@@ -83,14 +83,43 @@ async function fetchWithTimeout(url, ms = 8000) {
     }
 }
 
+// Proxies en cascada — si uno falla prueba el siguiente
+async function fetchViaProxy(targetUrl) {
+    const proxies = [
+        async (url) => {
+            const res = await fetchWithTimeout(`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`);
+            if (!res.ok) throw new Error(`CodeTabs ${res.status}`);
+            return res.json();
+        },
+        async (url) => {
+            const res = await fetchWithTimeout(`https://corsfix.com/${encodeURIComponent(url)}`);
+            if (!res.ok) throw new Error(`Corsfix ${res.status}`);
+            return res.json();
+        },
+        async (url) => {
+            const res = await fetchWithTimeout(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+            if (!res.ok) throw new Error(`AllOrigins ${res.status}`);
+            const wrapper = await res.json();
+            return JSON.parse(wrapper.contents);
+        },
+    ];
+
+    for (const proxy of proxies) {
+        try {
+            return await proxy(targetUrl);
+        } catch (err) {
+            console.warn('Proxy falló, probando el siguiente...', err.message);
+        }
+    }
+    throw new Error('Todos los proxies fallaron');
+}
+
 async function fetchTeams(slug) {
     if (teamsCache[slug]) return teamsCache[slug];
 
     const espnUrl = `${ESPN}/${slug}/teams?limit=100`;
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(espnUrl)}`;
-    const res = await fetchWithTimeout(proxyUrl, 8000);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = JSON.parse((await res.json()).contents);
+    const data = await fetchViaProxy(espnUrl);
+
 
     // ESPN anida los equipos en data.sports[0].leagues[0].teams
     const raw = data?.sports?.[0]?.leagues?.[0]?.teams ?? [];
@@ -213,11 +242,8 @@ const App = (() => {
                 `).join('');
 
         } catch (err) {
-            const msg = err.name === 'AbortError'
-                ? 'La carga tardó demasiado. Intentá de nuevo.'
-                : 'No se pudo cargar esta liga.<br>Puede que ESPN no la tenga disponible.';
             elements.dataDisplay.querySelector('.teams-grid').innerHTML =
-                `<p class="empty-msg error-msg">${msg}</p>`;
+                `<p class="empty-msg error-msg">No se pudo cargar esta liga.<br>Puede que ESPN no la tenga disponible.</p>`;
             console.error(slug, err);
         }
     };
