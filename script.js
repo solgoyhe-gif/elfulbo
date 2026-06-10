@@ -114,26 +114,80 @@ async function fetchViaProxy(targetUrl) {
     throw new Error('Todos los proxies fallaron');
 }
 
+// ── API ESPN (Con Proxies en cascada y Parsing estricto) ──────────────────────
+
+// Función auxiliar para obtener datos saltando CORS con proxies en cascada
+async function fetchWithProxyCascade(espnUrl) {
+    // Añadimos un timestamp para evitar el caché agresivo de los proxies
+    const urlWithCacheBuster = `${espnUrl}&_t=${Date.now()}`;
+    const encodedUrl = encodeURIComponent(urlWithCacheBuster);
+
+    const proxies = [
+        `https://api.codetabs.com/v1/proxy/?quest=${encodedUrl}`,
+        `https://cors-anywhere.herokuapp.com/${urlWithCacheBuster}`, // Alternativa (requiere activación manual pero es útil probarla)
+        `https://api.allorigins.win/get?url=${encodedUrl}`
+    ];
+
+    for (const proxy of proxies) {
+        try {
+            const res = await fetch(proxy);
+            if (!res.ok) continue; // Si este proxy falla, pasamos al siguiente
+
+            let data;
+            if (proxy.includes('allorigins')) {
+                const textData = await res.json();
+                data = JSON.parse(textData.contents);
+            } else {
+                data = await res.json();
+            }
+
+            return data; // Si tuvimos éxito, devolvemos los datos y salimos del bucle
+        } catch (error) {
+            console.warn(`[Proxy Falló] ${proxy} - Intentando siguiente...`);
+        }
+    }
+    throw new Error("Todos los proxies fallaron. ESPN inaccesible actualmente.");
+}
+
 async function fetchTeams(slug) {
     if (teamsCache[slug]) return teamsCache[slug];
 
     const espnUrl = `${ESPN}/${slug}/teams?limit=100`;
-    const data = await fetchViaProxy(espnUrl);
+    
+    try {
+        const data = await fetchWithProxyCascade(espnUrl);
+        
+        // PARSING ESTRICTO: Buscar la liga correcta dentro del array de ESPN
+        const sportsArray = data?.sports?.[0];
+        if (!sportsArray || !sportsArray.leagues) throw new Error("Estructura JSON inválida");
 
+        // En lugar de asumir [0], buscamos la liga que coincida con nuestro slug
+        // ESPN a veces usa prefijos distintos en su respuesta, por lo que tomamos la primera válida
+        const targetLeague = sportsArray.leagues[0]; 
+        
+        const rawTeams = targetLeague?.teams ?? [];
 
-    // ESPN anida los equipos en data.sports[0].leagues[0].teams
-    const raw = data?.sports?.[0]?.leagues?.[0]?.teams ?? [];
-    const teams = raw.map(t => ({
-        id:     t.team.id,
-        name:   t.team.displayName,
-        abbr:   t.team.abbreviation,
-        logo:   t.team.logos?.[0]?.href ?? '',
-        color:  t.team.color ? `#${t.team.color}` : null,
-        venue:  t.team.venue?.fullName ?? '—',
-    }));
+        if (rawTeams.length === 0) {
+            console.warn(`[ESPN API] La liga ${slug} no tiene equipos cargados en esta temporada.`);
+            return []; 
+        }
 
-    teamsCache[slug] = teams;
-    return teams;
+        const teams = rawTeams.map(t => ({
+            id:     t.team.id,
+            name:   t.team.displayName,
+            abbr:   t.team.abbreviation,
+            logo:   t.team.logos?.[0]?.href ?? '',
+            color:  t.team.color ? `#${t.team.color}` : null,
+            venue:  t.team.venue?.fullName ?? '—',
+        }));
+
+        teamsCache[slug] = teams;
+        return teams;
+
+    } catch (error) {
+        console.error(`[Fetch Error] Fallo al obtener ${slug}:`, error);
+        throw error;
+    }
 }
 
 // ── RENDERIZADO ───────────────────────────────────────────────────────────────
