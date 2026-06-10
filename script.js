@@ -69,12 +69,26 @@ const appData = {
 
 // ── API ESPN ──────────────────────────────────────────────────────────────────
 
+// Fetch con timeout
+async function fetchWithTimeout(url, ms = 8000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ms);
+    try {
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timer);
+        return res;
+    } catch (err) {
+        clearTimeout(timer);
+        throw err;
+    }
+}
+
 async function fetchTeams(slug) {
     if (teamsCache[slug]) return teamsCache[slug];
 
     const espnUrl = `${ESPN}/${slug}/teams?limit=100`;
     const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(espnUrl)}`;
-    const res = await fetch(proxyUrl);
+    const res = await fetchWithTimeout(proxyUrl, 8000);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = JSON.parse((await res.json()).contents);
 
@@ -199,8 +213,11 @@ const App = (() => {
                 `).join('');
 
         } catch (err) {
+            const msg = err.name === 'AbortError'
+                ? 'La carga tardó demasiado. Intentá de nuevo.'
+                : 'No se pudo cargar esta liga.<br>Puede que ESPN no la tenga disponible.';
             elements.dataDisplay.querySelector('.teams-grid').innerHTML =
-                `<p class="empty-msg error-msg">No se pudo cargar esta liga.<br>Puede que ESPN no la tenga disponible.</p>`;
+                `<p class="empty-msg error-msg">${msg}</p>`;
             console.error(slug, err);
         }
     };
@@ -239,7 +256,7 @@ const App = (() => {
                 renderView(button.dataset.view);
             });
         });
-        renderView('leagues');                                    
+        renderView('leagues');
     };
 
     return { init };
