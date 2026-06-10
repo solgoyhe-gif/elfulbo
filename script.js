@@ -72,10 +72,11 @@ const appData = {
 async function fetchTeams(slug) {
     if (teamsCache[slug]) return teamsCache[slug];
 
-    // ESPN devuelve equipos paginados, limit=100 alcanza para todas las ligas
-    const res = await fetch(`${ESPN}/${slug}/teams?limit=100`);
+    const espnUrl = `${ESPN}/${slug}/teams?limit=100`;
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(espnUrl)}`;
+    const res = await fetch(proxyUrl);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
+    const data = JSON.parse((await res.json()).contents);
 
     // ESPN anida los equipos en data.sports[0].leagues[0].teams
     const raw = data?.sports?.[0]?.leagues?.[0]?.teams ?? [];
@@ -238,7 +239,7 @@ const App = (() => {
                 renderView(button.dataset.view);
             });
         });
-        renderView('leagues');
+        renderView('leagues');                                    
     };
 
     return { init };
