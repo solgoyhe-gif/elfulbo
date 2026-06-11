@@ -7,33 +7,33 @@ const ESPN = 'https://site.api.espn.com/apis/site/v2/sports/soccer';
 
 const LEAGUES = {
     // ── EUROPA TOP 5 ─────────────────────────────
-    PREMIER_LEAGUE:    { slug: 'eng.1',              name: "Premier League",      country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
-    BUNDESLIGA:        { slug: 'ger.1',              name: "Bundesliga",          country: "Germany",     flag: "🇩🇪" },
-    SERIE_A:           { slug: 'ita.1',              name: "Serie A",             country: "Italy",       flag: "🇮🇹" },
-    LIGUE_1:           { slug: 'fra.1',              name: "Ligue 1",             country: "France",      flag: "🇫🇷" },
-    LA_LIGA:           { slug: 'esp.1',              name: "La Liga",             country: "Spain",       flag: "🇪🇸" },
+    PREMIER_LEAGUE:    { id: 39,  slug: 'eng.1',              name: "Premier League",      country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", season: 2025 },
+    BUNDESLIGA:        { id: 78,  slug: 'ger.1',              name: "Bundesliga",          country: "Germany",     flag: "🇩🇪", season: 2025 },
+    SERIE_A:           { id: 135, slug: 'ita.1',              name: "Serie A",             country: "Italy",       flag: "🇮🇹", season: 2025 },
+    LIGUE_1:           { id: 61,  slug: 'fra.1',              name: "Ligue 1",             country: "France",      flag: "🇫🇷", season: 2025 },
+    LA_LIGA:           { id: 140, slug: 'esp.1',              name: "La Liga",             country: "Spain",       flag: "🇪🇸", season: 2025 },
     // ── EUROPA OTRAS ─────────────────────────────
-    EREDIVISIE:        { slug: 'ned.1',              name: "Eredivisie",          country: "Netherlands", flag: "🇳🇱" },
-    PRIMEIRA_LIGA:     { slug: 'por.1',              name: "Primeira Liga",       country: "Portugal",    flag: "🇵🇹" },
+    EREDIVISIE:        { id: 88,  slug: 'ned.1',              name: "Eredivisie",          country: "Netherlands", flag: "🇳🇱", season: 2025 },
+    PRIMEIRA_LIGA:     { id: 94,  slug: 'por.1',              name: "Primeira Liga",       country: "Portugal",    flag: "🇵🇹", season: 2025 },
     // ── COPAS INGLESAS ───────────────────────────
-    CARABAO_CUP:       { slug: 'eng.league_cup',     name: "Carabao Cup",         country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
-    FA_CUP:            { slug: 'eng.fa',             name: "FA Cup",              country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+    CARABAO_CUP:       { id: 48,  slug: 'eng.league_cup',     name: "Carabao Cup",         country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", season: 2025 },
+    FA_CUP:            { id: 45,  slug: 'eng.fa',             name: "FA Cup",              country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", season: 2025 },
     // ── UEFA ─────────────────────────────────────
-    CHAMPIONS_LEAGUE:  { slug: 'uefa.champions',     name: "Champions League",    country: "Europe",      flag: "🇪🇺" },
-    EUROPA_LEAGUE:     { slug: 'uefa.europa',        name: "Europa League",       country: "Europe",      flag: "🇪🇺" },
-    CONFERENCE_LEAGUE: { slug: 'uefa.europa.conf',   name: "Conference League",   country: "Europe",      flag: "🇪🇺" },
-    UEFA_SUPER_CUP:    { slug: 'uefa.super_cup',     name: "UEFA Super Cup",      country: "Europe",      flag: "🇪🇺" },
+    CHAMPIONS_LEAGUE:  { id: 2,   slug: 'uefa.champions',     name: "Champions League",    country: "Europe",      flag: "🇪🇺", season: 2025 },
+    EUROPA_LEAGUE:     { id: 3,   slug: 'uefa.europa',        name: "Europa League",       country: "Europe",      flag: "🇪🇺", season: 2025 },
+    CONFERENCE_LEAGUE: { id: 848, slug: 'uefa.europa.conf',   name: "Conference League",   country: "Europe",      flag: "🇪🇺", season: 2025 },
+    UEFA_SUPER_CUP:    { id: 531, slug: 'uefa.super_cup',     name: "UEFA Super Cup",      country: "Europe",      flag: "🇪🇺", season: 2025 },
     // ── MUNDIAL ───────────────────────────────────
-    WORLD_CUP:         { slug: 'fifa.world',         name: "FIFA World Cup",      country: "World",       flag: "🌍" },
-    FRIENDLIES_INTL:   { slug: 'fifa.friendly',      name: "Amistosos Pre-Mundial", country: "World",     flag: "🌍" },
+    WORLD_CUP:         { id: 1,   slug: 'fifa.world',         name: "FIFA World Cup",      country: "World",       flag: "🌍", season: 2026 },
+    FRIENDLIES_INTL:   { id: 10,  slug: 'fifa.friendly',      name: "Amistosos Pre-Mundial", country: "World",     flag: "🌍", season: 2026 },
     // ── CONMEBOL ─────────────────────────────────
-    COPA_LIBERTADORES: { slug: 'conmebol.libertadores', name: "Copa Libertadores", country: "CONMEBOL",   flag: "🌎" },
-    COPA_SUDAMERICANA: { slug: 'conmebol.sudamericana', name: "Copa Sudamericana", country: "CONMEBOL",   flag: "🌎" },
+    COPA_LIBERTADORES: { id: 13,  slug: 'conmebol.libertadores', name: "Copa Libertadores", country: "CONMEBOL",   flag: "🌎", season: 2026 },
+    COPA_SUDAMERICANA: { id: 11,  slug: 'conmebol.sudamericana', name: "Copa Sudamericana", country: "CONMEBOL",   flag: "🌎", season: 2026 },
     // ── ARGENTINA ────────────────────────────────
-    LIGA_PROFESIONAL:  { slug: 'arg.1',              name: "Liga Profesional",    country: "Argentina",   flag: "🇦🇷" },
-    COPA_ARGENTINA:    { slug: 'arg.copa',           name: "Copa Argentina",      country: "Argentina",   flag: "🇦🇷" },
+    LIGA_PROFESIONAL:  { id: 128, slug: 'arg.1',              name: "Liga Profesional",    country: "Argentina",   flag: "🇦🇷", season: 2026 },
+    COPA_ARGENTINA:    { id: 130, slug: 'arg.copa',           name: "Copa Argentina",      country: "Argentina",   flag: "🇦🇷", season: 2025 },
     // ── BRASIL ───────────────────────────────────
-    BRASILEIRAO:       { slug: 'bra.1',              name: "Brasileirao",         country: "Brazil",      flag: "🇧🇷" },
+    BRASILEIRAO:       { id: 71,  slug: 'bra.1',              name: "Brasileirao",         country: "Brazil",      flag: "🇧🇷", season: 2025 },
 };
 
 const teamsCache = {};
@@ -55,17 +55,29 @@ const appData = {
         lineups: {
             local: [
                 { number: 1, name: "GK", playerName: "Raya" }, 
+                { number: 4, name: "DF", playerName: "White" },
+                { number: 2, name: "DF", playerName: "Saliba" },
+                { number: 6, name: "DF", playerName: "Gabriel" },
+                { number: 3, name: "DF", playerName: "Zinchenko" },
+                { number: 8, name: "MF", playerName: "Ødegaard" },
+                { number: 41, name: "MF", playerName: "Rice" },
+                { number: 5, name: "MF", playerName: "Partey" },
+                { number: 7, name: "FW", playerName: "Saka" },
                 { number: 9, name: "FW", playerName: "Havertz" },
-                { number: 18, name: "MF", playerName: "Partey" }, 
-                { number: 17, name: "MF", playerName: "Saka" },
-                { number: 5, name: "DF", playerName: "Gabriel" }
+                { number: 11, name: "FW", playerName: "Martinelli" }
             ],
             visitor: [
                 { number: 1, name: "GK", playerName: "Ter Stegen" }, 
+                { number: 23, name: "DF", playerName: "Koundé" },
+                { number: 4, name: "DF", playerName: "Araujo" },
+                { number: 15, name: "DF", playerName: "Christensen" },
+                { number: 3, name: "DF", playerName: "Balde" },
                 { number: 8, name: "MF", playerName: "Pedri" },
-                { number: 21, name: "MF", playerName: "De Jong" }, 
-                { number: 13, name: "DF", playerName: "Araujo" },
-                { number: 3, name: "DF", playerName: "Balde" }
+                { number: 21, name: "MF", playerName: "De Jong" },
+                { number: 22, name: "MF", playerName: "Gündoğan" },
+                { number: 27, name: "FW", playerName: "Yamal" },
+                { number: 9, name: "FW", playerName: "Lewandowski" },
+                { number: 11, name: "FW", playerName: "Raphinha" }
             ]
         }
     }
@@ -73,16 +85,16 @@ const appData = {
 
 // ── API ESPN (Proxies en Cascada + Cache Buster) ──────────────────────────────
 async function fetchTeams(slug) {
+    if (!slug || slug === "undefined") {
+        throw new Error("Slug inválido o ausente en la configuración de ligas.");
+    }
+
     if (teamsCache[slug]) return teamsCache[slug];
     
-    // Cache buster para evitar respuestas cacheadas incorrectas de los proxies
     const espnUrl = `${ESPN}/${slug}/teams?limit=100&_t=${Date.now()}`;
-    
-    // Lista de proxies en cascada
     const proxies = [
-        `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(espnUrl)}`,
-        `https://corsproxy.io/?${encodeURIComponent(espnUrl)}`,
-        `https://api.allorigins.win/get?url=${encodeURIComponent(espnUrl)}`
+        `https://api.allorigins.win/get?url=${encodeURIComponent(espnUrl)}`,
+        `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(espnUrl)}`
     ];
 
     let data = null;
@@ -93,22 +105,22 @@ async function fetchTeams(slug) {
             const res = await fetch(proxyUrl);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             
-            // AllOrigins requiere parsear `.contents`
-            if (proxyUrl.includes('allorigins')) {
+            if (proxyUrl.includes('allorigins.win/get')) {
                 const jsonRes = await res.json();
                 data = JSON.parse(jsonRes.contents);
             } else {
                 data = await res.json();
             }
 
-            if (data) break; // Si hay data válida, salimos del loop
+            if (data && data.sports) break; 
         } catch (err) {
             lastError = err;
-            console.warn(`Fallo en proxy: ${proxyUrl}. Intentando siguiente...`);
+            data = null;
+            console.warn(`Fallo en proxy: ${proxyUrl}. Intentando alternativa...`);
         }
     }
 
-    if (!data) throw lastError || new Error("Todos los proxies fallaron.");
+    if (!data) throw lastError || new Error("Todos los proxies fallaron al obtener equipos.");
     
     const raw = data?.sports?.[0]?.leagues?.[0]?.teams ?? [];
     
@@ -150,7 +162,6 @@ const App = (() => {
 
     // ── Alineaciones 3D ───────────────────────────────────────────────────────
     
-    // Función auxiliar para mapear posiciones en la cancha 3D
     const buildPitchPlayers = (players, isLocal) => {
         const positions = { GK: [], DF: [], MF: [], FW: [] };
         players.forEach(p => { if (positions[p.name]) positions[p.name].push(p); });
@@ -159,10 +170,9 @@ const App = (() => {
         const stroke = isLocal ? "rgba(220,248,54,0.9)" : "rgba(255,255,255,0.7)";
         const textFill = isLocal ? "#080b11" : "#fff";
 
-        // Coordenadas Y aproximadas para la perspectiva isométrica
         const yMap = isLocal
-            ? { GK: 278, DF: 245, MF: 215, FW: 190 } // Local (Abajo)
-            : { GK: 78,  DF: 108, MF: 142, FW: 162 }; // Visitante (Arriba)
+            ? { GK: 278, DF: 245, MF: 215, FW: 190 } 
+            : { GK: 78,  DF: 108, MF: 142, FW: 162 }; 
 
         let svgHTML = '';
         for (const [pos, posPlayers] of Object.entries(positions)) {
@@ -170,7 +180,7 @@ const App = (() => {
             if (count === 0) continue;
             
             const cy = yMap[pos];
-            const areaWidth = 200; // Espacio horizontal para distribuir jugadores
+            const areaWidth = 240; 
             const startX = 280 - (areaWidth / 2);
             const spacing = areaWidth / (count + 1);
 
@@ -185,7 +195,6 @@ const App = (() => {
         return svgHTML;
     };
 
-    // Función auxiliar para construir la lista de jugadores en la pestaña
     const buildPlayerList = (players) => {
         return players.map(p => `
             <div class="player-row">
@@ -206,7 +215,7 @@ const App = (() => {
                         <div class="team-badge badge-a">${appData.match.teams.local.substring(0,3).toUpperCase()}</div>
                         <div>
                             <div class="team-label">${appData.match.teams.local}</div>
-                            <div style="font-size:.62rem;color:var(--text-muted);font-weight:600">Formación</div>
+                            <div style="font-size:.62rem;color:var(--text-muted);font-weight:600">4-3-3</div>
                         </div>
                     </div>
                     <div class="score-block">
@@ -217,7 +226,7 @@ const App = (() => {
                         <div class="team-badge badge-b">${appData.match.teams.visitor.substring(0,3).toUpperCase()}</div>
                         <div>
                             <div class="team-label">${appData.match.teams.visitor}</div>
-                            <div style="font-size:.62rem;color:var(--text-muted);font-weight:600">Formación</div>
+                            <div style="font-size:.62rem;color:var(--text-muted);font-weight:600">4-3-3</div>
                         </div>
                     </div>
                 </div>
@@ -321,7 +330,6 @@ const App = (() => {
             </div>
         `;
 
-        // Delegación de eventos locales para los tabs
         const tabs = elements.dataDisplay.querySelectorAll('.tab');
         tabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
@@ -377,72 +385,3 @@ const App = (() => {
             const teams = await fetchTeams(slug);
             if (!teams.length) {
                 elements.dataDisplay.querySelector('.teams-grid').innerHTML = `
-                    <div class="empty-msg">No se encontraron equipos.</div>
-                `;
-                return;
-            }
-            
-            elements.dataDisplay.querySelector('.teams-grid').innerHTML = teams.map(team => `
-                <div class="team-card">
-                    ${team.logo 
-                        ? `<img src="${team.logo}" alt="${team.name}" class="team-logo">` 
-                        : `<div class="team-logo" style="background:var(--border);border-radius:50%"></div>`
-                    }
-                    <div class="team-info">
-                        <span class="team-name">${team.name}</span>
-                        <span class="team-venue">${team.venue}</span>
-                    </div>
-                </div>
-            `).join('');
-        } catch (err) {
-            elements.dataDisplay.querySelector('.teams-grid').innerHTML = `
-                <div class="empty-msg">No se pudo cargar esta liga. Puede que ESPN no la tenga disponible.</div>
-            `;
-            console.error(slug, err);
-        }
-    };
-
-    // ── Router ────────────────────────────────────────────────────────────────
-    const getRequiredTier = (view) => ({ live: 5, lineups: 10, leagues: 0 }[view] ?? 0);
-
-    const setActiveNav = (viewType) => {
-        elements.navButtons.forEach(btn => 
-            btn.classList.toggle('active', btn.dataset.view === viewType)
-        );
-    };
-
-    const renderView = (viewType) => {
-        if (appData.user.subscriptionLevel < getRequiredTier(viewType)) {
-            elements.dataDisplay.innerHTML = `
-                <div class="access-denied">
-                    <h3>Acceso denegado</h3>
-                    <p>Se requiere plan de $${getRequiredTier(viewType)}.</p>
-                </div>
-            `;
-            return;
-        }
-
-        switch (viewType) {
-            case 'live':    renderLiveCommentary(); break;
-            case 'lineups': renderLineups();        break;
-            case 'leagues': renderLeagues();        break;
-        }
-    };
-
-    const init = () => {
-        elements.navButtons.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const button = e.target.closest('.nav-item');
-                if (!button) return;
-                setActiveNav(button.dataset.view);
-                renderView(button.dataset.view);
-            });
-        });
-        
-        renderView('leagues');
-    };
-
-    return { init };
-})();
-
-document.addEventListener('DOMContentLoaded', App.init);
