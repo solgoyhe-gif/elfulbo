@@ -1,6 +1,6 @@
 /**
  * script.js - Lógica principal de "El Fulbo"
- * API: ESPN pública con sistema de proxies en cascada y cache buster.
+ * API: ESPN pública con sistema de proxies en cascada optimizado.
  */
 
 const ESPN = 'https://site.api.espn.com/apis/site/v2/sports/soccer';
@@ -83,7 +83,7 @@ const appData = {
     }
 };
 
-// ── API ESPN (Proxies en Cascada + Cache Buster) ──────────────────────────────
+// ── API ESPN (Proxies en Cascada sin Cache Buster agresivo) ───────────────────
 async function fetchTeams(slug) {
     if (!slug || slug === "undefined") {
         throw new Error("Slug inválido o ausente en la configuración de ligas.");
@@ -91,7 +91,9 @@ async function fetchTeams(slug) {
 
     if (teamsCache[slug]) return teamsCache[slug];
     
-    const espnUrl = `${ESPN}/${slug}/teams?limit=100&_t=${Date.now()}`;
+    // Eliminado el `_t=${Date.now()}` para permitir que los proxies cacheen y evitar errores 400
+    const espnUrl = `${ESPN}/${slug}/teams?limit=100`;
+    
     const proxies = [
         `https://api.allorigins.win/get?url=${encodeURIComponent(espnUrl)}`,
         `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(espnUrl)}`
@@ -107,6 +109,7 @@ async function fetchTeams(slug) {
             
             if (proxyUrl.includes('allorigins.win/get')) {
                 const jsonRes = await res.json();
+                if (!jsonRes.contents) throw new Error("AllOrigins no devolvió contents");
                 data = JSON.parse(jsonRes.contents);
             } else {
                 data = await res.json();
@@ -383,5 +386,78 @@ const App = (() => {
         
         try {
             const teams = await fetchTeams(slug);
+            
+            // PROTECCIÓN CONTRA RACE CONDITION DEL DOM
+            const grid = elements.dataDisplay.querySelector('.teams-grid');
+            if (!grid) return; 
+
             if (!teams.length) {
-                elements.dataDisplay.querySelector('.teams-grid').innerHTML = `
+                grid.innerHTML = `<div class="empty-msg">No se encontraron equipos en esta liga.</div>`;
+                return;
+            }
+            
+            grid.innerHTML = teams.map(team => `
+                <div class="team-card">
+                    ${team.logo 
+                        ? `<img src="${team.logo}" alt="${team.name}" class="team-logo">` 
+                        : `<div class="team-logo" style="background:var(--border);border-radius:50%"></div>`
+                    }
+                    <div class="team-info">
+                        <span class="team-name">${team.name}</span>
+                        <span class="team-venue">${team.venue}</span>
+                    </div>
+                </div>
+            `).join('');
+        } catch (err) {
+            console.error(slug, err);
+            const grid = elements.dataDisplay.querySelector('.teams-grid');
+            if (grid) {
+                grid.innerHTML = `<div class="empty-msg">No se pudo cargar esta liga. ESPN no devolvió datos o el proxy falló.</div>`;
+            }
+        }
+    };
+
+    // ── Router ────────────────────────────────────────────────────────────────
+    const getRequiredTier = (view) => ({ live: 5, lineups: 10, leagues: 0 }[view] ?? 0);
+
+    const setActiveNav = (viewType) => {
+        elements.navButtons.forEach(btn => 
+            btn.classList.toggle('active', btn.dataset.view === viewType)
+        );
+    };
+
+    const renderView = (viewType) => {
+        if (appData.user.subscriptionLevel < getRequiredTier(viewType)) {
+            elements.dataDisplay.innerHTML = `
+                <div class="access-denied">
+                    <h3>Acceso denegado</h3>
+                    <p>Se requiere plan de $${getRequiredTier(viewType)}.</p>
+                </div>
+            `;
+            return;
+        }
+
+        switch (viewType) {
+            case 'live':    renderLiveCommentary(); break;
+            case 'lineups': renderLineups();        break;
+            case 'leagues': renderLeagues();        break;
+        }
+    };
+
+    const init = () => {
+        elements.navButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const button = e.target.closest('.nav-item');
+                if (!button) return;
+                setActiveNav(button.dataset.view);
+                renderView(button.dataset.view);
+            });
+        });
+        
+        renderView('leagues');
+    };
+
+    return { init };
+})();
+
+document.addEventListener('DOMContentLoaded', App.init);
