@@ -51,7 +51,23 @@ const appData = {
             { minute: 32, event: "Goal", player: "Messi" },
             { minute: 48, event: "Injured", player: "Neymar" },
             { minute: 62, event: "Goal", player: "Sánchez" }
-        ]
+        ],
+        lineups: {
+            local: [
+                { number: 1, name: "GK", playerName: "Raya" }, 
+                { number: 9, name: "FW", playerName: "Havertz" },
+                { number: 18, name: "MF", playerName: "Partey" }, 
+                { number: 17, name: "MF", playerName: "Saka" },
+                { number: 5, name: "DF", playerName: "Gabriel" }
+            ],
+            visitor: [
+                { number: 1, name: "GK", playerName: "Ter Stegen" }, 
+                { number: 8, name: "MF", playerName: "Pedri" },
+                { number: 21, name: "MF", playerName: "De Jong" }, 
+                { number: 13, name: "DF", playerName: "Araujo" },
+                { number: 3, name: "DF", playerName: "Balde" }
+            ]
+        }
     }
 };
 
@@ -105,16 +121,64 @@ const App = (() => {
     };
 
     // ── Alineaciones 3D ───────────────────────────────────────────────────────
+    
+    // Función auxiliar para mapear posiciones en la cancha 3D
+    const buildPitchPlayers = (players, isLocal) => {
+        const positions = { GK: [], DF: [], MF: [], FW: [] };
+        players.forEach(p => { if (positions[p.name]) positions[p.name].push(p); });
+
+        const fill = isLocal ? "#f0f2f7" : "#c8102e";
+        const stroke = isLocal ? "rgba(220,248,54,0.9)" : "rgba(255,255,255,0.7)";
+        const textFill = isLocal ? "#080b11" : "#fff";
+
+        // Coordenadas Y aproximadas para la perspectiva isométrica
+        const yMap = isLocal
+            ? { GK: 278, DF: 245, MF: 215, FW: 190 } // Local (Abajo)
+            : { GK: 78,  DF: 108, MF: 142, FW: 162 }; // Visitante (Arriba)
+
+        let svgHTML = '';
+        for (const [pos, posPlayers] of Object.entries(positions)) {
+            const count = posPlayers.length;
+            if (count === 0) continue;
+            
+            const cy = yMap[pos];
+            const areaWidth = 200; // Espacio horizontal para distribuir jugadores
+            const startX = 280 - (areaWidth / 2);
+            const spacing = areaWidth / (count + 1);
+
+            posPlayers.forEach((p, idx) => {
+                const cx = count === 1 ? 280 : startX + (spacing * (idx + 1));
+                svgHTML += `
+                    <circle cx="${cx}" cy="${cy}" r="12" fill="${fill}" stroke="${stroke}" stroke-width="1.8"/>
+                    <text x="${cx}" y="${cy + 3}" text-anchor="middle" font-size="9" font-weight="900" fill="${textFill}" font-family="Inter,sans-serif">${p.number}</text>
+                `;
+            });
+        }
+        return svgHTML;
+    };
+
+    // Función auxiliar para construir la lista de jugadores en la pestaña
+    const buildPlayerList = (players) => {
+        return players.map(p => `
+            <div class="player-row">
+                <span class="p-num">${p.number}</span>
+                <span class="p-pos pos-${p.name.toLowerCase()}">${p.name}</span>
+                <span class="p-name">${p.playerName || `Jugador ${p.number}`}</span>
+                <span class="p-rating">-</span>
+            </div>
+        `).join('');
+    };
+
     const renderLineups = () => {
         elements.dataDisplay.innerHTML = `
             <h2 class="sr-only">Vista de alineaciones: ${appData.match.teams.local} vs ${appData.match.teams.visitor}, ${appData.match.score.local}-${appData.match.score.visitor} en vivo</h2>
             <div class="root">
                 <div class="match-header">
                     <div class="team-side">
-                        <div class="team-badge badge-a">ARS</div>
+                        <div class="team-badge badge-a">${appData.match.teams.local.substring(0,3).toUpperCase()}</div>
                         <div>
                             <div class="team-label">${appData.match.teams.local}</div>
-                            <div style="font-size:.62rem;color:var(--text-muted);font-weight:600">4-3-3</div>
+                            <div style="font-size:.62rem;color:var(--text-muted);font-weight:600">Formación</div>
                         </div>
                     </div>
                     <div class="score-block">
@@ -122,20 +186,11 @@ const App = (() => {
                         <div class="match-status"><span class="live-dot"></span>${appData.match.minute}</div>
                     </div>
                     <div class="team-side right">
-                        <div class="team-badge badge-b">FCB</div>
+                        <div class="team-badge badge-b">${appData.match.teams.visitor.substring(0,3).toUpperCase()}</div>
                         <div>
                             <div class="team-label">${appData.match.teams.visitor}</div>
-                            <div style="font-size:.62rem;color:var(--text-muted);font-weight:600">4-3-3</div>
+                            <div style="font-size:.62rem;color:var(--text-muted);font-weight:600">Formación</div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="formation-row">
-                    <span class="formation-label">Formación</span>
-                    <div class="formation-pills">
-                        <div class="pill active">4-3-3</div>
-                        <div class="pill">4-4-2</div>
-                        <div class="pill">3-5-2</div>
                     </div>
                 </div>
 
@@ -157,6 +212,7 @@ const App = (() => {
                         <line x1="30" y1="177" x2="530" y2="177" stroke="rgba(255,255,255,0.22)" stroke-width="1"/>
                         <ellipse cx="280" cy="177" rx="68" ry="22" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1"/>
                         <circle cx="280" cy="177" r="2.5" fill="rgba(255,255,255,0.3)"/>
+                        
                         <polygon points="193,62 367,62 385,118 175,118" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
                         <polygon points="228,62 332,62 342,88 218,88" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
                         <rect x="238" y="52" width="84" height="12" rx="1" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
@@ -168,64 +224,32 @@ const App = (() => {
                         <path d="M30,292 Q40,282 52,290" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
                         <path d="M530,292 Q520,282 508,290" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
 
-                        <circle cx="280" cy="78" r="12" fill="#c8102e" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
-                        <text x="280" y="82" text-anchor="middle" font-size="9" font-weight="900" fill="#fff" font-family="Inter,sans-serif">1</text>
-                        <circle cx="170" cy="108" r="12" fill="#c8102e" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
-                        <text x="170" y="112" text-anchor="middle" font-size="9" font-weight="900" fill="#fff" font-family="Inter,sans-serif">23</text>
-                        <circle cx="228" cy="103" r="12" fill="#c8102e" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
-                        <text x="228" y="107" text-anchor="middle" font-size="9" font-weight="900" fill="#fff" font-family="Inter,sans-serif">3</text>
-                        <circle cx="332" cy="103" r="12" fill="#c8102e" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
-                        <text x="332" y="107" text-anchor="middle" font-size="9" font-weight="900" fill="#fff" font-family="Inter,sans-serif">15</text>
-                        <circle cx="390" cy="108" r="12" fill="#c8102e" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
-                        <text x="390" y="112" text-anchor="middle" font-size="9" font-weight="900" fill="#fff" font-family="Inter,sans-serif">2</text>
-                        <circle cx="200" cy="142" r="12" fill="#c8102e" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
-                        <text x="200" y="146" text-anchor="middle" font-size="9" font-weight="900" fill="#fff" font-family="Inter,sans-serif">8</text>
-                        <circle cx="280" cy="138" r="12" fill="#c8102e" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
-                        <text x="280" y="142" text-anchor="middle" font-size="9" font-weight="900" fill="#fff" font-family="Inter,sans-serif">6</text>
-                        <circle cx="360" cy="142" r="12" fill="#c8102e" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
-                        <text x="360" y="146" text-anchor="middle" font-size="9" font-weight="900" fill="#fff" font-family="Inter,sans-serif">4</text>
-                        <circle cx="185" cy="162" r="12" fill="#c8102e" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
-                        <text x="185" y="166" text-anchor="middle" font-size="9" font-weight="900" fill="#fff" font-family="Inter,sans-serif">11</text>
-                        <circle cx="280" cy="160" r="12" fill="#c8102e" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
-                        <text x="280" y="164" text-anchor="middle" font-size="9" font-weight="900" fill="#fff" font-family="Inter,sans-serif">9</text>
-                        <circle cx="375" cy="162" r="12" fill="#c8102e" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
-                        <text x="375" y="166" text-anchor="middle" font-size="9" font-weight="900" fill="#fff" font-family="Inter,sans-serif">7</text>
+                        ${buildPitchPlayers(appData.match.lineups.visitor, false)}
+                        ${buildPitchPlayers(appData.match.lineups.local, true)}
 
-                        <circle cx="180" cy="192" r="12" fill="#f0f2f7" stroke="rgba(220,248,54,0.9)" stroke-width="1.8"/>
-                        <text x="180" y="196" text-anchor="middle" font-size="9" font-weight="900" fill="#080b11" font-family="Inter,sans-serif">19</text>
-                        <circle cx="280" cy="190" r="12" fill="#f0f2f7" stroke="rgba(220,248,54,0.9)" stroke-width="1.8"/>
-                        <text x="280" y="194" text-anchor="middle" font-size="9" font-weight="900" fill="#080b11" font-family="Inter,sans-serif">9</text>
-                        <circle cx="380" cy="192" r="12" fill="#f0f2f7" stroke="rgba(220,248,54,0.9)" stroke-width="1.8"/>
-                        <text x="380" y="196" text-anchor="middle" font-size="9" font-weight="900" fill="#080b11" font-family="Inter,sans-serif">7</text>
-                        <circle cx="193" cy="218" r="12" fill="#f0f2f7" stroke="rgba(220,248,54,0.9)" stroke-width="1.8"/>
-                        <text x="193" y="222" text-anchor="middle" font-size="9" font-weight="900" fill="#080b11" font-family="Inter,sans-serif">8</text>
-                        <circle cx="280" cy="215" r="12" fill="#f0f2f7" stroke="rgba(220,248,54,0.9)" stroke-width="1.8"/>
-                        <text x="280" y="219" text-anchor="middle" font-size="9" font-weight="900" fill="#080b11" font-family="Inter,sans-serif">35</text>
-                        <circle cx="367" cy="218" r="12" fill="#f0f2f7" stroke="rgba(220,248,54,0.9)" stroke-width="1.8"/>
-                        <text x="367" y="222" text-anchor="middle" font-size="9" font-weight="900" fill="#080b11" font-family="Inter,sans-serif">41</text>
-                        <circle cx="148" cy="248" r="12" fill="#f0f2f7" stroke="rgba(220,248,54,0.9)" stroke-width="1.8"/>
-                        <text x="148" y="252" text-anchor="middle" font-size="9" font-weight="900" fill="#080b11" font-family="Inter,sans-serif">35</text>
-                        <circle cx="226" cy="242" r="12" fill="#f0f2f7" stroke="rgba(220,248,54,0.9)" stroke-width="1.8"/>
-                        <text x="226" y="246" text-anchor="middle" font-size="9" font-weight="900" fill="#080b11" font-family="Inter,sans-serif">6</text>
-                        <circle cx="334" cy="242" r="12" fill="#f0f2f7" stroke="rgba(220,248,54,0.9)" stroke-width="1.8"/>
-                        <text x="334" y="246" text-anchor="middle" font-size="9" font-weight="900" fill="#080b11" font-family="Inter,sans-serif">12</text>
-                        <circle cx="412" cy="248" r="12" fill="#f0f2f7" stroke="rgba(220,248,54,0.9)" stroke-width="1.8"/>
-                        <text x="412" y="252" text-anchor="middle" font-size="9" font-weight="900" fill="#080b11" font-family="Inter,sans-serif">2</text>
-                        <circle cx="280" cy="278" r="12" fill="#f0f2f7" stroke="rgba(220,248,54,0.9)" stroke-width="1.8"/>
-                        <text x="280" y="282" text-anchor="middle" font-size="9" font-weight="900" fill="#080b11" font-family="Inter,sans-serif">1</text>
-
-                        <text x="75" y="100" text-anchor="middle" font-size="9" font-weight="800" fill="rgba(200,16,46,0.8)" font-family="Inter,sans-serif" letter-spacing="1">FCB</text>
-                        <text x="75" y="260" text-anchor="middle" font-size="9" font-weight="800" fill="rgba(220,248,54,0.8)" font-family="Inter,sans-serif" letter-spacing="1">ARS</text>
+                        <text x="75" y="100" text-anchor="middle" font-size="9" font-weight="800" fill="rgba(200,16,46,0.8)" font-family="Inter,sans-serif" letter-spacing="1">${appData.match.teams.visitor.substring(0,3).toUpperCase()}</text>
+                        <text x="75" y="260" text-anchor="middle" font-size="9" font-weight="800" fill="rgba(220,248,54,0.8)" font-family="Inter,sans-serif" letter-spacing="1">${appData.match.teams.local.substring(0,3).toUpperCase()}</text>
                     </svg>
                 </div>
 
                 <div class="tabs">
-                    <div class="tab active" data-target="panel-stats">Estadísticas</div>
+                    <div class="tab active" data-target="panel-players">Jugadores</div>
+                    <div class="tab" data-target="panel-stats">Estadísticas</div>
                     <div class="tab" data-target="panel-analysis">Análisis</div>
-                    <div class="tab" data-target="panel-players">Jugadores</div>
                 </div>
 
-                <div id="panel-stats" class="stats-section">
+                <div id="panel-players" style="display:block">
+                    <div class="section-title">${appData.match.teams.local} · Titulares</div>
+                    <div class="player-list" style="margin-bottom: 12px;">
+                        ${buildPlayerList(appData.match.lineups.local)}
+                    </div>
+                    <div class="section-title">${appData.match.teams.visitor} · Titulares</div>
+                    <div class="player-list">
+                        ${buildPlayerList(appData.match.lineups.visitor)}
+                    </div>
+                </div>
+
+                <div id="panel-stats" class="stats-section" style="display:none">
                     <div class="section-title">Comparativa del partido</div>
                     <div class="stat-row">
                         <div class="stat-bar-wrap">
@@ -249,119 +273,21 @@ const App = (() => {
                             <span class="stat-val">6</span>
                         </div>
                     </div>
-                    <div class="stat-row">
-                        <div class="stat-bar-wrap">
-                            <span class="stat-val right">4</span>
-                            <div class="bar-bg"><div class="bar-fill bar-a" style="width:67%"></div></div>
-                        </div>
-                        <div class="stat-label">Al arco</div>
-                        <div class="stat-bar-wrap">
-                            <div class="bar-bg"><div class="bar-fill bar-b" style="width:33%"></div></div>
-                            <span class="stat-val">2</span>
-                        </div>
-                    </div>
-                    <div class="stat-row">
-                        <div class="stat-bar-wrap">
-                            <span class="stat-val right">412</span>
-                            <div class="bar-bg"><div class="bar-fill bar-a" style="width:55%"></div></div>
-                        </div>
-                        <div class="stat-label">Pases</div>
-                        <div class="stat-bar-wrap">
-                            <div class="bar-bg"><div class="bar-fill bar-b" style="width:45%"></div></div>
-                            <span class="stat-val">338</span>
-                        </div>
-                    </div>
-                    <div class="stat-row">
-                        <div class="stat-bar-wrap">
-                            <span class="stat-val right">88%</span>
-                            <div class="bar-bg"><div class="bar-fill bar-a" style="width:88%"></div></div>
-                        </div>
-                        <div class="stat-label">Precisión</div>
-                        <div class="stat-bar-wrap">
-                            <div class="bar-bg"><div class="bar-fill bar-b" style="width:83%"></div></div>
-                            <span class="stat-val">83%</span>
-                        </div>
-                    </div>
-                    <div class="stat-row">
-                        <div class="stat-bar-wrap">
-                            <span class="stat-val right">14</span>
-                            <div class="bar-bg"><div class="bar-fill bar-a" style="width:47%"></div></div>
-                        </div>
-                        <div class="stat-label">Faltas</div>
-                        <div class="stat-bar-wrap">
-                            <div class="bar-bg"><div class="bar-fill bar-b" style="width:53%"></div></div>
-                            <span class="stat-val">16</span>
-                        </div>
-                    </div>
                 </div>
 
                 <div id="panel-analysis" style="display:none">
                     <div class="section-title">Análisis táctico</div>
                     <div class="analysis-grid">
                         <div class="analysis-card">
-                            <div class="a-card-val trend-up">+34%</div>
-                            <div class="a-card-label">Presión alta</div>
-                            <div class="a-card-sub">Arsenal domina la presión en los últimos 20 min</div>
-                        </div>
-                        <div class="analysis-card">
                             <div class="a-card-val trend-neutral">1.82</div>
-                            <div class="a-card-label">xG Arsenal</div>
-                            <div class="a-card-sub">Supera el xG esperado (1.4) para este partido</div>
+                            <div class="a-card-label">xG ${appData.match.teams.local}</div>
+                            <div class="a-card-sub">Supera el xG esperado para este partido</div>
                         </div>
                         <div class="analysis-card">
                             <div class="a-card-val trend-down">0.94</div>
-                            <div class="a-card-label">xG Barcelona</div>
-                            <div class="a-card-sub">Por debajo del promedio histórico de 1.6</div>
+                            <div class="a-card-label">xG ${appData.match.teams.visitor}</div>
+                            <div class="a-card-sub">Por debajo del promedio histórico</div>
                         </div>
-                        <div class="analysis-card">
-                            <div class="a-card-val" style="color:#3b82f6">7.4</div>
-                            <div class="a-card-label">PPDA Arsenal</div>
-                            <div class="a-card-sub">Presión efectiva — menos pases permitidos</div>
-                        </div>
-                        <div class="analysis-card">
-                            <div class="a-card-val trend-up">63%</div>
-                            <div class="a-card-label">Banda izq.</div>
-                            <div class="a-card-sub">Arsenal construye la mayoría por el lado izquierdo</div>
-                        </div>
-                        <div class="analysis-card">
-                            <div class="a-card-val trend-neutral">4.2</div>
-                            <div class="a-card-label">Duelos / min</div>
-                            <div class="a-card-sub">Partido físico por encima del promedio UCL</div>
-                        </div>
-                    </div>
-                    <div class="section-title" style="margin-top:14px">Línea de tiempo xG</div>
-                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px;position:relative;height:64px">
-                        <svg width="100%" height="100%" viewBox="0 0 500 50" preserveAspectRatio="none" style="overflow:visible">
-                            <polyline points="0,50 80,50 120,38 160,38 200,28 240,28 280,22 320,15 360,15 400,12 500,10" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>
-                            <polyline points="0,50 80,42 120,42 160,42 200,35 240,35 280,32 320,32 360,28 400,28 500,28" fill="none" stroke="#c8102e" stroke-width="2" stroke-linejoin="round"/>
-                            <circle cx="200" cy="28" r="4" fill="var(--accent)"/>
-                            <circle cx="280" cy="32" r="4" fill="#c8102e"/>
-                            <circle cx="320" cy="15" r="4" fill="var(--accent)"/>
-                            <text x="198" y="22" font-size="7" fill="var(--accent)" font-family="Inter,sans-serif" text-anchor="middle">⚽</text>
-                            <text x="278" y="26" font-size="7" fill="#f04b5a" font-family="Inter,sans-serif" text-anchor="middle">⚽</text>
-                            <text x="318" y="9" font-size="7" fill="var(--accent)" font-family="Inter,sans-serif" text-anchor="middle">⚽</text>
-                        </svg>
-                        <div style="position:absolute;bottom:6px;right:8px;display:flex;gap:10px">
-                            <span style="font-size:.58rem;color:var(--accent);font-weight:700">— ARS</span>
-                            <span style="font-size:.58rem;color:#c8102e;font-weight:700">— FCB</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="panel-players" style="display:none">
-                    <div class="section-title">Arsenal · titulares</div>
-                    <div class="player-list">
-                        <div class="player-row"><span class="p-num">1</span><span class="p-pos pos-gk">GK</span><span class="p-name">Raya</span><span class="p-rating">7.2</span></div>
-                        <div class="player-row"><span class="p-num">2</span><span class="p-pos pos-df">DF</span><span class="p-name">Ben White</span><span class="p-rating">7.0</span></div>
-                        <div class="player-row"><span class="p-num">6</span><span class="p-pos pos-df">DF</span><span class="p-name">Gabriel</span><span class="p-rating">7.5</span></div>
-                        <div class="player-row"><span class="p-num">12</span><span class="p-pos pos-df">DF</span><span class="p-name">Saliba</span><span class="p-rating">8.1</span></div>
-                        <div class="player-row"><span class="p-num">35</span><span class="p-pos pos-df">DF</span><span class="p-name">Zinchenko</span><span class="p-rating">6.9</span></div>
-                        <div class="player-row"><span class="p-num">8</span><span class="p-pos pos-mf">MF</span><span class="p-name">Ødegaard</span><span class="p-rating">8.4</span></div>
-                        <div class="player-row"><span class="p-num">35</span><span class="p-pos pos-mf">MF</span><span class="p-name">Jorginho</span><span class="p-rating">7.1</span></div>
-                        <div class="player-row"><span class="p-num">41</span><span class="p-pos pos-mf">MF</span><span class="p-name">Rice</span><span class="p-rating">8.6</span></div>
-                        <div class="player-row"><span class="p-num">7</span><span class="p-pos pos-fw">FW</span><span class="p-name">Saka</span><span class="p-rating">8.9</span></div>
-                        <div class="player-row"><span class="p-num">9</span><span class="p-pos pos-fw">FW</span><span class="p-name">Havertz</span><span class="p-rating">7.8</span></div>
-                        <div class="player-row"><span class="p-num">19</span><span class="p-pos pos-fw">FW</span><span class="p-name">Trossard</span><span class="p-rating">7.4</span></div>
                     </div>
                 </div>
             </div>
@@ -377,15 +303,6 @@ const App = (() => {
                 ['panel-stats', 'panel-analysis', 'panel-players'].forEach(p => {
                     document.getElementById(p).style.display = p === targetId ? 'block' : 'none';
                 });
-            });
-        });
-
-        // Delegación de eventos locales para las pastillas de formación
-        const pills = elements.dataDisplay.querySelectorAll('.pill');
-        pills.forEach(pill => {
-            pill.addEventListener('click', function() {
-                pills.forEach(p => p.classList.remove('active'));
-                this.classList.add('active');
             });
         });
     };
@@ -416,7 +333,6 @@ const App = (() => {
 
     // ── Equipos de una liga ───────────────────────────────────────────────────
     const renderLeagueTeams = async (slug, leagueName) => {
-        // Skeleton mientras carga
         elements.dataDisplay.innerHTML = `
             <div class="back-header">
                 <button class="btn-back" id="btn-back">← Volver</button>
@@ -495,7 +411,6 @@ const App = (() => {
             });
         });
         
-        // Carga inicial
         renderView('leagues');
     };
 
