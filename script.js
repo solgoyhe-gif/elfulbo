@@ -93,32 +93,33 @@ async function fetchWithTimeout(url, ms = 8000) {
     }
 }
 
-const MY_PROXY = 'https://TU-WORKER.workers.dev'; // ← reemplazá con tu URL
+// ← Tu Worker de Cloudflare, siempre primero
+const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
 
 async function fetchWithProxyCascade(espnUrl) {
+    const encoded = encodeURIComponent(espnUrl);
+
     const proxies = [
-        // Tu Worker propio — siempre primero
         {
             name: 'Worker',
-            build: () => `${MY_PROXY}?url=${encodeURIComponent(espnUrl)}`,
+            url: `${CF_WORKER}?url=${encoded}`,
             parse: async (res) => res.json()
         },
-        // Fallbacks públicos por si acaso
         {
             name: 'AllOrigins',
-            build: () => `https://api.allorigins.win/raw?url=${encodeURIComponent(espnUrl)}`,
+            url: `https://api.allorigins.win/raw?url=${encoded}`,
             parse: async (res) => res.json()
         },
         {
             name: 'CodeTabs',
-            build: () => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(espnUrl)}`,
+            url: `https://api.codetabs.com/v1/proxy/?quest=${encoded}`,
             parse: async (res) => res.json()
         },
     ];
 
     for (const proxy of proxies) {
         try {
-            const res = await fetchWithTimeout(proxy.build(), 10000);
+            const res = await fetchWithTimeout(proxy.url, 10000);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await proxy.parse(res);
             if (!data?.sports) throw new Error('Respuesta inválida');
@@ -129,8 +130,9 @@ async function fetchWithProxyCascade(espnUrl) {
         }
     }
 
-    throw new Error('Todos los proxies fallaron.');
+    throw new Error('Todos los proxies fallaron. ESPN inaccesible.');
 }
+
 // ── FETCH EQUIPOS (con caché en memoria + localStorage) ───────────────────────
 
 async function fetchTeams(slug) {
