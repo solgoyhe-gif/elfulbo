@@ -71,17 +71,45 @@ const appData = {
     }
 };
 
-// ── API ESPN ──────────────────────────────────────────────────────────────────
+// ── API ESPN (Proxies en Cascada + Cache Buster) ──────────────────────────────
 async function fetchTeams(slug) {
     if (teamsCache[slug]) return teamsCache[slug];
     
+    // Cache buster para evitar respuestas cacheadas incorrectas de los proxies
     const espnUrl = `${ESPN}/${slug}/teams?limit=100&_t=${Date.now()}`;
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(espnUrl)}`;
     
-    const res = await fetch(proxyUrl);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    // Lista de proxies en cascada
+    const proxies = [
+        `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(espnUrl)}`,
+        `https://corsproxy.io/?${encodeURIComponent(espnUrl)}`,
+        `https://api.allorigins.win/get?url=${encodeURIComponent(espnUrl)}`
+    ];
+
+    let data = null;
+    let lastError = null;
+
+    for (const proxyUrl of proxies) {
+        try {
+            const res = await fetch(proxyUrl);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            
+            // AllOrigins requiere parsear `.contents`
+            if (proxyUrl.includes('allorigins')) {
+                const jsonRes = await res.json();
+                data = JSON.parse(jsonRes.contents);
+            } else {
+                data = await res.json();
+            }
+
+            if (data) break; // Si hay data válida, salimos del loop
+        } catch (err) {
+            lastError = err;
+            console.warn(`Fallo en proxy: ${proxyUrl}. Intentando siguiente...`);
+        }
+    }
+
+    if (!data) throw lastError || new Error("Todos los proxies fallaron.");
     
-    const data = JSON.parse((await res.json()).contents);
     const raw = data?.sports?.[0]?.leagues?.[0]?.teams ?? [];
     
     const teams = raw.map(t => ({
