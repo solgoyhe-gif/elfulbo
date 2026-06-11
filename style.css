@@ -42,7 +42,7 @@ body {
     background: var(--bg-main);     
     border-bottom: 1px solid var(--border);     
     z-index: 10; 
-    position: relative; /* Modificado para referenciar el logo absoluto */
+    position: relative; /* Para centrar el logo absoluto */
 }
 
 #app-logo {     
@@ -50,7 +50,7 @@ body {
     font-weight: 800;     
     letter-spacing: -0.5px;     
     color: var(--accent); 
-    position: absolute; /* Modificado: Centrado absoluto */
+    position: absolute; 
     left: 50%;
     transform: translateX(-50%);
 } 
@@ -58,7 +58,7 @@ body {
 #top-bar-right {     
     display: flex;     
     gap: 8px;
-    margin-left: auto; /* Empuja los íconos a la derecha */
+    margin-left: auto;
 } 
 
 .icon-btn {     
@@ -520,10 +520,10 @@ svg.pitch-svg {
     gap: 8px;
 }
 .stat-label {
-    font-size: 0.65rem; /* Ajustado para textos largos */
+    font-size: 0.65rem; 
     color: var(--text-muted);
     font-weight: 600;
-    width: 120px; /* Ancho incrementado de 90px a 120px */
+    width: 120px; 
     text-align: center;
     line-height: 1.1;
 }
