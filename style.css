@@ -110,9 +110,7 @@ body {
 
 .nav-item span { letter-spacing: 0.2px; }
 
-.nav-item.active {
-    color: var(--accent);
-}
+.nav-item.active { color: var(--accent); }
 
 .nav-item.active::before {
     content: '';
@@ -182,11 +180,12 @@ body {
     line-height: 1.2;
 }
 
-.league-season {
-    font-size: 0.75rem;
-    color: var(--accent);
-    font-weight: 600;
-    margin-top: 2px;
+.cache-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    margin-left: auto;
 }
 
 /* ── Teams view ────────────────────────────────────────────────────────── */
@@ -243,6 +242,13 @@ body {
     object-fit: contain;
 }
 
+.team-logo-placeholder {
+    width: 52px;
+    height: 52px;
+    background: var(--border);
+    border-radius: 50%;
+}
+
 .team-info {
     display: flex;
     flex-direction: column;
@@ -285,6 +291,8 @@ body {
     padding: 2.5rem 1rem;
     font-size: 0.9rem;
 }
+
+.error-msg { color: var(--red) !important; }
 
 /* ── Cronología ────────────────────────────────────────────────────────── */
 .timeline-container {
