@@ -1,15 +1,15 @@
 /* ── Variables ─────────────────────────────────────────────────────────── */ 
 :root {     
-    --bg-main:      #080b11;
-    --bg-card:      #10141d;     
+    --bg-main:      #0b0e14;
+    --bg-card:      #1a1e29;     
     --bg-nav:       #13161f;     
     --accent:       #dcf836;     
     --accent-dim:   rgba(220, 248, 54, 0.12);
     --text-main:    #ffffff;     
     --text-muted:   #6b7280;     
-    --border:       #1a1f2e;     
+    --border:       #1f2535;     
     --pitch-green:  #2e7d32;     
-    --red:          #c8102e;
+    --red:          #ff4757;
     --nav-h:        64px;     
     --top-h:        56px; 
 }
@@ -42,6 +42,7 @@ body {
     background: var(--bg-main);     
     border-bottom: 1px solid var(--border);     
     z-index: 10; 
+    position: relative; /* Modificado para referenciar el logo absoluto */
 }
 
 #app-logo {     
@@ -49,11 +50,15 @@ body {
     font-weight: 800;     
     letter-spacing: -0.5px;     
     color: var(--accent); 
+    position: absolute; /* Modificado: Centrado absoluto */
+    left: 50%;
+    transform: translateX(-50%);
 } 
 
 #top-bar-right {     
     display: flex;     
     gap: 8px;
+    margin-left: auto; /* Empuja los íconos a la derecha */
 } 
 
 .icon-btn {     
@@ -333,17 +338,10 @@ body {
     padding: 3rem 1rem; 
 }
 
-.access-denied h3 { 
-    color: var(--red);
-    margin-bottom: 8px; 
-} 
+.access-denied h3 { color: var(--red); margin-bottom: 8px; } 
+.access-denied p  { color: var(--text-muted); font-size: 0.9rem; }
 
-.access-denied p  { 
-    color: var(--text-muted); 
-    font-size: 0.9rem; 
-}
-
-/* ── NUEVA VISTA 3D: MATCH HEADER ──────────────────────────────────────── */
+/* ── VISTA 3D: MATCH HEADER ────────────────────────────────────────────── */
 .match-header {
     display: flex;
     align-items: center;
@@ -375,8 +373,8 @@ body {
     font-size: 11px;
     letter-spacing: -.5px;
 }
-.badge-a { background: #fff; color: #080b11; }
-.badge-b { background: #c8102e; color: #fff; }
+.badge-a { background: #fff; color: #0b0e14; }
+.badge-b { background: var(--red); color: #fff; }
 .team-label {
     font-weight: 800;
     font-size: 0.9rem;
@@ -400,7 +398,7 @@ body {
     font-weight: 700;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: #f04b5a;
+    color: var(--red);
     display: flex;
     align-items: center;
     gap: 4px;
@@ -408,7 +406,7 @@ body {
 .live-dot {
     width: 5px;
     height: 5px;
-    background: #f04b5a;
+    background: var(--red);
     border-radius: 50%;
     animation: blink 1.2s infinite;
 }
@@ -448,7 +446,7 @@ body {
 }
 .pill.active {
     background: var(--accent);
-    color: #080b11;
+    color: #0b0e14;
     border-color: var(--accent);
 }
 
@@ -522,11 +520,12 @@ svg.pitch-svg {
     gap: 8px;
 }
 .stat-label {
-    font-size: 0.7rem;
+    font-size: 0.65rem; /* Ajustado para textos largos */
     color: var(--text-muted);
     font-weight: 600;
-    width: 90px;
+    width: 120px; /* Ancho incrementado de 90px a 120px */
     text-align: center;
+    line-height: 1.1;
 }
 .stat-bar-wrap {
     flex: 1;
@@ -539,7 +538,7 @@ svg.pitch-svg {
     font-weight: 800;
     font-variant-numeric: tabular-nums;
     color: #f0f2f7;
-    width: 28px;
+    width: 32px;
 }
 .stat-val.right { text-align: right; }
 .bar-bg {
@@ -590,7 +589,7 @@ svg.pitch-svg {
     line-height: 1.4;
 }
 .trend-up { color: #2ecc71; }
-.trend-down { color: #f04b5a; }
+.trend-down { color: var(--red); }
 .trend-neutral { color: var(--accent); }
 
 /* ── PLAYER LIST ───────────────────────────────────────────────────────── */
@@ -622,12 +621,12 @@ svg.pitch-svg {
     letter-spacing: .5px;
     padding: 2px 5px;
     border-radius: 3px;
-    color: #080b11;
+    color: #0b0e14;
 }
 .pos-gk { background: #f59e0b; }
 .pos-df { background: #3b82f6; }
 .pos-mf { background: #8b5cf6; }
-.pos-fw { background: #f04b5a; }
+.pos-fw { background: var(--red); }
 .p-name {
     flex: 1;
     font-size: 0.8rem;
@@ -639,7 +638,7 @@ svg.pitch-svg {
     font-weight: 800;
     font-variant-numeric: tabular-nums;
     color: var(--accent);
-    background: var(--bg-card);
+    background: var(--bg-main);
     border: 1px solid var(--border);
     padding: 1px 6px;
     border-radius: 4px;
