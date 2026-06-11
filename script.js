@@ -1,175 +1,132 @@
 /**
  * script.js - Lógica principal de "El Fulbo"
- * API: ESPN pública (sin key, sin restricción de temporada)
- * Mejoras: precarga en background + caché en localStorage (24hs)
+ * API: ESPN pública con sistema de proxies en cascada optimizado.
  */
 
 const ESPN = 'https://site.api.espn.com/apis/site/v2/sports/soccer';
 
 const LEAGUES = {
     // ── EUROPA TOP 5 ─────────────────────────────
-    PREMIER_LEAGUE:    { slug: 'eng.1',                  name: "Premier League",       country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
-    BUNDESLIGA:        { slug: 'ger.1',                  name: "Bundesliga",            country: "Germany",     flag: "🇩🇪" },
-    SERIE_A:           { slug: 'ita.1',                  name: "Serie A",               country: "Italy",       flag: "🇮🇹" },
-    LIGUE_1:           { slug: 'fra.1',                  name: "Ligue 1",               country: "France",      flag: "🇫🇷" },
-    LA_LIGA:           { slug: 'esp.1',                  name: "La Liga",               country: "Spain",       flag: "🇪🇸" },
+    PREMIER_LEAGUE:    { id: 39,  slug: 'eng.1',              name: "Premier League",      country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", season: 2025 },
+    BUNDESLIGA:        { id: 78,  slug: 'ger.1',              name: "Bundesliga",          country: "Germany",     flag: "🇩🇪", season: 2025 },
+    SERIE_A:           { id: 135, slug: 'ita.1',              name: "Serie A",             country: "Italy",       flag: "🇮🇹", season: 2025 },
+    LIGUE_1:           { id: 61,  slug: 'fra.1',              name: "Ligue 1",             country: "France",      flag: "🇫🇷", season: 2025 },
+    LA_LIGA:           { id: 140, slug: 'esp.1',              name: "La Liga",             country: "Spain",       flag: "🇪🇸", season: 2025 },
     // ── EUROPA OTRAS ─────────────────────────────
-    EREDIVISIE:        { slug: 'ned.1',                  name: "Eredivisie",            country: "Netherlands", flag: "🇳🇱" },
-    PRIMEIRA_LIGA:     { slug: 'por.1',                  name: "Primeira Liga",         country: "Portugal",    flag: "🇵🇹" },
+    EREDIVISIE:        { id: 88,  slug: 'ned.1',              name: "Eredivisie",          country: "Netherlands", flag: "🇳🇱", season: 2025 },
+    PRIMEIRA_LIGA:     { id: 94,  slug: 'por.1',              name: "Primeira Liga",       country: "Portugal",    flag: "🇵🇹", season: 2025 },
     // ── COPAS INGLESAS ───────────────────────────
-    CARABAO_CUP:       { slug: 'eng.league_cup',         name: "Carabao Cup",           country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
-    FA_CUP:            { slug: 'eng.fa',                 name: "FA Cup",                country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+    CARABAO_CUP:       { id: 48,  slug: 'eng.league_cup',     name: "Carabao Cup",         country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", season: 2025 },
+    FA_CUP:            { id: 45,  slug: 'eng.fa',             name: "FA Cup",              country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", season: 2025 },
     // ── UEFA ─────────────────────────────────────
-    CHAMPIONS_LEAGUE:  { slug: 'uefa.champions',         name: "Champions League",      country: "Europe",      flag: "🇪🇺" },
-    EUROPA_LEAGUE:     { slug: 'uefa.europa',            name: "Europa League",         country: "Europe",      flag: "🇪🇺" },
-    CONFERENCE_LEAGUE: { slug: 'uefa.europa.conf',       name: "Conference League",     country: "Europe",      flag: "🇪🇺" },
-    UEFA_SUPER_CUP:    { slug: 'uefa.super_cup',         name: "UEFA Super Cup",        country: "Europe",      flag: "🇪🇺" },
-    // ── MUNDIAL ──────────────────────────────────
-    WORLD_CUP:         { slug: 'fifa.world',             name: "FIFA World Cup",        country: "World",       flag: "🌍" },
-    FRIENDLIES_INTL:   { slug: 'fifa.friendly',          name: "Amistosos Pre-Mundial", country: "World",       flag: "🌍" },
+    CHAMPIONS_LEAGUE:  { id: 2,   slug: 'uefa.champions',     name: "Champions League",    country: "Europe",      flag: "🇪🇺", season: 2025 },
+    EUROPA_LEAGUE:     { id: 3,   slug: 'uefa.europa',        name: "Europa League",       country: "Europe",      flag: "🇪🇺", season: 2025 },
+    CONFERENCE_LEAGUE: { id: 848, slug: 'uefa.europa.conf',   name: "Conference League",   country: "Europe",      flag: "🇪🇺", season: 2025 },
+    UEFA_SUPER_CUP:    { id: 531, slug: 'uefa.super_cup',     name: "UEFA Super Cup",      country: "Europe",      flag: "🇪🇺", season: 2025 },
+    // ── MUNDIAL ───────────────────────────────────
+    WORLD_CUP:         { id: 1,   slug: 'fifa.world',         name: "FIFA World Cup",      country: "World",       flag: "🌍", season: 2026 },
+    FRIENDLIES_INTL:   { id: 10,  slug: 'fifa.friendly',      name: "Amistosos Pre-Mundial", country: "World",     flag: "🌍", season: 2026 },
     // ── CONMEBOL ─────────────────────────────────
-    COPA_LIBERTADORES: { slug: 'conmebol.libertadores',  name: "Copa Libertadores",     country: "CONMEBOL",    flag: "🌎" },
-    COPA_SUDAMERICANA: { slug: 'conmebol.sudamericana',  name: "Copa Sudamericana",     country: "CONMEBOL",    flag: "🌎" },
+    COPA_LIBERTADORES: { id: 13,  slug: 'conmebol.libertadores', name: "Copa Libertadores", country: "CONMEBOL",   flag: "🌎", season: 2026 },
+    COPA_SUDAMERICANA: { id: 11,  slug: 'conmebol.sudamericana', name: "Copa Sudamericana", country: "CONMEBOL",   flag: "🌎", season: 2026 },
     // ── ARGENTINA ────────────────────────────────
-    LIGA_PROFESIONAL:  { slug: 'arg.1',                  name: "Liga Profesional",      country: "Argentina",   flag: "🇦🇷" },
-    COPA_ARGENTINA:    { slug: 'arg.copa',               name: "Copa Argentina",        country: "Argentina",   flag: "🇦🇷" },
+    LIGA_PROFESIONAL:  { id: 128, slug: 'arg.1',              name: "Liga Profesional",    country: "Argentina",   flag: "🇦🇷", season: 2026 },
+    COPA_ARGENTINA:    { id: 130, slug: 'arg.copa',           name: "Copa Argentina",      country: "Argentina",   flag: "🇦🇷", season: 2025 },
     // ── BRASIL ───────────────────────────────────
-    BRASILEIRAO:       { slug: 'bra.1',                  name: "Brasileirao",           country: "Brazil",      flag: "🇧🇷" },
+    BRASILEIRAO:       { id: 71,  slug: 'bra.1',              name: "Brasileirao",         country: "Brazil",      flag: "🇧🇷", season: 2025 },
 };
 
-// Caché en memoria (se llena desde localStorage al iniciar)
 const teamsCache = {};
 
-// ── CACHÉ PERSISTENTE (localStorage, 24hs) ────────────────────────────────────
-
-const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 horas en ms
-
-function cacheRead(slug) {
-    try {
-        const raw = localStorage.getItem(`fulbo_teams_${slug}`);
-        if (!raw) return null;
-        const { teams, ts } = JSON.parse(raw);
-        if (Date.now() - ts > CACHE_TTL) {
-            localStorage.removeItem(`fulbo_teams_${slug}`);
-            return null;
+const appData = {
+    user: { subscriptionLevel: 10 },
+    leagues: Object.values(LEAGUES),
+    match: {
+        id: "match-001",
+        teams: { local: "Arsenal", visitor: "Barcelona" },
+        score: { local: 2, visitor: 1 },
+        minute: "62'",
+        timeline: [
+            { minute: 28, event: "Yellow Card", player: "Gibbs" },
+            { minute: 32, event: "Goal", player: "Messi" },
+            { minute: 48, event: "Injured", player: "Neymar" },
+            { minute: 62, event: "Goal", player: "Sánchez" }
+        ],
+        lineups: {
+            local: [
+                { number: 1, name: "GK", playerName: "Raya" }, 
+                { number: 4, name: "DF", playerName: "White" },
+                { number: 2, name: "DF", playerName: "Saliba" },
+                { number: 6, name: "DF", playerName: "Gabriel" },
+                { number: 3, name: "DF", playerName: "Zinchenko" },
+                { number: 8, name: "MF", playerName: "Ødegaard" },
+                { number: 41, name: "MF", playerName: "Rice" },
+                { number: 5, name: "MF", playerName: "Partey" },
+                { number: 7, name: "FW", playerName: "Saka" },
+                { number: 9, name: "FW", playerName: "Havertz" },
+                { number: 11, name: "FW", playerName: "Martinelli" }
+            ],
+            visitor: [
+                { number: 1, name: "GK", playerName: "Ter Stegen" }, 
+                { number: 23, name: "DF", playerName: "Koundé" },
+                { number: 4, name: "DF", playerName: "Araujo" },
+                { number: 15, name: "DF", playerName: "Christensen" },
+                { number: 3, name: "DF", playerName: "Balde" },
+                { number: 8, name: "MF", playerName: "Pedri" },
+                { number: 21, name: "MF", playerName: "De Jong" },
+                { number: 22, name: "MF", playerName: "Gündoğan" },
+                { number: 27, name: "FW", playerName: "Yamal" },
+                { number: 9, name: "FW", playerName: "Lewandowski" },
+                { number: 11, name: "FW", playerName: "Raphinha" }
+            ]
         }
-        return teams;
-    } catch {
-        return null;
     }
-}
+};
 
-function cacheWrite(slug, teams) {
-    try {
-        localStorage.setItem(`fulbo_teams_${slug}`, JSON.stringify({
-            teams,
-            ts: Date.now()
-        }));
-    } catch {
-        // localStorage lleno o bloqueado — no es crítico
+// ── API ESPN (Proxies en Cascada sin Cache Buster agresivo) ───────────────────
+async function fetchTeams(slug) {
+    if (!slug || slug === "undefined") {
+        throw new Error("Slug inválido o ausente en la configuración de ligas.");
     }
-}
 
-// Precarga el caché en memoria desde localStorage al arrancar
-function warmMemoryCacheFromStorage() {
-    Object.values(LEAGUES).forEach(({ slug }) => {
-        const teams = cacheRead(slug);
-        if (teams) teamsCache[slug] = teams;
-    });
-}
-
-// ── FETCH CON PROXIES EN CASCADA ──────────────────────────────────────────────
-
-async function fetchWithTimeout(url, ms = 8000) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), ms);
-    try {
-        const res = await fetch(url, { signal: controller.signal });
-        clearTimeout(timer);
-        return res;
-    } catch (err) {
-        clearTimeout(timer);
-        throw err;
-    }
-}
-
-// ← Tu Worker de Cloudflare, siempre primero
-const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
-
-async function fetchWithProxyCascade(espnUrl) {
-    const encoded = encodeURIComponent(espnUrl);
-
+    if (teamsCache[slug]) return teamsCache[slug];
+    
+    const espnUrl = `${ESPN}/${slug}/teams?limit=100`;
+    
     const proxies = [
-        {
-            name: 'Worker',
-            url: `${CF_WORKER}?url=${encoded}`,
-            parse: async (res) => res.json()
-        },
-        {
-            name: 'AllOrigins',
-            url: `https://api.allorigins.win/raw?url=${encoded}`,
-            parse: async (res) => res.json()
-        },
-        {
-            name: 'CodeTabs',
-            url: `https://api.codetabs.com/v1/proxy/?quest=${encoded}`,
-            parse: async (res) => res.json()
-        },
+        `https://api.allorigins.win/get?url=${encodeURIComponent(espnUrl)}`,
+        `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(espnUrl)}`
     ];
 
-    for (const proxy of proxies) {
+    let data = null;
+    let lastError = null;
+
+    for (const proxyUrl of proxies) {
         try {
-            const res = await fetchWithTimeout(proxy.url, 10000);
+            const res = await fetch(proxyUrl);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data = await proxy.parse(res);
-            if (!data?.sports) throw new Error('Respuesta inválida');
-            console.log(`[Proxy ${proxy.name}] ✅`);
-            return data;
+            
+            if (proxyUrl.includes('allorigins.win/get')) {
+                const jsonRes = await res.json();
+                if (!jsonRes.contents) throw new Error("AllOrigins no devolvió contents");
+                data = JSON.parse(jsonRes.contents);
+            } else {
+                data = await res.json();
+            }
+
+            if (data && data.sports) break; 
         } catch (err) {
-            console.warn(`[Proxy ${proxy.name}] Falló:`, err.message);
+            lastError = err;
+            data = null;
+            console.warn(`Fallo en proxy: ${proxyUrl}. Intentando alternativa...`);
         }
     }
 
-    throw new Error('Todos los proxies fallaron. ESPN inaccesible.');
-}
-
-// ── FETCH EQUIPOS (con caché en memoria + localStorage) ───────────────────────
-
-async function fetchTeams(slug) {
-    // 1. Caché en memoria (más rápido)
-    if (teamsCache[slug]) return teamsCache[slug];
-
-    // 2. Caché en localStorage (sobrevive recarga)
-    const fromStorage = cacheRead(slug);
-    if (fromStorage) {
-        teamsCache[slug] = fromStorage;
-        return fromStorage;
-    }
-
-    // 3. Fetch real a ESPN
-    const espnUrl = `${ESPN}/${slug}/teams?limit=100`;
-
-    const data = await fetchWithProxyCascade(espnUrl);
-
-    const sportsArray = data?.sports?.[0];
-    if (!sportsArray?.leagues?.length) throw new Error('Estructura JSON inválida');
-
-    // Buscar la liga correcta por slug — no asumir índice 0
-    const targetLeague =
-        sportsArray.leagues.find(l => l.slug === slug) ||
-        sportsArray.leagues.find(l => l.abbreviation?.toLowerCase() === slug.toLowerCase()) ||
-        sportsArray.leagues[0];
-
-    console.log(`[${slug}] Liga resuelta:`, targetLeague?.slug ?? targetLeague?.abbreviation ?? '?');
-
-    const rawTeams = targetLeague?.teams ?? [];
-
-    if (!rawTeams.length) {
-        console.warn(`[ESPN] Sin equipos para ${slug}`);
-        return [];
-    }
-
-    const teams = rawTeams.map(t => ({
+    if (!data) throw lastError || new Error("Todos los proxies fallaron al obtener equipos.");
+    
+    const raw = data?.sports?.[0]?.leagues?.[0]?.teams ?? [];
+    
+    const teams = raw.map(t => ({
         id:    t.team.id,
         name:  t.team.displayName,
         abbr:  t.team.abbreviation,
@@ -177,77 +134,16 @@ async function fetchTeams(slug) {
         color: t.team.color ? `#${t.team.color}` : null,
         venue: t.team.venue?.fullName ?? '—',
     }));
-
-    // Guardar en ambos cachés
+    
     teamsCache[slug] = teams;
-    cacheWrite(slug, teams);
-
     return teams;
 }
 
-// ── PRECARGA EN BACKGROUND ────────────────────────────────────────────────────
-
-async function preloadAllLeagues() {
-    // Orden de prioridad: las más populares/consultadas primero
-    const priority = [
-        'eng.1', 'esp.1', 'ger.1', 'ita.1', 'fra.1',
-        'arg.1', 'bra.1', 'uefa.champions',
-        'ned.1', 'por.1', 'conmebol.libertadores',
-        'conmebol.sudamericana', 'eng.fa', 'eng.league_cup',
-        'arg.copa', 'uefa.europa', 'uefa.europa.conf',
-        'fifa.world', 'fifa.friendly', 'uefa.super_cup'
-    ];
-
-    for (const slug of priority) {
-        if (teamsCache[slug]) continue; // Ya en memoria, saltear
-        try {
-            await fetchTeams(slug);
-            console.log(`[Precarga] ✅ ${slug}`);
-        } catch {
-            console.warn(`[Precarga] ❌ ${slug}`);
-        }
-        // Pausa entre requests para no saturar los proxies
-        await new Promise(r => setTimeout(r, 400));
-    }
-
-    console.log('[Precarga] Completada');
-}
-
-// ── APP DATA ──────────────────────────────────────────────────────────────────
-
-const appData = {
-    user: { subscriptionLevel: 10 },
-    leagues: Object.values(LEAGUES),
-    match: {
-        teams: { local: "Arsenal", visitor: "FCB" },
-        score: { local: 2, visitor: 1 },
-        timeline: [
-            { minute: 28, event: "Yellow Card", player: "Gibbs" },
-            { minute: 32, event: "Goal",        player: "Messi" },
-            { minute: 48, event: "Injured",     player: "Neymar" },
-            { minute: 62, event: "Goal",        player: "Sánchez" }
-        ],
-        lineups: {
-            local: [
-                { number: 1,  name: "GK" }, { number: 9,  name: "FW" },
-                { number: 18, name: "MF" }, { number: 17, name: "MF" },
-                { number: 5,  name: "DF" }
-            ],
-            visitor: [
-                { number: 1,  name: "GK" }, { number: 8,  name: "DF" },
-                { number: 21, name: "DF" }, { number: 13, name: "DF" },
-                { number: 3,  name: "DF" }
-            ]
-        }
-    }
-};
-
 // ── RENDERIZADO ───────────────────────────────────────────────────────────────
-
 const App = (() => {
     const elements = {
         dataDisplay: document.getElementById('data-display'),
-        navButtons:  document.querySelectorAll('#bottom-nav .nav-item')
+        navButtons: document.querySelectorAll('#main-nav .nav-item')
     };
 
     // ── Cronología ────────────────────────────────────────────────────────────
@@ -257,58 +153,240 @@ const App = (() => {
                 <span>${item.minute}'</span> — <strong>${item.player}</strong>: ${item.event}
             </div>
         `).join('');
+        
         elements.dataDisplay.innerHTML = `
-            <p class="section-header">Cronología del Partido</p>
-            <div class="timeline-container">${timelineHTML}</div>
-        `;
-    };
-
-    // ── Alineaciones ─────────────────────────────────────────────────────────
-    const buildFormationHTML = (teamArray, type) => {
-        return ['GK', 'DF', 'MF', 'FW'].map(pos => {
-            const line = teamArray.filter(p => p.name === pos);
-            if (!line.length) return '';
-            return `<div class="formation-row">${
-                line.map(p => `<div class="player ${type}">${p.number}</div>`).join('')
-            }</div>`;
-        }).join('');
-    };
-
-    const renderLineups = () => {
-        elements.dataDisplay.innerHTML = `
-            <p class="section-header">Alineaciones</p>
-            <div class="pitch">
-                <div class="team-visitor">${buildFormationHTML(appData.match.lineups.visitor, 'visitor')}</div>
-                <div class="center-circle"></div>
-                <div class="center-line"></div>
-                <div class="team-local">${buildFormationHTML(appData.match.lineups.local, 'local')}</div>
+            <h3 class="section-header">Cronología del Partido</h3>
+            <div class="timeline-container">
+                ${timelineHTML}
             </div>
         `;
     };
 
-    // ── Listado de ligas ──────────────────────────────────────────────────────
-    const renderLeagues = () => {
-        const html = appData.leagues.map(league => {
-            const cached = !!teamsCache[league.slug];
-            return `
-                <div class="league-card ${cached ? 'cached' : ''}" data-slug="${league.slug}" data-name="${league.name}">
-                    <div class="league-card-header">
-                        <span class="league-flag">${league.flag}</span>
-                        <span class="league-country">${league.country}</span>
-                        ${cached ? '<span class="cache-dot" title="Cargado"></span>' : ''}
-                    </div>
-                    <h4>${league.name}</h4>
+    // ── Alineaciones 3D ───────────────────────────────────────────────────────
+    
+    const buildPitchPlayers = (players, isLocal) => {
+        const positions = { GK: [], DF: [], MF: [], FW: [] };
+        players.forEach(p => { if (positions[p.name]) positions[p.name].push(p); });
+
+        const fill = isLocal ? "#f0f2f7" : "#ff4757"; // Rojo visitante actualizado
+        const stroke = isLocal ? "rgba(220,248,54,0.9)" : "rgba(255,255,255,0.8)";
+        const textFill = isLocal ? "#0b0e14" : "#fff";
+
+        const yMap = isLocal
+            ? { GK: 278, DF: 245, MF: 215, FW: 190 } 
+            : { GK: 78,  DF: 108, MF: 142, FW: 162 }; 
+
+        let svgHTML = '';
+        for (const [pos, posPlayers] of Object.entries(positions)) {
+            const count = posPlayers.length;
+            if (count === 0) continue;
+            
+            const cy = yMap[pos];
+            const areaWidth = 240; 
+            const startX = 280 - (areaWidth / 2);
+            const spacing = areaWidth / (count + 1);
+
+            posPlayers.forEach((p, idx) => {
+                const cx = count === 1 ? 280 : startX + (spacing * (idx + 1));
+                // Aplicamos la sombra definida en SVG (#playerShadow)
+                svgHTML += `
+                    <circle cx="${cx}" cy="${cy}" r="12" fill="${fill}" stroke="${stroke}" stroke-width="1.8" filter="url(#playerShadow)"/>
+                    <text x="${cx}" y="${cy + 3.5}" text-anchor="middle" font-size="9" font-weight="900" fill="${textFill}" font-family="Inter,sans-serif">${p.number}</text>
+                `;
+            });
+        }
+        return svgHTML;
+    };
+
+    const buildPlayerList = (players) => {
+        return players.map(p => `
+            <div class="player-row">
+                <span class="p-num">${p.number}</span>
+                <span class="p-pos pos-${p.name.toLowerCase()}">${p.name}</span>
+                <span class="p-name">${p.playerName || `Jugador ${p.number}`}</span>
+                <span class="p-rating">-</span>
+            </div>
+        `).join('');
+    };
+
+    const renderLineups = () => {
+        // Datos de estadísticas expandidos (Punto 7)
+        const matchStats = [
+            { label: "Goles esperados (xG)", a: "1.82", b: "0.94", pctA: 66, pctB: 34 },
+            { label: "Posesión", a: "58%", b: "42%", pctA: 58, pctB: 42 },
+            { label: "Pases completados", a: "412 (88%)", b: "338 (83%)", pctA: 55, pctB: 45 },
+            { label: "Tiros", a: "7", b: "6", pctA: 54, pctB: 46 },
+            { label: "Tiros al arco", a: "4", b: "2", pctA: 66, pctB: 34 },
+            { label: "Faltas", a: "14", b: "16", pctA: 47, pctB: 53 },
+            { label: "Tarjetas (Am. / Roj.)", a: "2 / 0", b: "3 / 1", pctA: 40, pctB: 60 },
+            { label: "Córners", a: "5", b: "3", pctA: 62, pctB: 38 },
+            { label: "Tiros libres", a: "18", b: "15", pctA: 54, pctB: 46 },
+            { label: "Penales", a: "1", b: "0", pctA: 100, pctB: 0 },
+            { label: "Km recorridos", a: "108.5", b: "104.2", pctA: 51, pctB: 49 },
+            { label: "Cambios", a: "4", b: "5", pctA: 44, pctB: 56 }
+        ];
+
+        const statsHTML = matchStats.map(s => `
+            <div class="stat-row">
+                <div class="stat-bar-wrap">
+                    <span class="stat-val right">${s.a}</span>
+                    <div class="bar-bg"><div class="bar-fill bar-a" style="width:${s.pctA}%"></div></div>
                 </div>
-            `;
-        }).join('');
+                <div class="stat-label">${s.label}</div>
+                <div class="stat-bar-wrap">
+                    <div class="bar-bg"><div class="bar-fill bar-b" style="width:${s.pctB}%"></div></div>
+                    <span class="stat-val">${s.b}</span>
+                </div>
+            </div>
+        `).join('');
 
         elements.dataDisplay.innerHTML = `
-            <p class="section-header">Ligas</p>
+            <h2 class="sr-only">Vista de alineaciones: ${appData.match.teams.local} vs ${appData.match.teams.visitor}, ${appData.match.score.local}-${appData.match.score.visitor} en vivo</h2>
+            <div class="root">
+                <div class="match-header">
+                    <div class="team-side">
+                        <div class="team-badge badge-a">${appData.match.teams.local.substring(0,3).toUpperCase()}</div>
+                        <div>
+                            <div class="team-label">${appData.match.teams.local}</div>
+                            <div style="font-size:.62rem;color:var(--text-muted);font-weight:600">4-3-3</div>
+                        </div>
+                    </div>
+                    <div class="score-block">
+                        <div class="score">${appData.match.score.local} — ${appData.match.score.visitor}</div>
+                        <div class="match-status"><span class="live-dot"></span>${appData.match.minute}</div>
+                    </div>
+                    <div class="team-side right">
+                        <div class="team-badge badge-b">${appData.match.teams.visitor.substring(0,3).toUpperCase()}</div>
+                        <div>
+                            <div class="team-label">${appData.match.teams.visitor}</div>
+                            <div style="font-size:.62rem;color:var(--text-muted);font-weight:600">4-3-3</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pitch-wrap">
+                    <svg class="pitch-svg" viewBox="0 0 560 340" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <radialGradient id="stadiumLight" cx="50%" cy="50%" r="70%" fx="50%" fy="50%">
+                                <stop offset="0%" stop-color="#2e7d32"/>
+                                <stop offset="100%" stop-color="#0f3d14"/>
+                            </radialGradient>
+                            <filter id="grassNoise">
+                                <feTurbulence type="fractalNoise" baseFrequency="1.2" numOctaves="3" result="noise"/>
+                                <feColorMatrix type="matrix" values="1 0 0 0 0, 0 1 0 0 0, 0 0 1 0 0, 0 0 0 0.05 0" in="noise" result="coloredNoise"/>
+                                <feBlend in="SourceGraphic" in2="coloredNoise" mode="overlay"/>
+                            </filter>
+                            <filter id="playerShadow" x="-30%" y="-30%" width="160%" height="160%">
+                                <feDropShadow dx="2" dy="4" stdDeviation="3" flood-color="#000" flood-opacity="0.6"/>
+                            </filter>
+                            <pattern id="stripes" x="0" y="0" width="36" height="1" patternUnits="userSpaceOnUse" patternTransform="skewX(-30) scale(1,1)">
+                                <rect width="18" height="1" fill="rgba(255,255,255,0.06)"/>
+                            </pattern>
+                        </defs>
+                        
+                        <ellipse cx="280" cy="330" rx="230" ry="18" fill="#000" opacity=".45"/>
+                        
+                        <polygon points="140,62 420,62 530,292 30,292" fill="url(#stadiumLight)" filter="url(#grassNoise)"/>
+                        <polygon points="140,62 420,62 530,292 30,292" fill="url(#stripes)"/>
+                        <polygon points="140,62 420,62 530,292 30,292" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+                        
+                        <line x1="30" y1="177" x2="530" y2="177" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+                        <ellipse cx="280" cy="177" rx="68" ry="22" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+                        <circle cx="280" cy="177" r="2.5" fill="rgba(255,255,255,0.3)"/>
+                        
+                        <polygon points="193,62 367,62 385,118 175,118" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+                        <polygon points="228,62 332,62 342,88 218,88" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+                        <rect x="238" y="52" width="84" height="12" rx="1" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+                        
+                        <polygon points="175,236 385,236 367,292 193,292" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+                        <polygon points="218,262 342,262 332,292 228,292" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+                        <rect x="238" y="290" width="84" height="12" rx="1" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+                        
+                        <path d="M140,62 Q148,70 140,78" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+                        <path d="M420,62 Q412,70 420,78" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+                        <path d="M30,292 Q40,282 52,290" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+                        <path d="M530,292 Q520,282 508,290" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+
+                        ${buildPitchPlayers(appData.match.lineups.visitor, false)}
+                        ${buildPitchPlayers(appData.match.lineups.local, true)}
+
+                        <text x="75" y="100" text-anchor="middle" font-size="9" font-weight="800" fill="rgba(255,71,87,0.8)" font-family="Inter,sans-serif" letter-spacing="1">${appData.match.teams.visitor.substring(0,3).toUpperCase()}</text>
+                        <text x="75" y="260" text-anchor="middle" font-size="9" font-weight="800" fill="rgba(220,248,54,0.8)" font-family="Inter,sans-serif" letter-spacing="1">${appData.match.teams.local.substring(0,3).toUpperCase()}</text>
+                    </svg>
+                </div>
+
+                <div class="tabs">
+                    <div class="tab active" data-target="panel-players">Jugadores</div>
+                    <div class="tab" data-target="panel-stats">Estadísticas</div>
+                    <div class="tab" data-target="panel-analysis">Análisis</div>
+                </div>
+
+                <div id="panel-players" style="display:block">
+                    <div class="section-title">${appData.match.teams.local} · Titulares</div>
+                    <div class="player-list" style="margin-bottom: 12px;">
+                        ${buildPlayerList(appData.match.lineups.local)}
+                    </div>
+                    <div class="section-title">${appData.match.teams.visitor} · Titulares</div>
+                    <div class="player-list">
+                        ${buildPlayerList(appData.match.lineups.visitor)}
+                    </div>
+                </div>
+
+                <div id="panel-stats" class="stats-section" style="display:none">
+                    <div class="section-title">Comparativa del partido</div>
+                    ${statsHTML}
+                </div>
+
+                <div id="panel-analysis" style="display:none">
+                    <div class="section-title">Análisis táctico</div>
+                    <div class="analysis-grid">
+                        <div class="analysis-card">
+                            <div class="a-card-val trend-neutral">1.82</div>
+                            <div class="a-card-label">xG ${appData.match.teams.local}</div>
+                            <div class="a-card-sub">Supera el xG esperado para este partido</div>
+                        </div>
+                        <div class="analysis-card">
+                            <div class="a-card-val trend-down">0.94</div>
+                            <div class="a-card-label">xG ${appData.match.teams.visitor}</div>
+                            <div class="a-card-sub">Por debajo del promedio histórico</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const tabs = elements.dataDisplay.querySelectorAll('.tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                tabs.forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                const targetId = e.target.getAttribute('data-target');
+                ['panel-stats', 'panel-analysis', 'panel-players'].forEach(p => {
+                    document.getElementById(p).style.display = p === targetId ? 'block' : 'none';
+                });
+            });
+        });
+    };
+
+    // ── Listado de ligas ──────────────────────────────────────────────────────
+    const renderLeagues = () => {
+        const html = appData.leagues.map(league => `
+            <div class="league-card" data-slug="${league.slug}" data-name="${league.name}">
+                <div class="league-card-header">
+                    <span class="league-flag">${league.flag}</span>
+                    <span class="league-country">${league.country}</span>
+                </div>
+                <h4>${league.name}</h4>
+            </div>
+        `).join('');
+        
+        elements.dataDisplay.innerHTML = `
+            <h3 class="section-header">Ligas</h3>
             <div class="leagues-grid">${html}</div>
         `;
 
         elements.dataDisplay.querySelectorAll('.league-card').forEach(card => {
-            card.addEventListener('click', () =>
+            card.addEventListener('click', () => 
                 renderLeagueTeams(card.dataset.slug, card.dataset.name)
             );
         });
@@ -319,41 +397,44 @@ const App = (() => {
         elements.dataDisplay.innerHTML = `
             <div class="back-header">
                 <button class="btn-back" id="btn-back">← Volver</button>
-                <p class="section-header">${leagueName} · Equipos</p>
+                <h3 class="section-header">${leagueName} · Equipos</h3>
             </div>
             <div class="teams-grid">
                 ${Array(12).fill('<div class="skeleton"></div>').join('')}
             </div>
         `;
+        
         document.getElementById('btn-back').addEventListener('click', renderLeagues);
-
+        
         try {
             const teams = await fetchTeams(slug);
+            
+            const grid = elements.dataDisplay.querySelector('.teams-grid');
+            if (!grid) return; 
 
             if (!teams.length) {
-                elements.dataDisplay.querySelector('.teams-grid').innerHTML =
-                    `<p class="empty-msg">No se encontraron equipos.</p>`;
+                grid.innerHTML = `<div class="empty-msg">No se encontraron equipos en esta liga.</div>`;
                 return;
             }
-
-            elements.dataDisplay.querySelector('.teams-grid').innerHTML =
-                teams.map(team => `
-                    <div class="team-card">
-                        ${team.logo
-                            ? `<img class="team-logo" src="${team.logo}" alt="${team.name}" loading="lazy" onerror="this.style.opacity='0.15'">`
-                            : `<div class="team-logo-placeholder"></div>`
-                        }
-                        <div class="team-info">
-                            <span class="team-name">${team.name}</span>
-                            <span class="team-venue">${team.venue}</span>
-                        </div>
+            
+            grid.innerHTML = teams.map(team => `
+                <div class="team-card">
+                    ${team.logo 
+                        ? `<img src="${team.logo}" alt="${team.name}" class="team-logo">` 
+                        : `<div class="team-logo" style="background:var(--border);border-radius:50%"></div>`
+                    }
+                    <div class="team-info">
+                        <span class="team-name">${team.name}</span>
+                        <span class="team-venue">${team.venue}</span>
                     </div>
-                `).join('');
-
+                </div>
+            `).join('');
         } catch (err) {
-            elements.dataDisplay.querySelector('.teams-grid').innerHTML =
-                `<p class="empty-msg error-msg">No se pudo cargar esta liga.<br>Puede que ESPN no la tenga disponible.</p>`;
             console.error(slug, err);
+            const grid = elements.dataDisplay.querySelector('.teams-grid');
+            if (grid) {
+                grid.innerHTML = `<div class="empty-msg">No se pudo cargar esta liga. ESPN no devolvió datos o el proxy falló.</div>`;
+            }
         }
     };
 
@@ -361,7 +442,7 @@ const App = (() => {
     const getRequiredTier = (view) => ({ live: 5, lineups: 10, leagues: 0 }[view] ?? 0);
 
     const setActiveNav = (viewType) => {
-        elements.navButtons.forEach(btn =>
+        elements.navButtons.forEach(btn => 
             btn.classList.toggle('active', btn.dataset.view === viewType)
         );
     };
@@ -372,9 +453,11 @@ const App = (() => {
                 <div class="access-denied">
                     <h3>Acceso denegado</h3>
                     <p>Se requiere plan de $${getRequiredTier(viewType)}.</p>
-                </div>`;
+                </div>
+            `;
             return;
         }
+
         switch (viewType) {
             case 'live':    renderLiveCommentary(); break;
             case 'lineups': renderLineups();        break;
@@ -383,9 +466,6 @@ const App = (() => {
     };
 
     const init = () => {
-        // Calentar caché en memoria desde localStorage antes de cualquier render
-        warmMemoryCacheFromStorage();
-
         elements.navButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const button = e.target.closest('.nav-item');
@@ -394,12 +474,8 @@ const App = (() => {
                 renderView(button.dataset.view);
             });
         });
-
-        // Render inicial
+        
         renderView('leagues');
-
-        // Precarga el resto en background sin bloquear la UI
-        preloadAllLeagues();
     };
 
     return { init };
