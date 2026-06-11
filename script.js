@@ -153,32 +153,36 @@ async function fetchTeams(slug) {
     if (teamsCache[slug]) return teamsCache[slug];
 
     const espnUrl = `${ESPN}/${slug}/teams?limit=100`;
-    
+
     try {
         const data = await fetchWithProxyCascade(espnUrl);
-        
-        // PARSING ESTRICTO: Buscar la liga correcta dentro del array de ESPN
-        const sportsArray = data?.sports?.[0];
-        if (!sportsArray || !sportsArray.leagues) throw new Error("Estructura JSON inválida");
 
-        // En lugar de asumir [0], buscamos la liga que coincida con nuestro slug
-        // ESPN a veces usa prefijos distintos en su respuesta, por lo que tomamos la primera válida
-        const targetLeague = sportsArray.leagues[0]; 
-        
+        const sportsArray = data?.sports?.[0];
+        if (!sportsArray?.leagues?.length) throw new Error("Estructura JSON inválida");
+
+        // ✅ FIX: buscar la liga que matchee el slug pedido
+        // ESPN usa el campo "slug" o "abbreviation" en cada entrada del array
+        const targetLeague =
+            sportsArray.leagues.find(l => l.slug === slug) ||
+            sportsArray.leagues.find(l => l.abbreviation?.toLowerCase() === slug.toLowerCase()) ||
+            sportsArray.leagues[0]; // fallback solo si no hay match
+
+        console.log(`[${slug}] Liga encontrada:`, targetLeague?.slug ?? targetLeague?.abbreviation ?? '?');
+
         const rawTeams = targetLeague?.teams ?? [];
 
-        if (rawTeams.length === 0) {
-            console.warn(`[ESPN API] La liga ${slug} no tiene equipos cargados en esta temporada.`);
-            return []; 
+        if (!rawTeams.length) {
+            console.warn(`[ESPN] La liga ${slug} no devolvió equipos.`);
+            return [];
         }
 
         const teams = rawTeams.map(t => ({
-            id:     t.team.id,
-            name:   t.team.displayName,
-            abbr:   t.team.abbreviation,
-            logo:   t.team.logos?.[0]?.href ?? '',
-            color:  t.team.color ? `#${t.team.color}` : null,
-            venue:  t.team.venue?.fullName ?? '—',
+            id:    t.team.id,
+            name:  t.team.displayName,
+            abbr:  t.team.abbreviation,
+            logo:  t.team.logos?.[0]?.href ?? '',
+            color: t.team.color ? `#${t.team.color}` : null,
+            venue: t.team.venue?.fullName ?? '—',
         }));
 
         teamsCache[slug] = teams;
