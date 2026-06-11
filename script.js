@@ -1,51 +1,61 @@
 /**
  * script.js - Lógica principal de "El Fulbo"
- * API: ESPN pública con sistema de proxies en cascada optimizado.
+ * Arquitectura: Event-driven, Estado Centralizado, Renderizado Modular
  */
-
 const ESPN = 'https://site.api.espn.com/apis/site/v2/sports/soccer';
 
 const LEAGUES = {
-    // ── EUROPA TOP 5 ─────────────────────────────
-    PREMIER_LEAGUE:    { id: 39,  slug: 'eng.1',              name: "Premier League",      country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", season: 2025 },
-    BUNDESLIGA:        { id: 78,  slug: 'ger.1',              name: "Bundesliga",          country: "Germany",     flag: "🇩🇪", season: 2025 },
-    SERIE_A:           { id: 135, slug: 'ita.1',              name: "Serie A",             country: "Italy",       flag: "🇮🇹", season: 2025 },
-    LIGUE_1:           { id: 61,  slug: 'fra.1',              name: "Ligue 1",             country: "France",      flag: "🇫🇷", season: 2025 },
-    LA_LIGA:           { id: 140, slug: 'esp.1',              name: "La Liga",             country: "Spain",       flag: "🇪🇸", season: 2025 },
-    // ── EUROPA OTRAS ─────────────────────────────
-    EREDIVISIE:        { id: 88,  slug: 'ned.1',              name: "Eredivisie",          country: "Netherlands", flag: "🇳🇱", season: 2025 },
-    PRIMEIRA_LIGA:     { id: 94,  slug: 'por.1',              name: "Primeira Liga",       country: "Portugal",    flag: "🇵🇹", season: 2025 },
-    // ── COPAS INGLESAS ───────────────────────────
-    CARABAO_CUP:       { id: 48,  slug: 'eng.league_cup',     name: "Carabao Cup",         country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", season: 2025 },
-    FA_CUP:            { id: 45,  slug: 'eng.fa',             name: "FA Cup",              country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", season: 2025 },
-    // ── UEFA ─────────────────────────────────────
-    CHAMPIONS_LEAGUE:  { id: 2,   slug: 'uefa.champions',     name: "Champions League",    country: "Europe",      flag: "🇪🇺", season: 2025 },
-    EUROPA_LEAGUE:     { id: 3,   slug: 'uefa.europa',        name: "Europa League",       country: "Europe",      flag: "🇪🇺", season: 2025 },
-    CONFERENCE_LEAGUE: { id: 848, slug: 'uefa.europa.conf',   name: "Conference League",   country: "Europe",      flag: "🇪🇺", season: 2025 },
-    UEFA_SUPER_CUP:    { id: 531, slug: 'uefa.super_cup',     name: "UEFA Super Cup",      country: "Europe",      flag: "🇪🇺", season: 2025 },
-    // ── MUNDIAL ───────────────────────────────────
-    WORLD_CUP:         { id: 1,   slug: 'fifa.world',         name: "FIFA World Cup",      country: "World",       flag: "🌍", season: 2026 },
-    FRIENDLIES_INTL:   { id: 10,  slug: 'fifa.friendly',      name: "Amistosos Pre-Mundial", country: "World",     flag: "🌍", season: 2026 },
-    // ── CONMEBOL ─────────────────────────────────
-    COPA_LIBERTADORES: { id: 13,  slug: 'conmebol.libertadores', name: "Copa Libertadores", country: "CONMEBOL",   flag: "🌎", season: 2026 },
-    COPA_SUDAMERICANA: { id: 11,  slug: 'conmebol.sudamericana', name: "Copa Sudamericana", country: "CONMEBOL",   flag: "🌎", season: 2026 },
-    // ── ARGENTINA ────────────────────────────────
-    LIGA_PROFESIONAL:  { id: 128, slug: 'arg.1',              name: "Liga Profesional",    country: "Argentina",   flag: "🇦🇷", season: 2026 },
-    COPA_ARGENTINA:    { id: 130, slug: 'arg.copa',           name: "Copa Argentina",      country: "Argentina",   flag: "🇦🇷", season: 2025 },
-    // ── BRASIL ───────────────────────────────────
-    BRASILEIRAO:       { id: 71,  slug: 'bra.1',              name: "Brasileirao",         country: "Brazil",      flag: "🇧🇷", season: 2025 },
+    PREMIER_LEAGUE:    { slug: 'eng.1',              name: "Premier League",       country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+    BUNDESLIGA:        { slug: 'ger.1',              name: "Bundesliga",           country: "Germany",     flag: "🇩🇪" },
+    SERIE_A:           { slug: 'ita.1',              name: "Serie A",              country: "Italy",       flag: "🇮🇹" },
+    LIGUE_1:           { slug: 'fra.1',              name: "Ligue 1",              country: "France",      flag: "🇫🇷" },
+    LA_LIGA:           { slug: 'esp.1',              name: "La Liga",              country: "Spain",       flag: "🇪🇸" },
+    EREDIVISIE:        { slug: 'ned.1',              name: "Eredivisie",           country: "Netherlands", flag: "🇳🇱" },
+    PRIMEIRA_LIGA:     { slug: 'por.1',              name: "Primeira Liga",        country: "Portugal",    flag: "🇵🇹" },
+    CARABAO_CUP:       { slug: 'eng.league_cup',     name: "Carabao Cup",          country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+    FA_CUP:            { slug: 'eng.fa',             name: "FA Cup",               country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+    CHAMPIONS_LEAGUE:  { slug: 'uefa.champions',     name: "Champions League",     country: "Europe",      flag: "🇪🇺" },
+    EUROPA_LEAGUE:     { slug: 'uefa.europa',        name: "Europa League",        country: "Europe",      flag: "🇪🇺" },
+    CONFERENCE_LEAGUE: { slug: 'uefa.europa.conf',   name: "Conference League",    country: "Europe",      flag: "🇪🇺" },
+    UEFA_SUPER_CUP:    { slug: 'uefa.super_cup',     name: "UEFA Super Cup",       country: "Europe",      flag: "🇪🇺" },
+    WORLD_CUP:         { slug: 'fifa.world',         name: "FIFA World Cup",       country: "World",       flag: "🌍" },
+    FRIENDLIES_INTL:   { slug: 'fifa.friendly',      name: "Amistosos Pre-Mundial", country: "World",      flag: "🌍" },
+    COPA_LIBERTADORES: { slug: 'conmebol.libertadores', name: "Copa Libertadores",  country: "CONMEBOL",    flag: "🌎" },
+    COPA_SUDAMERICANA: { slug: 'conmebol.sudamericana', name: "Copa Sudamericana",  country: "CONMEBOL",    flag: "🌎" },
+    LIGA_PROFESIONAL:  { slug: 'arg.1',              name: "Liga Profesional",     country: "Argentina",   flag: "🇦🇷" },
+    COPA_ARGENTINA:    { slug: 'arg.copa',           name: "Copa Argentina",       country: "Argentina",   flag: "🇦🇷" },
+    BRASILEIRAO:       { slug: 'bra.1',              name: "Brasileirao",          country: "Brazil",      flag: "🇧🇷" }
 };
 
 const teamsCache = {};
 
+// Estado Centralizado Extendido (11vs11, Estadísticas completas, Tácticas)
 const appData = {
     user: { subscriptionLevel: 10 },
     leagues: Object.values(LEAGUES),
     match: {
         id: "match-001",
-        teams: { local: "Arsenal", visitor: "Barcelona" },
+        teams: { local: "Arsenal", visitor: "FCB" },
         score: { local: 2, visitor: 1 },
-        minute: "62'",
+        status: "62'",
+        stats: [
+            { label: "Goles Esperados (xG)", local: 2.1, visitor: 0.9, type: "decimal" },
+            { label: "Posesión (%)", local: 42, visitor: 58, type: "percent" },
+            { label: "Pases Completados", local: 342, visitor: 512, type: "number" },
+            { label: "Efectividad de Pases (%)", local: 81, visitor: 89, type: "percent" },
+            { label: "Tiros Totales", local: 14, visitor: 8, type: "number" },
+            { label: "Tiros al Arco", local: 6, visitor: 3, type: "number" },
+            { label: "Faltas Cometidas", local: 12, visitor: 9, type: "number" },
+            { label: "Tarjetas (Amarillas/Rojas)", local: "2/0", visitor: "1/0", type: "string" },
+            { label: "Córners", local: 5, visitor: 7, type: "number" },
+            { label: "Tiros Libres", local: 11, visitor: 14, type: "number" },
+            { label: "Kilómetros Recorridos", local: 108.4, visitor: 105.2, type: "decimal" }
+        ],
+        analysis: {
+            ppda: { local: 8.4, visitor: 12.1 },
+            highPress: { local: "Alta", visitor: "Media" },
+            attackFlank: { local: "Izquierda (45%)", visitor: "Centro (52%)" }
+        },
         timeline: [
             { minute: 28, event: "Yellow Card", player: "Gibbs" },
             { minute: 32, event: "Goal", player: "Messi" },
@@ -54,396 +64,311 @@ const appData = {
         ],
         lineups: {
             local: [
-                { number: 1, name: "GK", playerName: "Raya" }, 
-                { number: 4, name: "DF", playerName: "White" },
-                { number: 2, name: "DF", playerName: "Saliba" },
-                { number: 6, name: "DF", playerName: "Gabriel" },
-                { number: 3, name: "DF", playerName: "Zinchenko" },
-                { number: 8, name: "MF", playerName: "Ødegaard" },
-                { number: 41, name: "MF", playerName: "Rice" },
-                { number: 5, name: "MF", playerName: "Partey" },
-                { number: 7, name: "FW", playerName: "Saka" },
-                { number: 9, name: "FW", playerName: "Havertz" },
-                { number: 11, name: "FW", playerName: "Martinelli" }
+                { number: 1, name: "Ramsdale", role: "GK" },
+                { number: 4, name: "White", role: "DF" }, { number: 12, name: "Saliba", role: "DF" }, { number: 6, name: "Gabriel", role: "DF" }, { number: 35, name: "Zinchenko", role: "DF" },
+                { number: 8, name: "Ødegaard", role: "MF" }, { number: 5, name: "Partey", role: "MF" }, { number: 34, name: "Xhaka", role: "MF" },
+                { number: 7, name: "Saka", role: "FW" }, { number: 9, name: "Jesus", role: "FW" }, { number: 11, name: "Martinelli", role: "FW" }
             ],
             visitor: [
-                { number: 1, name: "GK", playerName: "Ter Stegen" }, 
-                { number: 23, name: "DF", playerName: "Koundé" },
-                { number: 4, name: "DF", playerName: "Araujo" },
-                { number: 15, name: "DF", playerName: "Christensen" },
-                { number: 3, name: "DF", playerName: "Balde" },
-                { number: 8, name: "MF", playerName: "Pedri" },
-                { number: 21, name: "MF", playerName: "De Jong" },
-                { number: 22, name: "MF", playerName: "Gündoğan" },
-                { number: 27, name: "FW", playerName: "Yamal" },
-                { number: 9, name: "FW", playerName: "Lewandowski" },
-                { number: 11, name: "FW", playerName: "Raphinha" }
+                { number: 1, name: "Ter Stegen", role: "GK" },
+                { number: 23, name: "Koundé", role: "DF" }, { number: 4, name: "Araujo", role: "DF" }, { number: 15, name: "Christensen", role: "DF" }, { number: 28, name: "Balde", role: "DF" },
+                { number: 8, name: "Pedri", role: "MF" }, { number: 5, name: "Busquets", role: "MF" }, { number: 21, name: "De Jong", role: "MF" },
+                { number: 11, name: "Raphinha", role: "FW" }, { number: 9, name: "Lewandowski", role: "FW" }, { number: 30, name: "Gavi", role: "FW" }
             ]
         }
     }
 };
 
-// ── API ESPN (Proxies en Cascada sin Cache Buster agresivo) ───────────────────
+// ── API ESPN (Proxies en cascada) ──────────────────────────────────────────
 async function fetchTeams(slug) {
-    if (!slug || slug === "undefined") {
-        throw new Error("Slug inválido o ausente en la configuración de ligas.");
-    }
-
     if (teamsCache[slug]) return teamsCache[slug];
-    
+
     const espnUrl = `${ESPN}/${slug}/teams?limit=100`;
-    
+    const encodedUrl = encodeURIComponent(espnUrl);
+
     const proxies = [
-        `https://api.allorigins.win/get?url=${encodeURIComponent(espnUrl)}`,
-        `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(espnUrl)}`
+        `https://api.allorigins.win/get?url=${encodedUrl}`,
+        `https://api.codetabs.com/v1/proxy/?quest=${encodedUrl}`
     ];
 
-    let data = null;
-    let lastError = null;
+    let lastError;
 
     for (const proxyUrl of proxies) {
         try {
             const res = await fetch(proxyUrl);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             
-            if (proxyUrl.includes('allorigins.win/get')) {
+            let data;
+            if (proxyUrl.includes('allorigins')) {
                 const jsonRes = await res.json();
-                if (!jsonRes.contents) throw new Error("AllOrigins no devolvió contents");
                 data = JSON.parse(jsonRes.contents);
             } else {
                 data = await res.json();
             }
 
-            if (data && data.sports) break; 
+            const raw = data?.sports?.[0]?.leagues?.[0]?.teams ?? [];
+            const teams = raw.map(t => ({
+                id:     t.team.id,
+                name:   t.team.displayName,
+                logo:   t.team.logos?.[0]?.href ?? '',
+                venue:  t.team.venue?.fullName ?? '—',
+            }));
+
+            teamsCache[slug] = teams;
+            return teams;
+
         } catch (err) {
             lastError = err;
-            data = null;
-            console.warn(`Fallo en proxy: ${proxyUrl}. Intentando alternativa...`);
         }
     }
-
-    if (!data) throw lastError || new Error("Todos los proxies fallaron al obtener equipos.");
-    
-    const raw = data?.sports?.[0]?.leagues?.[0]?.teams ?? [];
-    
-    const teams = raw.map(t => ({
-        id:    t.team.id,
-        name:  t.team.displayName,
-        abbr:  t.team.abbreviation,
-        logo:  t.team.logos?.[0]?.href ?? '',
-        color: t.team.color ? `#${t.team.color}` : null,
-        venue: t.team.venue?.fullName ?? '—',
-    }));
-    
-    teamsCache[slug] = teams;
-    return teams;
+    throw lastError;
 }
 
-// ── RENDERIZADO ───────────────────────────────────────────────────────────────
+// ── RENDERIZADO MODULAR ───────────────────────────────────────────────────
 const App = (() => {
     const elements = {
         dataDisplay: document.getElementById('data-display')
     };
 
-    // ── Cronología ────────────────────────────────────────────────────────────
+    // 1. Cronología (Live)
     const renderLiveCommentary = () => {
-        const timelineHTML = appData.match.timeline.map(item => `
-            <div class="event">
-                <span>${item.minute}'</span> — <strong>${item.player}</strong>: ${item.event}
-            </div>
-        `).join('');
+        const timelineHTML = appData.match.timeline.map(item =>
+            `<div class="event">
+                <span>${item.minute}'</span> — ${item.player}: <strong>${item.event}</strong>
+            </div>`
+        ).join('');
         
         elements.dataDisplay.innerHTML = `
-            <h3 class="section-header">Cronología del Partido</h3>
+            <div class="match-header-compact">
+                <div class="score-pill">
+                    <span class="live-dot"></span>${appData.match.status}
+                </div>
+                <h2>${appData.match.teams.local} ${appData.match.score.local} - ${appData.match.score.visitor} ${appData.match.teams.visitor}</h2>
+            </div>
+            <h2 class="section-header">Cronología</h2>
             <div class="timeline-container">
                 ${timelineHTML}
             </div>
         `;
     };
 
-    // ── Alineaciones 3D ───────────────────────────────────────────────────────
-    
-    const buildPitchPlayers = (players, isLocal) => {
-        const positions = { GK: [], DF: [], MF: [], FW: [] };
-        players.forEach(p => { if (positions[p.name]) positions[p.name].push(p); });
-
-        const fill = isLocal ? "#f0f2f7" : "#ff4757"; 
-        const stroke = isLocal ? "rgba(220,248,54,0.9)" : "rgba(255,255,255,0.8)";
-        const textFill = isLocal ? "#0b0e14" : "#fff";
-
-        const yMap = isLocal
-            ? { GK: 278, DF: 245, MF: 215, FW: 190 } 
-            : { GK: 78,  DF: 108, MF: 142, FW: 162 }; 
-
-        let svgHTML = '';
-        for (const [pos, posPlayers] of Object.entries(positions)) {
-            const count = posPlayers.length;
-            if (count === 0) continue;
+    // 2. Alineaciones 3D e Insights
+    const buildPitchPlayers = (teamArray, isLocal) => {
+        const roles = ['GK', 'DF', 'MF', 'FW'];
+        // Invertir el orden visual para el visitante
+        const renderRoles = isLocal ? roles : [...roles].reverse();
+        
+        let html = '';
+        renderRoles.forEach((role, rowIndex) => {
+            const playersInRole = teamArray.filter(p => p.role === role);
+            const yPos = isLocal ? 60 + (rowIndex * 18) : 10 + (rowIndex * 18);
             
-            const cy = yMap[pos];
-            const areaWidth = 240; 
-            const startX = 280 - (areaWidth / 2);
-            const spacing = areaWidth / (count + 1);
-
-            posPlayers.forEach((p, idx) => {
-                const cx = count === 1 ? 280 : startX + (spacing * (idx + 1));
-                svgHTML += `
-                    <circle cx="${cx}" cy="${cy}" r="12" fill="${fill}" stroke="${stroke}" stroke-width="1.8" filter="url(#playerShadow)"/>
-                    <text x="${cx}" y="${cy + 3.5}" text-anchor="middle" font-size="9" font-weight="900" fill="${textFill}" font-family="Inter,sans-serif">${p.number}</text>
+            playersInRole.forEach((p, idx) => {
+                const spacing = 80 / (playersInRole.length + 1);
+                const xPos = 10 + (spacing * (idx + 1));
+                const color = isLocal ? '#ffffff' : '#ff4757';
+                const textCol = isLocal ? '#000000' : '#ffffff';
+                
+                html += `
+                    <g transform="translate(${xPos}, ${yPos})">
+                        <circle cx="0" cy="0" r="3.5" fill="${color}" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/>
+                        <text x="0" y="1.2" font-family="sans-serif" font-size="2.8" font-weight="bold" fill="${textCol}" text-anchor="middle">${p.number}</text>
+                    </g>
                 `;
             });
-        }
-        return svgHTML;
+        });
+        return html;
     };
 
-    const buildPlayerList = (players) => {
-        return players.map(p => `
-            <div class="player-row">
-                <span class="p-num">${p.number}</span>
-                <span class="p-pos pos-${p.name.toLowerCase()}">${p.name}</span>
-                <span class="p-name">${p.playerName || `Jugador ${p.number}`}</span>
-                <span class="p-rating">-</span>
+    const buildStatsBars = () => {
+        return appData.match.stats.map(stat => {
+            let localWidth = 50;
+            let visitorWidth = 50;
+            
+            if (typeof stat.local === 'number' && typeof stat.visitor === 'number') {
+                const total = stat.local + stat.visitor;
+                if (total > 0) {
+                    localWidth = (stat.local / total) * 100;
+                    visitorWidth = (stat.visitor / total) * 100;
+                }
+            }
+
+            return `
+            <div class="stat-row">
+                <div class="stat-values">
+                    <span class="stat-val local">${stat.local}</span>
+                    <span class="stat-label">${stat.label}</span>
+                    <span class="stat-val visitor">${stat.visitor}</span>
+                </div>
+                <div class="stat-bar-container">
+                    <div class="stat-bar local" style="width: ${localWidth}%"></div>
+                    <div class="stat-bar visitor" style="width: ${visitorWidth}%"></div>
+                </div>
+            </div>`;
+        }).join('');
+    };
+
+    const buildPlayerList = () => {
+        const buildCol = (team, isLocal) => {
+            return team.map(p => `
+                <div class="player-list-item">
+                    <div class="player-role-indicator ${p.role.toLowerCase()}"></div>
+                    <span class="player-num">${p.number}</span>
+                    <span class="player-name">${p.name}</span>
+                </div>
+            `).join('');
+        };
+
+        return `
+            <div class="player-lists-wrapper">
+                <div class="player-col">
+                    <h4 class="col-title">${appData.match.teams.local}</h4>
+                    ${buildCol(appData.match.lineups.local, true)}
+                </div>
+                <div class="player-col">
+                    <h4 class="col-title">${appData.match.teams.visitor}</h4>
+                    ${buildCol(appData.match.lineups.visitor, false)}
+                </div>
             </div>
-        `).join('');
+        `;
     };
 
     const renderLineups = () => {
-        const matchStats = [
-            { label: "Goles esperados (xG)", a: "1.82", b: "0.94", pctA: 66, pctB: 34 },
-            { label: "Posesión", a: "58%", b: "42%", pctA: 58, pctB: 42 },
-            { label: "Pases completados", a: "412 (88%)", b: "338 (83%)", pctA: 55, pctB: 45 },
-            { label: "Tiros", a: "7", b: "6", pctA: 54, pctB: 46 },
-            { label: "Tiros al arco", a: "4", b: "2", pctA: 66, pctB: 34 },
-            { label: "Faltas", a: "14", b: "16", pctA: 47, pctB: 53 },
-            { label: "Tarjetas (Am. / Roj.)", a: "2 / 0", b: "3 / 1", pctA: 40, pctB: 60 },
-            { label: "Córners", a: "5", b: "3", pctA: 62, pctB: 38 },
-            { label: "Tiros libres", a: "18", b: "15", pctA: 54, pctB: 46 },
-            { label: "Penales", a: "1", b: "0", pctA: 100, pctB: 0 },
-            { label: "Km recorridos", a: "108.5", b: "104.2", pctA: 51, pctB: 49 },
-            { label: "Cambios", a: "4", b: "5", pctA: 44, pctB: 56 }
-        ];
+        elements.dataDisplay.innerHTML = `
+            <div class="match-header-compact">
+                <h2>${appData.match.teams.local} ${appData.match.score.local} - ${appData.match.score.visitor} ${appData.match.teams.visitor}</h2>
+            </div>
+            
+            <div class="pitch-container">
+                <svg viewBox="0 0 100 130" class="isometric-pitch" preserveAspectRatio="xMidYMid meet">
+                    <defs>
+                        <radialGradient id="pitchLight" cx="50%" cy="50%" r="70%">
+                            <stop offset="0%" stop-color="rgba(255,255,255,0.15)"/>
+                            <stop offset="100%" stop-color="rgba(0,0,0,0.4)"/>
+                        </radialGradient>
+                        <filter id="grassNoise">
+                            <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" result="noise"/>
+                            <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.05 0" in="noise" result="coloredNoise"/>
+                            <feBlend in="SourceGraphic" in2="coloredNoise" mode="overlay"/>
+                        </filter>
+                    </defs>
+                    <rect width="100" height="130" fill="var(--pitch-green)" filter="url(#grassNoise)"/>
+                    <rect width="100" height="130" fill="url(#pitchLight)"/>
+                    
+                    <g stroke="rgba(255,255,255,0.4)" stroke-width="0.5" fill="none">
+                        <rect x="2" y="2" width="96" height="126" />
+                        <line x1="2" y1="65" x2="98" y2="65" />
+                        <circle cx="50" cy="65" r="10" />
+                        <rect x="25" y="2" width="50" height="18" />
+                        <rect x="38" y="2" width="24" height="6" />
+                        <path d="M 40 20 A 10 10 0 0 0 60 20" />
+                        <rect x="25" y="110" width="50" height="18" />
+                        <rect x="38" y="122" width="24" height="6" />
+                        <path d="M 60 110 A 10 10 0 0 0 40 110" />
+                    </g>
+                    
+                    ${buildPitchPlayers(appData.match.lineups.visitor, false)}
+                    ${buildPitchPlayers(appData.match.lineups.local, true)}
+                </svg>
+            </div>
 
-        const statsHTML = matchStats.map(s => `
-            <div class="stat-row">
-                <div class="stat-bar-wrap">
-                    <span class="stat-val right">${s.a}</span>
-                    <div class="bar-bg"><div class="bar-fill bar-a" style="width:${s.pctA}%"></div></div>
-                </div>
-                <div class="stat-label">${s.label}</div>
-                <div class="stat-bar-wrap">
-                    <div class="bar-bg"><div class="bar-fill bar-b" style="width:${s.pctB}%"></div></div>
-                    <span class="stat-val">${s.b}</span>
+            <div class="lineup-tabs-nav">
+                <button class="lineup-tab active" data-target="panel-players">Jugadores</button>
+                <button class="lineup-tab" data-target="panel-stats">Estadísticas</button>
+                <button class="lineup-tab" data-target="panel-analysis">Análisis</button>
+            </div>
+
+            <div id="panel-players" class="lineup-panel active">
+                ${buildPlayerList()}
+            </div>
+            <div id="panel-stats" class="lineup-panel" style="display:none;">
+                <div class="stats-container">
+                    ${buildStatsBars()}
                 </div>
             </div>
-        `).join('');
-
-        elements.dataDisplay.innerHTML = `
-            <h2 class="sr-only">Vista de alineaciones: ${appData.match.teams.local} vs ${appData.match.teams.visitor}, ${appData.match.score.local}-${appData.match.score.visitor} en vivo</h2>
-            <div class="root">
-                <div class="match-header">
-                    <div class="team-side">
-                        <div class="team-badge badge-a">${appData.match.teams.local.substring(0,3).toUpperCase()}</div>
-                        <div>
-                            <div class="team-label">${appData.match.teams.local}</div>
-                            <div style="font-size:.62rem;color:var(--text-muted);font-weight:600">4-3-3</div>
-                        </div>
+            <div id="panel-analysis" class="lineup-panel" style="display:none;">
+                <div class="analysis-grid">
+                    <div class="analysis-card">
+                        <h5>Intensidad de Presión (PPDA)</h5>
+                        <p><span style="color:var(--accent)">${appData.match.analysis.ppda.local}</span> vs <span style="color:var(--red)">${appData.match.analysis.ppda.visitor}</span></p>
                     </div>
-                    <div class="score-block">
-                        <div class="score">${appData.match.score.local} — ${appData.match.score.visitor}</div>
-                        <div class="match-status"><span class="live-dot"></span>${appData.match.minute}</div>
+                    <div class="analysis-card">
+                        <h5>Bloque Defensivo</h5>
+                        <p>${appData.match.analysis.highPress.local} vs ${appData.match.analysis.highPress.visitor}</p>
                     </div>
-                    <div class="team-side right">
-                        <div class="team-badge badge-b">${appData.match.teams.visitor.substring(0,3).toUpperCase()}</div>
-                        <div>
-                            <div class="team-label">${appData.match.teams.visitor}</div>
-                            <div style="font-size:.62rem;color:var(--text-muted);font-weight:600">4-3-3</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="pitch-wrap">
-                    <svg class="pitch-svg" viewBox="0 0 560 340" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <radialGradient id="stadiumLight" cx="50%" cy="50%" r="70%" fx="50%" fy="50%">
-                                <stop offset="0%" stop-color="#2e7d32"/>
-                                <stop offset="100%" stop-color="#0f3d14"/>
-                            </radialGradient>
-                            <filter id="grassNoise">
-                                <feTurbulence type="fractalNoise" baseFrequency="1.2" numOctaves="3" result="noise"/>
-                                <feColorMatrix type="matrix" values="1 0 0 0 0, 0 1 0 0 0, 0 0 1 0 0, 0 0 0 0.05 0" in="noise" result="coloredNoise"/>
-                                <feBlend in="SourceGraphic" in2="coloredNoise" mode="overlay"/>
-                            </filter>
-                            <filter id="playerShadow" x="-30%" y="-30%" width="160%" height="160%">
-                                <feDropShadow dx="2" dy="4" stdDeviation="3" flood-color="#000" flood-opacity="0.6"/>
-                            </filter>
-                            <pattern id="stripes" x="0" y="0" width="36" height="1" patternUnits="userSpaceOnUse" patternTransform="skewX(-30) scale(1,1)">
-                                <rect width="18" height="1" fill="rgba(255,255,255,0.06)"/>
-                            </pattern>
-                        </defs>
-                        
-                        <ellipse cx="280" cy="330" rx="230" ry="18" fill="#000" opacity=".45"/>
-                        <polygon points="140,62 420,62 530,292 30,292" fill="url(#stadiumLight)" filter="url(#grassNoise)"/>
-                        <polygon points="140,62 420,62 530,292 30,292" fill="url(#stripes)"/>
-                        <polygon points="140,62 420,62 530,292 30,292" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
-                        
-                        <line x1="30" y1="177" x2="530" y2="177" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
-                        <ellipse cx="280" cy="177" rx="68" ry="22" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
-                        <circle cx="280" cy="177" r="2.5" fill="rgba(255,255,255,0.3)"/>
-                        
-                        <polygon points="193,62 367,62 385,118 175,118" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
-                        <polygon points="228,62 332,62 342,88 218,88" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
-                        <rect x="238" y="52" width="84" height="12" rx="1" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
-                        
-                        <polygon points="175,236 385,236 367,292 193,292" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
-                        <polygon points="218,262 342,262 332,292 228,292" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
-                        <rect x="238" y="290" width="84" height="12" rx="1" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
-                        
-                        <path d="M140,62 Q148,70 140,78" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
-                        <path d="M420,62 Q412,70 420,78" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
-                        <path d="M30,292 Q40,282 52,290" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
-                        <path d="M530,292 Q520,282 508,290" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
-
-                        ${buildPitchPlayers(appData.match.lineups.visitor, false)}
-                        ${buildPitchPlayers(appData.match.lineups.local, true)}
-
-                        <text x="75" y="100" text-anchor="middle" font-size="9" font-weight="800" fill="rgba(255,71,87,0.8)" font-family="Inter,sans-serif" letter-spacing="1">${appData.match.teams.visitor.substring(0,3).toUpperCase()}</text>
-                        <text x="75" y="260" text-anchor="middle" font-size="9" font-weight="800" fill="rgba(220,248,54,0.8)" font-family="Inter,sans-serif" letter-spacing="1">${appData.match.teams.local.substring(0,3).toUpperCase()}</text>
-                    </svg>
-                </div>
-
-                <div class="tabs">
-                    <div class="tab active" data-target="panel-players">Jugadores</div>
-                    <div class="tab" data-target="panel-stats">Estadísticas</div>
-                    <div class="tab" data-target="panel-analysis">Análisis</div>
-                </div>
-
-                <div id="panel-players" style="display:block">
-                    <div class="section-title">${appData.match.teams.local} · Titulares</div>
-                    <div class="player-list" style="margin-bottom: 12px;">
-                        ${buildPlayerList(appData.match.lineups.local)}
-                    </div>
-                    <div class="section-title">${appData.match.teams.visitor} · Titulares</div>
-                    <div class="player-list">
-                        ${buildPlayerList(appData.match.lineups.visitor)}
-                    </div>
-                </div>
-
-                <div id="panel-stats" class="stats-section" style="display:none">
-                    <div class="section-title">Comparativa del partido</div>
-                    ${statsHTML}
-                </div>
-
-                <div id="panel-analysis" style="display:none">
-                    <div class="section-title">Análisis táctico</div>
-                    <div class="analysis-grid">
-                        <div class="analysis-card">
-                            <div class="a-card-val trend-neutral">1.82</div>
-                            <div class="a-card-label">xG ${appData.match.teams.local}</div>
-                            <div class="a-card-sub">Supera el xG esperado para este partido</div>
-                        </div>
-                        <div class="analysis-card">
-                            <div class="a-card-val trend-down">0.94</div>
-                            <div class="a-card-label">xG ${appData.match.teams.visitor}</div>
-                            <div class="a-card-sub">Por debajo del promedio histórico</div>
-                        </div>
+                    <div class="analysis-card">
+                        <h5>Ataque Principal</h5>
+                        <p>${appData.match.analysis.attackFlank.local}</p>
                     </div>
                 </div>
             </div>
         `;
-
-        const tabs = elements.dataDisplay.querySelectorAll('.tab');
-        tabs.forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                tabs.forEach(t => t.classList.remove('active'));
-                e.target.classList.add('active');
-                const targetId = e.target.getAttribute('data-target');
-                ['panel-stats', 'panel-analysis', 'panel-players'].forEach(p => {
-                    document.getElementById(p).style.display = p === targetId ? 'block' : 'none';
-                });
-            });
-        });
     };
 
-    // ── Listado de ligas ──────────────────────────────────────────────────────
+    // 3. Ligas y Equipos
     const renderLeagues = () => {
-        const html = appData.leagues.map(league => `
-            <div class="league-card" data-slug="${league.slug}" data-name="${league.name}">
+        const html = appData.leagues.map(league =>
+            `<div class="league-card" data-slug="${league.slug}" data-name="${league.name}">
                 <div class="league-card-header">
                     <span class="league-flag">${league.flag}</span>
                     <span class="league-country">${league.country}</span>
                 </div>
                 <h4>${league.name}</h4>
-            </div>
-        `).join('');
-        
-        elements.dataDisplay.innerHTML = `
-            <h3 class="section-header">Ligas</h3>
-            <div class="leagues-grid">${html}</div>
-        `;
+            </div>`
+        ).join('');
 
-        elements.dataDisplay.querySelectorAll('.league-card').forEach(card => {
-            card.addEventListener('click', () => 
-                renderLeagueTeams(card.dataset.slug, card.dataset.name)
-            );
-        });
+        elements.dataDisplay.innerHTML = `
+            <h2 class="section-header">Ligas</h2>
+            <div class="leagues-grid">
+                ${html}
+            </div>
+        `;
     };
 
-    // ── Equipos de una liga ───────────────────────────────────────────────────
     const renderLeagueTeams = async (slug, leagueName) => {
         elements.dataDisplay.innerHTML = `
             <div class="back-header">
-                <button class="btn-back" id="btn-back">← Volver</button>
-                <h3 class="section-header">${leagueName} · Equipos</h3>
+                <button class="btn-back" data-action="back-to-leagues">← Volver</button>
+                <h2 class="section-header">${leagueName}</h2>
             </div>
             <div class="teams-grid">
                 ${Array(12).fill('<div class="skeleton"></div>').join('')}
             </div>
         `;
-        
-        document.getElementById('btn-back').addEventListener('click', renderLeagues);
-        
+
         try {
             const teams = await fetchTeams(slug);
-            
             const grid = elements.dataDisplay.querySelector('.teams-grid');
-            if (!grid) return; 
+            if (!grid) return; // Protección DOM (Race Condition)
 
             if (!teams.length) {
-                grid.innerHTML = `<div class="empty-msg">No se encontraron equipos en esta liga.</div>`;
+                grid.innerHTML = `<div class="empty-msg">No se encontraron equipos para la temporada actual.</div>`;
                 return;
             }
-            
-            grid.innerHTML = teams.map(team => `
-                <div class="team-card">
+
+            grid.innerHTML = teams.map(team =>
+                `<div class="team-card">
                     ${team.logo 
-                        ? `<img src="${team.logo}" alt="${team.name}" class="team-logo">` 
-                        : `<div class="team-logo" style="background:var(--border);border-radius:50%"></div>`
+                        ? `<img src="${team.logo}" class="team-logo" alt="${team.name}" loading="lazy">` 
+                        : `<div class="team-logo" style="background: var(--border); border-radius: 50%;"></div>`
                     }
                     <div class="team-info">
                         <span class="team-name">${team.name}</span>
                         <span class="team-venue">${team.venue}</span>
                     </div>
-                </div>
-            `).join('');
+                </div>`
+            ).join('');
+
         } catch (err) {
-            console.error(slug, err);
             const grid = elements.dataDisplay.querySelector('.teams-grid');
-            if (grid) {
-                grid.innerHTML = `<div class="empty-msg">No se pudo cargar esta liga. ESPN no devolvió datos o el proxy falló.</div>`;
-            }
+            if (!grid) return;
+            grid.innerHTML = `<div class="empty-msg">No se pudo cargar esta liga.<br>Puede que ESPN no la tenga disponible actualmente.</div>`;
+            console.warn(`[API Info] Fallo al cargar datos para ${slug}`);
         }
     };
 
-    // ── Router ────────────────────────────────────────────────────────────────
+    // ── Router y Control de Accesos ─────────────────────────────────────────
     const getRequiredTier = (view) => ({ live: 5, lineups: 10, leagues: 0 }[view] ?? 0);
-
-    const setActiveNav = (viewType) => {
-        // En busca de botones en todo el documento para evitar fallos si cambian los selectores
-        const allNavButtons = document.querySelectorAll('.nav-item');
-        allNavButtons.forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.view === viewType);
-        });
-    };
 
     const renderView = (viewType) => {
         if (appData.user.subscriptionLevel < getRequiredTier(viewType)) {
@@ -464,15 +389,46 @@ const App = (() => {
     };
 
     const init = () => {
-        // Selector ultrarrobusto que atrapa clics sin importar la estructura en HTML
+        // Delegación de Eventos Global en el Body
         document.body.addEventListener('click', (e) => {
-            const navBtn = e.target.closest('.nav-item') || e.target.closest('[data-view]');
-            if (navBtn && navBtn.dataset.view) {
-                setActiveNav(navBtn.dataset.view);
+            
+            // 1. Navegación Principal Bottom Nav
+            const navBtn = e.target.closest('[data-view]');
+            if (navBtn) {
+                document.querySelectorAll('[data-view]').forEach(btn => 
+                    btn.classList.toggle('active', btn === navBtn)
+                );
                 renderView(navBtn.dataset.view);
+                return;
+            }
+
+            // 2. Navegación de Ligas a Equipos
+            const leagueCard = e.target.closest('.league-card');
+            if (leagueCard) {
+                renderLeagueTeams(leagueCard.dataset.slug, leagueCard.dataset.name);
+                return;
+            }
+
+            // 3. Botón de retroceso de Equipos a Ligas
+            const backBtn = e.target.closest('[data-action="back-to-leagues"]');
+            if (backBtn) {
+                renderLeagues();
+                return;
+            }
+
+            // 4. Sub-pestañas internas de Alineaciones (Jugadores/Stats/Análisis)
+            const lineupTab = e.target.closest('.lineup-tab');
+            if (lineupTab) {
+                document.querySelectorAll('.lineup-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.lineup-panel').forEach(p => p.style.display = 'none');
+                
+                lineupTab.classList.add('active');
+                document.getElementById(lineupTab.dataset.target).style.display = 'block';
+                return;
             }
         });
-        
+
+        // Render inicial
         renderView('leagues');
     };
 
