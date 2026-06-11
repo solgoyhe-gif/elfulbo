@@ -93,29 +93,25 @@ async function fetchWithTimeout(url, ms = 8000) {
     }
 }
 
-async function fetchWithProxyCascade(espnUrl) {
-    // Sin cache buster — algunos proxies lo rechazan
-    const encoded = encodeURIComponent(espnUrl);
+const MY_PROXY = 'https://TU-WORKER.workers.dev'; // ← reemplazá con tu URL
 
+async function fetchWithProxyCascade(espnUrl) {
     const proxies = [
+        // Tu Worker propio — siempre primero
+        {
+            name: 'Worker',
+            build: () => `${MY_PROXY}?url=${encodeURIComponent(espnUrl)}`,
+            parse: async (res) => res.json()
+        },
+        // Fallbacks públicos por si acaso
         {
             name: 'AllOrigins',
-            build: () => `https://api.allorigins.win/raw?url=${encoded}`,
-            parse: async (res) => res.json()
-        },
-        {
-            name: 'JsonProxy',
-            build: () => `https://jsonp.afeld.me/?url=${encoded}`,
-            parse: async (res) => res.json()
-        },
-        {
-            name: 'ThingProxy',
-            build: () => `https://thingproxy.freeboard.io/fetch/${espnUrl}`,
+            build: () => `https://api.allorigins.win/raw?url=${encodeURIComponent(espnUrl)}`,
             parse: async (res) => res.json()
         },
         {
             name: 'CodeTabs',
-            build: () => `https://api.codetabs.com/v1/proxy/?quest=${encoded}`,
+            build: () => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(espnUrl)}`,
             parse: async (res) => res.json()
         },
     ];
@@ -126,7 +122,7 @@ async function fetchWithProxyCascade(espnUrl) {
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await proxy.parse(res);
             if (!data?.sports) throw new Error('Respuesta inválida');
-            console.log(`[Proxy ${proxy.name}] ✅ OK`);
+            console.log(`[Proxy ${proxy.name}] ✅`);
             return data;
         } catch (err) {
             console.warn(`[Proxy ${proxy.name}] Falló:`, err.message);
