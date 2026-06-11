@@ -2,29 +2,46 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>El Fulbo</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <header>
-        <h1>El Fulbo</h1>
+    <!-- TOP BAR -->
+    <header id="top-bar">
+        <div id="app-logo">⚽ El Fulbo</div>
+        <div id="top-bar-right">
+            <button class="icon-btn" id="btn-search" aria-label="Buscar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+            <button class="icon-btn" aria-label="Notificaciones">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            </button>
+        </div>
     </header>
 
-    <nav id="main-nav">
-        <button data-view="live">Live Commentary ($5)</button>
-        <button data-view="lineups">Lineups ($10)</button>
-        <button data-view="leagues">Ligas</button>
-    </nav>
-
+    <!-- MAIN -->
     <main id="app-container">
-        <section id="dashboard">
-            <div id="data-display">
-                </div>
-        </section>
+        <div id="data-display"></div>
     </main>
 
-    <script src="script.js" type="module"></script>
+    <!-- BOTTOM NAV -->
+    <nav id="bottom-nav">
+        <button class="nav-item active" data-view="leagues">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+            <span>Ligas</span>
+        </button>
+        <button class="nav-item" data-view="live">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            <span>Live</span>
+        </button>
+        <button class="nav-item" data-view="lineups">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>Alineaciones</span>
+        </button>
+    </nav>
+
+    <script src="script.js"></script>
 </body>
 </html>
