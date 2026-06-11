@@ -94,44 +94,47 @@ async function fetchWithTimeout(url, ms = 8000) {
 }
 
 async function fetchWithProxyCascade(espnUrl) {
-    const urlWithCacheBuster = `${espnUrl}&_t=${Date.now()}`;
-    const encoded = encodeURIComponent(urlWithCacheBuster);
+    // Sin cache buster — algunos proxies lo rechazan
+    const encoded = encodeURIComponent(espnUrl);
 
     const proxies = [
         {
-            name: 'CodeTabs',
-            url: `https://api.codetabs.com/v1/proxy/?quest=${encoded}`,
+            name: 'AllOrigins',
+            build: () => `https://api.allorigins.win/raw?url=${encoded}`,
             parse: async (res) => res.json()
         },
         {
-            name: 'AllOrigins',
-            url: `https://api.allorigins.win/get?url=${encoded}`,
-            parse: async (res) => {
-                const wrapper = await res.json();
-                return JSON.parse(wrapper.contents);
-            }
+            name: 'JsonProxy',
+            build: () => `https://jsonp.afeld.me/?url=${encoded}`,
+            parse: async (res) => res.json()
         },
         {
-            name: 'Corsfix',
-            url: `https://corsfix.com/${encoded}`,
+            name: 'ThingProxy',
+            build: () => `https://thingproxy.freeboard.io/fetch/${espnUrl}`,
+            parse: async (res) => res.json()
+        },
+        {
+            name: 'CodeTabs',
+            build: () => `https://api.codetabs.com/v1/proxy/?quest=${encoded}`,
             parse: async (res) => res.json()
         },
     ];
 
     for (const proxy of proxies) {
         try {
-            const res = await fetchWithTimeout(proxy.url, 8000);
+            const res = await fetchWithTimeout(proxy.build(), 10000);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await proxy.parse(res);
+            if (!data?.sports) throw new Error('Respuesta inválida');
+            console.log(`[Proxy ${proxy.name}] ✅ OK`);
             return data;
         } catch (err) {
             console.warn(`[Proxy ${proxy.name}] Falló:`, err.message);
         }
     }
 
-    throw new Error('Todos los proxies fallaron. ESPN inaccesible.');
+    throw new Error('Todos los proxies fallaron.');
 }
-
 // ── FETCH EQUIPOS (con caché en memoria + localStorage) ───────────────────────
 
 async function fetchTeams(slug) {
