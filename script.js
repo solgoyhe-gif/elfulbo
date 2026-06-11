@@ -142,8 +142,7 @@ async function fetchTeams(slug) {
 // ── RENDERIZADO ───────────────────────────────────────────────────────────────
 const App = (() => {
     const elements = {
-        dataDisplay: document.getElementById('data-display'),
-        navButtons: document.querySelectorAll('#main-nav .nav-item')
+        dataDisplay: document.getElementById('data-display')
     };
 
     // ── Cronología ────────────────────────────────────────────────────────────
@@ -168,7 +167,7 @@ const App = (() => {
         const positions = { GK: [], DF: [], MF: [], FW: [] };
         players.forEach(p => { if (positions[p.name]) positions[p.name].push(p); });
 
-        const fill = isLocal ? "#f0f2f7" : "#ff4757"; // Rojo visitante actualizado
+        const fill = isLocal ? "#f0f2f7" : "#ff4757"; 
         const stroke = isLocal ? "rgba(220,248,54,0.9)" : "rgba(255,255,255,0.8)";
         const textFill = isLocal ? "#0b0e14" : "#fff";
 
@@ -188,7 +187,6 @@ const App = (() => {
 
             posPlayers.forEach((p, idx) => {
                 const cx = count === 1 ? 280 : startX + (spacing * (idx + 1));
-                // Aplicamos la sombra definida en SVG (#playerShadow)
                 svgHTML += `
                     <circle cx="${cx}" cy="${cy}" r="12" fill="${fill}" stroke="${stroke}" stroke-width="1.8" filter="url(#playerShadow)"/>
                     <text x="${cx}" y="${cy + 3.5}" text-anchor="middle" font-size="9" font-weight="900" fill="${textFill}" font-family="Inter,sans-serif">${p.number}</text>
@@ -210,7 +208,6 @@ const App = (() => {
     };
 
     const renderLineups = () => {
-        // Datos de estadísticas expandidos (Punto 7)
         const matchStats = [
             { label: "Goles esperados (xG)", a: "1.82", b: "0.94", pctA: 66, pctB: 34 },
             { label: "Posesión", a: "58%", b: "42%", pctA: 58, pctB: 42 },
@@ -285,7 +282,6 @@ const App = (() => {
                         </defs>
                         
                         <ellipse cx="280" cy="330" rx="230" ry="18" fill="#000" opacity=".45"/>
-                        
                         <polygon points="140,62 420,62 530,292 30,292" fill="url(#stadiumLight)" filter="url(#grassNoise)"/>
                         <polygon points="140,62 420,62 530,292 30,292" fill="url(#stripes)"/>
                         <polygon points="140,62 420,62 530,292 30,292" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
@@ -442,9 +438,11 @@ const App = (() => {
     const getRequiredTier = (view) => ({ live: 5, lineups: 10, leagues: 0 }[view] ?? 0);
 
     const setActiveNav = (viewType) => {
-        elements.navButtons.forEach(btn => 
-            btn.classList.toggle('active', btn.dataset.view === viewType)
-        );
+        // En busca de botones en todo el documento para evitar fallos si cambian los selectores
+        const allNavButtons = document.querySelectorAll('.nav-item');
+        allNavButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === viewType);
+        });
     };
 
     const renderView = (viewType) => {
@@ -466,13 +464,13 @@ const App = (() => {
     };
 
     const init = () => {
-        elements.navButtons.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const button = e.target.closest('.nav-item');
-                if (!button) return;
-                setActiveNav(button.dataset.view);
-                renderView(button.dataset.view);
-            });
+        // Selector ultrarrobusto que atrapa clics sin importar la estructura en HTML
+        document.body.addEventListener('click', (e) => {
+            const navBtn = e.target.closest('.nav-item') || e.target.closest('[data-view]');
+            if (navBtn && navBtn.dataset.view) {
+                setActiveNav(navBtn.dataset.view);
+                renderView(navBtn.dataset.view);
+            }
         });
         
         renderView('leagues');
