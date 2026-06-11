@@ -1,44 +1,218 @@
 /**
  * script.js - Lógica principal de "El Fulbo"
- * API: ESPN pública (sin key, sin límites, sin restricción de temporada)
+ * API: ESPN pública (sin key, sin restricción de temporada)
+ * Mejoras: precarga en background + caché en localStorage (24hs)
  */
 
 const ESPN = 'https://site.api.espn.com/apis/site/v2/sports/soccer';
 
-// Cada liga tiene un "slug" que ESPN usa en la URL
 const LEAGUES = {
     // ── EUROPA TOP 5 ─────────────────────────────
-    PREMIER_LEAGUE:    { slug: 'eng.1',              name: "Premier League",       country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
-    BUNDESLIGA:        { slug: 'ger.1',              name: "Bundesliga",            country: "Germany",     flag: "🇩🇪" },
-    SERIE_A:           { slug: 'ita.1',              name: "Serie A",               country: "Italy",       flag: "🇮🇹" },
-    LIGUE_1:           { slug: 'fra.1',              name: "Ligue 1",               country: "France",      flag: "🇫🇷" },
-    LA_LIGA:           { slug: 'esp.1',              name: "La Liga",               country: "Spain",       flag: "🇪🇸" },
+    PREMIER_LEAGUE:    { slug: 'eng.1',                  name: "Premier League",       country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+    BUNDESLIGA:        { slug: 'ger.1',                  name: "Bundesliga",            country: "Germany",     flag: "🇩🇪" },
+    SERIE_A:           { slug: 'ita.1',                  name: "Serie A",               country: "Italy",       flag: "🇮🇹" },
+    LIGUE_1:           { slug: 'fra.1',                  name: "Ligue 1",               country: "France",      flag: "🇫🇷" },
+    LA_LIGA:           { slug: 'esp.1',                  name: "La Liga",               country: "Spain",       flag: "🇪🇸" },
     // ── EUROPA OTRAS ─────────────────────────────
-    EREDIVISIE:        { slug: 'ned.1',              name: "Eredivisie",            country: "Netherlands", flag: "🇳🇱" },
-    PRIMEIRA_LIGA:     { slug: 'por.1',              name: "Primeira Liga",         country: "Portugal",    flag: "🇵🇹" },
+    EREDIVISIE:        { slug: 'ned.1',                  name: "Eredivisie",            country: "Netherlands", flag: "🇳🇱" },
+    PRIMEIRA_LIGA:     { slug: 'por.1',                  name: "Primeira Liga",         country: "Portugal",    flag: "🇵🇹" },
     // ── COPAS INGLESAS ───────────────────────────
-    CARABAO_CUP:       { slug: 'eng.league_cup',     name: "Carabao Cup",           country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
-    FA_CUP:            { slug: 'eng.fa',             name: "FA Cup",                country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+    CARABAO_CUP:       { slug: 'eng.league_cup',         name: "Carabao Cup",           country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+    FA_CUP:            { slug: 'eng.fa',                 name: "FA Cup",                country: "England",     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
     // ── UEFA ─────────────────────────────────────
-    CHAMPIONS_LEAGUE:  { slug: 'uefa.champions',     name: "Champions League",      country: "Europe",      flag: "🇪🇺" },
-    EUROPA_LEAGUE:     { slug: 'uefa.europa',        name: "Europa League",         country: "Europe",      flag: "🇪🇺" },
-    CONFERENCE_LEAGUE: { slug: 'uefa.europa.conf',   name: "Conference League",     country: "Europe",      flag: "🇪🇺" },
-    UEFA_SUPER_CUP:    { slug: 'uefa.super_cup',     name: "UEFA Super Cup",        country: "Europe",      flag: "🇪🇺" },
-    // ── MUNDIAL ───────────────────────────────────
-    WORLD_CUP:         { slug: 'fifa.world',         name: "FIFA World Cup",        country: "World",       flag: "🌍" },
-    FRIENDLIES_INTL:   { slug: 'fifa.friendly',      name: "Amistosos Pre-Mundial", country: "World",       flag: "🌍" },
+    CHAMPIONS_LEAGUE:  { slug: 'uefa.champions',         name: "Champions League",      country: "Europe",      flag: "🇪🇺" },
+    EUROPA_LEAGUE:     { slug: 'uefa.europa',            name: "Europa League",         country: "Europe",      flag: "🇪🇺" },
+    CONFERENCE_LEAGUE: { slug: 'uefa.europa.conf',       name: "Conference League",     country: "Europe",      flag: "🇪🇺" },
+    UEFA_SUPER_CUP:    { slug: 'uefa.super_cup',         name: "UEFA Super Cup",        country: "Europe",      flag: "🇪🇺" },
+    // ── MUNDIAL ──────────────────────────────────
+    WORLD_CUP:         { slug: 'fifa.world',             name: "FIFA World Cup",        country: "World",       flag: "🌍" },
+    FRIENDLIES_INTL:   { slug: 'fifa.friendly',          name: "Amistosos Pre-Mundial", country: "World",       flag: "🌍" },
     // ── CONMEBOL ─────────────────────────────────
-    COPA_LIBERTADORES: { slug: 'conmebol.libertadores', name: "Copa Libertadores",  country: "CONMEBOL",    flag: "🌎" },
-    COPA_SUDAMERICANA: { slug: 'conmebol.sudamericana', name: "Copa Sudamericana",  country: "CONMEBOL",    flag: "🌎" },
+    COPA_LIBERTADORES: { slug: 'conmebol.libertadores',  name: "Copa Libertadores",     country: "CONMEBOL",    flag: "🌎" },
+    COPA_SUDAMERICANA: { slug: 'conmebol.sudamericana',  name: "Copa Sudamericana",     country: "CONMEBOL",    flag: "🌎" },
     // ── ARGENTINA ────────────────────────────────
-    LIGA_PROFESIONAL:  { slug: 'arg.1',              name: "Liga Profesional",      country: "Argentina",   flag: "🇦🇷" },
-    COPA_ARGENTINA:    { slug: 'arg.copa',           name: "Copa Argentina",        country: "Argentina",   flag: "🇦🇷" },
+    LIGA_PROFESIONAL:  { slug: 'arg.1',                  name: "Liga Profesional",      country: "Argentina",   flag: "🇦🇷" },
+    COPA_ARGENTINA:    { slug: 'arg.copa',               name: "Copa Argentina",        country: "Argentina",   flag: "🇦🇷" },
     // ── BRASIL ───────────────────────────────────
-    BRASILEIRAO:       { slug: 'bra.1',              name: "Brasileirao",           country: "Brazil",      flag: "🇧🇷" },
+    BRASILEIRAO:       { slug: 'bra.1',                  name: "Brasileirao",           country: "Brazil",      flag: "🇧🇷" },
 };
 
-// Cache para no repetir llamadas
+// Caché en memoria (se llena desde localStorage al iniciar)
 const teamsCache = {};
+
+// ── CACHÉ PERSISTENTE (localStorage, 24hs) ────────────────────────────────────
+
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 horas en ms
+
+function cacheRead(slug) {
+    try {
+        const raw = localStorage.getItem(`fulbo_teams_${slug}`);
+        if (!raw) return null;
+        const { teams, ts } = JSON.parse(raw);
+        if (Date.now() - ts > CACHE_TTL) {
+            localStorage.removeItem(`fulbo_teams_${slug}`);
+            return null;
+        }
+        return teams;
+    } catch {
+        return null;
+    }
+}
+
+function cacheWrite(slug, teams) {
+    try {
+        localStorage.setItem(`fulbo_teams_${slug}`, JSON.stringify({
+            teams,
+            ts: Date.now()
+        }));
+    } catch {
+        // localStorage lleno o bloqueado — no es crítico
+    }
+}
+
+// Precarga el caché en memoria desde localStorage al arrancar
+function warmMemoryCacheFromStorage() {
+    Object.values(LEAGUES).forEach(({ slug }) => {
+        const teams = cacheRead(slug);
+        if (teams) teamsCache[slug] = teams;
+    });
+}
+
+// ── FETCH CON PROXIES EN CASCADA ──────────────────────────────────────────────
+
+async function fetchWithTimeout(url, ms = 8000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ms);
+    try {
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timer);
+        return res;
+    } catch (err) {
+        clearTimeout(timer);
+        throw err;
+    }
+}
+
+async function fetchWithProxyCascade(espnUrl) {
+    const urlWithCacheBuster = `${espnUrl}&_t=${Date.now()}`;
+    const encoded = encodeURIComponent(urlWithCacheBuster);
+
+    const proxies = [
+        {
+            name: 'CodeTabs',
+            url: `https://api.codetabs.com/v1/proxy/?quest=${encoded}`,
+            parse: async (res) => res.json()
+        },
+        {
+            name: 'AllOrigins',
+            url: `https://api.allorigins.win/get?url=${encoded}`,
+            parse: async (res) => {
+                const wrapper = await res.json();
+                return JSON.parse(wrapper.contents);
+            }
+        },
+        {
+            name: 'Corsfix',
+            url: `https://corsfix.com/${encoded}`,
+            parse: async (res) => res.json()
+        },
+    ];
+
+    for (const proxy of proxies) {
+        try {
+            const res = await fetchWithTimeout(proxy.url, 8000);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await proxy.parse(res);
+            return data;
+        } catch (err) {
+            console.warn(`[Proxy ${proxy.name}] Falló:`, err.message);
+        }
+    }
+
+    throw new Error('Todos los proxies fallaron. ESPN inaccesible.');
+}
+
+// ── FETCH EQUIPOS (con caché en memoria + localStorage) ───────────────────────
+
+async function fetchTeams(slug) {
+    // 1. Caché en memoria (más rápido)
+    if (teamsCache[slug]) return teamsCache[slug];
+
+    // 2. Caché en localStorage (sobrevive recarga)
+    const fromStorage = cacheRead(slug);
+    if (fromStorage) {
+        teamsCache[slug] = fromStorage;
+        return fromStorage;
+    }
+
+    // 3. Fetch real a ESPN
+    const espnUrl = `${ESPN}/${slug}/teams?limit=100`;
+
+    const data = await fetchWithProxyCascade(espnUrl);
+
+    const sportsArray = data?.sports?.[0];
+    if (!sportsArray?.leagues?.length) throw new Error('Estructura JSON inválida');
+
+    // Buscar la liga correcta por slug — no asumir índice 0
+    const targetLeague =
+        sportsArray.leagues.find(l => l.slug === slug) ||
+        sportsArray.leagues.find(l => l.abbreviation?.toLowerCase() === slug.toLowerCase()) ||
+        sportsArray.leagues[0];
+
+    console.log(`[${slug}] Liga resuelta:`, targetLeague?.slug ?? targetLeague?.abbreviation ?? '?');
+
+    const rawTeams = targetLeague?.teams ?? [];
+
+    if (!rawTeams.length) {
+        console.warn(`[ESPN] Sin equipos para ${slug}`);
+        return [];
+    }
+
+    const teams = rawTeams.map(t => ({
+        id:    t.team.id,
+        name:  t.team.displayName,
+        abbr:  t.team.abbreviation,
+        logo:  t.team.logos?.[0]?.href ?? '',
+        color: t.team.color ? `#${t.team.color}` : null,
+        venue: t.team.venue?.fullName ?? '—',
+    }));
+
+    // Guardar en ambos cachés
+    teamsCache[slug] = teams;
+    cacheWrite(slug, teams);
+
+    return teams;
+}
+
+// ── PRECARGA EN BACKGROUND ────────────────────────────────────────────────────
+
+async function preloadAllLeagues() {
+    // Orden de prioridad: las más populares/consultadas primero
+    const priority = [
+        'eng.1', 'esp.1', 'ger.1', 'ita.1', 'fra.1',
+        'arg.1', 'bra.1', 'uefa.champions',
+        'ned.1', 'por.1', 'conmebol.libertadores',
+        'conmebol.sudamericana', 'eng.fa', 'eng.league_cup',
+        'arg.copa', 'uefa.europa', 'uefa.europa.conf',
+        'fifa.world', 'fifa.friendly', 'uefa.super_cup'
+    ];
+
+    for (const slug of priority) {
+        if (teamsCache[slug]) continue; // Ya en memoria, saltear
+        try {
+            await fetchTeams(slug);
+            console.log(`[Precarga] ✅ ${slug}`);
+        } catch {
+            console.warn(`[Precarga] ❌ ${slug}`);
+        }
+        // Pausa entre requests para no saturar los proxies
+        await new Promise(r => setTimeout(r, 400));
+    }
+
+    console.log('[Precarga] Completada');
+}
+
+// ── APP DATA ──────────────────────────────────────────────────────────────────
 
 const appData = {
     user: { subscriptionLevel: 10 },
@@ -67,133 +241,6 @@ const appData = {
     }
 };
 
-// ── API ESPN ──────────────────────────────────────────────────────────────────
-
-// Fetch con timeout
-async function fetchWithTimeout(url, ms = 8000) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), ms);
-    try {
-        const res = await fetch(url, { signal: controller.signal });
-        clearTimeout(timer);
-        return res;
-    } catch (err) {
-        clearTimeout(timer);
-        throw err;
-    }
-}
-
-// Proxies en cascada — si uno falla prueba el siguiente
-async function fetchViaProxy(targetUrl) {
-    const proxies = [
-        async (url) => {
-            const res = await fetchWithTimeout(`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`);
-            if (!res.ok) throw new Error(`CodeTabs ${res.status}`);
-            return res.json();
-        },
-        async (url) => {
-            const res = await fetchWithTimeout(`https://corsfix.com/${encodeURIComponent(url)}`);
-            if (!res.ok) throw new Error(`Corsfix ${res.status}`);
-            return res.json();
-        },
-        async (url) => {
-            const res = await fetchWithTimeout(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
-            if (!res.ok) throw new Error(`AllOrigins ${res.status}`);
-            const wrapper = await res.json();
-            return JSON.parse(wrapper.contents);
-        },
-    ];
-
-    for (const proxy of proxies) {
-        try {
-            return await proxy(targetUrl);
-        } catch (err) {
-            console.warn('Proxy falló, probando el siguiente...', err.message);
-        }
-    }
-    throw new Error('Todos los proxies fallaron');
-}
-
-// ── API ESPN (Con Proxies en cascada y Parsing estricto) ──────────────────────
-
-// Función auxiliar para obtener datos saltando CORS con proxies en cascada
-async function fetchWithProxyCascade(espnUrl) {
-    // Añadimos un timestamp para evitar el caché agresivo de los proxies
-    const urlWithCacheBuster = `${espnUrl}&_t=${Date.now()}`;
-    const encodedUrl = encodeURIComponent(urlWithCacheBuster);
-
-    const proxies = [
-        `https://api.codetabs.com/v1/proxy/?quest=${encodedUrl}`,
-        `https://cors-anywhere.herokuapp.com/${urlWithCacheBuster}`, // Alternativa (requiere activación manual pero es útil probarla)
-        `https://api.allorigins.win/get?url=${encodedUrl}`
-    ];
-
-    for (const proxy of proxies) {
-        try {
-            const res = await fetch(proxy);
-            if (!res.ok) continue; // Si este proxy falla, pasamos al siguiente
-
-            let data;
-            if (proxy.includes('allorigins')) {
-                const textData = await res.json();
-                data = JSON.parse(textData.contents);
-            } else {
-                data = await res.json();
-            }
-
-            return data; // Si tuvimos éxito, devolvemos los datos y salimos del bucle
-        } catch (error) {
-            console.warn(`[Proxy Falló] ${proxy} - Intentando siguiente...`);
-        }
-    }
-    throw new Error("Todos los proxies fallaron. ESPN inaccesible actualmente.");
-}
-
-async function fetchTeams(slug) {
-    if (teamsCache[slug]) return teamsCache[slug];
-
-    const espnUrl = `${ESPN}/${slug}/teams?limit=100`;
-
-    try {
-        const data = await fetchWithProxyCascade(espnUrl);
-
-        const sportsArray = data?.sports?.[0];
-        if (!sportsArray?.leagues?.length) throw new Error("Estructura JSON inválida");
-
-        // ✅ FIX: buscar la liga que matchee el slug pedido
-        // ESPN usa el campo "slug" o "abbreviation" en cada entrada del array
-        const targetLeague =
-            sportsArray.leagues.find(l => l.slug === slug) ||
-            sportsArray.leagues.find(l => l.abbreviation?.toLowerCase() === slug.toLowerCase()) ||
-            sportsArray.leagues[0]; // fallback solo si no hay match
-
-        console.log(`[${slug}] Liga encontrada:`, targetLeague?.slug ?? targetLeague?.abbreviation ?? '?');
-
-        const rawTeams = targetLeague?.teams ?? [];
-
-        if (!rawTeams.length) {
-            console.warn(`[ESPN] La liga ${slug} no devolvió equipos.`);
-            return [];
-        }
-
-        const teams = rawTeams.map(t => ({
-            id:    t.team.id,
-            name:  t.team.displayName,
-            abbr:  t.team.abbreviation,
-            logo:  t.team.logos?.[0]?.href ?? '',
-            color: t.team.color ? `#${t.team.color}` : null,
-            venue: t.team.venue?.fullName ?? '—',
-        }));
-
-        teamsCache[slug] = teams;
-        return teams;
-
-    } catch (error) {
-        console.error(`[Fetch Error] Fallo al obtener ${slug}:`, error);
-        throw error;
-    }
-}
-
 // ── RENDERIZADO ───────────────────────────────────────────────────────────────
 
 const App = (() => {
@@ -217,7 +264,7 @@ const App = (() => {
 
     // ── Alineaciones ─────────────────────────────────────────────────────────
     const buildFormationHTML = (teamArray, type) => {
-        return ['GK','DF','MF','FW'].map(pos => {
+        return ['GK', 'DF', 'MF', 'FW'].map(pos => {
             const line = teamArray.filter(p => p.name === pos);
             if (!line.length) return '';
             return `<div class="formation-row">${
@@ -240,15 +287,19 @@ const App = (() => {
 
     // ── Listado de ligas ──────────────────────────────────────────────────────
     const renderLeagues = () => {
-        const html = appData.leagues.map(league => `
-            <div class="league-card" data-slug="${league.slug}" data-name="${league.name}">
-                <div class="league-card-header">
-                    <span class="league-flag">${league.flag}</span>
-                    <span class="league-country">${league.country}</span>
+        const html = appData.leagues.map(league => {
+            const cached = !!teamsCache[league.slug];
+            return `
+                <div class="league-card ${cached ? 'cached' : ''}" data-slug="${league.slug}" data-name="${league.name}">
+                    <div class="league-card-header">
+                        <span class="league-flag">${league.flag}</span>
+                        <span class="league-country">${league.country}</span>
+                        ${cached ? '<span class="cache-dot" title="Cargado"></span>' : ''}
+                    </div>
+                    <h4>${league.name}</h4>
                 </div>
-                <h4>${league.name}</h4>
-            </div>
-        `).join('');
+            `;
+        }).join('');
 
         elements.dataDisplay.innerHTML = `
             <p class="section-header">Ligas</p>
@@ -264,7 +315,6 @@ const App = (() => {
 
     // ── Equipos de una liga ───────────────────────────────────────────────────
     const renderLeagueTeams = async (slug, leagueName) => {
-        // Skeleton mientras carga
         elements.dataDisplay.innerHTML = `
             <div class="back-header">
                 <button class="btn-back" id="btn-back">← Volver</button>
@@ -332,6 +382,9 @@ const App = (() => {
     };
 
     const init = () => {
+        // Calentar caché en memoria desde localStorage antes de cualquier render
+        warmMemoryCacheFromStorage();
+
         elements.navButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const button = e.target.closest('.nav-item');
@@ -340,7 +393,12 @@ const App = (() => {
                 renderView(button.dataset.view);
             });
         });
+
+        // Render inicial
         renderView('leagues');
+
+        // Precarga el resto en background sin bloquear la UI
+        preloadAllLeagues();
     };
 
     return { init };
