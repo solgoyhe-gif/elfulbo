@@ -1,81 +1,80 @@
+// js/app.js - SPA Router & Global State
+
 const App = (() => {
     const appContainer = document.getElementById('app');
 
-    // Generador de Navbar compartido
-    const getNavbarHTML = (activeRoute) => `
-        <nav class="navbar">
-            <a href="#/home" class="nav-link ${activeRoute === 'home' ? 'active' : ''}">Inicio</a>
-            <a href="#/ligas" class="nav-link ${activeRoute === 'ligas' ? 'active' : ''}">Ligas</a>
-            <a href="#/h2h" class="nav-link ${activeRoute === 'h2h' ? 'active' : ''}">H2H</a>
-            <a href="#/info" class="nav-link ${activeRoute === 'info' ? 'active' : ''}">Info</a>
+    // Módulo Navbar (Reutilizable)
+    const renderNavbar = (activeHash) => `
+        <nav class="navbar fade-in">
+            <a href="#/home" class="nav-link ${activeHash === '#/home' ? 'active' : ''}">Inicio</a>
+            <a href="#/ligas" class="nav-link ${activeHash === '#/ligas' ? 'active' : ''}">Ligas</a>
+            <a href="#/h2h" class="nav-link ${activeHash === '#/h2h' ? 'active' : ''}">H2H</a>
+            <a href="#/info" class="nav-link ${activeHash === '#/info' ? 'active' : ''}">Info</a>
         </nav>
     `;
 
-    // Vista HOME (Paso 2)
+    // Vista HOME (PASO 2)
     const renderHome = () => {
         appContainer.innerHTML = `
-            ${getNavbarHTML('home')}
-            <main class="hero-container fade-in">
+            ${renderNavbar('#/home')}
+            <main class="home-view fade-in">
                 <h1 class="hero-title">EL FULBO</h1>
-                <div class="pitch-wrapper">
+                <div class="pitch-perspective">
                     <div class="pitch-3d">
-                        <div class="penalty-area-top"></div>
-                        <div class="penalty-area-bottom"></div>
+                        <div class="area-top"></div>
+                        <div class="area-bottom"></div>
                     </div>
                 </div>
             </main>
         `;
     };
 
-    // Vista Placeholder para otras rutas temporales
-    const renderPlaceholder = (title, route) => {
+    // Vista Login Placeholder
+    const renderLogin = () => {
         appContainer.innerHTML = `
-            ${getNavbarHTML(route)}
-            <main class="fade-in" style="padding: 100px 20px; text-align: center;">
-                <h2 style="font-family: var(--font-heading); color: var(--accent-neon); font-size: 2rem;">${title}</h2>
-                <p>En desarrollo...</p>
+            <main class="home-view fade-in" style="flex-direction: column; gap: 2rem;">
+                <h1 class="hero-title" style="position: relative; transform: none; top: auto; left: auto;">LOGIN</h1>
+                <button onclick="Auth.login('Manager')" style="padding: 10px 30px; background: var(--accent-neon); border: none; font-weight: bold; cursor: pointer; border-radius: 4px;">ENTRAR</button>
             </main>
         `;
     };
 
-    // Router Core
+    // Router Logic
     const router = () => {
         const hash = window.location.hash || '#/home';
-        
-        // Simulación de protección de rutas
-        if (!Auth.isAuthenticated() && hash !== '#/login') {
+        const url = new URL(`http://dummy.com${hash.replace('#', '')}`);
+        const path = '#' + url.pathname;
+
+        // Protección de rutas
+        if (!Auth.isAuthenticated() && path !== '#/login') {
             window.location.hash = '#/login';
             return;
         }
 
-        appContainer.innerHTML = ''; // Clean DOM
-
-        if (hash === '#/home') {
-            renderHome();
-        } else if (hash === '#/login') {
-            // Se implementará en el PASO 3
-            renderPlaceholder('Login / Registro', 'login'); 
-        } else if (hash === '#/ligas') {
-            // Se implementará en el PASO 4
-            renderPlaceholder('Módulo de Ligas', 'ligas');
-        } else if (hash.startsWith('#/liga?id=')) {
-            renderPlaceholder('Vista de Liga Detalle', 'ligas');
-        } else if (hash === '#/h2h') {
-            renderPlaceholder('Head to Head', 'h2h');
-        } else if (hash === '#/info') {
-            renderPlaceholder('Noticias e Info', 'info');
-        } else {
-            renderHome();
+        switch (path) {
+            case '#/login':
+                renderLogin();
+                break;
+            case '#/home':
+                renderHome();
+                break;
+            default:
+                // Fallback temporal para las demás rutas
+                appContainer.innerHTML = `${renderNavbar(path)}<main class="home-view fade-in" style="align-items: flex-start; padding-top: 100px;"><h2 style="font-family: var(--font-heading); color: var(--accent-neon);">Construyendo ${path}...</h2></main>`;
+                break;
         }
     };
 
+    // Listeners
     const init = () => {
         window.addEventListener('hashchange', router);
         window.addEventListener('load', router);
+        
+        // Exponer Auth globalmente para el placeholder de login
+        window.Auth = Auth; 
     };
 
     return { init };
 })();
 
-// Inicializar la SPA
 App.init();
