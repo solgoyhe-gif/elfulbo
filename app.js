@@ -2,7 +2,6 @@
 const App = (() => {
     const appContainer = document.getElementById('app');
 
-    // Estructura compartida de la barra de navegación (Navbar / Tab Bar)
     const renderNavbar = (activeHash) => {
         return `
             <nav class="navbar">
@@ -17,23 +16,86 @@ const App = (() => {
         `;
     };
 
-    // Renderizado de la Vista Principal (PASO 2)
+    // EL NUEVO DASHBOARD CENTRAL
     const renderHome = () => {
+        // Generar lista rápida de ligas para el panel derecho
+        let miniLigasHtml = '';
+        if (typeof LIGAS !== 'undefined') {
+            const ligasDestacadas = [...LIGAS.europa_top5.competiciones, ...LIGAS.sudamerica.competiciones];
+            ligasDestacadas.forEach(liga => {
+                miniLigasHtml += `
+                    <div class="mini-league" onclick="window.location.hash='#/liga?id=${liga.id}'">
+                        <span style="font-size: 1.2rem;">${liga.flag}</span>
+                        <span class="mini-league-name">${liga.nombre}</span>
+                    </div>
+                `;
+            });
+        }
+
         appContainer.innerHTML = `
             ${renderNavbar('#/home')}
-            <main class="home-view fade-in">
-                <h1 class="hero-title">EL FULBO</h1>
-                <div class="pitch-perspective">
-                    <div class="pitch-3d">
-                        <div class="area-top"></div>
-                        <div class="area-bottom"></div>
+            <main class="dashboard-container fade-in">
+                
+                <section class="glass-panel panel-left">
+                    <h3 class="panel-title">📊 Stats en Vivo</h3>
+                    
+                    <div class="stat-box">
+                        <div class="stat-header"><span>Posesión</span></div>
+                        <div class="stat-bar">
+                            <div class="stat-fill-local" style="width: 60%;"></div>
+                            <div class="stat-fill-visita" style="width: 40%;"></div>
+                        </div>
+                        <div class="stat-values"><span>60%</span><span style="color:var(--accent-neon)">40%</span></div>
                     </div>
-                </div>
+
+                    <div class="stat-box">
+                        <div class="stat-header"><span>Tiros a Puerta</span></div>
+                        <div class="stat-bar">
+                            <div class="stat-fill-local" style="width: 75%;"></div>
+                            <div class="stat-fill-visita" style="width: 25%;"></div>
+                        </div>
+                        <div class="stat-values"><span>12</span><span style="color:var(--accent-neon)">4</span></div>
+                    </div>
+
+                    <div class="stat-box">
+                        <div class="stat-header"><span>Faltas</span></div>
+                        <div class="stat-bar">
+                            <div class="stat-fill-local" style="width: 45%;"></div>
+                            <div class="stat-fill-visita" style="width: 55%;"></div>
+                        </div>
+                        <div class="stat-values"><span>9</span><span style="color:var(--accent-neon)">11</span></div>
+                    </div>
+                </section>
+
+                <section class="panel-center">
+                    <div style="position:absolute; top:0; font-family:var(--font-heading); font-size:2rem; font-weight:800; letter-spacing:2px; z-index:10; text-shadow: 0 5px 15px #000;">EL FULBO</div>
+                    <div class="pitch-perspective">
+                        <div class="pitch-horizontal">
+                            <div class="area-left"></div>
+                            <div class="area-right"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="glass-panel panel-right">
+                    <h3 class="panel-title">🏆 Top Ligas</h3>
+                    ${miniLigasHtml}
+                </section>
+
+                <section class="glass-panel panel-bottom">
+                    <h3 class="panel-title" style="margin-bottom:0; border:none;">🚨 URGENTE</h3>
+                    <div class="news-ticker">
+                        <span class="news-item"><span>MERCADO:</span> Mbappé confirma su fichaje por el Real Madrid.</span>
+                        <span class="news-item"><span>LESIÓN:</span> De Bruyne fuera por 3 semanas.</span>
+                        <span class="news-item"><span>CHAMPIONS:</span> Sorteo de cuartos de final este viernes.</span>
+                        <span class="news-item"><span>LIBERTADORES:</span> Boca y River lideran sus grupos.</span>
+                    </div>
+                </section>
+
             </main>
         `;
     };
 
-    // Renderizado del Listado de Competiciones por Categoría (PASO 4)
     const renderLigas = () => {
         let html = `
             ${renderNavbar('#/ligas')}
@@ -71,14 +133,13 @@ const App = (() => {
         appContainer.innerHTML = html;
     };
 
-    // Renderizado de la Vista de Login (PASO 3 - Eventos nativos sin <form>)
     const renderLogin = () => {
         appContainer.innerHTML = `
             <main class="login-view fade-in">
                 <div class="login-card">
                     <div class="login-logo">EL <span>FULBO</span></div>
                     
-                    <div class="auth-form-wrapper" id="form-contenedor">
+                    <div id="form-contenedor">
                         <div class="input-container">
                             <label>Dirección de Email</label>
                             <input type="email" id="auth-email" class="glass-input" placeholder="manager@elfulbo.com" autocomplete="off">
@@ -89,7 +150,7 @@ const App = (() => {
                             <input type="password" id="auth-password" class="glass-input" placeholder="••••••••">
                         </div>
                         
-                        <div id="auth-error-log" class="error-feedback"></div>
+                        <div id="auth-error-log" style="color: #ff4757; font-size: 0.85rem; margin-bottom: 1rem; min-height: 20px;"></div>
                         
                         <button id="auth-submit-trigger" class="btn-submit">Ingresar al Sistema</button>
                     </div>
@@ -97,7 +158,6 @@ const App = (() => {
             </main>
         `;
 
-        // Captura de elementos e inyección de listeners controlados por JS
         const btnSubmit = document.getElementById('auth-submit-trigger');
         const emailInput = document.getElementById('auth-email');
         const passwordInput = document.getElementById('auth-password');
@@ -117,20 +177,16 @@ const App = (() => {
         };
 
         btnSubmit.addEventListener('click', executeAuthentication);
-        
-        // Manejo táctil / teclado intuitivo
         passwordInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') executeAuthentication();
         });
     };
 
-    // Núcleo del Enrutador Dinámico
     const router = () => {
         const hash = window.location.hash || '#/home';
         const url = new URL(`http://dummy.com${hash.replace('#', '')}`);
         const path = '#' + url.pathname;
 
-        // Guardia de Seguridad Perimetral
         if (!Auth.isAuthenticated() && path !== '#/login') {
             window.location.hash = '#/login';
             return;
@@ -138,11 +194,8 @@ const App = (() => {
 
         switch (path) {
             case '#/login':
-                if (Auth.isAuthenticated()) {
-                    window.location.hash = '#/home';
-                } else {
-                    renderLogin();
-                }
+                if (Auth.isAuthenticated()) window.location.hash = '#/home';
+                else renderLogin();
                 break;
             case '#/home':
                 renderHome();
@@ -151,7 +204,6 @@ const App = (() => {
                 renderLigas();
                 break;
             default:
-                // Fallback dinámico
                 appContainer.innerHTML = `
                     ${renderNavbar(path)}
                     <main class="page-container fade-in" style="text-align: center; padding-top: 15%;">
@@ -171,5 +223,4 @@ const App = (() => {
     return { init };
 })();
 
-// Inicialización de la SPA
 App.init();
