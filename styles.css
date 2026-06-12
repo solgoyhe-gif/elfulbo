@@ -1,193 +1,102 @@
-/* css/styles.css - Estilos Globales y SPA Layout */
-
 :root {
-    /* Paleta de Colores */
     --bg-main: #0a0a0a;
     --bg-surface: #1c1c1e;
+    --bg-card: rgba(255, 255, 255, 0.04);
+    --border-glass: rgba(255, 255, 255, 0.08);
     --pitch-dark: #1a472a;
     --pitch-light: #2d6a4f;
     --accent-neon: #39ff14;
     --text-main: #f5f5f5;
     --text-muted: #a0a0a0;
-    
-    /* Tipografía */
     --font-heading: 'Rajdhani', sans-serif;
     --font-body: 'Inter', sans-serif;
-    
-    /* Layout */
-    --nav-height: 64px;
+    --nav-height: 70px;
 }
 
-/* Reset Base */
-*, *::before, *::after {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
     background-color: var(--bg-main);
     color: var(--text-main);
     font-family: var(--font-body);
-    -webkit-font-smoothing: antialiased;
-    overflow: hidden; /* Evita scroll global, se maneja por vista */
-    height: 100dvh;
+    overflow-x: hidden;
 }
 
-/* Scrollbar Custom */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--bg-main); }
-::-webkit-scrollbar-thumb { background: var(--bg-surface); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--accent-neon); }
-
-/* Animaciones SPA */
-.fade-in {
-    animation: fadeIn 250ms ease-out forwards;
-}
+.fade-in { animation: fadeIn 0.3s ease-out forwards; }
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
+    from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Navbar / Tab Bar */
+/* Navbar */
 .navbar {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: var(--nav-height);
-    background: rgba(28, 28, 30, 0.85);
+    top: 0; width: 100%; height: var(--nav-height);
+    background: rgba(10, 10, 10, 0.85);
     backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
+    border-bottom: 1px solid var(--border-glass);
+    display: flex; justify-content: center; align-items: center; gap: 2rem;
     z-index: 1000;
 }
-
 .nav-link {
-    color: var(--text-muted);
-    text-decoration: none;
-    font-family: var(--font-heading);
-    font-size: 1rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    transition: color 0.2s ease;
-    padding: 10px;
+    color: var(--text-muted); text-decoration: none; font-family: var(--font-heading);
+    font-size: 1.2rem; font-weight: 700; text-transform: uppercase; transition: color 0.2s;
+}
+.nav-link:hover, .nav-link.active { color: var(--accent-neon); }
+
+/* Contenedores */
+.page-container {
+    padding: calc(var(--nav-height) + 2rem) 2rem 2rem;
+    max-width: 1200px; margin: 0 auto; min-height: 100vh;
+}
+.section-title {
+    font-family: var(--font-heading); font-size: 2rem; color: var(--text-main);
+    margin-bottom: 2rem; border-bottom: 1px solid var(--border-glass); padding-bottom: 1rem;
+}
+.category-title {
+    color: var(--text-muted); font-size: 1.1rem; margin: 2rem 0 1rem;
 }
 
-.nav-link.active, .nav-link:hover {
-    color: var(--accent-neon);
+/* Glass Cards (Ligas) */
+.leagues-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;
+}
+.glass-card {
+    background: var(--bg-card); backdrop-filter: blur(12px);
+    border: 1px solid var(--border-glass); border-radius: 12px; padding: 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+.glass-card:hover {
+    transform: translateY(-4px); border-color: rgba(57, 255, 20, 0.3);
+    box-shadow: 0 10px 30px rgba(57, 255, 20, 0.05);
+}
+.league-info { display: flex; align-items: center; gap: 15px; }
+.league-flag { font-size: 2rem; }
+.league-name { font-weight: 600; font-size: 1.1rem; }
+.league-country { font-size: 0.85rem; color: var(--text-muted); }
+.badge {
+    padding: 5px 12px; border-radius: 20px; font-family: var(--font-heading);
+    font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: #fff;
 }
 
-/* Responsive Desktop */
-@media (min-width: 768px) {
-    .navbar {
-        bottom: auto;
-        top: 0;
-        border-top: none;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        justify-content: center;
-        gap: 3rem;
-    }
-}
-
-/* ── COMPONENTE: Home / Hero 3D ── */
-.home-view {
-    height: 100dvh;
-    width: 100vw;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
-}
-
+/* Home & 3D Pitch */
+.home-view { height: 100vh; display: flex; justify-content: center; align-items: center; position: relative; }
 .hero-title {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-family: var(--font-heading);
-    font-size: clamp(3rem, 8vw, 6rem);
-    font-weight: 700;
-    color: var(--text-main);
-    letter-spacing: 0.15em;
-    z-index: 10;
-    pointer-events: none;
-    text-shadow: 0 10px 30px rgba(0,0,0,0.8);
-    text-align: center;
-    white-space: nowrap;
+    position: absolute; font-family: var(--font-heading); font-size: clamp(3rem, 10vw, 7rem);
+    font-weight: 800; color: var(--text-main); letter-spacing: 0.15em; z-index: 10; pointer-events: none;
+    text-shadow: 0 10px 40px rgba(0,0,0,0.9); text-align: center;
 }
-
-/* Campo 3D */
-.pitch-perspective {
-    perspective: 900px;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding-bottom: var(--nav-height);
-}
-
+.pitch-perspective { perspective: 1000px; display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
 .pitch-3d {
-    width: 320px;
-    height: 500px;
-    background: repeating-linear-gradient(
-        0deg,
-        var(--pitch-dark),
-        var(--pitch-dark) 10%,
-        var(--pitch-light) 10%,
-        var(--pitch-light) 20%
-    );
-    transform: rotateX(28deg);
-    border: 3px solid rgba(255, 255, 255, 0.6);
-    position: relative;
-    box-shadow: 0 30px 60px rgba(0,0,0,0.9);
-    border-radius: 4px;
+    width: 340px; height: 520px;
+    background: repeating-linear-gradient(0deg, var(--pitch-dark), var(--pitch-dark) 10%, var(--pitch-light) 10%, var(--pitch-light) 20%);
+    transform: rotateX(40deg) scale(0.9); border: 2px solid rgba(255, 255, 255, 0.7);
+    border-radius: 6px; position: relative; box-shadow: 0 40px 60px rgba(0,0,0,0.9);
 }
-
-@media (min-width: 768px) {
-    .pitch-3d {
-        width: 450px;
-        height: 650px;
-    }
-}
-
-/* Marcas del campo */
-.pitch-3d::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background: rgba(255, 255, 255, 0.6);
-    transform: translateY(-50%);
-}
-
-.pitch-3d::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 80px;
-    height: 80px;
-    border: 3px solid rgba(255, 255, 255, 0.6);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-}
-
-.area-top, .area-bottom {
-    position: absolute;
-    left: 50%;
-    width: 50%;
-    height: 15%;
-    border: 3px solid rgba(255, 255, 255, 0.6);
-    transform: translateX(-50%);
-}
-
+.pitch-3d::before { content: ''; position: absolute; top: 50%; width: 100%; height: 2px; background: rgba(255, 255, 255, 0.7); transform: translateY(-50%); }
+.pitch-3d::after { content: ''; position: absolute; top: 50%; left: 50%; width: 90px; height: 90px; border: 2px solid rgba(255, 255, 255, 0.7); border-radius: 50%; transform: translate(-50%, -50%); }
+.area-top, .area-bottom { position: absolute; left: 50%; width: 50%; height: 16%; border: 2px solid rgba(255, 255, 255, 0.7); transform: translateX(-50%); }
 .area-top { top: 0; border-top: none; }
 .area-bottom { bottom: 0; border-bottom: none; }
+@media (min-width: 768px) { .pitch-3d { width: 460px; height: 680px; transform: rotateX(35deg) scale(1); } }
