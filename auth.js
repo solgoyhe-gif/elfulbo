@@ -1,24 +1,26 @@
-// js/auth.js
+// js/auth.js - Módulo de Autenticación de El Fulbo
 const Auth = (() => {
     const KEY = 'fulbo_session';
 
-    // Comprueba si existe la sesión en localStorage
-    const isAuthenticated = () => !!localStorage.getItem(KEY);
+    // Comprueba el estado de la sesión en el almacenamiento local
+    const isAuthenticated = () => {
+        return localStorage.getItem(KEY) !== null;
+    };
 
-    // Lógica de acceso (simulada)
+    // Lógica para registrar credenciales y redirigir al dashboard
     const login = (email, password) => {
         if (email.trim() !== '' && password.trim() !== '') {
-            localStorage.setItem(KEY, JSON.stringify({ email, token: 'mock-token-777' }));
-            window.location.hash = '#/home'; // Redirige al dashboard
+            localStorage.setItem(KEY, JSON.stringify({ email: email.trim(), token: 'mock-token-777-es6' }));
+            window.location.hash = '#/home';
             return true;
         }
         return false;
     };
 
-    // Lógica de cierre de sesión
+    // Lógica para destruir la sesión y forzar la expulsión al login
     const logout = () => {
         localStorage.removeItem(KEY);
-        window.location.hash = '#/login'; // Expulsa al login
+        window.location.hash = '#/login';
     };
 
     return { isAuthenticated, login, logout };
