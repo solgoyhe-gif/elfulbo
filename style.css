@@ -1,4 +1,7 @@
+/* css/styles.css - Estilos Globales y SPA Layout */
+
 :root {
+    /* Paleta de Colores */
     --bg-main: #0a0a0a;
     --bg-surface: #1c1c1e;
     --pitch-dark: #1a472a;
@@ -6,13 +9,17 @@
     --accent-neon: #39ff14;
     --text-main: #f5f5f5;
     --text-muted: #a0a0a0;
+    
+    /* Tipografía */
     --font-heading: 'Rajdhani', sans-serif;
     --font-body: 'Inter', sans-serif;
-    --nav-height: 60px;
+    
+    /* Layout */
+    --nav-height: 64px;
 }
 
-/* Reset y Base */
-* {
+/* Reset Base */
+*, *::before, *::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -22,62 +29,40 @@ body {
     background-color: var(--bg-main);
     color: var(--text-main);
     font-family: var(--font-body);
-    overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
+    overflow: hidden; /* Evita scroll global, se maneja por vista */
+    height: 100dvh;
 }
 
-/* Scrollbar personalizada */
-::-webkit-scrollbar {
-    width: 8px;
-}
-::-webkit-scrollbar-track {
-    background: var(--bg-main);
-}
-::-webkit-scrollbar-thumb {
-    background: var(--bg-surface);
-    border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-neon);
-}
+/* Scrollbar Custom */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-main); }
+::-webkit-scrollbar-thumb { background: var(--bg-surface); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-neon); }
 
-/* Animación de entrada SPA */
+/* Animaciones SPA */
 .fade-in {
-    animation: fadeIn 250ms ease-in-out forwards;
+    animation: fadeIn 250ms ease-out forwards;
 }
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
+    from { opacity: 0; transform: translateY(5px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* UI Components */
-.glass-card {
-    background: rgba(255, 255, 255, 0.04);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.glass-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(57, 255, 20, 0.1);
-}
-
-/* Navegación */
+/* Navbar / Tab Bar */
 .navbar {
     position: fixed;
-    top: 0;
+    bottom: 0;
+    left: 0;
     width: 100%;
     height: var(--nav-height);
-    background: rgba(28, 28, 30, 0.8);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(28, 28, 30, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
-    justify-content: center;
+    justify-content: space-around;
     align-items: center;
-    gap: 2rem;
     z-index: 1000;
 }
 
@@ -85,54 +70,71 @@ body {
     color: var(--text-muted);
     text-decoration: none;
     font-family: var(--font-heading);
-    font-size: 1.2rem;
+    font-size: 1rem;
     font-weight: 600;
     text-transform: uppercase;
-    transition: color 0.2s;
+    transition: color 0.2s ease;
+    padding: 10px;
 }
 
-.nav-link:hover, .nav-link.active {
+.nav-link.active, .nav-link:hover {
     color: var(--accent-neon);
 }
 
-/* Hero & 3D Pitch */
-.hero-container {
-    position: relative;
-    width: 100%;
-    height: 100vh;
+/* Responsive Desktop */
+@media (min-width: 768px) {
+    .navbar {
+        bottom: auto;
+        top: 0;
+        border-top: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        justify-content: center;
+        gap: 3rem;
+    }
+}
+
+/* ── COMPONENTE: Home / Hero 3D ── */
+.home-view {
+    height: 100dvh;
+    width: 100vw;
     display: flex;
     justify-content: center;
     align-items: center;
+    position: relative;
     overflow: hidden;
-    padding-top: var(--nav-height);
 }
 
 .hero-title {
     position: absolute;
-    z-index: 10;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     font-family: var(--font-heading);
     font-size: clamp(3rem, 8vw, 6rem);
     font-weight: 700;
     color: var(--text-main);
     letter-spacing: 0.15em;
-    text-align: center;
-    text-shadow: 0 4px 20px rgba(0,0,0,0.8);
+    z-index: 10;
     pointer-events: none;
+    text-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    text-align: center;
+    white-space: nowrap;
 }
 
-.pitch-wrapper {
+/* Campo 3D */
+.pitch-perspective {
     perspective: 900px;
     width: 100%;
     height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
+    padding-bottom: var(--nav-height);
 }
 
 .pitch-3d {
-    width: 60vw;
-    height: 80vh;
-    min-width: 300px;
+    width: 320px;
+    height: 500px;
     background: repeating-linear-gradient(
         0deg,
         var(--pitch-dark),
@@ -141,58 +143,51 @@ body {
         var(--pitch-light) 20%
     );
     transform: rotateX(28deg);
-    border: 4px solid rgba(255, 255, 255, 0.4);
-    border-radius: 4px;
+    border: 3px solid rgba(255, 255, 255, 0.6);
     position: relative;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.9);
+    border-radius: 4px;
 }
 
-/* Líneas del campo */
+@media (min-width: 768px) {
+    .pitch-3d {
+        width: 450px;
+        height: 650px;
+    }
+}
+
+/* Marcas del campo */
 .pitch-3d::before {
     content: '';
     position: absolute;
     top: 50%;
     left: 0;
     width: 100%;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.4);
+    height: 3px;
+    background: rgba(255, 255, 255, 0.6);
     transform: translateY(-50%);
 }
+
 .pitch-3d::after {
     content: '';
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 20%;
-    aspect-ratio: 1;
-    border: 4px solid rgba(255, 255, 255, 0.4);
+    width: 80px;
+    height: 80px;
+    border: 3px solid rgba(255, 255, 255, 0.6);
     border-radius: 50%;
     transform: translate(-50%, -50%);
 }
 
-.penalty-area-top, .penalty-area-bottom {
+.area-top, .area-bottom {
     position: absolute;
     left: 50%;
-    width: 40%;
+    width: 50%;
     height: 15%;
-    border: 4px solid rgba(255, 255, 255, 0.4);
+    border: 3px solid rgba(255, 255, 255, 0.6);
     transform: translateX(-50%);
 }
-.penalty-area-top { top: 0; border-top: none; }
-.penalty-area-bottom { bottom: 0; border-bottom: none; }
 
-/* Responsive Mobile */
-@media (max-width: 768px) {
-    .navbar {
-        top: auto;
-        bottom: 0;
-        border-top: 1px solid rgba(255, 255, 255, 0.05);
-        border-bottom: none;
-        padding: 0 1rem;
-        justify-content: space-between;
-    }
-    .pitch-3d {
-        width: 90vw;
-        height: 60vh;
-    }
-}
+.area-top { top: 0; border-top: none; }
+.area-bottom { bottom: 0; border-bottom: none; }
