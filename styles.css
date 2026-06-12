@@ -23,7 +23,7 @@ body {
     color: var(--text-main);
     font-family: var(--font-body);
     overflow-x: hidden;
-    height: 100dvh;
+    min-height: 100vh;
     -webkit-font-smoothing: antialiased;
 }
 
@@ -59,31 +59,14 @@ body {
 
 /* ── DASHBOARD LAYOUT (INICIO) ── */
 .dashboard-container {
-    display: grid;
-    grid-template-columns: 280px 1fr 280px;
-    grid-template-rows: 1fr 80px;
-    gap: 1.5rem;
-    padding: calc(var(--nav-height) + 1.5rem) 1.5rem 1.5rem;
-    height: 100vh;
-    overflow: hidden;
+    display: grid; grid-template-columns: 280px 1fr 280px; grid-template-rows: 1fr 80px;
+    gap: 1.5rem; padding: calc(var(--nav-height) + 1.5rem) 1.5rem 1.5rem; height: 100vh; overflow: hidden;
 }
-
 .glass-panel {
-    background: var(--bg-card);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--border-glass);
-    border-radius: 12px;
-    padding: 1.2rem;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
+    background: var(--bg-card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-glass); border-radius: 12px; padding: 1.2rem; display: flex; flex-direction: column; overflow-y: auto;
 }
-
-.panel-title {
-    font-family: var(--font-heading); font-size: 1.2rem; color: var(--accent-neon);
-    text-transform: uppercase; margin-bottom: 1rem; border-bottom: 1px solid var(--border-glass); padding-bottom: 0.5rem;
-}
+.panel-title { font-family: var(--font-heading); font-size: 1.2rem; color: var(--accent-neon); text-transform: uppercase; margin-bottom: 1rem; border-bottom: 1px solid var(--border-glass); padding-bottom: 0.5rem; }
 
 /* Izquierda: Estadísticas */
 .panel-left { grid-column: 1; grid-row: 1; }
@@ -96,7 +79,7 @@ body {
 
 /* Centro: Cancha Horizontal 3D */
 .panel-center { grid-column: 2; grid-row: 1; display: flex; justify-content: center; align-items: center; position: relative; }
-.pitch-perspective { perspective: 1000px; width: 100%; display: flex; justify-content: center; }
+.pitch-perspective { perspective: 1000px; width: 100%; display: flex; justify-content: center; align-items: center;}
 .pitch-horizontal {
     width: 100%; max-width: 650px; aspect-ratio: 1.6 / 1;
     background: repeating-linear-gradient(90deg, var(--pitch-dark), var(--pitch-dark) 10%, var(--pitch-light) 10%, var(--pitch-light) 20%);
@@ -111,17 +94,12 @@ body {
 
 /* Derecha: Ligas Mini */
 .panel-right { grid-column: 3; grid-row: 1; gap: 10px; }
-.mini-league { 
-    display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.02);
-    border: 1px solid var(--border-glass); border-radius: 8px; cursor: pointer; transition: 0.2s;
-}
+.mini-league { display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass); border-radius: 8px; cursor: pointer; transition: 0.2s; }
 .mini-league:hover { border-color: var(--accent-neon); background: rgba(57, 255, 20, 0.05); }
 .mini-league-name { font-size: 0.9rem; font-weight: 600; }
 
 /* Abajo: Noticias */
-.panel-bottom { 
-    grid-column: 1 / -1; grid-row: 2; display: flex; align-items: center; flex-direction: row; padding: 0 1.5rem; gap: 2rem;
-}
+.panel-bottom { grid-column: 1 / -1; grid-row: 2; display: flex; align-items: center; flex-direction: row; padding: 0 1.5rem; gap: 2rem; }
 .news-ticker { display: flex; gap: 3rem; overflow: hidden; white-space: nowrap; width: 100%; color: var(--text-main); font-size: 0.95rem; }
 .news-item span { color: var(--accent-neon); font-weight: bold; margin-right: 8px; }
 
@@ -145,33 +123,84 @@ body {
 .btn-submit { background: var(--accent-neon); color: #0a0a0a; border: none; border-radius: 8px; padding: 14px; font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: 0.2s; width: 100%;}
 .btn-submit:hover { background-color: #32e011; transform: translateY(-2px); }
 
-/* ── PASO 5: VISTA DE LIGA DETALLADA ── */
-.liga-header {
-    display: flex; align-items: center; gap: 1.5rem; padding-bottom: 1.5rem; margin-bottom: 2rem;
-    background: linear-gradient(90deg, rgba(255,255,255,0.05) 0%, transparent 100%);
-    padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-glass);
-}
+/* VISTA DE LIGA DETALLADA */
+.liga-header { display: flex; align-items: center; gap: 1.5rem; padding-bottom: 1.5rem; margin-bottom: 2rem; background: linear-gradient(90deg, rgba(255,255,255,0.05) 0%, transparent 100%); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-glass); }
 .liga-flag-large { font-size: 3.5rem; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5)); }
 .liga-title-main { font-family: var(--font-heading); font-size: 2.5rem; color: var(--text-main); text-transform: uppercase; line-height: 1.1; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 .liga-content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
 
-/* Tabla de Posiciones */
 .table-responsive { width: 100%; overflow-x: auto; }
 .standings-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem; }
 .standings-table th { padding: 12px 10px; color: var(--text-muted); border-bottom: 1px solid var(--border-glass); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 0.05em; }
 .standings-table td { padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-.standings-table tbody tr { transition: background-color 0.2s ease; }
-.standings-table tbody tr:hover { background-color: rgba(57, 255, 20, 0.08); cursor: pointer; }
+.standings-table tbody tr { transition: background-color 0.2s ease; cursor: pointer; }
+.standings-table tbody tr:hover { background-color: rgba(57, 255, 20, 0.08); }
 .col-pos { width: 40px; font-weight: bold; color: var(--text-muted); }
 .col-team { font-weight: 600; display: flex; align-items: center; gap: 8px; }
 .col-pts { font-weight: 800; color: var(--accent-neon); }
 .team-shield { width: 24px; height: 24px; background: rgba(255,255,255,0.1); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.6rem; border: 1px solid rgba(255,255,255,0.2); }
 
-/* Lista de Partidos */
 .match-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-glass); }
 .match-item:last-child { border-bottom: none; }
 .match-teams { display: flex; flex-direction: column; gap: 4px; font-size: 0.95rem; font-weight: 600; }
 .match-date { font-size: 0.75rem; color: var(--bg-main); background: var(--accent-neon); padding: 4px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
+
+/* ── PASO 6: VISTA DE EQUIPO Y ALINEACIÓN 3D ── */
+.equipo-header {
+    display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem;
+    background: linear-gradient(90deg, rgba(57, 255, 20, 0.1) 0%, transparent 100%);
+    padding: 1.5rem; border-radius: 12px; border: 1px solid var(--accent-neon);
+}
+.equipo-title { font-family: var(--font-heading); font-size: 2.5rem; color: var(--text-main); text-transform: uppercase; }
+.equipo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
+
+/* Plantilla Lista */
+.roster-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
+.roster-item { 
+    display: flex; justify-content: space-between; align-items: center; padding: 12px; 
+    background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass); border-radius: 8px; 
+}
+.player-num { font-family: var(--font-heading); font-weight: 800; font-size: 1.2rem; color: var(--accent-neon); width: 35px; }
+.player-name { flex: 1; font-weight: 600; font-size: 1rem; }
+.player-pos { font-size: 0.8rem; font-weight: bold; padding: 2px 8px; background: rgba(255,255,255,0.1); border-radius: 4px; text-transform: uppercase; }
+
+/* Cancha 3D Vertical */
+.tactical-board { display: flex; justify-content: center; align-items: center; padding: 2rem 0; }
+.pitch-vertical {
+    width: 320px; height: 480px;
+    background: repeating-linear-gradient(0deg, var(--pitch-dark), var(--pitch-dark) 10%, var(--pitch-light) 10%, var(--pitch-light) 20%);
+    transform: rotateX(45deg); border: 2px solid rgba(255, 255, 255, 0.7); border-radius: 6px; position: relative;
+    box-shadow: 0 40px 60px rgba(0,0,0,0.9), inset 0 0 30px rgba(0,0,0,0.5); transform-style: preserve-3d;
+}
+.pitch-vertical::before { content: ''; position: absolute; top: 50%; width: 100%; height: 2px; background: rgba(255, 255, 255, 0.7); transform: translateY(-50%); }
+.pitch-vertical::after { content: ''; position: absolute; top: 50%; left: 50%; width: 80px; height: 80px; border: 2px solid rgba(255, 255, 255, 0.7); border-radius: 50%; transform: translate(-50%, -50%); }
+.area-top-v, .area-bottom-v { position: absolute; left: 50%; width: 50%; height: 16%; border: 2px solid rgba(255, 255, 255, 0.7); transform: translateX(-50%); }
+.area-top-v { top: 0; border-top: none; }
+.area-bottom-v { bottom: 0; border-bottom: none; }
+
+/* Fichas de Jugadores en 3D */
+.player-token {
+    position: absolute; width: 30px; height: 30px; background: var(--text-main); color: #000;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-heading); font-weight: 800; font-size: 14px;
+    /* TranslateZ los levanta del piso. RotateX contrarresta la inclinación de la cancha */
+    transform: translate(-50%, -50%) translateZ(25px) rotateX(-45deg);
+    box-shadow: 0 15px 15px rgba(0,0,0,0.8); border: 2px solid var(--accent-neon); transition: 0.3s; cursor: pointer;
+}
+.player-token:hover { background: var(--accent-neon); transform: translate(-50%, -50%) translateZ(35px) rotateX(-45deg) scale(1.2); box-shadow: 0 25px 20px rgba(0,0,0,0.9); }
+
+/* Posiciones Tácticas 4-3-3 */
+.pos-gk  { bottom: 5%; left: 50%; }
+.pos-df1 { bottom: 22%; left: 15%; }
+.pos-df2 { bottom: 18%; left: 38%; }
+.pos-df3 { bottom: 18%; left: 62%; }
+.pos-df4 { bottom: 22%; left: 85%; }
+.pos-md1 { bottom: 42%; left: 25%; }
+.pos-md2 { bottom: 35%; left: 50%; }
+.pos-md3 { bottom: 42%; left: 75%; }
+.pos-fw1 { top: 25%; left: 25%; }
+.pos-fw2 { top: 15%; left: 50%; }
+.pos-fw3 { top: 25%; left: 75%; }
 
 /* Responsive General */
 @media (max-width: 1024px) {
@@ -180,5 +209,5 @@ body {
     .panel-left { grid-column: 1; grid-row: 2; }
     .panel-right { grid-column: 1; grid-row: 3; }
     .panel-bottom { grid-column: 1; grid-row: 4; flex-direction: column; text-align: center; padding: 1rem; }
-    .liga-content-grid { grid-template-columns: 1fr; }
+    .liga-content-grid, .equipo-grid { grid-template-columns: 1fr; }
 }
