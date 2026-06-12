@@ -1,4 +1,3 @@
-// js/auth.js - Auth Manager
 const Auth = (() => {
     const KEY = 'fulbo_session';
 
