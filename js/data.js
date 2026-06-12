@@ -1,5 +1,3 @@
-// js/data.js - Mock Database
-
 const LIGAS = {
     europa_top5: {
         nombre: "Europa Top 5",
@@ -21,8 +19,8 @@ const LIGAS = {
     copas_inglesas: {
         nombre: "Copas Inglesas",
         competiciones: [
-            { id: "efl_cup",    nombre: "EFL Cup (Carabao Cup)", pais: "Inglaterra", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", badge_color: "#00a650" },
-            { id: "fa_cup",     nombre: "FA Cup",                pais: "Inglaterra", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", badge_color: "#d4af37" }
+            { id: "efl_cup",    nombre: "EFL Cup",          pais: "Inglaterra", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", badge_color: "#00a650" },
+            { id: "fa_cup",     nombre: "FA Cup",           pais: "Inglaterra", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", badge_color: "#d4af37" }
         ]
     },
     uefa: {
@@ -52,7 +50,7 @@ const LIGAS = {
         nombre: "Argentina",
         competiciones: [
             { id: "liga_prof",    nombre: "Liga Profesional", pais: "Argentina", flag: "🇦🇷", badge_color: "#74acdf" },
-            { id: "copa_arg",     nombre: "Copa Argentina",   pais: "Argentina", flag: "🇦🇷", badge_color: "#f5f5f5" }
+            { id: "copa_arg",     nombre: "Copa Argentina",   pais: "Argentina", flag: "🇦🇷", badge_color: "#555555" }
         ]
     },
     brasil: {
@@ -62,21 +60,3 @@ const LIGAS = {
         ]
     }
 };
-
-// Equipos Mock distribuidos en distintas ligas
-const EQUIPOS_DB = [
-    { id: "mci", nombre: "Manchester City", liga_id: "premier" },
-    { id: "ars", nombre: "Arsenal", liga_id: "premier" },
-    { id: "rma", nombre: "Real Madrid", liga_id: "laliga" },
-    { id: "bay", nombre: "Bayern Munich", liga_id: "bundesliga" },
-    { id: "psg", nombre: "PSG", liga_id: "ligue1" },
-    { id: "boc", nombre: "Boca Juniors", liga_id: "liga_prof" },
-    { id: "fla", nombre: "Flamengo", liga_id: "brasileirao" }
-];
-
-// Partidos Mock con referencia a competiciones
-const PARTIDOS_DB = [
-    { id: "match1", local: "mci", visitante: "ars", competicion_id: "premier", fecha: "2026-06-15T15:00:00Z" },
-    { id: "match2", local: "rma", visitante: "bay", competicion_id: "champions", fecha: "2026-06-16T20:00:00Z" },
-    { id: "match3", local: "boc", visitante: "fla", competicion_id: "libertadores", fecha: "2026-06-18T21:30:00Z" }
-];
