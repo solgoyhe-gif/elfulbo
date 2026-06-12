@@ -3,7 +3,7 @@ const App = (() => {
     const appContainer = document.getElementById('app');
 
     const renderNavbar = (activeHash) => {
-        const isLigasActive = activeHash === '#/ligas' || activeHash.includes('#/liga?id=');
+        const isLigasActive = activeHash === '#/ligas' || activeHash.includes('#/liga?id=') || activeHash.includes('#/equipo?id=');
         
         return `
             <nav class="navbar">
@@ -18,7 +18,6 @@ const App = (() => {
         `;
     };
 
-    // EL DASHBOARD DE INICIO (El que se había roto, ahora restaurado)
     const renderHome = () => {
         let miniLigasHtml = '';
         if (typeof LIGAS !== 'undefined') {
@@ -36,34 +35,21 @@ const App = (() => {
         appContainer.innerHTML = `
             ${renderNavbar('#/home')}
             <main class="dashboard-container fade-in">
-                
                 <section class="glass-panel panel-left">
                     <h3 class="panel-title">📊 Stats en Vivo</h3>
-                    
                     <div class="stat-box">
                         <div class="stat-header"><span>Posesión</span></div>
-                        <div class="stat-bar">
-                            <div class="stat-fill-local" style="width: 60%;"></div>
-                            <div class="stat-fill-visita" style="width: 40%;"></div>
-                        </div>
+                        <div class="stat-bar"><div class="stat-fill-local" style="width: 60%;"></div><div class="stat-fill-visita" style="width: 40%;"></div></div>
                         <div class="stat-values"><span>60%</span><span style="color:var(--accent-neon)">40%</span></div>
                     </div>
-
                     <div class="stat-box">
                         <div class="stat-header"><span>Tiros a Puerta</span></div>
-                        <div class="stat-bar">
-                            <div class="stat-fill-local" style="width: 75%;"></div>
-                            <div class="stat-fill-visita" style="width: 25%;"></div>
-                        </div>
+                        <div class="stat-bar"><div class="stat-fill-local" style="width: 75%;"></div><div class="stat-fill-visita" style="width: 25%;"></div></div>
                         <div class="stat-values"><span>12</span><span style="color:var(--accent-neon)">4</span></div>
                     </div>
-
                     <div class="stat-box">
                         <div class="stat-header"><span>Faltas</span></div>
-                        <div class="stat-bar">
-                            <div class="stat-fill-local" style="width: 45%;"></div>
-                            <div class="stat-fill-visita" style="width: 55%;"></div>
-                        </div>
+                        <div class="stat-bar"><div class="stat-fill-local" style="width: 45%;"></div><div class="stat-fill-visita" style="width: 55%;"></div></div>
                         <div class="stat-values"><span>9</span><span style="color:var(--accent-neon)">11</span></div>
                     </div>
                 </section>
@@ -86,17 +72,15 @@ const App = (() => {
                 <section class="glass-panel panel-bottom">
                     <h3 class="panel-title" style="margin-bottom:0; border:none;">🚨 URGENTE</h3>
                     <div class="news-ticker">
-                        <span class="news-item"><span>MERCADO:</span> Mbappé confirma su fichaje por el Real Madrid.</span>
+                        <span class="news-item"><span>MERCADO:</span> Fichaje bomba confirmado en la liga inglesa.</span>
                         <span class="news-item"><span>LESIÓN:</span> De Bruyne fuera por 3 semanas.</span>
                         <span class="news-item"><span>CHAMPIONS:</span> Sorteo de cuartos de final este viernes.</span>
-                        <span class="news-item"><span>LIBERTADORES:</span> Boca y River lideran sus grupos.</span>
                     </div>
                 </section>
             </main>
         `;
     };
 
-    // EL LISTADO GLOBAL DE LIGAS
     const renderLigas = () => {
         let html = `
             ${renderNavbar('#/ligas')}
@@ -126,7 +110,6 @@ const App = (() => {
         appContainer.innerHTML = html;
     };
 
-    // VISTA DETALLADA DE LA LIGA (PASO 5)
     const renderLigaDetalle = (ligaId) => {
         let ligaData = null;
         for (const cat in LIGAS) {
@@ -144,10 +127,13 @@ const App = (() => {
         for(let i = 1; i <= 8; i++) {
             const pts = 30 - (i * 3) + Math.floor(Math.random() * 3);
             const pg = Math.floor(pts / 3);
+            const nombreEquipo = mockNombres[i-1] + ' ' + ligaData.pais.substring(0,3);
+            
+            // AHORA LAS FILAS TIENEN ONCLICK PARA IR AL EQUIPO
             tablaHtml += `
-                <tr>
+                <tr onclick="window.location.hash='#/equipo?id=${encodeURIComponent(nombreEquipo)}'">
                     <td class="col-pos">${i}</td>
-                    <td class="col-team"><span class="team-shield">${ligaData.nombre.charAt(0)}</span> ${mockNombres[i-1]} ${ligaData.pais.substring(0,3)}</td>
+                    <td class="col-team"><span class="team-shield">${ligaData.nombre.charAt(0)}</span> ${nombreEquipo}</td>
                     <td>10</td>
                     <td>${pg}</td>
                     <td>${10 - pg - Math.floor(Math.random()*2)}</td>
@@ -175,20 +161,8 @@ const App = (() => {
                         <h3 class="panel-title" style="color: ${ligaData.badge_color};">Tabla de Posiciones</h3>
                         <div class="table-responsive">
                             <table class="standings-table">
-                                <thead>
-                                    <tr>
-                                        <th class="col-pos">#</th>
-                                        <th>Equipo</th>
-                                        <th>PJ</th>
-                                        <th>PG</th>
-                                        <th>PE</th>
-                                        <th>PP</th>
-                                        <th class="col-pts">PTS</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${tablaHtml}
-                                </tbody>
+                                <thead><tr><th class="col-pos">#</th><th>Equipo</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th class="col-pts">PTS</th></tr></thead>
+                                <tbody>${tablaHtml}</tbody>
                             </table>
                         </div>
                     </div>
@@ -196,17 +170,88 @@ const App = (() => {
                     <div class="glass-panel" style="padding: 1.5rem; height: fit-content;">
                         <h3 class="panel-title" style="color: ${ligaData.badge_color};">Próxima Fecha</h3>
                         <div class="match-list">
-                            <div class="match-item">
-                                <div class="match-teams"><span>${mockNombres[0]}</span><span>${mockNombres[3]}</span></div>
-                                <span class="match-date">SÁB 15:00</span>
-                            </div>
-                            <div class="match-item">
-                                <div class="match-teams"><span>${mockNombres[1]}</span><span>${mockNombres[4]}</span></div>
-                                <span class="match-date">SÁB 17:30</span>
-                            </div>
-                            <div class="match-item">
-                                <div class="match-teams"><span>${mockNombres[2]}</span><span>${mockNombres[5]}</span></div>
-                                <span class="match-date">DOM 14:00</span>
+                            <div class="match-item"><div class="match-teams"><span>${mockNombres[0]}</span><span>${mockNombres[3]}</span></div><span class="match-date">SÁB 15:00</span></div>
+                            <div class="match-item"><div class="match-teams"><span>${mockNombres[1]}</span><span>${mockNombres[4]}</span></div><span class="match-date">SÁB 17:30</span></div>
+                            <div class="match-item"><div class="match-teams"><span>${mockNombres[2]}</span><span>${mockNombres[5]}</span></div><span class="match-date">DOM 14:00</span></div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        `;
+    };
+
+    // NUEVO: PASO 6 - Perfil de Equipo y Pizarrón Táctico
+    const renderEquipoDetalle = (equipoId) => {
+        const decodedName = decodeURIComponent(equipoId || 'Equipo Desconocido');
+        
+        // Mock de plantilla de jugadores
+        const jugadores = [
+            { num: 1, nombre: 'J. Martínez', pos: 'POR' },
+            { num: 4, nombre: 'A. Davies', pos: 'DEF' },
+            { num: 3, nombre: 'M. Silva', pos: 'DEF' },
+            { num: 2, nombre: 'L. Hernández', pos: 'DEF' },
+            { num: 5, nombre: 'R. Varane', pos: 'DEF' },
+            { num: 8, nombre: 'T. Kroos', pos: 'MED' },
+            { num: 6, nombre: 'N. Kanté', pos: 'MED' },
+            { num: 10, nombre: 'L. Messi', pos: 'MED' },
+            { num: 7, nombre: 'K. Mbappé', pos: 'DEL' },
+            { num: 9, nombre: 'E. Haaland', pos: 'DEL' },
+            { num: 11, nombre: 'V. Júnior', pos: 'DEL' },
+        ];
+
+        let rosterHtml = '';
+        jugadores.forEach(j => {
+            rosterHtml += `
+                <div class="roster-item">
+                    <span class="player-num">${j.num}</span>
+                    <span class="player-name">${j.nombre}</span>
+                    <span class="player-pos">${j.pos}</span>
+                </div>
+            `;
+        });
+
+        appContainer.innerHTML = `
+            ${renderNavbar('#/equipo?id=' + equipoId)}
+            <main class="page-container fade-in">
+                <a href="javascript:history.back()" style="color: var(--text-muted); text-decoration: none; display: inline-block; margin-bottom: 1rem; font-size: 0.9rem;">← Volver a la Tabla</a>
+                
+                <div class="equipo-header">
+                    <div class="team-shield" style="width: 70px; height: 70px; font-size: 2rem;">${decodedName.charAt(0)}</div>
+                    <div>
+                        <h1 class="equipo-title">${decodedName}</h1>
+                        <span style="color: var(--text-muted); font-weight: 600;">ANÁLISIS TÁCTICO & PLANTILLA</span>
+                    </div>
+                </div>
+
+                <div class="equipo-grid">
+                    <div class="glass-panel" style="padding: 1.5rem;">
+                        <h3 class="panel-title">Lista de Convocados</h3>
+                        <div class="roster-list">
+                            ${rosterHtml}
+                        </div>
+                    </div>
+
+                    <div class="glass-panel" style="padding: 1.5rem;">
+                        <h3 class="panel-title">Formación 4-3-3</h3>
+                        <div class="pitch-perspective tactical-board">
+                            <div class="pitch-vertical">
+                                <div class="area-top-v"></div>
+                                <div class="area-bottom-v"></div>
+                                
+                                <div class="player-token pos-gk" title="J. Martínez">1</div>
+                                
+                                <div class="player-token pos-df1" title="A. Davies">4</div>
+                                <div class="player-token pos-df2" title="M. Silva">3</div>
+                                <div class="player-token pos-df3" title="L. Hernández">2</div>
+                                <div class="player-token pos-df4" title="R. Varane">5</div>
+                                
+                                <div class="player-token pos-md1" title="T. Kroos">8</div>
+                                <div class="player-token pos-md2" title="N. Kanté">6</div>
+                                <div class="player-token pos-md3" title="L. Messi">10</div>
+                                
+                                <div class="player-token pos-fw1" title="K. Mbappé">7</div>
+                                <div class="player-token pos-fw2" title="E. Haaland">9</div>
+                                <div class="player-token pos-fw3" title="V. Júnior">11</div>
                             </div>
                         </div>
                     </div>
@@ -258,7 +303,8 @@ const App = (() => {
             case '#/login': Auth.isAuthenticated() ? window.location.hash = '#/home' : renderLogin(); break;
             case '#/home': renderHome(); break;
             case '#/ligas': renderLigas(); break;
-            case '#/liga': renderLigaDetalle(url.searchParams.get('id')); break; 
+            case '#/liga': renderLigaDetalle(url.searchParams.get('id')); break;
+            case '#/equipo': renderEquipoDetalle(url.searchParams.get('id')); break; // INTERCEPCIÓN PASO 6
             default:
                 appContainer.innerHTML = `${renderNavbar(path)}<main class="page-container fade-in" style="text-align: center; padding-top: 15%;"><h2 class="section-title" style="border:none; color: var(--accent-neon);">Construyendo módulo...</h2></main>`;
                 break;
