@@ -2,7 +2,7 @@ const App = (() => {
     const appContainer = document.getElementById('app');
 
     const renderNavbar = (activeHash) => `
-        <nav class="navbar fade-in">
+        <nav class="navbar">
             <a href="#/home" class="nav-link ${activeHash === '#/home' ? 'active' : ''}">Inicio</a>
             <a href="#/ligas" class="nav-link ${activeHash === '#/ligas' ? 'active' : ''}">Ligas</a>
             <a href="#/h2h" class="nav-link ${activeHash === '#/h2h' ? 'active' : ''}">H2H</a>
@@ -25,42 +25,71 @@ const App = (() => {
         `;
     };
 
-    const renderLogin = () => {
-        appContainer.innerHTML = `
-            <main class="home-view fade-in" style="flex-direction: column; gap: 2rem;">
-                <h1 class="hero-title" style="position: relative; transform: none; top: auto; left: auto;">LOGIN</h1>
-                <button onclick="Auth.login('Manager')" style="padding: 10px 30px; background: var(--accent-neon); border: none; font-weight: bold; cursor: pointer; border-radius: 4px;">ENTRAR</button>
-            </main>
+    const renderLigas = () => {
+        let html = `
+            ${renderNavbar('#/ligas')}
+            <main class="page-container fade-in">
+                <h2 class="section-title">🏆 Competiciones Disponibles</h2>
         `;
+
+        // Iterar sobre el objeto LIGAS de data.js
+        for (const key in LIGAS) {
+            const categoria = LIGAS[key];
+            html += `
+                <div class="categoria-section">
+                    <h3 class="category-title">${categoria.nombre}</h3>
+                    <div class="leagues-grid">
+            `;
+
+            categoria.competiciones.forEach(liga => {
+                html += `
+                        <div class="glass-card league-card" onclick="window.location.hash='#/liga?id=${liga.id}'">
+                            <div class="league-info">
+                                <span class="league-flag">${liga.flag}</span>
+                                <div>
+                                    <div class="league-name">${liga.nombre}</div>
+                                    <div class="league-country">${liga.pais}</div>
+                                </div>
+                            </div>
+                            <span class="badge" style="background-color: ${liga.badge_color};">${liga.id.toUpperCase().substring(0, 5)}</span>
+                        </div>
+                `;
+            });
+
+            html += `</div></div>`;
+        }
+
+        html += `</main>`;
+        appContainer.innerHTML = html;
     };
 
     const router = () => {
         const hash = window.location.hash || '#/home';
-        const url = new URL(`http://dummy.com${hash.replace('#', '')}`);
-        const path = '#' + url.pathname;
-
-        if (!Auth.isAuthenticated() && path !== '#/login') {
+        
+        // Simulación auth
+        if (!Auth.isAuthenticated() && hash !== '#/login') {
             window.location.hash = '#/login';
             return;
         }
 
-        switch (path) {
-            case '#/login':
-                renderLogin();
-                break;
-            case '#/home':
-                renderHome();
-                break;
-            default:
-                appContainer.innerHTML = `${renderNavbar(path)}<main class="home-view fade-in" style="align-items: flex-start; padding-top: 100px;"><h2 style="font-family: var(--font-heading); color: var(--accent-neon);">Construyendo ${path}...</h2></main>`;
-                break;
+        if (hash === '#/home') {
+            renderHome();
+        } else if (hash === '#/ligas') {
+            renderLigas();
+        } else {
+            // Placeholder para rutas no implementadas aún
+            appContainer.innerHTML = `
+                ${renderNavbar(hash)}
+                <main class="page-container fade-in" style="text-align: center; padding-top: 200px;">
+                    <h2 class="section-title" style="border:none; color: var(--accent-neon);">Construyendo vista...</h2>
+                </main>
+            `;
         }
     };
 
     const init = () => {
         window.addEventListener('hashchange', router);
         window.addEventListener('load', router);
-        window.Auth = Auth; 
     };
 
     return { init };
