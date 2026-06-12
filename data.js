@@ -19,7 +19,7 @@ const LIGAS = {
     copas_inglesas: {
         nombre: "Copas Inglesas",
         competiciones: [
-            { id: "efl_cup",    nombre: "EFL Cup",          pais: "Inglaterra", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", badge_color: "#00a650" },
+            { id: "efl_cup",    nombre: "Carabao Cup",      pais: "Inglaterra", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", badge_color: "#00a650" },
             { id: "fa_cup",     nombre: "FA Cup",           pais: "Inglaterra", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", badge_color: "#d4af37" }
         ]
     },
@@ -50,7 +50,7 @@ const LIGAS = {
         nombre: "Argentina",
         competiciones: [
             { id: "liga_prof",    nombre: "Liga Profesional", pais: "Argentina", flag: "🇦🇷", badge_color: "#74acdf" },
-            { id: "copa_arg",     nombre: "Copa Argentina",   pais: "Argentina", flag: "🇦🇷", badge_color: "#555555" }
+            { id: "copa_arg",     nombre: "Copa Argentina",   pais: "Argentina", flag: "🇦🇷", badge_color: "#888888" }
         ]
     },
     brasil: {
