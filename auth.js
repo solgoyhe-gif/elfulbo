@@ -1,18 +1,24 @@
+// js/auth.js
 const Auth = (() => {
     const KEY = 'fulbo_session';
 
-    // Para esta fase de desarrollo, forzamos que siempre esté autenticado
-    // Si quieres probar el login real, cambia esto a: return !!localStorage.getItem(KEY);
-    const isAuthenticated = () => true; 
+    // Comprueba si existe la sesión en localStorage
+    const isAuthenticated = () => !!localStorage.getItem(KEY);
 
-    const login = (username) => {
-        localStorage.setItem(KEY, JSON.stringify({ user: username, token: 'mock-123' }));
-        window.location.hash = '#/home';
+    // Lógica de acceso (simulada)
+    const login = (email, password) => {
+        if (email.trim() !== '' && password.trim() !== '') {
+            localStorage.setItem(KEY, JSON.stringify({ email, token: 'mock-token-777' }));
+            window.location.hash = '#/home'; // Redirige al dashboard
+            return true;
+        }
+        return false;
     };
 
+    // Lógica de cierre de sesión
     const logout = () => {
         localStorage.removeItem(KEY);
-        window.location.hash = '#/login';
+        window.location.hash = '#/login'; // Expulsa al login
     };
 
     return { isAuthenticated, login, logout };
