@@ -80,7 +80,7 @@ const App = (() => {
                     
                     <div class="auth-form-wrapper" id="form-contenedor">
                         <div class="input-container">
-                            <label>Dirección de EmailLabel>
+                            <label>Dirección de Email</label>
                             <input type="email" id="auth-email" class="glass-input" placeholder="manager@elfulbo.com" autocomplete="off">
                         </div>
                         
@@ -151,7 +151,7 @@ const App = (() => {
                 renderLigas();
                 break;
             default:
-                // Fallback dinámico para interceptar parámetros de consulta (?id=X) de los pasos siguientes
+                // Fallback dinámico
                 appContainer.innerHTML = `
                     ${renderNavbar(path)}
                     <main class="page-container fade-in" style="text-align: center; padding-top: 15%;">
