@@ -3,7 +3,6 @@ const App = (() => {
     const appContainer = document.getElementById('app');
 
     const renderNavbar = (activeHash) => {
-        // Asegura que la pestaña Ligas quede iluminada aunque estemos en un detalle
         const isLigasActive = activeHash === '#/ligas' || activeHash.includes('#/liga?id=');
         
         return `
@@ -19,6 +18,7 @@ const App = (() => {
         `;
     };
 
+    // EL DASHBOARD DE INICIO (El que se había roto, ahora restaurado)
     const renderHome = () => {
         let miniLigasHtml = '';
         if (typeof LIGAS !== 'undefined') {
@@ -36,21 +36,34 @@ const App = (() => {
         appContainer.innerHTML = `
             ${renderNavbar('#/home')}
             <main class="dashboard-container fade-in">
+                
                 <section class="glass-panel panel-left">
                     <h3 class="panel-title">📊 Stats en Vivo</h3>
+                    
                     <div class="stat-box">
                         <div class="stat-header"><span>Posesión</span></div>
-                        <div class="stat-bar"><div class="stat-fill-local" style="width: 60%;"></div><div class="stat-fill-visita" style="width: 40%;"></div></div>
+                        <div class="stat-bar">
+                            <div class="stat-fill-local" style="width: 60%;"></div>
+                            <div class="stat-fill-visita" style="width: 40%;"></div>
+                        </div>
                         <div class="stat-values"><span>60%</span><span style="color:var(--accent-neon)">40%</span></div>
                     </div>
+
                     <div class="stat-box">
                         <div class="stat-header"><span>Tiros a Puerta</span></div>
-                        <div class="stat-bar"><div class="stat-fill-local" style="width: 75%;"></div><div class="stat-fill-visita" style="width: 25%;"></div></div>
+                        <div class="stat-bar">
+                            <div class="stat-fill-local" style="width: 75%;"></div>
+                            <div class="stat-fill-visita" style="width: 25%;"></div>
+                        </div>
                         <div class="stat-values"><span>12</span><span style="color:var(--accent-neon)">4</span></div>
                     </div>
+
                     <div class="stat-box">
                         <div class="stat-header"><span>Faltas</span></div>
-                        <div class="stat-bar"><div class="stat-fill-local" style="width: 45%;"></div><div class="stat-fill-visita" style="width: 55%;"></div></div>
+                        <div class="stat-bar">
+                            <div class="stat-fill-local" style="width: 45%;"></div>
+                            <div class="stat-fill-visita" style="width: 55%;"></div>
+                        </div>
                         <div class="stat-values"><span>9</span><span style="color:var(--accent-neon)">11</span></div>
                     </div>
                 </section>
@@ -58,7 +71,10 @@ const App = (() => {
                 <section class="panel-center">
                     <div style="position:absolute; top:0; font-family:var(--font-heading); font-size:2rem; font-weight:800; letter-spacing:2px; z-index:10; text-shadow: 0 5px 15px #000;">EL FULBO</div>
                     <div class="pitch-perspective">
-                        <div class="pitch-horizontal"><div class="area-left"></div><div class="area-right"></div></div>
+                        <div class="pitch-horizontal">
+                            <div class="area-left"></div>
+                            <div class="area-right"></div>
+                        </div>
                     </div>
                 </section>
 
@@ -70,15 +86,17 @@ const App = (() => {
                 <section class="glass-panel panel-bottom">
                     <h3 class="panel-title" style="margin-bottom:0; border:none;">🚨 URGENTE</h3>
                     <div class="news-ticker">
-                        <span class="news-item"><span>MERCADO:</span> Fichaje histórico confirmado para la próxima temporada.</span>
-                        <span class="news-item"><span>LESIÓN:</span> Estrella del líder fuera por 3 semanas.</span>
-                        <span class="news-item"><span>SORTEO:</span> Definidos los cruces de cuartos de final.</span>
+                        <span class="news-item"><span>MERCADO:</span> Mbappé confirma su fichaje por el Real Madrid.</span>
+                        <span class="news-item"><span>LESIÓN:</span> De Bruyne fuera por 3 semanas.</span>
+                        <span class="news-item"><span>CHAMPIONS:</span> Sorteo de cuartos de final este viernes.</span>
+                        <span class="news-item"><span>LIBERTADORES:</span> Boca y River lideran sus grupos.</span>
                     </div>
                 </section>
             </main>
         `;
     };
 
+    // EL LISTADO GLOBAL DE LIGAS
     const renderLigas = () => {
         let html = `
             ${renderNavbar('#/ligas')}
@@ -91,7 +109,13 @@ const App = (() => {
             categoria.competiciones.forEach(liga => {
                 html += `
                     <div class="glass-card league-card" onclick="window.location.hash='#/liga?id=${liga.id}'">
-                        <div class="league-info"><span class="league-flag">${liga.flag}</span><div><div class="league-name">${liga.nombre}</div><div class="league-country">${liga.pais}</div></div></div>
+                        <div class="league-info">
+                            <span class="league-flag">${liga.flag}</span>
+                            <div>
+                                <div class="league-name">${liga.nombre}</div>
+                                <div class="league-country">${liga.pais}</div>
+                            </div>
+                        </div>
                         <span class="badge-liga" style="background-color: ${liga.badge_color};">${liga.id.substring(0, 5)}</span>
                     </div>
                 `;
@@ -102,9 +126,8 @@ const App = (() => {
         appContainer.innerHTML = html;
     };
 
-    // NUEVO: PASO 5 - Renderizado de Detalles de Liga
+    // VISTA DETALLADA DE LA LIGA (PASO 5)
     const renderLigaDetalle = (ligaId) => {
-        // Buscar los datos de la liga en el objeto global
         let ligaData = null;
         for (const cat in LIGAS) {
             const found = LIGAS[cat].competiciones.find(l => l.id === ligaId);
@@ -116,7 +139,6 @@ const App = (() => {
             return;
         }
 
-        // Mock de Tabla de Posiciones Generada Dinámicamente
         const mockNombres = ['Atlético', 'Sporting', 'United', 'Real', 'Deportivo', 'City', 'Rovers', 'Wanderers', 'FC', 'Club'];
         let tablaHtml = '';
         for(let i = 1; i <= 8; i++) {
@@ -186,10 +208,6 @@ const App = (() => {
                                 <div class="match-teams"><span>${mockNombres[2]}</span><span>${mockNombres[5]}</span></div>
                                 <span class="match-date">DOM 14:00</span>
                             </div>
-                            <div class="match-item">
-                                <div class="match-teams"><span>${mockNombres[6]}</span><span>${mockNombres[7]}</span></div>
-                                <span class="match-date">DOM 20:00</span>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -240,7 +258,7 @@ const App = (() => {
             case '#/login': Auth.isAuthenticated() ? window.location.hash = '#/home' : renderLogin(); break;
             case '#/home': renderHome(); break;
             case '#/ligas': renderLigas(); break;
-            case '#/liga': renderLigaDetalle(url.searchParams.get('id')); break; // INTERCEPCIÓN DEL PASO 5
+            case '#/liga': renderLigaDetalle(url.searchParams.get('id')); break; 
             default:
                 appContainer.innerHTML = `${renderNavbar(path)}<main class="page-container fade-in" style="text-align: center; padding-top: 15%;"><h2 class="section-title" style="border:none; color: var(--accent-neon);">Construyendo módulo...</h2></main>`;
                 break;
