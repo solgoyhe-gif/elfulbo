@@ -1,9 +1,6 @@
-// js/app.js - SPA Router & Global State
-
 const App = (() => {
     const appContainer = document.getElementById('app');
 
-    // Módulo Navbar (Reutilizable)
     const renderNavbar = (activeHash) => `
         <nav class="navbar fade-in">
             <a href="#/home" class="nav-link ${activeHash === '#/home' ? 'active' : ''}">Inicio</a>
@@ -13,7 +10,6 @@ const App = (() => {
         </nav>
     `;
 
-    // Vista HOME (PASO 2)
     const renderHome = () => {
         appContainer.innerHTML = `
             ${renderNavbar('#/home')}
@@ -29,7 +25,6 @@ const App = (() => {
         `;
     };
 
-    // Vista Login Placeholder
     const renderLogin = () => {
         appContainer.innerHTML = `
             <main class="home-view fade-in" style="flex-direction: column; gap: 2rem;">
@@ -39,13 +34,11 @@ const App = (() => {
         `;
     };
 
-    // Router Logic
     const router = () => {
         const hash = window.location.hash || '#/home';
         const url = new URL(`http://dummy.com${hash.replace('#', '')}`);
         const path = '#' + url.pathname;
 
-        // Protección de rutas
         if (!Auth.isAuthenticated() && path !== '#/login') {
             window.location.hash = '#/login';
             return;
@@ -59,18 +52,14 @@ const App = (() => {
                 renderHome();
                 break;
             default:
-                // Fallback temporal para las demás rutas
                 appContainer.innerHTML = `${renderNavbar(path)}<main class="home-view fade-in" style="align-items: flex-start; padding-top: 100px;"><h2 style="font-family: var(--font-heading); color: var(--accent-neon);">Construyendo ${path}...</h2></main>`;
                 break;
         }
     };
 
-    // Listeners
     const init = () => {
         window.addEventListener('hashchange', router);
         window.addEventListener('load', router);
-        
-        // Exponer Auth globalmente para el placeholder de login
         window.Auth = Auth; 
     };
 
