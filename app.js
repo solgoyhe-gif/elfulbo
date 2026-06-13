@@ -401,6 +401,77 @@ const App = (() => {
         `;
     };
 
+    // NUEVO: PASO 8 - MÓDULO INFO (PERFIL DEL MÁNAGER)
+    const renderInfo = () => {
+        appContainer.innerHTML = `
+            ${renderNavbar('#/info')}
+            <main class="page-container fade-in">
+                <div class="profile-header">
+                    <div class="profile-avatar">👤</div>
+                    <div class="profile-email">manager@elfulbo.com</div>
+                    <div class="profile-role">Pro Manager Nivel 42</div>
+                </div>
+
+                <div class="info-grid">
+                    <div class="glass-panel" style="padding: 1.5rem;">
+                        <h3 class="panel-title">📈 Estadísticas Globales</h3>
+                        
+                        <div class="stat-box" style="margin-top: 1rem;">
+                            <div class="stat-header">
+                                <span>Partidos Dirigidos</span>
+                                <span style="color:var(--text-main); font-size: 1.2rem;">342</span>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-box" style="margin-top: 1rem;">
+                            <div class="stat-header">
+                                <span>Porcentaje de Victorias</span>
+                                <span style="color:var(--accent-neon); font-size: 1.2rem;">68.4%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-box" style="margin-top: 1rem;">
+                            <div class="stat-header">
+                                <span>Títulos Ganados</span>
+                                <span style="color:var(--text-main); font-size: 1.2rem;">14</span>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-box" style="margin-top: 1rem;">
+                            <div class="stat-header">
+                                <span>Ranking Global</span>
+                                <span style="color:var(--accent-neon); font-size: 1.2rem; font-family: var(--font-heading);">#1.402</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel" style="padding: 1.5rem;">
+                        <h3 class="panel-title">⚙️ Preferencias del Sistema</h3>
+                        
+                        <div class="settings-row">
+                            <span>Notificaciones Push</span>
+                            <div class="toggle-btn"></div>
+                        </div>
+                        
+                        <div class="settings-row">
+                            <span>Modo Rendimiento (Gráficos 3D)</span>
+                            <div class="toggle-btn"></div>
+                        </div>
+                        
+                        <div class="settings-row">
+                            <span>Idioma de la Interfaz</span>
+                            <span style="color: var(--accent-neon); font-weight: bold; cursor: pointer;">ESPAÑOL ▼</span>
+                        </div>
+                        
+                        <div class="settings-row" style="margin-top: 1rem; justify-content: center; border-bottom: none;">
+                            <button onclick="Auth.logout()" class="btn-submit" style="background: transparent; color: #ff4757; border: 1px solid #ff4757;">Cerrar Sesión Segura</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        `;
+    };
+
     // FORMULARIO DE LOGIN
     const renderLogin = () => {
         appContainer.innerHTML = `
@@ -476,6 +547,9 @@ const App = (() => {
                 break;
             case '#/h2h': 
                 renderH2H(); 
+                break;
+            case '#/info': 
+                renderInfo(); // INTERCEPCIÓN PASO 8
                 break;
             default:
                 appContainer.innerHTML = `
