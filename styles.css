@@ -243,30 +243,101 @@ body {
     .h2h-header-panel { flex-direction: column; gap: 1.5rem; }
     .h2h-vs { transform: rotate(90deg); padding: 5px 15px; }
 }
-/* ── PASO 8: MÓDULO INFO (PERFIL DEL MÁNAGER) ── */
-.profile-header {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 3rem 2rem; margin-bottom: 2rem; border-radius: 12px;
-    background: radial-gradient(circle at center, rgba(57, 255, 20, 0.1) 0%, transparent 70%);
-    border: 1px solid var(--border-glass); text-align: center;
-}
-.profile-avatar {
-    width: 100px; height: 100px; border-radius: 50%; background: var(--bg-surface);
-    border: 3px solid var(--accent-neon); display: flex; align-items: center; justify-content: center;
-    font-size: 3.5rem; margin-bottom: 1rem; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-}
-.profile-email { font-family: var(--font-heading); font-size: 2rem; color: var(--text-main); font-weight: 700; margin-bottom: 0.5rem; }
-.profile-role { 
-    font-size: 0.9rem; color: var(--bg-main); background: var(--accent-neon); 
-    padding: 4px 12px; border-radius: 20px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; 
+/* ── PASO 8 CORREGIDO: MÓDULO INFO (NOTICIAS Y NOVEDADES) ── */
+.news-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
 }
 
-.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
-.settings-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border-glass); }
-.settings-row:last-child { border-bottom: none; }
-.toggle-btn { width: 44px; height: 24px; background: var(--accent-neon); border-radius: 12px; position: relative; cursor: pointer; }
-.toggle-btn::after { content: ''; position: absolute; right: 2px; top: 2px; width: 20px; height: 20px; background: var(--bg-main); border-radius: 50%; }
+.news-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-glass);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+    display: flex;
+    flex-direction: column;
+}
 
-@media (max-width: 768px) {
-    .info-grid { grid-template-columns: 1fr; }
+.news-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent-neon);
+}
+
+.news-image-placeholder {
+    width: 100%;
+    height: 160px;
+    background: linear-gradient(45deg, var(--bg-surface), #2a2a2c);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    border-bottom: 1px solid var(--border-glass);
+}
+
+.news-content {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.news-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.news-tag {
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+}
+
+.tag-mercado { background: rgba(57, 255, 20, 0.2); color: var(--accent-neon); border: 1px solid var(--accent-neon); }
+.tag-lesion { background: rgba(255, 71, 87, 0.2); color: #ff4757; border: 1px solid #ff4757; }
+.tag-declaracion { background: rgba(108, 171, 221, 0.2); color: #6CABDD; border: 1px solid #6CABDD; }
+
+.news-date {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.news-title {
+    font-family: var(--font-heading);
+    font-size: 1.4rem;
+    color: var(--text-main);
+    margin-bottom: 0.8rem;
+    line-height: 1.2;
+}
+
+.news-excerpt {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+    flex: 1;
+}
+
+.news-read-more {
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent-neon);
+    text-decoration: none;
+    text-transform: uppercase;
+    align-self: flex-start;
+    transition: color 0.2s;
+}
+
+.news-read-more:hover {
+    color: #fff;
 }
