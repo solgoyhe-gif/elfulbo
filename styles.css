@@ -211,3 +211,35 @@ body {
     .panel-bottom { grid-column: 1; grid-row: 4; flex-direction: column; text-align: center; padding: 1rem; }
     .liga-content-grid, .equipo-grid { grid-template-columns: 1fr; }
 }
+/* ── PASO 7: MÓDULO HEAD-TO-HEAD (H2H) ── */
+.h2h-header-panel {
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 2rem; margin-bottom: 2rem; background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(57, 255, 20, 0.05) 100%);
+}
+.h2h-team { display: flex; flex-direction: column; align-items: center; gap: 10px; flex: 1; }
+.h2h-team .team-shield { width: 90px; height: 90px; font-size: 3rem; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+.h2h-team-name { font-family: var(--font-heading); font-size: 2rem; text-transform: uppercase; font-weight: 800; text-align: center;}
+.h2h-vs { 
+    font-family: var(--font-heading); font-size: 3rem; font-weight: 800; color: var(--bg-main);
+    background: var(--accent-neon); padding: 10px 20px; border-radius: 12px;
+    box-shadow: 0 0 30px rgba(57, 255, 20, 0.4); z-index: 10;
+}
+
+/* Barras de Comparación de Choque */
+.h2h-stats-board { display: flex; flex-direction: column; gap: 1.5rem; padding: 2rem 1.5rem; }
+.h2h-stat-row { display: flex; flex-direction: column; gap: 8px; }
+.h2h-stat-labels { display: flex; justify-content: space-between; font-weight: 700; font-size: 1.1rem; }
+.h2h-stat-labels .lbl-center { font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600;}
+
+.h2h-bar-container { 
+    display: flex; width: 100%; height: 12px; background: rgba(0,0,0,0.5); 
+    border-radius: 6px; overflow: hidden; border: 1px solid var(--border-glass);
+}
+/* Barra que crece desde el centro hacia los lados */
+.h2h-bar-left { background: var(--text-main); display: flex; justify-content: flex-end; }
+.h2h-bar-right { background: var(--accent-neon); }
+
+@media (max-width: 768px) {
+    .h2h-header-panel { flex-direction: column; gap: 1.5rem; }
+    .h2h-vs { transform: rotate(90deg); padding: 5px 15px; }
+}
