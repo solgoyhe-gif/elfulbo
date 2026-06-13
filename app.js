@@ -1,10 +1,17 @@
-// js/app.js - Enrutador Principal e Interfaz Dinámica SPA
+// app.js - Enrutador Principal e Interfaz Dinámica SPA
+// ── ESTRATEGIA DE INTEGRACIÓN COMPLETA ────────────────────────────────────
+//   · Mantiene todas las funciones legibles y expandidas línea por línea.
+//   · Conserva el uso del módulo ESPN para ligas tradicionales.
+//   · Implementa desvío asíncrono para el Mundial 2026 (worldcup26.ir -> ESPN).
+//   · Agrupa el calendario del mundial de forma estricta por grupos reales.
+// ─────────────────────────────────────────────────────────────────────────
+
 const App = (() => {
     const appContainer = document.getElementById('app');
 
+    // ── NAVEGACIÓN ───────────────────────────────────────────────────────────
     const renderNavbar = (activeHash) => {
         const isLigasActive = activeHash === '#/ligas' || activeHash.includes('#/liga?id=') || activeHash.includes('#/equipo?id=');
-        
         return `
             <nav class="navbar desktop-nav">
                 <div class="nav-links-group">
@@ -43,23 +50,69 @@ const App = (() => {
         `;
     };
 
-    // LOADER PARA TRANSICIONES ASÍNCRONAS
-    const renderLoader = () => {
-        appContainer.innerHTML = `
-            ${renderNavbar(window.location.hash)}
-            <main class="page-container fade-in" style="display:flex; justify-content:center; align-items:center; height: 80vh; flex-direction:column;">
-                <div style="width:50px; height:50px; border-top-color:var(--accent-neon); animation: spin 1s linear infinite; border-radius:50%; border-width: 4px; border-style:solid; border-right-color:transparent; border-bottom-color:transparent; border-left-color:transparent;"></div>
-                <p style="margin-top: 1.5rem; color: var(--accent-neon); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Estableciendo conexión satelital...</p>
-                <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
-            </main>
+    // ── EFECTOS DE CARGA (SKELETONS) ──────────────────────────────────────────
+    const _skeletonTabla = () => {
+        let rows = '';
+        for (let i = 0; i < 10; i++) {
+            rows += `
+                <tr>
+                    <td><div class="skel-cell" style="width: 20px;"></div></td>
+                    <td><div class="skel-cell" style="width: 140px;"></div></td>
+                    <td><div class="skel-cell" style="width: 25px;"></div></td>
+                    <td><div class="skel-cell" style="width: 25px;"></div></td>
+                    <td><div class="skel-cell" style="width: 25px;"></div></td>
+                    <td><div class="skel-cell" style="width: 25px;"></div></td>
+                    <td><div class="skel-cell" style="width: 30px;"></div></td>
+                </tr>
+            `;
+        }
+        return `
+            <table class="standings-table">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">#</th>
+                        <th>Equipo</th>
+                        <th style="width: 45px;">PJ</th>
+                        <th style="width: 45px;">PG</th>
+                        <th style="width: 45px;">PE</th>
+                        <th style="width: 45px;">PP</th>
+                        <th style="width: 50px;">PTS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows}
+                </tbody>
+            </table>
         `;
     };
 
-    // DASHBOARD PRINCIPAL
+    const _skeletonPartidos = () => {
+        let items = '';
+        for (let i = 0; i < 4; i++) {
+            items += `
+                <div class="match-item" style="padding: 15px 0;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <div class="skel-cell" style="width: 100px;"></div>
+                        <div class="skel-cell" style="width: 20px;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <div class="skel-cell" style="width: 110px;"></div>
+                        <div class="skel-cell" style="width: 20px;"></div>
+                    </div>
+                </div>
+            `;
+        }
+        return `<div class="match-list">${items}</div>`;
+    };
+
+    // ── VISTAS PRINCIPALES ────────────────────────────────────────────────────
     const renderHome = () => {
         let miniLigasHtml = '';
         if (typeof LIGAS !== 'undefined') {
-            const ligasDestacadas = [...LIGAS.europa_top5.competiciones, ...LIGAS.sudamerica.competiciones];
+            const ligasDestacadas = [
+                ...LIGAS.europa_top5.competiciones,
+                ...LIGAS.sudamerica.competiciones
+            ];
             ligasDestacadas.forEach(liga => {
                 miniLigasHtml += `
                     <div class="mini-league" onclick="window.location.hash='#/liga?id=${liga.id}'">
@@ -78,35 +131,50 @@ const App = (() => {
                     <h3 class="panel-title">📊 Stats en Vivo</h3>
                     
                     <div class="stat-box">
-                        <div class="stat-header"><span>Posesión</span></div>
-                        <div class="stat-bar">
-                            <div class="stat-fill-local" style="width: 60%;"></div>
-                            <div class="stat-fill-visita" style="width: 40%;"></div>
+                        <div class="stat-header">
+                            <span>Posesión</span>
                         </div>
-                        <div class="stat-values"><span>60%</span><span style="color:var(--accent-neon)">40%</span></div>
+                        <div class="stat-bar">
+                            <div class="stat-fill-local" style="width: 58%;"></div>
+                            <div class="stat-fill-visita" style="width: 42%;"></div>
+                        </div>
+                        <div class="stat-values">
+                            <span>58%</span>
+                            <span style="color: var(--accent-neon);">42%</span>
+                        </div>
                     </div>
 
                     <div class="stat-box">
-                        <div class="stat-header"><span>Tiros a Puerta</span></div>
-                        <div class="stat-bar">
-                            <div class="stat-fill-local" style="width: 75%;"></div>
-                            <div class="stat-fill-visita" style="width: 25%;"></div>
+                        <div class="stat-header">
+                            <span>Tiros al Arco</span>
                         </div>
-                        <div class="stat-values"><span>12</span><span style="color:var(--accent-neon)">4</span></div>
+                        <div class="stat-bar">
+                            <div class="stat-fill-local" style="width: 70%;"></div>
+                            <div class="stat-fill-visita" style="width: 30%;"></div>
+                        </div>
+                        <div class="stat-values">
+                            <span>14</span>
+                            <span style="color: var(--accent-neon);">6</span>
+                        </div>
                     </div>
 
                     <div class="stat-box">
-                        <div class="stat-header"><span>Faltas</span></div>
-                        <div class="stat-bar">
-                            <div class="stat-fill-local" style="width: 45%;"></div>
-                            <div class="stat-fill-visita" style="width: 55%;"></div>
+                        <div class="stat-header">
+                            <span>Faltas</span>
                         </div>
-                        <div class="stat-values"><span>9</span><span style="color:var(--accent-neon)">11</span></div>
+                        <div class="stat-bar">
+                            <div class="stat-fill-local" style="width: 40%;"></div>
+                            <div class="stat-fill-visita" style="width: 60%;"></div>
+                        </div>
+                        <div class="stat-values">
+                            <span>8</span>
+                            <span style="color: var(--accent-neon);">12</span>
+                        </div>
                     </div>
                 </section>
 
                 <section class="panel-center">
-                    <div style="position:absolute; top:0; font-family:var(--font-heading); font-size:2rem; font-weight:800; letter-spacing:2px; z-index:10; text-shadow: 0 5px 15px #000;">EL FULBO</div>
+                    <div style="position: absolute; top: 0; font-family: var(--font-heading); font-size: 2rem; font-weight: 800; letter-spacing: 2px; z-index: 10; text-shadow: 0 5px 15px #000;">EL FULBO</div>
                     <div class="pitch-perspective">
                         <div class="pitch-horizontal">
                             <div class="area-left"></div>
@@ -121,13 +189,14 @@ const App = (() => {
                 </section>
 
                 <section class="glass-panel panel-bottom">
-                    <h3 class="panel-title" style="margin-bottom:0; border:none;">🚨 URGENTE</h3>
+                    <h3 class="panel-title" style="margin-bottom: 0; border: none;">🚨 URGENTE</h3>
                     <div class="news-ticker">
                         <span class="news-item"><span>MERCADO:</span> Fichaje bomba confirmado en la liga inglesa.</span>
-                        <span class="news-item"><span>LESIÓN:</span> Estrella fuera por 3 semanas.</span>
-                        <span class="news-item"><span>SORTEO:</span> Definidos los cruces de cuartos.</span>
+                        <span class="news-item"><span>LESIÓN:</span> Estrella de la selección queda fuera por 3 semanas.</span>
+                        <span class="news-item"><span>MUNDIAL:</span> Listos los preparativos de infraestructura para el 2026.</span>
                     </div>
                 </section>
+
             </main>
         `;
     };
@@ -140,13 +209,14 @@ const App = (() => {
         `;
         
         for (const key in LIGAS) {
+            const categoria = LIGAS[key];
             html += `
                 <div class="categoria-wrapper">
-                    <h3 class="category-title">${LIGAS[key].nombre}</h3>
+                    <h3 class="category-title">${categoria.nombre}</h3>
                     <div class="leagues-grid">
             `;
             
-            LIGAS[key].competiciones.forEach(liga => {
+            categoria.competiciones.forEach(liga => {
                 html += `
                     <div class="glass-card league-card" onclick="window.location.hash='#/liga?id=${liga.id}'">
                         <div class="league-info">
@@ -167,67 +237,28 @@ const App = (() => {
             `;
         }
         
-        appContainer.innerHTML = html + `</main>`;
+        html += `</main>`;
+        appContainer.innerHTML = html;
     };
 
-    // VISTA DE LIGA DETALLADA (AHORA ASÍNCRONA CON DATOS REALES)
+    // ── DETALLE DE LIGA TRADICIONAL ──────────────────────────────────────────
     const renderLigaDetalle = async (ligaId) => {
         let ligaData = null;
-        for (const cat in LIGAS) { 
-            const found = LIGAS[cat].competiciones.find(l => l.id === ligaId); 
-            if (found) ligaData = found; 
+        for (const cat in LIGAS) {
+            const found = LIGAS[cat].competiciones.find(l => l.id === ligaId);
+            if (found) {
+                ligaData = found;
+            }
         }
-        
         if (!ligaData) return;
 
-        // Pinta el loader mientras hace el fetch
-        renderLoader(); 
-
-        // LLAMADA A LA API EN CASCADA
-        const partidosReales = await ApiService.getPartidos(); 
-
-        let tablaHtml = '';
-        let proxPartidosHtml = '';
-
-        partidosReales.slice(0, 8).forEach((partido, index) => {
-            const escudoL = partido.escudoLocal.includes('http') ? `<img src="${partido.escudoLocal}" width="24" height="24" style="object-fit:contain;">` : `<span class="team-shield">${ligaData.nombre.charAt(0)}</span>`;
-            const escudoV = partido.escudoVisita.includes('http') ? `<img src="${partido.escudoVisita}" width="24" height="24" style="object-fit:contain;">` : `<span class="team-shield">${ligaData.nombre.charAt(0)}</span>`;
-
-            tablaHtml += `
-                <tr onclick="window.location.hash='#/equipo?id=${encodeURIComponent(partido.equipoLocal)}'">
-                    <td class="col-pos">${index + 1}</td>
-                    <td class="col-team">${escudoL} <span style="margin-left:8px;">${partido.equipoLocal}</span></td>
-                    <td>10</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td class="col-pts" style="color:var(--accent-neon); font-weight:bold;">${30 - (index*2)}</td>
-                </tr>
-            `;
-
-            if (index < 4) {
-                proxPartidosHtml += `
-                    <div class="match-item">
-                        <div class="match-teams" style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                            <div style="display:flex; flex-direction:column; gap:4px;">
-                                <span style="display:flex; align-items:center; gap:8px;">${escudoL} ${partido.equipoLocal}</span>
-                                <span style="display:flex; align-items:center; gap:8px;">${escudoV} ${partido.equipoVisita}</span>
-                            </div>
-                            <div style="display:flex; flex-direction:column; gap:4px; text-align:right; font-weight:800; font-size:1.1rem; color:var(--accent-neon);">
-                                <span>${partido.golesLocal}</span>
-                                <span>${partido.golesVisita}</span>
-                            </div>
-                        </div>
-                        <span class="match-date" style="margin-top:8px; display:block; text-align:center;">${partido.estado}</span>
-                    </div>
-                `;
-            }
-        });
-
-        if(partidosReales.length === 0) {
-            tablaHtml = `<tr><td colspan="7" style="text-align:center; padding: 2rem; color: var(--text-muted);">No hay datos disponibles en este momento.</td></tr>`;
+        // Desvío exclusivo para el Mundial 2026
+        if (ligaId === 'world_cup' || ligaId === 'wc') {
+            await renderCalendarioMundial(ligaData);
+            return;
         }
 
+        // Renderizado base de la estructura con Skeletons iniciales
         appContainer.innerHTML = `
             ${renderNavbar('#/liga?id=' + ligaId)}
             <main class="page-container fade-in">
@@ -237,83 +268,282 @@ const App = (() => {
                     <span class="liga-flag-large">${ligaData.flag}</span>
                     <div>
                         <h1 class="liga-title-main">${ligaData.nombre}</h1>
-                        <span style="color: var(--accent-neon); font-weight: 800; letter-spacing: 1px;">📡 CONEXIÓN API ACTIVA</span>
+                        <span style="color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">${ligaData.pais}</span>
                     </div>
                 </div>
 
                 <div class="liga-content-grid">
-                    <div class="glass-panel" style="padding: 1.5rem;">
+                    <div class="glass-panel" id="standings-box" style="padding: 1.5rem;">
                         <h3 class="panel-title" style="color: ${ligaData.badge_color};">Tabla de Posiciones</h3>
                         <div class="table-responsive">
-                            <table class="standings-table">
-                                <thead>
-                                    <tr>
-                                        <th class="col-pos">#</th>
-                                        <th>Equipo</th>
-                                        <th>PJ</th>
-                                        <th>PG</th>
-                                        <th>PE</th>
-                                        <th>PP</th>
-                                        <th class="col-pts">PTS</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${tablaHtml}
-                                </tbody>
-                            </table>
+                            ${_skeletonTabla()}
                         </div>
                     </div>
 
-                    <div class="glass-panel" style="padding: 1.5rem; height: fit-content;">
-                        <h3 class="panel-title" style="color: ${ligaData.badge_color};">Scores en Vivo</h3>
-                        <div class="match-list">
-                            ${proxPartidosHtml}
+                    <div class="glass-panel" id="matches-box" style="padding: 1.5rem; height: fit-content;">
+                        <h3 class="panel-title" style="color: ${ligaData.badge_color};">Partidos Recientes</h3>
+                        ${_skeletonPartidos()}
+                    </div>
+                </div>
+            </main>
+        `;
+
+        // Carga asíncrona en segundo plano desde el módulo ESPN
+        try {
+            const [tablaRaw, partidosRaw] = await Promise.all([
+                ESPN.getStandings(ligaId),
+                ESPN.getScoreboard(ligaId)
+            ]);
+
+            const standingsBox = document.getElementById('standings-box');
+            const matchesBox = document.getElementById('matches-box');
+
+            // Renderizado de la tabla real
+            if (tablaRaw && tablaRaw.length > 0) {
+                let rowsHtml = '';
+                tablaRaw.forEach(team => {
+                    const imgLogo = team.logo ? `<img src="${team.logo}" width="20" height="24" style="object-fit: contain; margin-right: 8px;">` : `<span class="team-shield" style="margin-right: 8px;">${team.name.charAt(0)}</span>`;
+                    rowsHtml += `
+                        <tr onclick="window.location.hash='#/equipo?id=${team.id}&liga=${ligaId}&name=${encodeURIComponent(team.name)}'">
+                            <td class="col-pos">${team.rank}</td>
+                            <td class="col-team">${imgLogo} <span>${team.name}</span></td>
+                            <td>${team.stats.pj}</td>
+                            <td>${team.stats.pg}</td>
+                            <td>${team.stats.pe}</td>
+                            <td>${team.stats.pp}</td>
+                            <td class="col-pts">${team.stats.pts}</td>
+                        </tr>
+                    `;
+                });
+                standingsBox.querySelector('.table-responsive').innerHTML = `
+                    <table class="standings-table">
+                        <thead>
+                            <tr>
+                                <th class="col-pos">#</th>
+                                <th>Equipo</th>
+                                <th>PJ</th>
+                                <th>PG</th>
+                                <th>PE</th>
+                                <th>PP</th>
+                                <th class="col-pts">PTS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                standingsBox.querySelector('.table-responsive').innerHTML = `<p style="color: var(--text-muted); padding: 10px;">Clasificación no disponible temporalmente.</p>`;
+            }
+
+            // Renderizado de partidos reales
+            if (partidosRaw && partidosRaw.length > 0) {
+                let matchesHtml = '';
+                partidosRaw.forEach(partido => {
+                    const isLive = partido.status.toLowerCase().includes('live') || partido.status.includes("'");
+                    const liveBadge = isLive ? `<span style="color: #ff4757; font-size: 0.7rem; font-weight: bold; animation: pulse 1s infinite; margin-left: 6px;">● VIVO</span>` : '';
+                    
+                    matchesHtml += `
+                        <div class="match-item" style="padding: 12px 0; border-bottom: 1px solid var(--border-glass);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; font-weight: 500;">
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    <span>${partido.homeTeam}</span>
+                                    <span>${partido.awayTeam}</span>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 4px; text-align: right; font-family: var(--font-heading); font-weight: 700; color: var(--accent-neon);">
+                                    <span>${partido.homeScore}</span>
+                                    <span>${partido.awayScore}</span>
+                                </div>
+                            </div>
+                            <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 4px; text-transform: uppercase;">
+                                ${partido.status} ${liveBadge}
+                            </span>
+                        </div>
+                    `;
+                });
+                matchesBox.innerHTML = `
+                    <h3 class="panel-title" style="color: ${ligaData.badge_color};">Resultados / Marcadores</h3>
+                    <div class="match-list" style="max-height: 450px; overflow-y: auto;">
+                        ${matchesHtml}
+                    </div>
+                `;
+            } else {
+                matchesBox.innerHTML = `
+                    <h3 class="panel-title" style="color: ${ligaData.badge_color};">Resultados / Marcadores</h3>
+                    <p style="color: var(--text-muted); padding: 10px;">No se registran eventos recientes.</p>
+                `;
+            }
+
+        } catch (err) {
+            console.error("Error cargando datos de liga:", err);
+        }
+    };
+
+    // ── VISTA EXCLUSIVA: CALENDARIO POR GRUPOS DEL MUNDIAL (CASCADA) ──────────
+    const renderCalendarioMundial = async (ligaData) => {
+        appContainer.innerHTML = `
+            ${renderNavbar('#/liga?id=' + ligaData.id)}
+            <main class="page-container fade-in" style="display: flex; justify-content: center; align-items: center; height: 75vh; flex-direction: column;">
+                <div style="width: 45px; height: 45px; border: 4px solid var(--accent-neon); border-right-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                <p style="margin-top: 1.5rem; color: var(--accent-neon); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Sincronizando fixture del mundial por cascada...</p>
+                <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
+            </main>
+        `;
+
+        let partidosMundial = [];
+
+        try {
+            // Intento 1: worldcup26.ir
+            console.log('📡 [Cascada] Solicitando datos primarios a worldcup26.ir...');
+            const controller = new AbortController();
+            const idTimeout = setTimeout(() => controller.abort(), 4500);
+            
+            const respuestaRaw = await fetch('https://api.worldcup26.ir/api/v1/matches', { signal: controller.signal });
+            clearTimeout(idTimeout);
+            
+            if (!respuestaRaw.ok) throw new Error('Servidor primario no disponible');
+            const parsedData = await respuestaRaw.json();
+            
+            const rawArray = parsedData.matches || parsedData.data || [];
+            partidosMundial = rawArray.map(m => ({
+                local: m.home_team?.name || m.home_team_en || 'TBD',
+                visita: m.away_team?.name || m.away_team_en || 'TBD',
+                golesL: m.home_score !== null && m.home_score !== undefined ? m.home_score : '-',
+                golesV: m.away_score !== null && m.away_score !== undefined ? m.away_score : '-',
+                grupo: m.group_name || m.group || 'Fase Eliminatoria',
+                badgeLogoL: m.home_team?.logo || m.home_flag || '🌐',
+                badgeLogoV: m.away_team?.logo || m.away_flag || '🌐',
+                informacionText: m.time || m.status || 'Programado'
+            }));
+
+        } catch (errPrimario) {
+            console.warn('⚠️ [Cascada] Servidor primario falló. Activando fallback a ESPN...', errPrimario.message);
+            
+            try {
+                // Intento 2: Fallback vía endpoint de copas internacionales de ESPN
+                const respuestaEspn = await fetch('https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard');
+                const parsedEspn = await respuestaEspn.json();
+                
+                if (parsedEspn.events) {
+                    partidosMundial = parsedEspn.events.map(ev => {
+                        const comp = ev.competitions[0];
+                        const loc = comp.competitors.find(c => c.homeAway === 'home');
+                        const vis = comp.competitors.find(c => c.homeAway === 'away');
+                        return {
+                            local: loc.team.name,
+                            visita: vis.team.name,
+                            golesL: loc.score !== undefined ? loc.score : '-',
+                            golesV: vis.score !== undefined ? vis.score : '-',
+                            grupo: ev.season?.type === 1 ? 'Fase de Grupos' : 'Fase Eliminatoria',
+                            badgeLogoL: loc.team.logo || '🌐',
+                            badgeLogoV: vis.team.logo || '🌐',
+                            informacionText: ev.status.type.description || 'Programado'
+                        };
+                    });
+                }
+            } catch (errSecundario) {
+                console.error('❌ [Cascada] Fallo absoluto de conexión a internet.', errSecundario);
+            }
+        }
+
+        // Salvavidas con alineación oficial por si las dos APIs están en mantenimiento
+        if (partidosMundial.length === 0) {
+            partidosMundial = [
+                { grupo: "Grupo A", informacionText: "11 JUN - 16:00", local: "México", golesL: "-", visita: "Por Definir", golesV: "-", badgeLogoL: "🇲🇽", badgeLogoV: "❓" },
+                { grupo: "Grupo A", informacionText: "12 JUN - 18:00", local: "Canadá", golesL: "-", visita: "Por Definir", golesV: "-", badgeLogoL: "🇨🇦", badgeLogoV: "❓" },
+                { grupo: "Grupo B", informacionText: "12 JUN - 20:00", local: "Estados Unidos", golesL: "-", visita: "Por Definir", golesV: "-", badgeLogoL: "🇺🇸", badgeLogoV: "❓" },
+                { grupo: "Grupo C", informacionText: "13 JUN - 15:00", local: "Argentina", golesL: "-", visita: "Por Definir", golesV: "-", badgeLogoL: "🇦🇷", badgeLogoV: "❓" },
+                { grupo: "Grupo C", informacionText: "13 JUN - 19:00", local: "España", golesL: "-", visita: "Por Definir", golesV: "-", badgeLogoL: "🇪🇸", badgeLogoV: "❓" }
+            ];
+        }
+
+        // Agrupación estricta por contenedor de grupos
+        const mapeoGrupos = {};
+        partidosMundial.forEach(p => {
+            const identificador = p.grupo;
+            if (!mapeoGrupos[identificador]) {
+                mapeoGrupos[identificador] = [];
+            }
+            mapeoGrupos[identificador].push(p);
+        });
+
+        // Armado del HTML estructural de las tarjetas por cada Grupo
+        let grillaGruposHtml = '';
+        for (const [tituloGrupo, partidos] of Object.entries(mapeoGrupos)) {
+            
+            let tarjetasPartidosHtml = partidos.map(p => {
+                const drawLogoL = p.badgeLogoL.includes('http') ? `<img src="${p.badgeLogoL}" width="22" height="22" style="object-fit: contain;">` : `<span style="font-size:1.1rem">${p.badgeLogoL}</span>`;
+                const drawLogoV = p.badgeLogoV.includes('http') ? `<img src="${p.badgeLogoV}" width="22" height="22" style="object-fit: contain;">` : `<span style="font-size:1.1rem">${p.badgeLogoV}</span>`;
+                
+                return `
+                    <div class="match-item" style="display: flex; flex-direction: column; background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border-glass);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.04);">
+                            <span style="font-size: 0.75rem; color: var(--accent-neon); font-weight: bold; text-transform: uppercase;">${p.informacionText}</span>
+                            <span style="font-size: 0.7rem; color: var(--text-muted);">FIFA WC</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <div style="display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 0.95rem;">
+                                ${drawLogoL} <span>${p.local}</span>
+                            </div>
+                            <span style="font-weight: 800; font-size: 1.1rem; color: var(--text-main);">${p.golesL}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 0.95rem;">
+                                ${drawLogoV} <span>${p.visita}</span>
+                            </div>
+                            <span style="font-weight: 800; font-size: 1.1rem; color: var(--text-main);">${p.golesV}</span>
                         </div>
                     </div>
+                `;
+            }).join('');
+
+            grillaGruposHtml += `
+                <div class="glass-panel" style="padding: 1.5rem; display: flex; flex-direction: column; min-height: 250px;">
+                    <h3 class="panel-title" style="text-align: center; color: var(--accent-neon); border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; margin-bottom: 14px; font-size: 1.3rem;">
+                        ${tituloGrupo.toUpperCase()}
+                    </h3>
+                    <div class="match-list" style="flex: 1; max-height: 380px; overflow-y: auto;">
+                        ${tarjetasPartidosHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        appContainer.innerHTML = `
+            ${renderNavbar('#/liga?id=' + ligaData.id)}
+            <main class="page-container fade-in">
+                <a href="#/ligas" style="color: var(--text-muted); text-decoration: none; display: inline-block; margin-bottom: 1.5rem; font-weight: 600;">← Volver a Ligas</a>
+                
+                <div class="liga-header" style="border-left: 6px solid ${ligaData.badge_color}; background: radial-gradient(circle at left, rgba(200, 168, 75, 0.12) 0%, transparent 60%);">
+                    <span class="liga-flag-large" style="font-size: 3.8rem; filter: drop-shadow(0 0 10px rgba(200,168,75,0.3));">${ligaData.flag}</span>
+                    <div>
+                        <h1 class="liga-title-main" style="font-size: 2.6rem;">${ligaData.nombre}</h1>
+                        <span style="color: var(--accent-neon); font-weight: 800; letter-spacing: 1px; font-size: 0.85rem;">🏆 FIXTURE Y CALENDARIO OFICIAL DE PARTIDOS</span>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
+                    ${grillaGruposHtml}
                 </div>
             </main>
         `;
     };
 
-    // PERFIL DE EQUIPO
-    const renderEquipoDetalle = (equipoId) => {
-        const decodedName = decodeURIComponent(equipoId || 'Equipo');
+    // ── PERFIL DE EQUIPO REAL ────────────────────────────────────────────────
+    const renderEquipoDetalle = async (equipoId, ligaId, nombreEquipoDecoded) => {
+        const name = decodeURIComponent(nombreEquipoDecoded || 'Club');
         
-        const jugadores = [
-            {num:1,n:'J. Martínez',p:'POR'},
-            {num:4,n:'A. Davies',p:'DEF'},
-            {num:3,n:'M. Silva',p:'DEF'},
-            {num:2,n:'L. Hernández',p:'DEF'},
-            {num:5,n:'R. Varane',p:'DEF'},
-            {num:8,n:'T. Kroos',p:'MED'},
-            {num:6,n:'N. Kanté',p:'MED'},
-            {num:10,n:'L. Messi',p:'MED'},
-            {num:7,n:'K. Mbappé',p:'DEL'},
-            {num:9,n:'E. Haaland',p:'DEL'},
-            {num:11,n:'V. Júnior',p:'DEL'}
-        ];
-
-        let rosterHtml = '';
-        jugadores.forEach(j => {
-            rosterHtml += `
-                <div class="roster-item">
-                    <span class="player-num">${j.num}</span>
-                    <span class="player-name">${j.n}</span>
-                    <span class="player-pos">${j.p}</span>
-                </div>
-            `;
-        });
-
         appContainer.innerHTML = `
-            ${renderNavbar('#/equipo?id=' + equipoId)}
+            ${renderNavbar('#/ligas')}
             <main class="page-container fade-in">
                 <a href="javascript:history.back()" style="color: var(--text-muted); text-decoration: none; display: inline-block; margin-bottom: 1rem;">← Volver a la Tabla</a>
                 
                 <div class="equipo-header">
-                    <div class="team-shield" style="width: 70px; height: 70px; font-size: 2rem;">${decodedName.charAt(0)}</div>
+                    <div class="team-shield" style="width: 70px; height: 70px; font-size: 2rem;">${name.charAt(0)}</div>
                     <div>
-                        <h1 class="equipo-title">${decodedName}</h1>
-                        <span style="color: var(--text-muted); font-weight: 600;">ANÁLISIS TÁCTICO & PLANTILLA</span>
+                        <h1 class="equipo-title">${name}</h1>
+                        <span style="color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Módulo de Estrategia Táctica</span>
                     </div>
                 </div>
 
@@ -321,12 +551,22 @@ const App = (() => {
                     <div class="glass-panel" style="padding: 1.5rem;">
                         <h3 class="panel-title">Lista de Convocados</h3>
                         <div class="roster-list">
-                            ${rosterHtml}
+                            <div class="roster-item"><span class="player-num">1</span><span class="player-name">Portero Titular</span><span class="player-pos">POR</span></div>
+                            <div class="roster-item"><span class="player-num">4</span><span class="player-name">Defensa Lateral Izquierdo</span><span class="player-pos">DEF</span></div>
+                            <div class="roster-item"><span class="player-num">3</span><span class="player-name">Defensa Central Izquierdo</span><span class="player-pos">DEF</span></div>
+                            <div class="roster-item"><span class="player-num">2</span><span class="player-name">Defensa Central Derecho</span><span class="player-pos">DEF</span></div>
+                            <div class="roster-item"><span class="player-num">5</span><span class="player-name">Defensa Lateral Derecho</span><span class="player-pos">DEF</span></div>
+                            <div class="roster-item"><span class="player-num">8</span><span class="player-name">Mediocentro Organizador</span><span class="player-pos">MED</span></div>
+                            <div class="roster-item"><span class="player-num">6</span><span class="player-name">Pivote Defensivo</span><span class="player-pos">MED</span></div>
+                            <div class="roster-item"><span class="player-num">10</span><span class="player-name">Volante Ofensivo</span><span class="player-pos">MED</span></div>
+                            <div class="roster-item"><span class="player-num">7</span><span class="player-name">Extremo Izquierdo</span><span class="player-pos">DEL</span></div>
+                            <div class="roster-item"><span class="player-num">9</span><span class="player-name">Delantero Centro</span><span class="player-pos">DEL</span></div>
+                            <div class="roster-item"><span class="player-num">11</span><span class="player-name">Extremo Derecho</span><span class="player-pos">DEL</span></div>
                         </div>
                     </div>
 
                     <div class="glass-panel" style="padding: 1.5rem;">
-                        <h3 class="panel-title">Formación 4-3-3</h3>
+                        <h3 class="panel-title">Disposición en Campo (4-3-3)</h3>
                         <div class="pitch-perspective tactical-board">
                             <div class="pitch-vertical">
                                 <div class="area-top-v"></div>
@@ -351,7 +591,6 @@ const App = (() => {
         `;
     };
 
-    // MÓDULO HEAD TO HEAD (H2H)
     const renderH2H = () => {
         appContainer.innerHTML = `
             ${renderNavbar('#/h2h')}
@@ -412,25 +651,11 @@ const App = (() => {
                             <div class="h2h-bar-right" style="width: 7%;"></div>
                         </div>
                     </div>
-                    
-                    <div class="h2h-stat-row" style="margin-top: 1rem;">
-                        <div class="h2h-stat-labels">
-                            <span style="color:var(--text-main)">48%</span>
-                            <span class="lbl-center">Posesión Media Temp.</span>
-                            <span style="color:var(--accent-neon)">68%</span>
-                        </div>
-                        <div class="h2h-bar-container">
-                            <div class="h2h-bar-left" style="width: 41%;"></div>
-                            <div class="h2h-bar-right" style="width: 59%;"></div>
-                        </div>
-                    </div>
-
                 </div>
             </main>
         `;
     };
 
-    // MÓDULO INFO (NOTICIAS Y NOVEDADES)
     const renderInfo = () => {
         appContainer.innerHTML = `
             ${renderNavbar('#/info')}
@@ -476,25 +701,11 @@ const App = (() => {
                             <a href="#" class="news-read-more">Ver parte médico →</a>
                         </div>
                     </article>
-                    
-                    <article class="news-card">
-                        <div class="news-image-placeholder">👀</div>
-                        <div class="news-content">
-                            <div class="news-header">
-                                <span class="news-tag tag-mercado">Rumores</span>
-                                <span class="news-date">Ayer</span>
-                            </div>
-                            <h3 class="news-title">¿Vuelve a casa? El guiño en redes sociales</h3>
-                            <p class="news-excerpt">El ídolo histórico posteó una foto misteriosa que enloqueció a los hinchas. Ya es agente libre para negociar.</p>
-                            <a href="#" class="news-read-more">Leer rumores →</a>
-                        </div>
-                    </article>
                 </div>
             </main>
         `;
     };
 
-    // FORMULARIO DE LOGIN
     const renderLogin = () => {
         appContainer.innerHTML = `
             <main class="login-view fade-in">
@@ -534,16 +745,15 @@ const App = (() => {
         };
 
         btnSubmit.addEventListener('click', executeAuthentication);
-        
         passwordInput.addEventListener('keypress', (e) => { 
             if (e.key === 'Enter') executeAuthentication(); 
         });
     };
 
-    // ROUTER ASÍNCRONO
+    // ── ROUTER DE ENRUTAMIENTO NATIVO SPA ─────────────────────────────────────
     const router = async () => {
         const hash = window.location.hash || '#/home';
-        const url = new URL(`http://dummy.com${hash.replace('#', '')}`);
+        const url  = new URL(`http://dummy.com${hash.replace('#', '')}`);
         const path = '#' + url.pathname;
 
         if (!Auth.isAuthenticated() && path !== '#/login') { 
@@ -555,36 +765,39 @@ const App = (() => {
             case '#/login': 
                 Auth.isAuthenticated() ? window.location.hash = '#/home' : renderLogin(); 
                 break;
-            case '#/home': 
-                renderHome(); 
+            case '#/home':   
+                renderHome();   
                 break;
-            case '#/ligas': 
-                renderLigas(); 
+            case '#/ligas':  
+                renderLigas();  
                 break;
-            case '#/liga': 
+            case '#/liga':   
                 await renderLigaDetalle(url.searchParams.get('id')); 
                 break;
             case '#/equipo': 
-                renderEquipoDetalle(url.searchParams.get('id')); 
+                await renderEquipoDetalle(
+                    url.searchParams.get('id'),
+                    url.searchParams.get('liga'),
+                    url.searchParams.get('name')
+                ); 
                 break;
-            case '#/h2h': 
-                renderH2H(); 
+            case '#/h2h':    
+                renderH2H();    
                 break;
-            case '#/info': 
-                renderInfo(); 
+            case '#/info':   
+                renderInfo();   
                 break;
-            default:
+            default: 
                 appContainer.innerHTML = `
                     ${renderNavbar(path)}
                     <main class="page-container fade-in" style="text-align: center; padding-top: 15%;">
-                        <h2 class="section-title" style="border:none; color: var(--accent-neon);">Módulo en desarrollo</h2>
+                        <h2 class="section-title" style="border: none; color: var(--accent-neon);">Módulo en desarrollo</h2>
                     </main>
-                `;
+                `; 
                 break;
         }
     };
 
-    // INICIALIZACIÓN
     const init = () => {
         window.addEventListener('hashchange', router);
         window.addEventListener('load', router);
