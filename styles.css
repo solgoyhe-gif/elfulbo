@@ -243,3 +243,30 @@ body {
     .h2h-header-panel { flex-direction: column; gap: 1.5rem; }
     .h2h-vs { transform: rotate(90deg); padding: 5px 15px; }
 }
+/* ── PASO 8: MÓDULO INFO (PERFIL DEL MÁNAGER) ── */
+.profile-header {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 3rem 2rem; margin-bottom: 2rem; border-radius: 12px;
+    background: radial-gradient(circle at center, rgba(57, 255, 20, 0.1) 0%, transparent 70%);
+    border: 1px solid var(--border-glass); text-align: center;
+}
+.profile-avatar {
+    width: 100px; height: 100px; border-radius: 50%; background: var(--bg-surface);
+    border: 3px solid var(--accent-neon); display: flex; align-items: center; justify-content: center;
+    font-size: 3.5rem; margin-bottom: 1rem; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+}
+.profile-email { font-family: var(--font-heading); font-size: 2rem; color: var(--text-main); font-weight: 700; margin-bottom: 0.5rem; }
+.profile-role { 
+    font-size: 0.9rem; color: var(--bg-main); background: var(--accent-neon); 
+    padding: 4px 12px; border-radius: 20px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; 
+}
+
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+.settings-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border-glass); }
+.settings-row:last-child { border-bottom: none; }
+.toggle-btn { width: 44px; height: 24px; background: var(--accent-neon); border-radius: 12px; position: relative; cursor: pointer; }
+.toggle-btn::after { content: ''; position: absolute; right: 2px; top: 2px; width: 20px; height: 20px; background: var(--bg-main); border-radius: 50%; }
+
+@media (max-width: 768px) {
+    .info-grid { grid-template-columns: 1fr; }
+}
