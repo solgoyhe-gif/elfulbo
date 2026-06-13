@@ -6,7 +6,7 @@ const App = (() => {
         const isLigasActive = activeHash === '#/ligas' || activeHash.includes('#/liga?id=') || activeHash.includes('#/equipo?id=');
         
         return `
-            <nav class="navbar">
+            <nav class="navbar desktop-nav">
                 <div class="nav-links-group">
                     <a href="#/home" class="nav-link ${activeHash === '#/home' ? 'active' : ''}">Inicio</a>
                     <a href="#/ligas" class="nav-link ${isLigasActive ? 'active' : ''}">Ligas</a>
@@ -15,6 +15,26 @@ const App = (() => {
                 </div>
                 ${Auth.isAuthenticated() ? `<button onclick="Auth.logout()" class="btn-logout">Salir</button>` : ''}
             </nav>
+
+            ${Auth.isAuthenticated() ? `
+            <nav class="mobile-nav">
+                <a href="#/home" class="mobile-nav-item ${activeHash === '#/home' ? 'active' : ''}">
+                    <span class="mobile-icon">🏠</span><span>Inicio</span>
+                </a>
+                <a href="#/ligas" class="mobile-nav-item ${isLigasActive ? 'active' : ''}">
+                    <span class="mobile-icon">🏆</span><span>Ligas</span>
+                </a>
+                <a href="#/h2h" class="mobile-nav-item ${activeHash === '#/h2h' ? 'active' : ''}">
+                    <span class="mobile-icon">⚔️</span><span>H2H</span>
+                </a>
+                <a href="#/info" class="mobile-nav-item ${activeHash === '#/info' ? 'active' : ''}">
+                    <span class="mobile-icon">📰</span><span>Info</span>
+                </a>
+                <button onclick="Auth.logout()" class="mobile-nav-item" style="background:none; border:none; padding:0; cursor:pointer;">
+                    <span class="mobile-icon" style="filter:none;">🚪</span><span style="color:#ff4757;">Salir</span>
+                </button>
+            </nav>
+            ` : ''}
         `;
     };
 
@@ -24,12 +44,7 @@ const App = (() => {
         if (typeof LIGAS !== 'undefined') {
             const ligasDestacadas = [...LIGAS.europa_top5.competiciones, ...LIGAS.sudamerica.competiciones];
             ligasDestacadas.forEach(liga => {
-                miniLigasHtml += `
-                    <div class="mini-league" onclick="window.location.hash='#/liga?id=${liga.id}'">
-                        <span style="font-size: 1.2rem;">${liga.flag}</span>
-                        <span class="mini-league-name">${liga.nombre}</span>
-                    </div>
-                `;
+                miniLigasHtml += `<div class="mini-league" onclick="window.location.hash='#/liga?id=${liga.id}'"><span style="font-size: 1.2rem;">${liga.flag}</span><span class="mini-league-name">${liga.nombre}</span></div>`;
             });
         }
 
@@ -141,65 +156,17 @@ const App = (() => {
         `;
     };
 
-    // PASO 8 CORREGIDO - MÓDULO DE NOTICIAS
+    // MÓDULO DE NOTICIAS
     const renderInfo = () => {
         appContainer.innerHTML = `
             ${renderNavbar('#/info')}
             <main class="page-container fade-in">
                 <h2 class="section-title">📰 Info & Noticias</h2>
-                
                 <div class="news-grid">
-                    <article class="news-card">
-                        <div class="news-image-placeholder">🤝</div>
-                        <div class="news-content">
-                            <div class="news-header">
-                                <span class="news-tag tag-mercado">Mercado</span>
-                                <span class="news-date">Hace 2 horas</span>
-                            </div>
-                            <h3 class="news-title">Acuerdo total: El fichaje más caro de la historia</h3>
-                            <p class="news-excerpt">Fuentes cercanas al club confirman que las negociaciones han llegado a buen puerto. El anuncio oficial se hará mañana al mediodía tras la revisión médica.</p>
-                            <a href="#" class="news-read-more">Leer completo →</a>
-                        </div>
-                    </article>
-
-                    <article class="news-card">
-                        <div class="news-image-placeholder">🎙️</div>
-                        <div class="news-content">
-                            <div class="news-header">
-                                <span class="news-tag tag-declaracion">Declaraciones</span>
-                                <span class="news-date">Hace 5 horas</span>
-                            </div>
-                            <h3 class="news-title">"El arbitraje de hoy fue una verdadera vergüenza"</h3>
-                            <p class="news-excerpt">El presidente del club explotó en conferencia de prensa tras el polémico empate. Pidió sanciones severas y no descartó presentar una queja formal a la liga.</p>
-                            <a href="#" class="news-read-more">Ver video →</a>
-                        </div>
-                    </article>
-
-                    <article class="news-card">
-                        <div class="news-image-placeholder">🚑</div>
-                        <div class="news-content">
-                            <div class="news-header">
-                                <span class="news-tag tag-lesion">Reporte Médico</span>
-                                <span class="news-date">Ayer</span>
-                            </div>
-                            <h3 class="news-title">Rotura de ligamentos: Se despide de la temporada</h3>
-                            <p class="news-excerpt">El cuerpo médico confirmó los peores temores. El capitán del equipo será operado este viernes y tendrá un tiempo estimado de recuperación de 8 meses.</p>
-                            <a href="#" class="news-read-more">Ver parte médico →</a>
-                        </div>
-                    </article>
-                    
-                    <article class="news-card">
-                        <div class="news-image-placeholder">👀</div>
-                        <div class="news-content">
-                            <div class="news-header">
-                                <span class="news-tag tag-mercado">Rumores</span>
-                                <span class="news-date">Ayer</span>
-                            </div>
-                            <h3 class="news-title">¿Vuelve a casa? El guiño en redes sociales</h3>
-                            <p class="news-excerpt">El ídolo histórico posteó una foto misteriosa que enloqueció a los hinchas. Su contrato en Europa termina en junio y ya es agente libre para negociar.</p>
-                            <a href="#" class="news-read-more">Leer rumores →</a>
-                        </div>
-                    </article>
+                    <article class="news-card"><div class="news-image-placeholder">🤝</div><div class="news-content"><div class="news-header"><span class="news-tag tag-mercado">Mercado</span><span class="news-date">Hace 2 horas</span></div><h3 class="news-title">Acuerdo total: El fichaje más caro de la historia</h3><p class="news-excerpt">Fuentes cercanas al club confirman que las negociaciones han llegado a buen puerto. El anuncio oficial se hará mañana al mediodía.</p><a href="#" class="news-read-more">Leer completo →</a></div></article>
+                    <article class="news-card"><div class="news-image-placeholder">🎙️</div><div class="news-content"><div class="news-header"><span class="news-tag tag-declaracion">Declaraciones</span><span class="news-date">Hace 5 horas</span></div><h3 class="news-title">"El arbitraje de hoy fue una verdadera vergüenza"</h3><p class="news-excerpt">El presidente del club explotó en conferencia de prensa tras el polémico empate. Pidió sanciones severas.</p><a href="#" class="news-read-more">Ver video →</a></div></article>
+                    <article class="news-card"><div class="news-image-placeholder">🚑</div><div class="news-content"><div class="news-header"><span class="news-tag tag-lesion">Reporte Médico</span><span class="news-date">Ayer</span></div><h3 class="news-title">Rotura de ligamentos: Se despide de la temporada</h3><p class="news-excerpt">El cuerpo médico confirmó los peores temores. El capitán será operado este viernes y tendrá un tiempo estimado de recuperación de 8 meses.</p><a href="#" class="news-read-more">Ver parte médico →</a></div></article>
+                    <article class="news-card"><div class="news-image-placeholder">👀</div><div class="news-content"><div class="news-header"><span class="news-tag tag-mercado">Rumores</span><span class="news-date">Ayer</span></div><h3 class="news-title">¿Vuelve a casa? El guiño en redes sociales</h3><p class="news-excerpt">El ídolo histórico posteó una foto misteriosa que enloqueció a los hinchas. Ya es agente libre para negociar.</p><a href="#" class="news-read-more">Leer rumores →</a></div></article>
                 </div>
             </main>
         `;
@@ -212,14 +179,8 @@ const App = (() => {
                 <div class="login-card">
                     <div class="login-logo">EL <span>FULBO</span></div>
                     <div id="form-contenedor">
-                        <div class="input-container">
-                            <label>Dirección de Email</label>
-                            <input type="email" id="auth-email" class="glass-input" placeholder="manager@elfulbo.com" autocomplete="off">
-                        </div>
-                        <div class="input-container">
-                            <label>Contraseña</label>
-                            <input type="password" id="auth-password" class="glass-input" placeholder="••••••••">
-                        </div>
+                        <div class="input-container"><label>Dirección de Email</label><input type="email" id="auth-email" class="glass-input" placeholder="manager@elfulbo.com" autocomplete="off"></div>
+                        <div class="input-container"><label>Contraseña</label><input type="password" id="auth-password" class="glass-input" placeholder="••••••••"></div>
                         <div id="auth-error-log" style="color: #ff4757; font-size: 0.85rem; margin-bottom: 1rem; min-height: 20px;"></div>
                         <button id="auth-submit-trigger" class="btn-submit">Ingresar al Sistema</button>
                     </div>
@@ -227,21 +188,9 @@ const App = (() => {
             </main>
         `;
 
-        const btnSubmit = document.getElementById('auth-submit-trigger');
-        const emailInput = document.getElementById('auth-email');
-        const passwordInput = document.getElementById('auth-password');
-        const errorFeedback = document.getElementById('auth-error-log');
-
-        const executeAuthentication = () => {
-            errorFeedback.textContent = ''; emailInput.style.borderColor = ''; passwordInput.style.borderColor = '';
-            if (!Auth.login(emailInput.value, passwordInput.value)) {
-                errorFeedback.textContent = 'Acceso denegado. Verifique los campos.';
-                emailInput.style.borderColor = '#ff4757'; passwordInput.style.borderColor = '#ff4757';
-            }
-        };
-
-        btnSubmit.addEventListener('click', executeAuthentication);
-        passwordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') executeAuthentication(); });
+        const btnSubmit = document.getElementById('auth-submit-trigger'), emailInput = document.getElementById('auth-email'), passwordInput = document.getElementById('auth-password'), errorFeedback = document.getElementById('auth-error-log');
+        const executeAuth = () => { errorFeedback.textContent = ''; emailInput.style.borderColor = ''; passwordInput.style.borderColor = ''; if (!Auth.login(emailInput.value, passwordInput.value)) { errorFeedback.textContent = 'Acceso denegado.'; emailInput.style.borderColor = '#ff4757'; passwordInput.style.borderColor = '#ff4757'; } };
+        btnSubmit.addEventListener('click', executeAuth); passwordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') executeAuth(); });
     };
 
     // NÚCLEO DEL ENRUTADOR
@@ -250,9 +199,7 @@ const App = (() => {
         const url = new URL(`http://dummy.com${hash.replace('#', '')}`);
         const path = '#' + url.pathname;
 
-        if (!Auth.isAuthenticated() && path !== '#/login') { 
-            window.location.hash = '#/login'; return; 
-        }
+        if (!Auth.isAuthenticated() && path !== '#/login') { window.location.hash = '#/login'; return; }
 
         switch (path) {
             case '#/login': Auth.isAuthenticated() ? window.location.hash = '#/home' : renderLogin(); break;
@@ -266,12 +213,7 @@ const App = (() => {
         }
     };
 
-    // INICIALIZACIÓN
-    const init = () => {
-        window.addEventListener('hashchange', router);
-        window.addEventListener('load', router);
-    };
-
+    const init = () => { window.addEventListener('hashchange', router); window.addEventListener('load', router); };
     return { init };
 })();
 
