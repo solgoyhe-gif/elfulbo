@@ -40,7 +40,7 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Navbar */
+/* Navbar Desktop */
 .navbar {
     position: fixed; top: 0; left: 0; width: 100%; height: var(--nav-height);
     background: rgba(10, 10, 10, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
@@ -57,7 +57,7 @@ body {
 .section-title { font-family: var(--font-heading); font-size: 2rem; color: var(--text-main); margin-bottom: 2rem; border-bottom: 1px solid var(--border-glass); padding-bottom: 1rem; }
 .category-title { color: var(--text-muted); font-family: var(--font-heading); font-size: 1.3rem; font-weight: 700; margin: 2rem 0 1rem; text-transform: uppercase; }
 
-/* ── DASHBOARD LAYOUT (INICIO) ── */
+/* DASHBOARD LAYOUT (INICIO) */
 .dashboard-container {
     display: grid; grid-template-columns: 280px 1fr 280px; grid-template-rows: 1fr 80px;
     gap: 1.5rem; padding: calc(var(--nav-height) + 1.5rem) 1.5rem 1.5rem; height: 100vh; overflow: hidden;
@@ -143,12 +143,8 @@ body {
 .match-teams { display: flex; flex-direction: column; gap: 4px; font-size: 0.95rem; font-weight: 600; }
 .match-date { font-size: 0.75rem; color: var(--bg-main); background: var(--accent-neon); padding: 4px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
 
-/* PASO 6: VISTA DE EQUIPO Y ALINEACIÓN 3D */
-.equipo-header {
-    display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem;
-    background: linear-gradient(90deg, rgba(57, 255, 20, 0.1) 0%, transparent 100%);
-    padding: 1.5rem; border-radius: 12px; border: 1px solid var(--accent-neon);
-}
+/* VISTA DE EQUIPO Y ALINEACIÓN 3D */
+.equipo-header { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; background: linear-gradient(90deg, rgba(57, 255, 20, 0.1) 0%, transparent 100%); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--accent-neon); }
 .equipo-title { font-family: var(--font-heading); font-size: 2.5rem; color: var(--text-main); text-transform: uppercase; }
 .equipo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
 .roster-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
@@ -171,31 +167,17 @@ body {
 .area-bottom-v { bottom: 0; border-bottom: none; }
 
 .player-token {
-    position: absolute; width: 30px; height: 30px; background: var(--text-main); color: #000;
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-heading); font-weight: 800; font-size: 14px;
-    transform: translate(-50%, -50%) translateZ(25px) rotateX(-45deg);
-    box-shadow: 0 15px 15px rgba(0,0,0,0.8); border: 2px solid var(--accent-neon); transition: 0.3s; cursor: pointer;
+    position: absolute; width: 30px; height: 30px; background: var(--text-main); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-heading); font-weight: 800; font-size: 14px;
+    transform: translate(-50%, -50%) translateZ(25px) rotateX(-45deg); box-shadow: 0 15px 15px rgba(0,0,0,0.8); border: 2px solid var(--accent-neon); transition: 0.3s; cursor: pointer;
 }
 .player-token:hover { background: var(--accent-neon); transform: translate(-50%, -50%) translateZ(35px) rotateX(-45deg) scale(1.2); box-shadow: 0 25px 20px rgba(0,0,0,0.9); }
 
-.pos-gk  { bottom: 5%; left: 50%; }
-.pos-df1 { bottom: 22%; left: 15%; }
-.pos-df2 { bottom: 18%; left: 38%; }
-.pos-df3 { bottom: 18%; left: 62%; }
-.pos-df4 { bottom: 22%; left: 85%; }
-.pos-md1 { bottom: 42%; left: 25%; }
-.pos-md2 { bottom: 35%; left: 50%; }
-.pos-md3 { bottom: 42%; left: 75%; }
-.pos-fw1 { top: 25%; left: 25%; }
-.pos-fw2 { top: 15%; left: 50%; }
-.pos-fw3 { top: 25%; left: 75%; }
+.pos-gk  { bottom: 5%; left: 50%; } .pos-df1 { bottom: 22%; left: 15%; } .pos-df2 { bottom: 18%; left: 38%; } .pos-df3 { bottom: 18%; left: 62%; } .pos-df4 { bottom: 22%; left: 85%; }
+.pos-md1 { bottom: 42%; left: 25%; } .pos-md2 { bottom: 35%; left: 50%; } .pos-md3 { bottom: 42%; left: 75%; }
+.pos-fw1 { top: 25%; left: 25%; } .pos-fw2 { top: 15%; left: 50%; } .pos-fw3 { top: 25%; left: 75%; }
 
-/* PASO 7: MÓDULO HEAD-TO-HEAD (H2H) */
-.h2h-header-panel {
-    display: flex; justify-content: space-around; align-items: center;
-    padding: 2rem; margin-bottom: 2rem; background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(57, 255, 20, 0.05) 100%);
-}
+/* MÓDULO HEAD-TO-HEAD (H2H) */
+.h2h-header-panel { display: flex; justify-content: space-around; align-items: center; padding: 2rem; margin-bottom: 2rem; background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(57, 255, 20, 0.05) 100%); }
 .h2h-team { display: flex; flex-direction: column; align-items: center; gap: 10px; flex: 1; }
 .h2h-team .team-shield { width: 90px; height: 90px; font-size: 3rem; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
 .h2h-team-name { font-family: var(--font-heading); font-size: 2rem; text-transform: uppercase; font-weight: 800; text-align: center;}
@@ -208,20 +190,11 @@ body {
 .h2h-bar-left { background: var(--text-main); display: flex; justify-content: flex-end; }
 .h2h-bar-right { background: var(--accent-neon); }
 
-/* ── PASO 8: MÓDULO INFO (NOTICIAS Y NOVEDADES) ── */
-.news-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;
-}
-.news-card {
-    background: var(--bg-card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--border-glass); border-radius: 12px; overflow: hidden;
-    transition: transform 0.2s ease, border-color 0.2s ease; display: flex; flex-direction: column;
-}
+/* MÓDULO INFO (NOTICIAS Y NOVEDADES) */
+.news-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+.news-card { background: var(--bg-card); backdrop-filter: blur(12px); border: 1px solid var(--border-glass); border-radius: 12px; overflow: hidden; transition: transform 0.2s ease, border-color 0.2s ease; display: flex; flex-direction: column; }
 .news-card:hover { transform: translateY(-5px); border-color: var(--accent-neon); }
-.news-image-placeholder {
-    width: 100%; height: 160px; background: linear-gradient(45deg, var(--bg-surface), #2a2a2c);
-    display: flex; align-items: center; justify-content: center; font-size: 3rem; border-bottom: 1px solid var(--border-glass);
-}
+.news-image-placeholder { width: 100%; height: 160px; background: linear-gradient(45deg, var(--bg-surface), #2a2a2c); display: flex; align-items: center; justify-content: center; font-size: 3rem; border-bottom: 1px solid var(--border-glass); }
 .news-content { padding: 1.5rem; display: flex; flex-direction: column; flex: 1; }
 .news-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 .news-tag { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; padding: 4px 10px; border-radius: 4px; letter-spacing: 1px; }
@@ -234,9 +207,11 @@ body {
 .news-read-more { font-family: var(--font-heading); font-size: 1rem; font-weight: 700; color: var(--accent-neon); text-decoration: none; text-transform: uppercase; align-self: flex-start; transition: color 0.2s; }
 .news-read-more:hover { color: #fff; }
 
-/* Responsive General */
+/* ── PASO 9: APP MÓVIL (BOTTOM NAV Y RESPONSIVE) ── */
+.mobile-nav { display: none; } /* Oculto en PC */
+
 @media (max-width: 1024px) {
-    .dashboard-container { grid-template-columns: 1fr; grid-template-rows: auto auto auto auto; height: auto; overflow-y: auto; padding-bottom: 5rem; }
+    .dashboard-container { grid-template-columns: 1fr; grid-template-rows: auto auto auto auto; height: auto; overflow-y: auto; }
     .panel-center { grid-column: 1; grid-row: 1; min-height: 300px; }
     .panel-left { grid-column: 1; grid-row: 2; }
     .panel-right { grid-column: 1; grid-row: 3; }
@@ -244,4 +219,36 @@ body {
     .liga-content-grid, .equipo-grid { grid-template-columns: 1fr; }
     .h2h-header-panel { flex-direction: column; gap: 1.5rem; }
     .h2h-vs { transform: rotate(90deg); padding: 5px 15px; }
+}
+
+/* Corte específico para Celulares (Transformación a App) */
+@media (max-width: 768px) {
+    /* Matamos la barra de arriba */
+    .desktop-nav { display: none !important; }
+    
+    /* Quitamos el margen superior que dejaba la barra de PC y agregamos abajo para el menú */
+    .page-container { padding-top: 1.5rem; padding-bottom: calc(var(--nav-height) + 1.5rem); }
+    .dashboard-container { padding-top: 1.5rem; padding-bottom: calc(var(--nav-height) + 1.5rem); }
+
+    /* Nace la barra inferior tipo app nativa */
+    .mobile-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0; left: 0; width: 100%; height: var(--nav-height);
+        background: rgba(10, 10, 10, 0.95);
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        border-top: 1px solid var(--border-glass);
+        justify-content: space-around; align-items: center; z-index: 1000;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .mobile-nav-item {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-decoration: none; color: var(--text-muted); font-family: var(--font-heading);
+        font-size: 0.7rem; font-weight: 700; text-transform: uppercase; transition: 0.2s; gap: 4px;
+    }
+
+    .mobile-nav-item.active { color: var(--accent-neon); }
+    .mobile-icon { font-size: 1.4rem; filter: grayscale(100%); transition: 0.2s; line-height: 1; }
+    .mobile-nav-item.active .mobile-icon { filter: grayscale(0%); text-shadow: 0 0 10px var(--accent-neon); }
 }
