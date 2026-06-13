@@ -18,6 +18,7 @@ const App = (() => {
         `;
     };
 
+    // DASHBOARD PRINCIPAL
     const renderHome = () => {
         let miniLigasHtml = '';
         if (typeof LIGAS !== 'undefined') {
@@ -35,22 +36,50 @@ const App = (() => {
         appContainer.innerHTML = `
             ${renderNavbar('#/home')}
             <main class="dashboard-container fade-in">
+                
                 <section class="glass-panel panel-left">
                     <h3 class="panel-title">📊 Stats en Vivo</h3>
+                    
                     <div class="stat-box">
-                        <div class="stat-header"><span>Posesión</span></div>
-                        <div class="stat-bar"><div class="stat-fill-local" style="width: 60%;"></div><div class="stat-fill-visita" style="width: 40%;"></div></div>
-                        <div class="stat-values"><span>60%</span><span style="color:var(--accent-neon)">40%</span></div>
+                        <div class="stat-header">
+                            <span>Posesión</span>
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-fill-local" style="width: 60%;"></div>
+                            <div class="stat-fill-visita" style="width: 40%;"></div>
+                        </div>
+                        <div class="stat-values">
+                            <span>60%</span>
+                            <span style="color:var(--accent-neon)">40%</span>
+                        </div>
                     </div>
+
                     <div class="stat-box">
-                        <div class="stat-header"><span>Tiros a Puerta</span></div>
-                        <div class="stat-bar"><div class="stat-fill-local" style="width: 75%;"></div><div class="stat-fill-visita" style="width: 25%;"></div></div>
-                        <div class="stat-values"><span>12</span><span style="color:var(--accent-neon)">4</span></div>
+                        <div class="stat-header">
+                            <span>Tiros a Puerta</span>
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-fill-local" style="width: 75%;"></div>
+                            <div class="stat-fill-visita" style="width: 25%;"></div>
+                        </div>
+                        <div class="stat-values">
+                            <span>12</span>
+                            <span style="color:var(--accent-neon)">4</span>
+                        </div>
                     </div>
+
                     <div class="stat-box">
-                        <div class="stat-header"><span>Faltas</span></div>
-                        <div class="stat-bar"><div class="stat-fill-local" style="width: 45%;"></div><div class="stat-fill-visita" style="width: 55%;"></div></div>
-                        <div class="stat-values"><span>9</span><span style="color:var(--accent-neon)">11</span></div>
+                        <div class="stat-header">
+                            <span>Faltas</span>
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-fill-local" style="width: 45%;"></div>
+                            <div class="stat-fill-visita" style="width: 55%;"></div>
+                        </div>
+                        <div class="stat-values">
+                            <span>9</span>
+                            <span style="color:var(--accent-neon)">11</span>
+                        </div>
                     </div>
                 </section>
 
@@ -73,23 +102,31 @@ const App = (() => {
                     <h3 class="panel-title" style="margin-bottom:0; border:none;">🚨 URGENTE</h3>
                     <div class="news-ticker">
                         <span class="news-item"><span>MERCADO:</span> Fichaje bomba confirmado en la liga inglesa.</span>
-                        <span class="news-item"><span>LESIÓN:</span> De Bruyne fuera por 3 semanas.</span>
-                        <span class="news-item"><span>CHAMPIONS:</span> Sorteo de cuartos de final este viernes.</span>
+                        <span class="news-item"><span>LESIÓN:</span> Estrella fuera por 3 semanas.</span>
+                        <span class="news-item"><span>SORTEO:</span> Definidos los cruces de cuartos de final.</span>
                     </div>
                 </section>
+
             </main>
         `;
     };
 
+    // LISTADO GLOBAL DE LIGAS
     const renderLigas = () => {
         let html = `
             ${renderNavbar('#/ligas')}
             <main class="page-container fade-in">
                 <h2 class="section-title">🏆 Competiciones Disponibles</h2>
         `;
+        
         for (const key in LIGAS) {
             const categoria = LIGAS[key];
-            html += `<div class="categoria-wrapper"><h3 class="category-title">${categoria.nombre}</h3><div class="leagues-grid">`;
+            html += `
+                <div class="categoria-wrapper">
+                    <h3 class="category-title">${categoria.nombre}</h3>
+                    <div class="leagues-grid">
+            `;
+            
             categoria.competiciones.forEach(liga => {
                 html += `
                     <div class="glass-card league-card" onclick="window.location.hash='#/liga?id=${liga.id}'">
@@ -104,40 +141,53 @@ const App = (() => {
                     </div>
                 `;
             });
-            html += `</div></div>`;
+            
+            html += `
+                    </div>
+                </div>
+            `;
         }
+        
         html += `</main>`;
         appContainer.innerHTML = html;
     };
 
+    // VISTA DETALLADA DE LA LIGA
     const renderLigaDetalle = (ligaId) => {
         let ligaData = null;
-        for (const cat in LIGAS) {
-            const found = LIGAS[cat].competiciones.find(l => l.id === ligaId);
-            if (found) ligaData = found;
+        for (const cat in LIGAS) { 
+            const found = LIGAS[cat].competiciones.find(l => l.id === ligaId); 
+            if (found) ligaData = found; 
         }
 
         if (!ligaData) {
-            appContainer.innerHTML = `${renderNavbar('#/ligas')}<main class="page-container fade-in"><h2 class="section-title">Error: Liga no encontrada</h2><a href="#/ligas" class="nav-link">Volver</a></main>`;
+            appContainer.innerHTML = `
+                ${renderNavbar('#/ligas')}
+                <main class="page-container fade-in">
+                    <h2 class="section-title">Error: Liga no encontrada</h2>
+                    <a href="#/ligas" class="nav-link">Volver</a>
+                </main>
+            `;
             return;
         }
 
-        const mockNombres = ['Atlético', 'Sporting', 'United', 'Real', 'Deportivo', 'City', 'Rovers', 'Wanderers', 'FC', 'Club'];
+        const mockNombres = ['Atlético', 'Sporting', 'United', 'Real', 'Deportivo', 'City', 'Rovers', 'Wanderers'];
         let tablaHtml = '';
         for(let i = 1; i <= 8; i++) {
             const pts = 30 - (i * 3) + Math.floor(Math.random() * 3);
-            const pg = Math.floor(pts / 3);
             const nombreEquipo = mockNombres[i-1] + ' ' + ligaData.pais.substring(0,3);
             
-            // AHORA LAS FILAS TIENEN ONCLICK PARA IR AL EQUIPO
             tablaHtml += `
                 <tr onclick="window.location.hash='#/equipo?id=${encodeURIComponent(nombreEquipo)}'">
                     <td class="col-pos">${i}</td>
-                    <td class="col-team"><span class="team-shield">${ligaData.nombre.charAt(0)}</span> ${nombreEquipo}</td>
+                    <td class="col-team">
+                        <span class="team-shield">${ligaData.nombre.charAt(0)}</span> 
+                        ${nombreEquipo}
+                    </td>
                     <td>10</td>
-                    <td>${pg}</td>
-                    <td>${10 - pg - Math.floor(Math.random()*2)}</td>
-                    <td>${Math.floor(Math.random()*4)}</td>
+                    <td>${Math.floor(pts/3)}</td>
+                    <td>0</td>
+                    <td>0</td>
                     <td class="col-pts">${pts}</td>
                 </tr>
             `;
@@ -146,13 +196,13 @@ const App = (() => {
         appContainer.innerHTML = `
             ${renderNavbar('#/liga?id=' + ligaId)}
             <main class="page-container fade-in">
-                <a href="#/ligas" style="color: var(--text-muted); text-decoration: none; display: inline-block; margin-bottom: 1rem; font-size: 0.9rem;">← Volver al Listado</a>
+                <a href="#/ligas" style="color: var(--text-muted); text-decoration: none; display: inline-block; margin-bottom: 1rem;">← Volver al Listado</a>
                 
                 <div class="liga-header" style="border-left: 6px solid ${ligaData.badge_color};">
                     <span class="liga-flag-large">${ligaData.flag}</span>
                     <div>
                         <h1 class="liga-title-main">${ligaData.nombre}</h1>
-                        <span style="color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 2px;">${ligaData.pais}</span>
+                        <span style="color: var(--text-muted); font-weight: 600;">${ligaData.pais}</span>
                     </div>
                 </div>
 
@@ -161,8 +211,20 @@ const App = (() => {
                         <h3 class="panel-title" style="color: ${ligaData.badge_color};">Tabla de Posiciones</h3>
                         <div class="table-responsive">
                             <table class="standings-table">
-                                <thead><tr><th class="col-pos">#</th><th>Equipo</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th class="col-pts">PTS</th></tr></thead>
-                                <tbody>${tablaHtml}</tbody>
+                                <thead>
+                                    <tr>
+                                        <th class="col-pos">#</th>
+                                        <th>Equipo</th>
+                                        <th>PJ</th>
+                                        <th>PG</th>
+                                        <th>PE</th>
+                                        <th>PP</th>
+                                        <th class="col-pts">PTS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tablaHtml}
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -170,9 +232,13 @@ const App = (() => {
                     <div class="glass-panel" style="padding: 1.5rem; height: fit-content;">
                         <h3 class="panel-title" style="color: ${ligaData.badge_color};">Próxima Fecha</h3>
                         <div class="match-list">
-                            <div class="match-item"><div class="match-teams"><span>${mockNombres[0]}</span><span>${mockNombres[3]}</span></div><span class="match-date">SÁB 15:00</span></div>
-                            <div class="match-item"><div class="match-teams"><span>${mockNombres[1]}</span><span>${mockNombres[4]}</span></div><span class="match-date">SÁB 17:30</span></div>
-                            <div class="match-item"><div class="match-teams"><span>${mockNombres[2]}</span><span>${mockNombres[5]}</span></div><span class="match-date">DOM 14:00</span></div>
+                            <div class="match-item">
+                                <div class="match-teams">
+                                    <span>${mockNombres[0]}</span>
+                                    <span>${mockNombres[3]}</span>
+                                </div>
+                                <span class="match-date">SÁB 15:00</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -180,23 +246,22 @@ const App = (() => {
         `;
     };
 
-    // NUEVO: PASO 6 - Perfil de Equipo y Pizarrón Táctico
+    // PERFIL DE EQUIPO
     const renderEquipoDetalle = (equipoId) => {
-        const decodedName = decodeURIComponent(equipoId || 'Equipo Desconocido');
+        const decodedName = decodeURIComponent(equipoId || 'Equipo');
         
-        // Mock de plantilla de jugadores
         const jugadores = [
-            { num: 1, nombre: 'J. Martínez', pos: 'POR' },
-            { num: 4, nombre: 'A. Davies', pos: 'DEF' },
-            { num: 3, nombre: 'M. Silva', pos: 'DEF' },
-            { num: 2, nombre: 'L. Hernández', pos: 'DEF' },
-            { num: 5, nombre: 'R. Varane', pos: 'DEF' },
-            { num: 8, nombre: 'T. Kroos', pos: 'MED' },
-            { num: 6, nombre: 'N. Kanté', pos: 'MED' },
-            { num: 10, nombre: 'L. Messi', pos: 'MED' },
-            { num: 7, nombre: 'K. Mbappé', pos: 'DEL' },
-            { num: 9, nombre: 'E. Haaland', pos: 'DEL' },
-            { num: 11, nombre: 'V. Júnior', pos: 'DEL' },
+            {num:1,n:'J. Martínez',p:'POR'},
+            {num:4,n:'A. Davies',p:'DEF'},
+            {num:3,n:'M. Silva',p:'DEF'},
+            {num:2,n:'L. Hernández',p:'DEF'},
+            {num:5,n:'R. Varane',p:'DEF'},
+            {num:8,n:'T. Kroos',p:'MED'},
+            {num:6,n:'N. Kanté',p:'MED'},
+            {num:10,n:'L. Messi',p:'MED'},
+            {num:7,n:'K. Mbappé',p:'DEL'},
+            {num:9,n:'E. Haaland',p:'DEL'},
+            {num:11,n:'V. Júnior',p:'DEL'}
         ];
 
         let rosterHtml = '';
@@ -204,8 +269,8 @@ const App = (() => {
             rosterHtml += `
                 <div class="roster-item">
                     <span class="player-num">${j.num}</span>
-                    <span class="player-name">${j.nombre}</span>
-                    <span class="player-pos">${j.pos}</span>
+                    <span class="player-name">${j.n}</span>
+                    <span class="player-pos">${j.p}</span>
                 </div>
             `;
         });
@@ -213,7 +278,7 @@ const App = (() => {
         appContainer.innerHTML = `
             ${renderNavbar('#/equipo?id=' + equipoId)}
             <main class="page-container fade-in">
-                <a href="javascript:history.back()" style="color: var(--text-muted); text-decoration: none; display: inline-block; margin-bottom: 1rem; font-size: 0.9rem;">← Volver a la Tabla</a>
+                <a href="javascript:history.back()" style="color: var(--text-muted); text-decoration: none; display: inline-block; margin-bottom: 1rem;">← Volver a la Tabla</a>
                 
                 <div class="equipo-header">
                     <div class="team-shield" style="width: 70px; height: 70px; font-size: 2rem;">${decodedName.charAt(0)}</div>
@@ -238,20 +303,17 @@ const App = (() => {
                                 <div class="area-top-v"></div>
                                 <div class="area-bottom-v"></div>
                                 
-                                <div class="player-token pos-gk" title="J. Martínez">1</div>
-                                
-                                <div class="player-token pos-df1" title="A. Davies">4</div>
-                                <div class="player-token pos-df2" title="M. Silva">3</div>
-                                <div class="player-token pos-df3" title="L. Hernández">2</div>
-                                <div class="player-token pos-df4" title="R. Varane">5</div>
-                                
-                                <div class="player-token pos-md1" title="T. Kroos">8</div>
-                                <div class="player-token pos-md2" title="N. Kanté">6</div>
-                                <div class="player-token pos-md3" title="L. Messi">10</div>
-                                
-                                <div class="player-token pos-fw1" title="K. Mbappé">7</div>
-                                <div class="player-token pos-fw2" title="E. Haaland">9</div>
-                                <div class="player-token pos-fw3" title="V. Júnior">11</div>
+                                <div class="player-token pos-gk">1</div>
+                                <div class="player-token pos-df1">4</div>
+                                <div class="player-token pos-df2">3</div>
+                                <div class="player-token pos-df3">2</div>
+                                <div class="player-token pos-df4">5</div>
+                                <div class="player-token pos-md1">8</div>
+                                <div class="player-token pos-md2">6</div>
+                                <div class="player-token pos-md3">10</div>
+                                <div class="player-token pos-fw1">7</div>
+                                <div class="player-token pos-fw2">9</div>
+                                <div class="player-token pos-fw3">11</div>
                             </div>
                         </div>
                     </div>
@@ -260,57 +322,173 @@ const App = (() => {
         `;
     };
 
+    // MÓDULO HEAD TO HEAD (H2H)
+    const renderH2H = () => {
+        appContainer.innerHTML = `
+            ${renderNavbar('#/h2h')}
+            <main class="page-container fade-in">
+                <h2 class="section-title">⚔️ Head to Head</h2>
+                
+                <div class="glass-panel h2h-header-panel">
+                    <div class="h2h-team">
+                        <div class="team-shield" style="background: rgba(255,255,255,0.9); color:#000;">RMA</div>
+                        <div class="h2h-team-name">Real Madrid</div>
+                        <span class="badge-liga" style="background: #001489;">ESPAÑA</span>
+                    </div>
+                    
+                    <div class="h2h-vs">VS</div>
+                    
+                    <div class="h2h-team">
+                        <div class="team-shield" style="background: #6CABDD; color:#fff;">MCI</div>
+                        <div class="h2h-team-name">Man. City</div>
+                        <span class="badge-liga" style="background: #3d195b;">INGLATERRA</span>
+                    </div>
+                </div>
+
+                <div class="glass-panel h2h-stats-board">
+                    <h3 class="panel-title" style="text-align:center; border:none;">Probabilidad de Victoria</h3>
+                    
+                    <div class="h2h-stat-row">
+                        <div class="h2h-stat-labels">
+                            <span style="color:var(--text-main)">45%</span>
+                            <span class="lbl-center">Probabilidad Algorítmica</span>
+                            <span style="color:var(--accent-neon)">55%</span>
+                        </div>
+                        <div class="h2h-bar-container">
+                            <div class="h2h-bar-left" style="width: 45%;"></div>
+                            <div class="h2h-bar-right" style="width: 55%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="h2h-stat-row" style="margin-top: 1rem;">
+                        <div class="h2h-stat-labels">
+                            <span style="color:var(--text-main)">2.4</span>
+                            <span class="lbl-center">Goles Esperados (xG)</span>
+                            <span style="color:var(--accent-neon)">2.1</span>
+                        </div>
+                        <div class="h2h-bar-container">
+                            <div class="h2h-bar-left" style="width: 53%;"></div>
+                            <div class="h2h-bar-right" style="width: 47%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="h2h-stat-row" style="margin-top: 1rem;">
+                        <div class="h2h-stat-labels">
+                            <span style="color:var(--text-main)">14</span>
+                            <span class="lbl-center">Títulos Internacionales</span>
+                            <span style="color:var(--accent-neon)">1</span>
+                        </div>
+                        <div class="h2h-bar-container">
+                            <div class="h2h-bar-left" style="width: 93%;"></div>
+                            <div class="h2h-bar-right" style="width: 7%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="h2h-stat-row" style="margin-top: 1rem;">
+                        <div class="h2h-stat-labels">
+                            <span style="color:var(--text-main)">48%</span>
+                            <span class="lbl-center">Posesión Media Temp.</span>
+                            <span style="color:var(--accent-neon)">68%</span>
+                        </div>
+                        <div class="h2h-bar-container">
+                            <div class="h2h-bar-left" style="width: 41%;"></div>
+                            <div class="h2h-bar-right" style="width: 59%;"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        `;
+    };
+
+    // FORMULARIO DE LOGIN
     const renderLogin = () => {
         appContainer.innerHTML = `
             <main class="login-view fade-in">
                 <div class="login-card">
                     <div class="login-logo">EL <span>FULBO</span></div>
                     <div id="form-contenedor">
-                        <div class="input-container"><label>Dirección de Email</label><input type="email" id="auth-email" class="glass-input" placeholder="manager@elfulbo.com" autocomplete="off"></div>
-                        <div class="input-container"><label>Contraseña</label><input type="password" id="auth-password" class="glass-input" placeholder="••••••••"></div>
+                        <div class="input-container">
+                            <label>Dirección de Email</label>
+                            <input type="email" id="auth-email" class="glass-input" placeholder="manager@elfulbo.com" autocomplete="off">
+                        </div>
+                        <div class="input-container">
+                            <label>Contraseña</label>
+                            <input type="password" id="auth-password" class="glass-input" placeholder="••••••••">
+                        </div>
                         <div id="auth-error-log" style="color: #ff4757; font-size: 0.85rem; margin-bottom: 1rem; min-height: 20px;"></div>
                         <button id="auth-submit-trigger" class="btn-submit">Ingresar al Sistema</button>
                     </div>
                 </div>
             </main>
         `;
+
         const btnSubmit = document.getElementById('auth-submit-trigger');
         const emailInput = document.getElementById('auth-email');
         const passwordInput = document.getElementById('auth-password');
         const errorFeedback = document.getElementById('auth-error-log');
 
         const executeAuthentication = () => {
-            errorFeedback.textContent = ''; emailInput.style.borderColor = ''; passwordInput.style.borderColor = '';
+            errorFeedback.textContent = ''; 
+            emailInput.style.borderColor = ''; 
+            passwordInput.style.borderColor = '';
+            
             if (!Auth.login(emailInput.value, passwordInput.value)) {
                 errorFeedback.textContent = 'Acceso denegado. Verifique los campos.';
-                emailInput.style.borderColor = '#ff4757'; passwordInput.style.borderColor = '#ff4757';
+                emailInput.style.borderColor = '#ff4757'; 
+                passwordInput.style.borderColor = '#ff4757';
             }
         };
+
         btnSubmit.addEventListener('click', executeAuthentication);
-        passwordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') executeAuthentication(); });
+        
+        passwordInput.addEventListener('keypress', (e) => { 
+            if (e.key === 'Enter') executeAuthentication(); 
+        });
     };
 
+    // NÚCLEO DEL ENRUTADOR
     const router = () => {
         const hash = window.location.hash || '#/home';
         const url = new URL(`http://dummy.com${hash.replace('#', '')}`);
         const path = '#' + url.pathname;
 
-        if (!Auth.isAuthenticated() && path !== '#/login') {
-            window.location.hash = '#/login'; return;
+        if (!Auth.isAuthenticated() && path !== '#/login') { 
+            window.location.hash = '#/login'; 
+            return; 
         }
 
         switch (path) {
-            case '#/login': Auth.isAuthenticated() ? window.location.hash = '#/home' : renderLogin(); break;
-            case '#/home': renderHome(); break;
-            case '#/ligas': renderLigas(); break;
-            case '#/liga': renderLigaDetalle(url.searchParams.get('id')); break;
-            case '#/equipo': renderEquipoDetalle(url.searchParams.get('id')); break; // INTERCEPCIÓN PASO 6
+            case '#/login': 
+                Auth.isAuthenticated() ? window.location.hash = '#/home' : renderLogin(); 
+                break;
+            case '#/home': 
+                renderHome(); 
+                break;
+            case '#/ligas': 
+                renderLigas(); 
+                break;
+            case '#/liga': 
+                renderLigaDetalle(url.searchParams.get('id')); 
+                break;
+            case '#/equipo': 
+                renderEquipoDetalle(url.searchParams.get('id')); 
+                break;
+            case '#/h2h': 
+                renderH2H(); 
+                break;
             default:
-                appContainer.innerHTML = `${renderNavbar(path)}<main class="page-container fade-in" style="text-align: center; padding-top: 15%;"><h2 class="section-title" style="border:none; color: var(--accent-neon);">Construyendo módulo...</h2></main>`;
+                appContainer.innerHTML = `
+                    ${renderNavbar(path)}
+                    <main class="page-container fade-in" style="text-align: center; padding-top: 15%;">
+                        <h2 class="section-title" style="border:none; color: var(--accent-neon);">Módulo en desarrollo</h2>
+                    </main>
+                `;
                 break;
         }
     };
 
+    // INICIALIZACIÓN
     const init = () => {
         window.addEventListener('hashchange', router);
         window.addEventListener('load', router);
