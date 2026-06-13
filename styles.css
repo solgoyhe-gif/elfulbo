@@ -128,7 +128,6 @@ body {
 .liga-flag-large { font-size: 3.5rem; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5)); }
 .liga-title-main { font-family: var(--font-heading); font-size: 2.5rem; color: var(--text-main); text-transform: uppercase; line-height: 1.1; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 .liga-content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
-
 .table-responsive { width: 100%; overflow-x: auto; }
 .standings-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem; }
 .standings-table th { padding: 12px 10px; color: var(--text-muted); border-bottom: 1px solid var(--border-glass); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 0.05em; }
@@ -139,13 +138,12 @@ body {
 .col-team { font-weight: 600; display: flex; align-items: center; gap: 8px; }
 .col-pts { font-weight: 800; color: var(--accent-neon); }
 .team-shield { width: 24px; height: 24px; background: rgba(255,255,255,0.1); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.6rem; border: 1px solid rgba(255,255,255,0.2); }
-
 .match-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-glass); }
 .match-item:last-child { border-bottom: none; }
 .match-teams { display: flex; flex-direction: column; gap: 4px; font-size: 0.95rem; font-weight: 600; }
 .match-date { font-size: 0.75rem; color: var(--bg-main); background: var(--accent-neon); padding: 4px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
 
-/* ── PASO 6: VISTA DE EQUIPO Y ALINEACIÓN 3D ── */
+/* PASO 6: VISTA DE EQUIPO Y ALINEACIÓN 3D */
 .equipo-header {
     display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem;
     background: linear-gradient(90deg, rgba(57, 255, 20, 0.1) 0%, transparent 100%);
@@ -153,18 +151,12 @@ body {
 }
 .equipo-title { font-family: var(--font-heading); font-size: 2.5rem; color: var(--text-main); text-transform: uppercase; }
 .equipo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
-
-/* Plantilla Lista */
 .roster-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
-.roster-item { 
-    display: flex; justify-content: space-between; align-items: center; padding: 12px; 
-    background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass); border-radius: 8px; 
-}
+.roster-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass); border-radius: 8px; }
 .player-num { font-family: var(--font-heading); font-weight: 800; font-size: 1.2rem; color: var(--accent-neon); width: 35px; }
 .player-name { flex: 1; font-weight: 600; font-size: 1rem; }
 .player-pos { font-size: 0.8rem; font-weight: bold; padding: 2px 8px; background: rgba(255,255,255,0.1); border-radius: 4px; text-transform: uppercase; }
 
-/* Cancha 3D Vertical */
 .tactical-board { display: flex; justify-content: center; align-items: center; padding: 2rem 0; }
 .pitch-vertical {
     width: 320px; height: 480px;
@@ -178,18 +170,15 @@ body {
 .area-top-v { top: 0; border-top: none; }
 .area-bottom-v { bottom: 0; border-bottom: none; }
 
-/* Fichas de Jugadores en 3D */
 .player-token {
     position: absolute; width: 30px; height: 30px; background: var(--text-main); color: #000;
     border-radius: 50%; display: flex; align-items: center; justify-content: center;
     font-family: var(--font-heading); font-weight: 800; font-size: 14px;
-    /* TranslateZ los levanta del piso. RotateX contrarresta la inclinación de la cancha */
     transform: translate(-50%, -50%) translateZ(25px) rotateX(-45deg);
     box-shadow: 0 15px 15px rgba(0,0,0,0.8); border: 2px solid var(--accent-neon); transition: 0.3s; cursor: pointer;
 }
 .player-token:hover { background: var(--accent-neon); transform: translate(-50%, -50%) translateZ(35px) rotateX(-45deg) scale(1.2); box-shadow: 0 25px 20px rgba(0,0,0,0.9); }
 
-/* Posiciones Tácticas 4-3-3 */
 .pos-gk  { bottom: 5%; left: 50%; }
 .pos-df1 { bottom: 22%; left: 15%; }
 .pos-df2 { bottom: 18%; left: 38%; }
@@ -202,6 +191,49 @@ body {
 .pos-fw2 { top: 15%; left: 50%; }
 .pos-fw3 { top: 25%; left: 75%; }
 
+/* PASO 7: MÓDULO HEAD-TO-HEAD (H2H) */
+.h2h-header-panel {
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 2rem; margin-bottom: 2rem; background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(57, 255, 20, 0.05) 100%);
+}
+.h2h-team { display: flex; flex-direction: column; align-items: center; gap: 10px; flex: 1; }
+.h2h-team .team-shield { width: 90px; height: 90px; font-size: 3rem; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+.h2h-team-name { font-family: var(--font-heading); font-size: 2rem; text-transform: uppercase; font-weight: 800; text-align: center;}
+.h2h-vs { font-family: var(--font-heading); font-size: 3rem; font-weight: 800; color: var(--bg-main); background: var(--accent-neon); padding: 10px 20px; border-radius: 12px; box-shadow: 0 0 30px rgba(57, 255, 20, 0.4); z-index: 10; }
+.h2h-stats-board { display: flex; flex-direction: column; gap: 1.5rem; padding: 2rem 1.5rem; }
+.h2h-stat-row { display: flex; flex-direction: column; gap: 8px; }
+.h2h-stat-labels { display: flex; justify-content: space-between; font-weight: 700; font-size: 1.1rem; }
+.h2h-stat-labels .lbl-center { font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600;}
+.h2h-bar-container { display: flex; width: 100%; height: 12px; background: rgba(0,0,0,0.5); border-radius: 6px; overflow: hidden; border: 1px solid var(--border-glass); }
+.h2h-bar-left { background: var(--text-main); display: flex; justify-content: flex-end; }
+.h2h-bar-right { background: var(--accent-neon); }
+
+/* ── PASO 8: MÓDULO INFO (NOTICIAS Y NOVEDADES) ── */
+.news-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;
+}
+.news-card {
+    background: var(--bg-card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-glass); border-radius: 12px; overflow: hidden;
+    transition: transform 0.2s ease, border-color 0.2s ease; display: flex; flex-direction: column;
+}
+.news-card:hover { transform: translateY(-5px); border-color: var(--accent-neon); }
+.news-image-placeholder {
+    width: 100%; height: 160px; background: linear-gradient(45deg, var(--bg-surface), #2a2a2c);
+    display: flex; align-items: center; justify-content: center; font-size: 3rem; border-bottom: 1px solid var(--border-glass);
+}
+.news-content { padding: 1.5rem; display: flex; flex-direction: column; flex: 1; }
+.news-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.news-tag { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; padding: 4px 10px; border-radius: 4px; letter-spacing: 1px; }
+.tag-mercado { background: rgba(57, 255, 20, 0.2); color: var(--accent-neon); border: 1px solid var(--accent-neon); }
+.tag-lesion { background: rgba(255, 71, 87, 0.2); color: #ff4757; border: 1px solid #ff4757; }
+.tag-declaracion { background: rgba(108, 171, 221, 0.2); color: #6CABDD; border: 1px solid #6CABDD; }
+.news-date { font-size: 0.8rem; color: var(--text-muted); }
+.news-title { font-family: var(--font-heading); font-size: 1.4rem; color: var(--text-main); margin-bottom: 0.8rem; line-height: 1.2; }
+.news-excerpt { font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.5rem; flex: 1; }
+.news-read-more { font-family: var(--font-heading); font-size: 1rem; font-weight: 700; color: var(--accent-neon); text-decoration: none; text-transform: uppercase; align-self: flex-start; transition: color 0.2s; }
+.news-read-more:hover { color: #fff; }
+
 /* Responsive General */
 @media (max-width: 1024px) {
     .dashboard-container { grid-template-columns: 1fr; grid-template-rows: auto auto auto auto; height: auto; overflow-y: auto; padding-bottom: 5rem; }
@@ -210,134 +242,6 @@ body {
     .panel-right { grid-column: 1; grid-row: 3; }
     .panel-bottom { grid-column: 1; grid-row: 4; flex-direction: column; text-align: center; padding: 1rem; }
     .liga-content-grid, .equipo-grid { grid-template-columns: 1fr; }
-}
-/* ── PASO 7: MÓDULO HEAD-TO-HEAD (H2H) ── */
-.h2h-header-panel {
-    display: flex; justify-content: space-around; align-items: center;
-    padding: 2rem; margin-bottom: 2rem; background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(57, 255, 20, 0.05) 100%);
-}
-.h2h-team { display: flex; flex-direction: column; align-items: center; gap: 10px; flex: 1; }
-.h2h-team .team-shield { width: 90px; height: 90px; font-size: 3rem; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-.h2h-team-name { font-family: var(--font-heading); font-size: 2rem; text-transform: uppercase; font-weight: 800; text-align: center;}
-.h2h-vs { 
-    font-family: var(--font-heading); font-size: 3rem; font-weight: 800; color: var(--bg-main);
-    background: var(--accent-neon); padding: 10px 20px; border-radius: 12px;
-    box-shadow: 0 0 30px rgba(57, 255, 20, 0.4); z-index: 10;
-}
-
-/* Barras de Comparación de Choque */
-.h2h-stats-board { display: flex; flex-direction: column; gap: 1.5rem; padding: 2rem 1.5rem; }
-.h2h-stat-row { display: flex; flex-direction: column; gap: 8px; }
-.h2h-stat-labels { display: flex; justify-content: space-between; font-weight: 700; font-size: 1.1rem; }
-.h2h-stat-labels .lbl-center { font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600;}
-
-.h2h-bar-container { 
-    display: flex; width: 100%; height: 12px; background: rgba(0,0,0,0.5); 
-    border-radius: 6px; overflow: hidden; border: 1px solid var(--border-glass);
-}
-/* Barra que crece desde el centro hacia los lados */
-.h2h-bar-left { background: var(--text-main); display: flex; justify-content: flex-end; }
-.h2h-bar-right { background: var(--accent-neon); }
-
-@media (max-width: 768px) {
     .h2h-header-panel { flex-direction: column; gap: 1.5rem; }
     .h2h-vs { transform: rotate(90deg); padding: 5px 15px; }
-}
-/* ── PASO 8 CORREGIDO: MÓDULO INFO (NOTICIAS Y NOVEDADES) ── */
-.news-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-    margin-top: 1.5rem;
-}
-
-.news-card {
-    background: var(--bg-card);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--border-glass);
-    border-radius: 12px;
-    overflow: hidden;
-    transition: transform 0.2s ease, border-color 0.2s ease;
-    display: flex;
-    flex-direction: column;
-}
-
-.news-card:hover {
-    transform: translateY(-5px);
-    border-color: var(--accent-neon);
-}
-
-.news-image-placeholder {
-    width: 100%;
-    height: 160px;
-    background: linear-gradient(45deg, var(--bg-surface), #2a2a2c);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 3rem;
-    border-bottom: 1px solid var(--border-glass);
-}
-
-.news-content {
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-}
-
-.news-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.news-tag {
-    font-size: 0.75rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    padding: 4px 10px;
-    border-radius: 4px;
-    letter-spacing: 1px;
-}
-
-.tag-mercado { background: rgba(57, 255, 20, 0.2); color: var(--accent-neon); border: 1px solid var(--accent-neon); }
-.tag-lesion { background: rgba(255, 71, 87, 0.2); color: #ff4757; border: 1px solid #ff4757; }
-.tag-declaracion { background: rgba(108, 171, 221, 0.2); color: #6CABDD; border: 1px solid #6CABDD; }
-
-.news-date {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-}
-
-.news-title {
-    font-family: var(--font-heading);
-    font-size: 1.4rem;
-    color: var(--text-main);
-    margin-bottom: 0.8rem;
-    line-height: 1.2;
-}
-
-.news-excerpt {
-    font-size: 0.95rem;
-    color: var(--text-muted);
-    line-height: 1.5;
-    margin-bottom: 1.5rem;
-    flex: 1;
-}
-
-.news-read-more {
-    font-family: var(--font-heading);
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--accent-neon);
-    text-decoration: none;
-    text-transform: uppercase;
-    align-self: flex-start;
-    transition: color 0.2s;
-}
-
-.news-read-more:hover {
-    color: #fff;
 }
