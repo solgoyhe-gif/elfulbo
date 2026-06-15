@@ -451,7 +451,7 @@ const App = (() => {
             }
         }
 
-        // Salvavidas con alineación oficial por si las dos APIs están en mantenimiento
+        // Salvavidas con alineación oficial por si las dos APIs están en mantenimiento o no hay datos actuales
         if (partidosMundial.length === 0) {
             partidosMundial = [
                 { grupo: "Grupo A", informacionText: "11 JUN - 16:00", local: "México", golesL: "-", visita: "Por Definir", golesV: "-", badgeLogoL: "🇲🇽", badgeLogoV: "❓" },
@@ -522,7 +522,7 @@ const App = (() => {
                 <div class="liga-header" style="border-left: 6px solid ${ligaData.badge_color}; background: radial-gradient(circle at left, rgba(200, 168, 75, 0.12) 0%, transparent 60%);">
                     <span class="liga-flag-large" style="font-size: 3.8rem; filter: drop-shadow(0 0 10px rgba(200,168,75,0.3));">${ligaData.flag}</span>
                     <div>
-                        <h1 class="liga-title-main" style="font-size: 2.6rem;">${ligaData.nombre}</h1>
+                        <h1 class="liga-title-main">${ligaData.nombre}</h1>
                         <span style="color: var(--accent-neon); font-weight: 800; letter-spacing: 1px; font-size: 0.85rem;">🏆 FIXTURE Y CALENDARIO OFICIAL DE PARTIDOS</span>
                     </div>
                 </div>
@@ -676,7 +676,7 @@ const App = (() => {
                             </div>
                             <h3 class="news-title">Acuerdo total: El fichaje más caro de la historia</h3>
                             <p class="news-excerpt">Fuentes cercanas al club confirman que las negociaciones han llegado a buen puerto. El anuncio oficial se hará mañana al mediodía.</p>
-                            <a href="#" class="news-read-more">Leer completo →</a>
+                            <a href="javascript:void(0)" class="news-read-more">Leer completo →</a>
                         </div>
                     </article>
 
@@ -689,7 +689,7 @@ const App = (() => {
                             </div>
                             <h3 class="news-title">"El arbitraje de hoy fue una verdadera vergüenza"</h3>
                             <p class="news-excerpt">El presidente del club explotó en conferencia de prensa tras el polémico empate. Pidió sanciones severas.</p>
-                            <a href="#" class="news-read-more">Ver video →</a>
+                            <a href="javascript:void(0)" class="news-read-more">Ver video →</a>
                         </div>
                     </article>
 
@@ -702,7 +702,7 @@ const App = (() => {
                             </div>
                             <h3 class="news-title">Rotura de ligamentos: Se despide de la temporada</h3>
                             <p class="news-excerpt">El cuerpo médico confirmó los peores temores. El capitán será operado este viernes y tendrá un tiempo estimado de recuperación de 8 meses.</p>
-                            <a href="#" class="news-read-more">Ver parte médico →</a>
+                            <a href="javascript:void(0)" class="news-read-more">Ver parte médico →</a>
                         </div>
                     </article>
                 </div>
