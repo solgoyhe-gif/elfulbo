@@ -1,23 +1,24 @@
 /**
  * espn.js — El Fulbo
- * Módulo de datos ESPN — se enchufan en la arquitectura existente sin tocar el router.
+ * Módulo de datos ESPN con endpoints correctos para soccer.
  *
- * Cómo funciona:
- *   1. Cloudflare Worker propio como proxy (sin CORS, sin límites de key)
- *   2. allorigins como fallback
- *   3. Caché en memoria + localStorage con TTL de 24hs
+ * FIXES:
+ *   - Standings: /apis/site/v2/ devuelve {} vacío para soccer.
+ *     El endpoint correcto es /apis/v2/sports/soccer/{slug}/standings
+ *   - Scoreboard: /apis/site/v2/ sí funciona para soccer.
+ *   - Estructura standings: /apis/v2/ devuelve children[].standings[].entries[]
  *
- * API usada: ESPN pública — sin API key, sin registro
+ * Sin API key, sin registro. Proxy Cloudflare propio + allorigins como fallback.
  */
 
 const ESPN = (() => {
 
     // ── Config ────────────────────────────────────────────────────────────────
     const CF_WORKER  = 'https://elfulbo.solgoyhe.workers.dev';
-    const ESPN_BASE  = 'https://site.api.espn.com/apis/site/v2/sports/soccer';
-    const CACHE_TTL  = 24 * 60 * 60 * 1000; // 24 horas en ms
+    const ESPN_V2    = 'https://site.api.espn.com/apis/v2/sports/soccer';    // standings
+    const ESPN_SITE  = 'https://site.api.espn.com/apis/site/v2/sports/soccer'; // scoreboard, teams
+    const CACHE_TTL  = 24 * 60 * 60 * 1000; // 24 horas
 
-    // Mapeo de los IDs de data.js → slugs reales de ESPN
     const SLUG_MAP = {
         premier:       'eng.1',
         bundesliga:    'ger.1',
@@ -62,8 +63,8 @@ const ESPN = (() => {
     const _fetch = async (espnUrl) => {
         const encoded = encodeURIComponent(espnUrl);
         const proxies = [
-            { url: `${CF_WORKER}?url=${encoded}`,                       parse: r => r.json() },
-            { url: `https://api.allorigins.win/get?url=${encoded}`,     parse: async r => JSON.parse((await r.json()).contents) },
+            { url: `${CF_WORKER}?url=${encoded}`,                   parse: r => r.json() },
+            { url: `https://api.allorigins.win/get?url=${encoded}`, parse: async r => JSON.parse((await r.json()).contents) },
         ];
 
         for (const proxy of proxies) {
@@ -80,14 +81,12 @@ const ESPN = (() => {
 
     // ── API pública ───────────────────────────────────────────────────────────
 
-    /**
-     * Obtiene el slug ESPN a partir del id de data.js
-     */
     const getSlug = (ligaId) => SLUG_MAP[ligaId] ?? null;
 
     /**
-     * Tabla de posiciones de una liga
-     * Devuelve array de { pos, team: {id, name, logo, color}, stats: {pj,pg,pe,pp,gf,gc,pts} }
+     * Tabla de posiciones.
+     * USA /apis/v2/ — el único endpoint que devuelve datos reales para soccer.
+     * Estructura: data.children[].standings[].entries[]  (varía según la liga)
      */
     const getStandings = async (ligaId) => {
         const slug = getSlug(ligaId);
@@ -98,33 +97,58 @@ const ESPN = (() => {
         const cached = _lsGet(cacheKey);
         if (cached) { _mem[cacheKey] = cached; return cached; }
 
-        const url  = `${ESPN_BASE}/${slug}/standings`;
+        // Endpoint correcto para soccer standings
+        const url  = `${ESPN_V2}/${slug}/standings`;
         const data = await _fetch(url);
 
-        // ESPN devuelve standings en data.standings[0].entries
-        const entries = data?.standings?.[0]?.entries ?? [];
+        // /apis/v2/ puede devolver:
+        //   data.standings[0].entries[]          (ligas simples)
+        //   data.children[0].standings[0].entries[]  (ligas con conferencias/grupos)
+        let entries = [];
+
+        if (data?.standings?.[0]?.entries?.length) {
+            // Formato directo
+            entries = data.standings[0].entries;
+        } else if (data?.children?.length) {
+            // Formato con divisiones/grupos — juntamos todas las conferencias
+            for (const child of data.children) {
+                const childEntries = child?.standings?.[0]?.entries ?? [];
+                entries = entries.concat(childEntries);
+            }
+        }
+
+        if (!entries.length) {
+            console.warn(`[ESPN] standings vacíos para ${slug}. Raw:`, JSON.stringify(data).substring(0, 300));
+        }
 
         const result = entries.map((entry, idx) => {
             const team = entry.team;
             const stats = {};
-            (entry.stats ?? []).forEach(s => { stats[s.abbreviation] = s.value; });
+            (entry.stats ?? []).forEach(s => {
+                // ESPN usa abreviaciones mixtas: GP, W, L, T, GF, GA, PTS, etc.
+                stats[s.abbreviation] = s.value;
+                // Guardar también por nombre largo por si la abrev cambia
+                if (s.name) stats[s.name] = s.value;
+            });
+
             return {
-                pos:  idx + 1,
+                pos:  entry.note?.rank ?? (idx + 1),
                 team: {
                     id:    team.id,
-                    name:  team.displayName,
+                    name:  team.displayName ?? team.name,
                     logo:  team.logos?.[0]?.href ?? '',
                     color: team.color ? `#${team.color}` : null,
-                    abbr:  team.abbreviation ?? team.displayName.substring(0, 3).toUpperCase(),
+                    abbr:  team.abbreviation ?? '',
                 },
                 stats: {
-                    pj:  stats['GP']  ?? stats['GS'] ?? 0,
-                    pg:  stats['W']   ?? 0,
-                    pe:  stats['T']   ?? stats['D']  ?? 0,
-                    pp:  stats['L']   ?? 0,
-                    gf:  stats['GF']  ?? 0,
-                    gc:  stats['GA']  ?? 0,
-                    pts: stats['PTS'] ?? stats['Pts'] ?? 0,
+                    pj:  stats['GP']  ?? stats['GS']           ?? stats['gamesPlayed']    ?? 0,
+                    pg:  stats['W']   ?? stats['wins']          ?? 0,
+                    pe:  stats['T']   ?? stats['D']             ?? stats['ties']           ?? 0,
+                    pp:  stats['L']   ?? stats['losses']        ?? 0,
+                    gf:  stats['GF']  ?? stats['pointsFor']     ?? 0,
+                    gc:  stats['GA']  ?? stats['pointsAgainst'] ?? 0,
+                    dif: stats['GD']  ?? stats['pointsDiff']    ?? 0,
+                    pts: stats['PTS'] ?? stats['Pts']           ?? stats['points']         ?? 0,
                 },
             };
         });
@@ -135,22 +159,25 @@ const ESPN = (() => {
     };
 
     /**
-     * Partidos de hoy / scoreboard
-     * Devuelve array de { id, homeTeam, awayTeam, score, status, date }
+     * Partidos / scoreboard.
+     * USA /apis/site/v2/ — sí funciona para scoreboard soccer.
+     * TTL corto (5 min) porque cambia en vivo.
      */
     const getScoreboard = async (ligaId) => {
         const slug = getSlug(ligaId);
         if (!slug) throw new Error(`Sin slug para liga: ${ligaId}`);
 
         const cacheKey = `scoreboard_${slug}`;
-        // Scoreboard: TTL corto (5 min) porque cambia en vivo
         const SHORT_TTL = 5 * 60 * 1000;
         try {
             const raw = localStorage.getItem(`elfulbo_${cacheKey}`);
-            if (raw) { const { ts, data } = JSON.parse(raw); if (Date.now() - ts < SHORT_TTL) return data; }
+            if (raw) {
+                const { ts, data } = JSON.parse(raw);
+                if (Date.now() - ts < SHORT_TTL) return data;
+            }
         } catch {}
 
-        const url  = `${ESPN_BASE}/${slug}/scoreboard`;
+        const url  = `${ESPN_SITE}/${slug}/scoreboard`;
         const data = await _fetch(url);
         const events = data?.events ?? [];
 
@@ -162,15 +189,15 @@ const ESPN = (() => {
                 id:       ev.id,
                 slug:     slug,
                 date:     ev.date,
-                status:   {
-                    state:       comp?.status?.type?.state ?? 'pre',        // 'pre' | 'in' | 'post'
-                    description: comp?.status?.type?.shortDetail ?? '',
-                    clock:       comp?.status?.displayClock ?? '',
-                    period:      comp?.status?.period ?? 0,
+                status: {
+                    state:       comp?.status?.type?.state        ?? 'pre',
+                    description: comp?.status?.type?.shortDetail  ?? comp?.status?.type?.description ?? '',
+                    clock:       comp?.status?.displayClock       ?? '',
+                    period:      comp?.status?.period             ?? 0,
                 },
                 homeTeam: {
                     id:    home?.team?.id,
-                    name:  home?.team?.displayName,
+                    name:  home?.team?.displayName ?? home?.team?.name,
                     abbr:  home?.team?.abbreviation,
                     logo:  home?.team?.logo ?? '',
                     color: home?.team?.color ? `#${home.team.color}` : null,
@@ -178,7 +205,7 @@ const ESPN = (() => {
                 },
                 awayTeam: {
                     id:    away?.team?.id,
-                    name:  away?.team?.displayName,
+                    name:  away?.team?.displayName ?? away?.team?.name,
                     abbr:  away?.team?.abbreviation,
                     logo:  away?.team?.logo ?? '',
                     color: away?.team?.color ? `#${away.team.color}` : null,
@@ -192,8 +219,7 @@ const ESPN = (() => {
     };
 
     /**
-     * Equipos de una liga (para la vista de equipos)
-     * Devuelve array de { id, name, logo, color, venue }
+     * Equipos de una liga.
      */
     const getTeams = async (ligaId) => {
         const slug = getSlug(ligaId);
@@ -204,13 +230,12 @@ const ESPN = (() => {
         const cached = _lsGet(cacheKey);
         if (cached) { _mem[cacheKey] = cached; return cached; }
 
-        const url  = `${ESPN_BASE}/${slug}/teams?limit=100`;
+        const url  = `${ESPN_SITE}/${slug}/teams?limit=100`;
         const data = await _fetch(url);
 
         const sportsArray = data?.sports?.[0];
         const targetLeague =
             sportsArray?.leagues?.find(l => l.slug === slug) ||
-            sportsArray?.leagues?.find(l => l.abbreviation?.toLowerCase() === slug.toLowerCase()) ||
             sportsArray?.leagues?.[0];
 
         const result = (targetLeague?.teams ?? []).map(t => ({
@@ -228,7 +253,7 @@ const ESPN = (() => {
     };
 
     /**
-     * Limpia toda la caché localStorage (útil para debug)
+     * Limpia toda la caché localStorage (útil para debug tras cambios de endpoint)
      */
     const clearCache = () => {
         Object.keys(localStorage)
