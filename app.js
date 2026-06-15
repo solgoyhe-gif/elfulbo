@@ -301,17 +301,18 @@ const App = (() => {
             // Renderizado de la tabla real
             if (tablaRaw && tablaRaw.length > 0) {
                 let rowsHtml = '';
-                tablaRaw.forEach(team => {
-                    const imgLogo = team.logo ? `<img src="${team.logo}" width="20" height="24" style="object-fit: contain; margin-right: 8px;">` : `<span class="team-shield" style="margin-right: 8px;">${team.name.charAt(0)}</span>`;
+                tablaRaw.forEach(entry => {
+                    const t = entry.team;
+                    const imgLogo = t.logo ? `<img src="${t.logo}" width="20" height="24" style="object-fit: contain; margin-right: 8px;">` : `<span class="team-shield" style="margin-right: 8px;">${t.name.charAt(0)}</span>`;
                     rowsHtml += `
-                        <tr onclick="window.location.hash='#/equipo?id=${team.id}&liga=${ligaId}&name=${encodeURIComponent(team.name)}'">
-                            <td class="col-pos">${team.rank}</td>
-                            <td class="col-team">${imgLogo} <span>${team.name}</span></td>
-                            <td>${team.stats.pj}</td>
-                            <td>${team.stats.pg}</td>
-                            <td>${team.stats.pe}</td>
-                            <td>${team.stats.pp}</td>
-                            <td class="col-pts">${team.stats.pts}</td>
+                        <tr onclick="window.location.hash='#/equipo?id=${t.id}&liga=${ligaId}&name=${encodeURIComponent(t.name)}'">
+                            <td class="col-pos">${entry.pos}</td>
+                            <td class="col-team">${imgLogo} <span>${t.name}</span></td>
+                            <td>${entry.stats.pj}</td>
+                            <td>${entry.stats.pg}</td>
+                            <td>${entry.stats.pe}</td>
+                            <td>${entry.stats.pp}</td>
+                            <td class="col-pts">${entry.stats.pts}</td>
                         </tr>
                     `;
                 });
@@ -341,23 +342,26 @@ const App = (() => {
             if (partidosRaw && partidosRaw.length > 0) {
                 let matchesHtml = '';
                 partidosRaw.forEach(partido => {
-                    const isLive = partido.status.toLowerCase().includes('live') || partido.status.includes("'");
+                    const statusDesc = partido.status?.description ?? partido.status?.state ?? '';
+                    const isLive = partido.status?.state === 'in' || statusDesc.toLowerCase().includes("'");
                     const liveBadge = isLive ? `<span style="color: #ff4757; font-size: 0.7rem; font-weight: bold; animation: pulse 1s infinite; margin-left: 6px;">● VIVO</span>` : '';
-                    
+                    const homeLogoHtml = partido.homeTeam?.logo ? `<img src="${partido.homeTeam.logo}" width="18" height="18" style="object-fit:contain; margin-right:6px; vertical-align:middle;">` : '';
+                    const awayLogoHtml = partido.awayTeam?.logo ? `<img src="${partido.awayTeam.logo}" width="18" height="18" style="object-fit:contain; margin-right:6px; vertical-align:middle;">` : '';
+
                     matchesHtml += `
                         <div class="match-item" style="padding: 12px 0; border-bottom: 1px solid var(--border-glass);">
                             <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; font-weight: 500;">
                                 <div style="display: flex; flex-direction: column; gap: 4px;">
-                                    <span>${partido.homeTeam}</span>
-                                    <span>${partido.awayTeam}</span>
+                                    <span>${homeLogoHtml}${partido.homeTeam?.name ?? '—'}</span>
+                                    <span>${awayLogoHtml}${partido.awayTeam?.name ?? '—'}</span>
                                 </div>
                                 <div style="display: flex; flex-direction: column; gap: 4px; text-align: right; font-family: var(--font-heading); font-weight: 700; color: var(--accent-neon);">
-                                    <span>${partido.homeScore}</span>
-                                    <span>${partido.awayScore}</span>
+                                    <span>${partido.homeTeam?.score ?? '-'}</span>
+                                    <span>${partido.awayTeam?.score ?? '-'}</span>
                                 </div>
                             </div>
                             <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 4px; text-transform: uppercase;">
-                                ${partido.status} ${liveBadge}
+                                ${statusDesc} ${liveBadge}
                             </span>
                         </div>
                     `;
