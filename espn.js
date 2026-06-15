@@ -25,7 +25,7 @@ const ESPN = (() => {
         ligue1:        'fra.1',
         laliga:        'esp.1',
         eredivisie:    'ned.1',
-        primera:       'por.1',
+        primeira:      'por.1',
         efl_cup:       'eng.league_cup',
         fa_cup:        'eng.fa',
         champions:     'uefa.champions',
