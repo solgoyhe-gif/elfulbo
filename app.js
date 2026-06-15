@@ -384,7 +384,7 @@ const App = (() => {
         }
     };
 
-    // ── VISTA EXCLUSIVA: CALENDARIO POR GRUPOS DEL MUNDIAL (CASCADA) ──────────
+    // ── VISTA EXCLUSIVA: CALENDARIO POR GRUPOS DEL MUNDIAL (CASCADA CON PROXY) ──────────
     const renderCalendarioMundial = async (ligaData) => {
         appContainer.innerHTML = `
             ${renderNavbar('#/liga?id=' + ligaData.id)}
@@ -398,7 +398,6 @@ const App = (() => {
         let partidosMundial = [];
 
         try {
-            // Intento 1: worldcup26.ir
             console.log('📡 [Cascada] Solicitando datos primarios a worldcup26.ir...');
             const controller = new AbortController();
             const idTimeout = setTimeout(() => controller.abort(), 4500);
@@ -425,44 +424,57 @@ const App = (() => {
             console.warn('⚠️ [Cascada] Servidor primario falló. Activando fallback a ESPN...', errPrimario.message);
             
             try {
-                // Intento 2: Fallback vía endpoint de copas internacionales de ESPN
-                const respuestaEspn = await fetch('https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard');
-                const parsedEspn = await respuestaEspn.json();
+                // FALLBACK SOLUCIONADO: Uso de proxy CORS para evitar el bloqueo del navegador en GitHub Pages
+                const targetUrl = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?limit=150&dates=20260611-20260719';
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+                
+                const respuestaProxy = await fetch(proxyUrl);
+                if (!respuestaProxy.ok) throw new Error('Error en el proxy de AllOrigins');
+                
+                const dataProxy = await respuestaProxy.json();
+                const parsedEspn = JSON.parse(dataProxy.contents); // AllOrigins inyecta el JSON real dentro de "contents"
                 
                 if (parsedEspn.events) {
                     partidosMundial = parsedEspn.events.map(ev => {
                         const comp = ev.competitions[0];
                         const loc = comp.competitors.find(c => c.homeAway === 'home');
                         const vis = comp.competitors.find(c => c.homeAway === 'away');
+                        
+                        let nombreGrupo = 'Fase Eliminatoria';
+                        if (ev.group?.name) {
+                            nombreGrupo = ev.group.name;
+                        } else if (ev.name?.toLowerCase().includes('group')) {
+                            nombreGrupo = ev.name.split('-')[0].trim();
+                        } else if (ev.season?.type === 1) {
+                            nombreGrupo = 'Fase de Grupos';
+                        }
+
                         return {
-                            local: loc.team.name,
-                            visita: vis.team.name,
-                            golesL: loc.score !== undefined ? loc.score : '-',
-                            golesV: vis.score !== undefined ? vis.score : '-',
-                            grupo: ev.season?.type === 1 ? 'Fase de Grupos' : 'Fase Eliminatoria',
-                            badgeLogoL: loc.team.logo || '🌐',
-                            badgeLogoV: vis.team.logo || '🌐',
-                            informacionText: ev.status.type.description || 'Programado'
+                            local: loc?.team?.name || 'TBD',
+                            visita: vis?.team?.name || 'TBD',
+                            golesL: loc?.score !== undefined ? loc.score : '-',
+                            golesV: vis?.score !== undefined ? vis.score : '-',
+                            grupo: nombreGrupo,
+                            badgeLogoL: loc?.team?.logo || '🌐',
+                            badgeLogoV: vis?.team?.logo || '🌐',
+                            informacionText: ev.status?.type?.shortDetail || ev.status?.type?.description || 'Programado'
                         };
                     });
                 }
             } catch (errSecundario) {
-                console.error('❌ [Cascada] Fallo absoluto de conexión a internet.', errSecundario);
+                console.error('❌ [Cascada] Fallo absoluto de conexión a internet o proxy bloqueado.', errSecundario);
             }
         }
 
-        // Salvavidas con alineación oficial por si las dos APIs están en mantenimiento o no hay datos actuales
+        // Salvavidas estático en caso de que todo falle
         if (partidosMundial.length === 0) {
             partidosMundial = [
                 { grupo: "Grupo A", informacionText: "11 JUN - 16:00", local: "México", golesL: "-", visita: "Por Definir", golesV: "-", badgeLogoL: "🇲🇽", badgeLogoV: "❓" },
                 { grupo: "Grupo A", informacionText: "12 JUN - 18:00", local: "Canadá", golesL: "-", visita: "Por Definir", golesV: "-", badgeLogoL: "🇨🇦", badgeLogoV: "❓" },
-                { grupo: "Grupo B", informacionText: "12 JUN - 20:00", local: "Estados Unidos", golesL: "-", visita: "Por Definir", golesV: "-", badgeLogoL: "🇺🇸", badgeLogoV: "❓" },
-                { grupo: "Grupo C", informacionText: "13 JUN - 15:00", local: "Argentina", golesL: "-", visita: "Por Definir", golesV: "-", badgeLogoL: "🇦🇷", badgeLogoV: "❓" },
-                { grupo: "Grupo C", informacionText: "13 JUN - 19:00", local: "España", golesL: "-", visita: "Por Definir", golesV: "-", badgeLogoL: "🇪🇸", badgeLogoV: "❓" }
+                { grupo: "Grupo B", informacionText: "12 JUN - 20:00", local: "Estados Unidos", golesL: "-", visita: "Por Definir", golesV: "-", badgeLogoL: "🇺🇸", badgeLogoV: "❓" }
             ];
         }
 
-        // Agrupación estricta por contenedor de grupos
         const mapeoGrupos = {};
         partidosMundial.forEach(p => {
             const identificador = p.grupo;
@@ -472,7 +484,6 @@ const App = (() => {
             mapeoGrupos[identificador].push(p);
         });
 
-        // Armado del HTML estructural de las tarjetas por cada Grupo
         let grillaGruposHtml = '';
         for (const [tituloGrupo, partidos] of Object.entries(mapeoGrupos)) {
             
