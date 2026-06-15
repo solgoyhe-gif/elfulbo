@@ -384,7 +384,7 @@ const App = (() => {
         }
     };
 
-    // ── VISTA EXCLUSIVA: CALENDARIO POR GRUPOS DEL MUNDIAL (CASCADA CON PROXY) ──────────
+    // ── VISTA EXCLUSIVA: CALENDARIO POR GRUPOS DEL MUNDIAL (CASCADA CON WORKER) ──────────
     const renderCalendarioMundial = async (ligaData) => {
         appContainer.innerHTML = `
             ${renderNavbar('#/liga?id=' + ligaData.id)}
@@ -424,15 +424,15 @@ const App = (() => {
             console.warn('⚠️ [Cascada] Servidor primario falló. Activando fallback a ESPN...', errPrimario.message);
             
             try {
-                // FALLBACK SOLUCIONADO: Uso de proxy CORS para evitar el bloqueo del navegador en GitHub Pages
+                // FALLBACK SOLUCIONADO: Uso del Cloudflare Worker configurado en tu proyecto
                 const targetUrl = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?limit=150&dates=20260611-20260719';
-                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+                const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
+                const proxyUrl = `${CF_WORKER}/?url=${encodeURIComponent(targetUrl)}`;
                 
                 const respuestaProxy = await fetch(proxyUrl);
-                if (!respuestaProxy.ok) throw new Error('Error en el proxy de AllOrigins');
+                if (!respuestaProxy.ok) throw new Error('Error de conexión en tu Cloudflare Worker');
                 
-                const dataProxy = await respuestaProxy.json();
-                const parsedEspn = JSON.parse(dataProxy.contents); // AllOrigins inyecta el JSON real dentro de "contents"
+                const parsedEspn = await respuestaProxy.json();
                 
                 if (parsedEspn.events) {
                     partidosMundial = parsedEspn.events.map(ev => {
