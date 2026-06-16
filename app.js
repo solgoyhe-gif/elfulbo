@@ -562,153 +562,26 @@ const App = (() => {
     // ── VISTA MUNDIAL: PERFIL DE EQUIPO, ESTADÍSTICAS REALES Y ANÁLISIS ──
     const renderEquipoDetalle = async (equipoId, ligaId, nombreEquipoDecoded) => {
         const name = decodeURIComponent(nombreEquipoDecoded || 'Selección');
-        
+        const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
+        const espnLeague = ESPN.getSlug(ligaId) ?? ligaId;
+
+        // ── Pantalla de carga inicial ─────────────────────────────────────────
         appContainer.innerHTML = `
             ${renderNavbar('#/liga?id=' + ligaId)}
             <main class="page-container fade-in">
                 <a href="javascript:history.back()" style="color: var(--text-muted); text-decoration: none; display: inline-block; margin-bottom: 1rem;">← Volver</a>
                 <div style="display: flex; justify-content: center; align-items: center; height: 30vh; flex-direction: column;">
                     <div style="width: 45px; height: 45px; border: 4px solid var(--accent-neon); border-right-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                    <p style="margin-top: 1.5rem; color: var(--accent-neon); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 1px;">Extrayendo datos de la Base de ESPN...</p>
+                    <p style="margin-top: 1.5rem; color: var(--accent-neon); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 1px;">Extrayendo datos de ESPN...</p>
                 </div>
             </main>
         `;
 
-        const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
-        let convocados = [];
-        let stats = { goles: [], asistencias: [], amarillas: [], rojas: [] };
-
-        const extraerDatos = (rosterJSON, teamJSON) => {
-            let tempConvocados = [];
-            let tempStats = { goles: [], asistencias: [], amarillas: [], rojas: [] };
-            
-            let atletasArray = [];
-            if (Array.isArray(rosterJSON.athletes)) {
-                // fifa.world: athletes es array plano de jugadores {id, displayName, position, jersey, ...}
-                // Verificar si es array plano (jugadores directos) o array de grupos con .items
-                if (rosterJSON.athletes.length > 0 && rosterJSON.athletes[0].items) {
-                    // Estructura agrupada por posición (ligas de clubes): [{items: [...]}, ...]
-                    atletasArray = rosterJSON.athletes.flatMap(grupo => grupo.items || []);
-                } else {
-                    // Estructura plana (selecciones nacionales / fifa.world): [{id, displayName, ...}, ...]
-                    atletasArray = rosterJSON.athletes;
-                }
-            } else if (teamJSON.team && teamJSON.team.athletes) {
-                atletasArray = teamJSON.team.athletes;
-            }
-
-            if (atletasArray && atletasArray.length > 0) {
-                atletasArray.forEach(ath => {
-                    tempConvocados.push({
-                        numero: ath.jersey || '-',
-                        nombre: ath.displayName || ath.fullName || 'Jugador',
-                        posicion: ath.position?.abbreviation || ath.position?.name || 'N/A'
-                    });
-
-                    if (ath.statistics && ath.statistics.length > 0) {
-                        const getStat = (statName) => {
-                            const s = ath.statistics.find(st => st.name === statName);
-                            return s ? parseInt(s.value, 10) : 0;
-                        };
-                        const g = getStat('goals');
-                        const a = getStat('assists');
-                        const y = getStat('yellowCards');
-                        const r = getStat('redCards');
-
-                        if (g > 0) tempStats.goles.push({ nombre: ath.displayName, valor: g });
-                        if (a > 0) tempStats.asistencias.push({ nombre: ath.displayName, valor: a });
-                        if (y > 0) tempStats.amarillas.push({ nombre: ath.displayName, valor: y });
-                        if (r > 0) tempStats.rojas.push({ nombre: ath.displayName, valor: r });
-                    }
-                });
-            }
-
-            if (tempStats.goles.length === 0 && teamJSON.team && teamJSON.team.leaders) {
-                const parseLeader = (keywords) => {
-                    const cat = teamJSON.team.leaders.find(c => keywords.includes(c.name));
-                    if (!cat || !cat.leaders) return [];
-                    return cat.leaders.map(l => ({
-                        nombre: l.athlete?.displayName || l.athlete?.shortName || l.athlete?.fullName || 'Desconocido',
-                        valor: parseInt(l.value, 10) || parseInt(l.displayValue, 10) || 0
-                    })).filter(l => l.valor > 0);
-                };
-                
-                tempStats.goles = parseLeader(['goals', 'scoring']);
-                tempStats.asistencias = parseLeader(['assists']);
-                tempStats.amarillas = parseLeader(['yellowCards', 'yellow']);
-                tempStats.rojas = parseLeader(['redCards', 'red']);
-            }
-            return { tempConvocados, tempStats };
-        };
-
-        if (equipoId && equipoId !== 'undefined') {
-            try {
-                // Traduce ligaId interno → slug ESPN real (centralizado en espn.js)
-                const espnLeague = ESPN.getSlug(ligaId) ?? ligaId;
-
-                const [rosterRes, teamRes] = await Promise.all([
-                    fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/teams/${equipoId}/roster`)}`),
-                    fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/teams/${equipoId}`)}`)
-                ]);
-                
-                let rJson = rosterRes.ok ? await rosterRes.json() : {};
-                let tJson = teamRes.ok ? await teamRes.json() : {};
-                let extract = extraerDatos(rJson, tJson);
-                
-                convocados = extract.tempConvocados;
-                stats = extract.tempStats;
-
-                // ── FALLBACK SECUNDARIO para selecciones: si fifa.world no tiene roster ──
-                // (puede pasar antes del inicio del torneo)
-                // Intenta con eng.1 para demostrar que el flujo funciona con datos reales.
-                // Cuando el Mundial arranque, fifa.world devolverá el roster completo
-                // y este bloque nunca se ejecutará.
-                if (convocados.length === 0 && espnLeague === 'fifa.world') {
-                    console.info(`[EL FULBO] fifa.world sin roster para equipo ${equipoId}. Intentando eng.1 como demo...`);
-                    const [rosterFallback, teamFallback] = await Promise.all([
-                        fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/${equipoId}/roster`)}`),
-                        fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/${equipoId}`)}`)
-                    ]);
-                    let rFb = rosterFallback.ok ? await rosterFallback.json() : {};
-                    let tFb = teamFallback.ok ? await teamFallback.json() : {};
-                    let extractFb = extraerDatos(rFb, tFb);
-                    convocados = extractFb.tempConvocados;
-                    stats = extractFb.tempStats;
-                }
-
-            } catch (err) { console.warn("Error API", err); }
-        }
-
-        // 🧠 ALGORITMO DE INYECCIÓN REALISTA:
-        // Si ESPN devuelve estadísticas en 0 (porque no empezó el mundial), usamos los NOMBRES REALES 
-        // de la plantilla para crear una simulación creíble y que la interfaz funcione.
-        if (stats.goles.length === 0 && convocados.length > 0) {
-            const delanteros = convocados.filter(j => ['F', 'A', 'DEL', 'ST', 'RW', 'LW', 'CF'].includes(j.posicion));
-            const medios = convocados.filter(j => ['M', 'MED', 'CM', 'CDM', 'CAM', 'RM', 'LM'].includes(j.posicion));
-            const defensas = convocados.filter(j => ['D', 'DEF', 'CB', 'LB', 'RB'].includes(j.posicion));
-
-            const pickPlayers = (pool, count, defaultPool) => {
-                let res = pool.slice(0, count);
-                if (res.length < count) res = res.concat(defaultPool.slice(0, count - res.length));
-                return res;
-            };
-
-            stats.goles = pickPlayers(delanteros, 3, convocados).map((p, i) => ({ nombre: p.nombre, valor: 3 - i }));
-            stats.asistencias = pickPlayers(medios, 3, convocados).map((p, i) => ({ nombre: p.nombre, valor: 2 - (i % 2) }));
-            stats.amarillas = pickPlayers(defensas.concat(medios), 4, convocados).map((p, i) => ({ nombre: p.nombre, valor: Math.floor(Math.random() * 2) + 1 }));
-            stats.rojas = pickPlayers(defensas, 1, convocados).map((p, i) => ({ nombre: p.nombre, valor: 1 }));
-        }
-
-        const ordenarYCortar = (arr) => arr.sort((a,b) => b.valor - a.valor).slice(0, 5);
-        const goleadores = ordenarYCortar(stats.goles);
-        const asistidores = ordenarYCortar(stats.asistencias);
-        const amarillas = ordenarYCortar(stats.amarillas);
-        const rojas = ordenarYCortar(stats.rojas);
-
+        // ── Helpers ───────────────────────────────────────────────────────────
         const renderLista = (lista, icono, unidad) => {
-            if(!lista || lista.length === 0) return `<p style="color:var(--text-muted); font-size:0.85rem; padding: 10px 0; text-align: center; font-style: italic;">Sin registros oficiales aún.</p>`;
+            if (!lista || lista.length === 0) return `<p style="color:var(--text-muted); font-size:0.85rem; padding: 10px 0; text-align: center; font-style: italic;">Sin registros en este partido.</p>`;
             return lista.map(item => `
-                <div style="display:flex; justify-content: space-between; align-items:center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
                     <div style="display:flex; align-items:center; gap: 8px;">
                         <span style="font-size: 1rem;">${icono}</span>
                         <span style="font-weight: 500; font-size: 0.95rem;">${item.nombre}</span>
@@ -718,125 +591,266 @@ const App = (() => {
             `).join('');
         };
 
-        let rosterHtml = '';
-        if (convocados.length > 0) {
-            rosterHtml = convocados.map(j => `
-                <div class="roster-item" style="display:flex; align-items:center; justify-content: space-between; padding: 8px; border-bottom: 1px solid var(--border-glass);">
-                    <div style="display:flex; align-items:center; gap: 10px;">
-                        <span class="player-num" style="background:rgba(255,255,255,0.1); width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:50%; font-weight:bold;">${j.numero}</span>
-                        <span class="player-name">${j.nombre}</span>
-                    </div>
-                    <span class="player-pos" style="font-size:0.8rem; color:var(--accent-neon); font-weight:bold;">${j.posicion}</span>
-                </div>
-            `).join('');
-        } else {
-            rosterHtml = `<p style="color:var(--text-muted); font-style: italic; text-align:center; padding-top: 1rem;">La base de datos no proveyó la lista de convocados.</p>`;
-        }
+        // ── Extrae stats reales de un summary de partido ──────────────────────
+        const extraerStatsDeSummary = (summaryJSON, teamId) => {
+            const stats = { goles: [], asistencias: [], amarillas: [], rojas: [] };
+            
+            // Goles y asistencias desde keyEvents
+            const goles = (summaryJSON.keyEvents ?? []).filter(e => e.scoringPlay === true && e.team?.id === String(teamId));
+            goles.forEach(g => {
+                const goleador = g.participants?.[0]?.athlete?.displayName;
+                const asistidor = g.participants?.[1]?.athlete?.displayName;
+                if (goleador) {
+                    const existing = stats.goles.find(x => x.nombre === goleador);
+                    if (existing) existing.valor++;
+                    else stats.goles.push({ nombre: goleador, valor: 1 });
+                }
+                if (asistidor) {
+                    const existing = stats.asistencias.find(x => x.nombre === asistidor);
+                    if (existing) existing.valor++;
+                    else stats.asistencias.push({ nombre: asistidor, valor: 1 });
+                }
+            });
 
-        const porteros = convocados.filter(j => ['G', 'POR', 'GK'].includes(j.posicion));
-        const defensas = convocados.filter(j => ['D', 'DEF', 'CB', 'LB', 'RB'].includes(j.posicion));
-        const medios = convocados.filter(j => ['M', 'MED', 'CM', 'CDM', 'CAM', 'RM', 'LM'].includes(j.posicion));
+            // Tarjetas desde rosters[].roster[].stats
+            const teamRoster = (summaryJSON.rosters ?? []).find(r => r.team?.id === String(teamId));
+            (teamRoster?.roster ?? []).forEach(j => {
+                const getStat = (n) => j.stats?.find(s => s.name === n)?.value ?? 0;
+                const am = getStat('yellowCards');
+                const ro = getStat('redCards');
+                const nombre = j.athlete?.displayName;
+                if (am > 0) stats.amarillas.push({ nombre, valor: am });
+                if (ro > 0) stats.rojas.push({ nombre, valor: ro });
+            });
+
+            return stats;
+        };
+
+        // ── Extrae convocados del roster general ──────────────────────────────
+        const extraerConvocados = (rosterJSON) => {
+            let atletasArray = [];
+            if (Array.isArray(rosterJSON.athletes)) {
+                atletasArray = rosterJSON.athletes[0]?.items
+                    ? rosterJSON.athletes.flatMap(g => g.items || [])
+                    : rosterJSON.athletes;
+            }
+            return atletasArray.map(ath => ({
+                numero:   ath.jersey || '-',
+                nombre:   ath.displayName || ath.fullName || 'Jugador',
+                posicion: ath.position?.abbreviation || ath.position?.name || 'N/A'
+            }));
+        };
+
+        // ── Fetch paralelo: roster + partidos del equipo ──────────────────────
+        let convocados = [];
+        let partidos = [];   // [{id, rival, resultado, estado, esLocal}]
+
+        try {
+            const [rosterRes, scoreboardRes] = await Promise.all([
+                fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/teams/${equipoId}/roster`)}`),
+                fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/scoreboard`)}`)
+            ]);
+
+            if (rosterRes.ok) convocados = extraerConvocados(await rosterRes.json());
+
+            if (scoreboardRes.ok) {
+                const sb = await scoreboardRes.json();
+                (sb.events ?? []).forEach(ev => {
+                    const comp = ev.competitions?.[0];
+                    const home = comp?.competitors?.find(c => c.homeAway === 'home');
+                    const away = comp?.competitors?.find(c => c.homeAway === 'away');
+                    const esLocal = home?.team?.id === String(equipoId);
+                    const esVisita = away?.team?.id === String(equipoId);
+                    if (!esLocal && !esVisita) return;
+
+                    const rival = esLocal ? (away?.team?.displayName ?? '?') : (home?.team?.displayName ?? '?');
+                    const scoreLocal = home?.score ?? '-';
+                    const scoreVisita = away?.score ?? '-';
+                    const estado = comp?.status?.type?.state ?? 'pre';
+                    const desc = comp?.status?.type?.shortDetail ?? '';
+                    const isLive = estado === 'in';
+                    const jugado = estado === 'post' || isLive;
+
+                    partidos.push({
+                        id: ev.id,
+                        rival,
+                        resultado: jugado ? `${scoreLocal} - ${scoreVisita}` : desc || 'Próximo',
+                        estado,
+                        isLive,
+                        jugado
+                    });
+                });
+            }
+        } catch (err) { console.warn('[EL FULBO] Error cargando equipo:', err); }
+
+        // ── Pizarra táctica ───────────────────────────────────────────────────
+        const porteros   = convocados.filter(j => ['G', 'POR', 'GK'].includes(j.posicion));
+        const defensas   = convocados.filter(j => ['D', 'DEF', 'CB', 'LB', 'RB'].includes(j.posicion));
+        const medios     = convocados.filter(j => ['M', 'MED', 'CM', 'CDM', 'CAM', 'RM', 'LM'].includes(j.posicion));
         const delanteros = convocados.filter(j => ['F', 'A', 'DEL', 'ST', 'RW', 'LW', 'CF'].includes(j.posicion));
+        const getDorsal  = (arr, i, fb) => (arr[i] && arr[i].numero !== '-') ? arr[i].numero : fb;
 
-        const getDorsal = (arr, index, fallback) => (arr[index] && arr[index].numero !== '-') ? arr[index].numero : fallback;
+        const rosterHtml = convocados.length > 0
+            ? convocados.map(j => `
+                <div style="display:flex; align-items:center; justify-content:space-between; padding: 8px; border-bottom: 1px solid var(--border-glass);">
+                    <div style="display:flex; align-items:center; gap: 10px;">
+                        <span style="background:rgba(255,255,255,0.1); width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:50%; font-weight:bold; font-size:0.85rem;">${j.numero}</span>
+                        <span>${j.nombre}</span>
+                    </div>
+                    <span style="font-size:0.8rem; color:var(--accent-neon); font-weight:bold;">${j.posicion}</span>
+                </div>`).join('')
+            : `<p style="color:var(--text-muted); font-style:italic; text-align:center; padding-top:1rem;">Sin datos de convocados.</p>`;
 
-        let topScorer = goleadores.length > 0 ? goleadores[0].nombre : 'sus delanteros';
-        let topAssister = asistidores.length > 0 ? asistidores[0].nombre : 'el mediocampo';
-        let totalYellows = amarillas.reduce((acc, curr) => acc + curr.valor, 0);
+        // ── Chips de partidos ─────────────────────────────────────────────────
+        const chipsHtml = partidos.length > 0
+            ? partidos.map((p, i) => `
+                <button onclick="window._seleccionarPartido(${i})" id="chip-partido-${i}"
+                    style="flex-shrink:0; padding: 10px 18px; border-radius: 20px; border: 2px solid ${i === 0 ? 'var(--accent-neon)' : 'var(--border-glass)'}; background: ${i === 0 ? 'rgba(57,255,20,0.12)' : 'rgba(255,255,255,0.04)'}; color: ${i === 0 ? 'var(--accent-neon)' : 'var(--text-muted)'}; cursor: pointer; font-family: var(--font-heading); font-weight: 700; font-size: 0.9rem; white-space: nowrap; transition: all 0.2s;">
+                    vs ${p.rival}
+                    ${p.isLive ? '<span style="color:#ff4757; margin-left:6px; font-size:0.75rem;">● VIVO</span>' : ''}
+                    <span style="display:block; font-size:0.75rem; font-weight:400; margin-top:2px; color:var(--text-muted);">${p.resultado}</span>
+                </button>`).join('')
+            : `<p style="color:var(--text-muted); font-size:0.85rem; padding: 10px;">Sin partidos registrados aún.</p>`;
 
+        // ── Render principal ──────────────────────────────────────────────────
         appContainer.innerHTML = `
             ${renderNavbar('#/liga?id=' + ligaId)}
             <main class="page-container fade-in">
                 <a href="javascript:history.back()" style="color: var(--text-muted); text-decoration: none; display: inline-block; margin-bottom: 1.5rem; font-weight: 600;">← Volver</a>
-                
-                <div class="liga-header" style="border-left: 6px solid var(--accent-neon); background: rgba(255, 255, 255, 0.03); display: flex; align-items: center; gap: 20px;">
-                    <div class="team-shield" style="width: 80px; height: 80px; font-size: 2.5rem; background: var(--surface-color); border: 2px solid var(--border-glass); display:flex; align-items:center; justify-content:center; border-radius:50%;">${name.charAt(0)}</div>
+
+                <div class="liga-header" style="border-left: 6px solid var(--accent-neon); background: rgba(255,255,255,0.03); display: flex; align-items: center; gap: 20px;">
+                    <div style="width: 80px; height: 80px; font-size: 2.5rem; background: var(--surface-color); border: 2px solid var(--border-glass); display:flex; align-items:center; justify-content:center; border-radius:50%;">${name.charAt(0)}</div>
                     <div>
                         <h1 class="liga-title-main" style="margin-bottom: 4px; font-size: 2rem;">${name}</h1>
-                        <span style="color: var(--accent-neon); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem;">Estadísticas de Plantilla Oficiales</span>
+                        <span style="color: var(--accent-neon); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem;">Estadísticas por Partido</span>
                     </div>
                 </div>
 
-                <div class="glass-panel" style="padding: 1.5rem; margin-top: 2rem; border: 1px solid var(--accent-neon);">
-                    <h3 class="panel-title" style="border-bottom: 1px solid rgba(57, 255, 20, 0.3); padding-bottom: 8px; margin-bottom: 15px;">🧠 Centro de Inteligencia Táctica</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
-                        <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; border-left: 3px solid #6CABDD;">
-                            <h4 style="color: #6CABDD; margin-bottom: 8px; font-family: var(--font-heading);">Análisis Ofensivo</h4>
-                            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">La principal amenaza de cara al arco rival recae sobre los pies de <strong>${topScorer}</strong>, quien lidera la métrica de efectividad. La distribución y armado de juego pasa invariablemente por <strong>${topAssister}</strong>, clave en la zona de creación.</p>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; border-left: 3px solid #f5f5f5;">
-                            <h4 style="color: #f5f5f5; margin-bottom: 8px; font-family: var(--font-heading);">Estructura del Equipo</h4>
-                            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">El seleccionado de ${name} suele asentar un bloque en formato 4-3-3. Priorizan el balance en el mediocampo para asegurar transiciones rápidas y repliegues seguros tras pérdida de balón.</p>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; border-left: 3px solid #ff4757;">
-                            <h4 style="color: #ff4757; margin-bottom: 8px; font-family: var(--font-heading);">Diagnóstico Disciplinario</h4>
-                            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">Con un acumulado parcial de ${totalYellows} tarjetas amarillas registradas en su cuadro principal, el equipo requiere extremar cuidados en las faltas tácticas para no condicionar su línea defensiva.</p>
-                        </div>
+                <!-- Selector de partidos -->
+                <div class="glass-panel" style="padding: 1.2rem 1.5rem; margin-top: 1.5rem;">
+                    <p style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; font-weight:600;">Seleccioná un partido</p>
+                    <div style="display:flex; gap: 12px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin;">
+                        ${chipsHtml}
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; margin-top: 2rem;">
-                    <div class="glass-panel" style="padding: 1.5rem;">
-                        <h3 class="panel-title" style="border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; margin-bottom: 10px; font-size: 1.1rem;">⚽ Goleadores</h3>
-                        ${renderLista(goleadores, '⚽', 'GOLES')}
-                    </div>
-                    <div class="glass-panel" style="padding: 1.5rem;">
-                        <h3 class="panel-title" style="border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; margin-bottom: 10px; font-size: 1.1rem;">🎯 Asistidores</h3>
-                        ${renderLista(asistidores, '👟', 'ASIST.')}
-                    </div>
-                    <div class="glass-panel" style="padding: 1.5rem;">
-                        <h3 class="panel-title" style="border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; margin-bottom: 10px; font-size: 1.1rem;">🟨 T. Amarillas</h3>
-                        ${renderLista(amarillas, '🟨', 'TARJ.')}
-                    </div>
-                    <div class="glass-panel" style="padding: 1.5rem;">
-                        <h3 class="panel-title" style="border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; margin-bottom: 10px; font-size: 1.1rem;">🟥 T. Rojas</h3>
-                        ${renderLista(rojas, '🟥', 'TARJ.')}
+                <!-- Stats del partido seleccionado -->
+                <div id="stats-partido-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+                    <div class="glass-panel" style="padding: 1.5rem; grid-column: 1 / -1; text-align:center;">
+                        <div style="width: 30px; height: 30px; border: 3px solid var(--accent-neon); border-right-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+                        <p style="color:var(--text-muted); margin-top:10px; font-size:0.9rem;">Cargando estadísticas...</p>
                     </div>
                 </div>
 
-                <div class="equipo-grid">
+                <!-- Convocados + Pizarra -->
+                <div class="equipo-grid" style="margin-top: 2rem;">
                     <div class="glass-panel" style="padding: 1.5rem; max-height: 500px; overflow-y: auto;">
-                        <h3 class="panel-title">Lista de Convocados Oficial</h3>
-                        <div class="roster-list">
-                            ${rosterHtml}
-                        </div>
+                        <h3 class="panel-title">Lista de Convocados</h3>
+                        ${rosterHtml}
                     </div>
-
                     <div class="glass-panel" style="padding: 1.5rem; overflow: hidden;">
                         <h3 class="panel-title">Disposición Táctica (4-3-3)</h3>
-                        <div style="position: relative; width: 100%; height: 400px; background: #1a472a; border: 2px solid rgba(255,255,255,0.2); border-radius: 10px; display: flex; flex-direction: column; justify-content: space-around; padding: 15px 0; overflow: hidden; box-shadow: inset 0 0 50px rgba(0,0,0,0.5);">
-                            <div style="position: absolute; top: 50%; left: 0; right: 0; border-top: 2px solid rgba(255,255,255,0.3); transform: translateY(-50%);"></div>
-                            <div style="position: absolute; top: 50%; left: 50%; width: 80px; height: 80px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; transform: translate(-50%, -50%);"></div>
-                            <div style="position: absolute; bottom: 0; left: 50%; width: 140px; height: 60px; border: 2px solid rgba(255,255,255,0.3); border-bottom: none; transform: translateX(-50%);"></div>
-                            <div style="position: absolute; top: 0; left: 50%; width: 140px; height: 60px; border: 2px solid rgba(255,255,255,0.3); border-top: none; transform: translateX(-50%);"></div>
-                            
-                            <div style="display: flex; justify-content: space-evenly; width: 100%; z-index: 2;">
-                                <div class="player-token" style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${getDorsal(delanteros, 0, '7')}</div>
-                                <div class="player-token" style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5); margin-top:-15px;">${getDorsal(delanteros, 1, '9')}</div>
-                                <div class="player-token" style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${getDorsal(delanteros, 2, '11')}</div>
+                        <div style="position:relative; width:100%; height:400px; background:#1a472a; border:2px solid rgba(255,255,255,0.2); border-radius:10px; display:flex; flex-direction:column; justify-content:space-around; padding:15px 0; overflow:hidden; box-shadow:inset 0 0 50px rgba(0,0,0,0.5);">
+                            <div style="position:absolute; top:50%; left:0; right:0; border-top:2px solid rgba(255,255,255,0.3); transform:translateY(-50%);"></div>
+                            <div style="position:absolute; top:50%; left:50%; width:80px; height:80px; border:2px solid rgba(255,255,255,0.3); border-radius:50%; transform:translate(-50%,-50%);"></div>
+                            <div style="position:absolute; bottom:0; left:50%; width:140px; height:60px; border:2px solid rgba(255,255,255,0.3); border-bottom:none; transform:translateX(-50%);"></div>
+                            <div style="position:absolute; top:0; left:50%; width:140px; height:60px; border:2px solid rgba(255,255,255,0.3); border-top:none; transform:translateX(-50%);"></div>
+                            <div style="display:flex; justify-content:space-evenly; width:100%; z-index:2;">
+                                <div style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${getDorsal(delanteros,0,'7')}</div>
+                                <div style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5); margin-top:-15px;">${getDorsal(delanteros,1,'9')}</div>
+                                <div style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${getDorsal(delanteros,2,'11')}</div>
                             </div>
-                            
-                            <div style="display: flex; justify-content: space-evenly; width: 100%; z-index: 2; margin-top: -20px;">
-                                <div class="player-token" style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${getDorsal(medios, 0, '8')}</div>
-                                <div class="player-token" style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5); margin-top:15px;">${getDorsal(medios, 1, '6')}</div>
-                                <div class="player-token" style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${getDorsal(medios, 2, '10')}</div>
+                            <div style="display:flex; justify-content:space-evenly; width:100%; z-index:2; margin-top:-20px;">
+                                <div style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${getDorsal(medios,0,'8')}</div>
+                                <div style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5); margin-top:15px;">${getDorsal(medios,1,'6')}</div>
+                                <div style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${getDorsal(medios,2,'10')}</div>
                             </div>
-                            
-                            <div style="display: flex; justify-content: space-between; padding: 0 10%; width: 100%; z-index: 2; margin-top: 10px;">
-                                <div class="player-token" style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${getDorsal(defensas, 0, '4')}</div>
-                                <div class="player-token" style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5); margin-top: 15px;">${getDorsal(defensas, 1, '3')}</div>
-                                <div class="player-token" style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5); margin-top: 15px;">${getDorsal(defensas, 2, '2')}</div>
-                                <div class="player-token" style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${getDorsal(defensas, 3, '5')}</div>
+                            <div style="display:flex; justify-content:space-between; padding:0 10%; width:100%; z-index:2; margin-top:10px;">
+                                <div style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${getDorsal(defensas,0,'4')}</div>
+                                <div style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5); margin-top:15px;">${getDorsal(defensas,1,'3')}</div>
+                                <div style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5); margin-top:15px;">${getDorsal(defensas,2,'2')}</div>
+                                <div style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${getDorsal(defensas,3,'5')}</div>
                             </div>
-                            
-                            <div style="display: flex; justify-content: center; width: 100%; z-index: 2;">
-                                <div class="player-token" style="background:var(--accent-neon); color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${getDorsal(porteros, 0, '1')}</div>
+                            <div style="display:flex; justify-content:center; width:100%; z-index:2;">
+                                <div style="background:var(--accent-neon); color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${getDorsal(porteros,0,'1')}</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </main>
         `;
+
+        // ── Función global para cargar stats de un partido ────────────────────
+        window._seleccionarPartido = async (idx) => {
+            // Actualizar chips
+            partidos.forEach((_, i) => {
+                const chip = document.getElementById(`chip-partido-${i}`);
+                if (!chip) return;
+                chip.style.border = i === idx ? '2px solid var(--accent-neon)' : '2px solid var(--border-glass)';
+                chip.style.background = i === idx ? 'rgba(57,255,20,0.12)' : 'rgba(255,255,255,0.04)';
+                chip.style.color = i === idx ? 'var(--accent-neon)' : 'var(--text-muted)';
+            });
+
+            const container = document.getElementById('stats-partido-container');
+            if (!container) return;
+
+            const partido = partidos[idx];
+
+            // Si no está jugado, mostrar mensaje
+            if (!partido.jugado) {
+                container.innerHTML = `
+                    <div class="glass-panel" style="padding: 1.5rem; grid-column: 1 / -1; text-align:center;">
+                        <p style="font-size: 2rem;">📅</p>
+                        <p style="color:var(--text-muted); margin-top:8px;">Este partido aún no se jugó.</p>
+                        <p style="color:var(--accent-neon); font-weight:700; font-size:1.1rem; margin-top:4px;">${partido.resultado}</p>
+                    </div>`;
+                return;
+            }
+
+            // Loading
+            container.innerHTML = `
+                <div class="glass-panel" style="padding: 1.5rem; grid-column: 1 / -1; text-align:center;">
+                    <div style="width:30px; height:30px; border:3px solid var(--accent-neon); border-right-color:transparent; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto;"></div>
+                    <p style="color:var(--text-muted); margin-top:10px; font-size:0.9rem;">Cargando stats de vs ${partido.rival}...</p>
+                </div>`;
+
+            try {
+                const summaryRes = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/summary?event=${partido.id}`)}`);
+                const summaryJSON = summaryRes.ok ? await summaryRes.json() : {};
+                const stats = extraerStatsDeSummary(summaryJSON, equipoId);
+
+                container.innerHTML = `
+                    <div class="glass-panel" style="padding: 1.5rem;">
+                        <h3 class="panel-title" style="border-bottom:1px solid var(--border-glass); padding-bottom:8px; margin-bottom:10px; font-size:1.1rem;">⚽ Goleadores</h3>
+                        ${renderLista(stats.goles, '⚽', 'GOLES')}
+                    </div>
+                    <div class="glass-panel" style="padding: 1.5rem;">
+                        <h3 class="panel-title" style="border-bottom:1px solid var(--border-glass); padding-bottom:8px; margin-bottom:10px; font-size:1.1rem;">🎯 Asistidores</h3>
+                        ${renderLista(stats.asistencias, '👟', 'ASIST.')}
+                    </div>
+                    <div class="glass-panel" style="padding: 1.5rem;">
+                        <h3 class="panel-title" style="border-bottom:1px solid var(--border-glass); padding-bottom:8px; margin-bottom:10px; font-size:1.1rem;">🟨 T. Amarillas</h3>
+                        ${renderLista(stats.amarillas, '🟨', 'TARJ.')}
+                    </div>
+                    <div class="glass-panel" style="padding: 1.5rem;">
+                        <h3 class="panel-title" style="border-bottom:1px solid var(--border-glass); padding-bottom:8px; margin-bottom:10px; font-size:1.1rem;">🟥 T. Rojas</h3>
+                        ${renderLista(stats.rojas, '🟥', 'TARJ.')}
+                    </div>`;
+            } catch (err) {
+                container.innerHTML = `<div class="glass-panel" style="padding:1.5rem; grid-column:1/-1; text-align:center;"><p style="color:var(--text-muted);">Error cargando estadísticas.</p></div>`;
+            }
+        };
+
+        // Cargar automáticamente el primer partido jugado
+        const primerJugado = partidos.findIndex(p => p.jugado);
+        if (primerJugado >= 0) {
+            window._seleccionarPartido(primerJugado);
+        } else if (partidos.length > 0) {
+            window._seleccionarPartido(0);
+        } else {
+            const container = document.getElementById('stats-partido-container');
+            if (container) container.innerHTML = `<div class="glass-panel" style="padding:1.5rem; grid-column:1/-1; text-align:center;"><p style="color:var(--text-muted); font-style:italic;">Este equipo aún no tiene partidos registrados en ESPN.</p></div>`;
+        }
     };
 
     // ── VISTAS ORIGINALES (H2H E INFO) ───────────────────────────────────────
