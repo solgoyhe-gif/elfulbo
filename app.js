@@ -465,12 +465,13 @@ const App = (() => {
         // Renderizado del HTML estructurado por Tablas
         let grillaGruposHtml = '';
         gruposData.forEach(grupo => {
-            let filasTabla = grupo.equipos.map(eq => {
+            // Utilizamos el 'index' nativo del mapa para forzar la posición visual del 1 al 4
+            let filasTabla = grupo.equipos.map((eq, index) => {
                 const logoHtml = eq.logo.includes('http') ? `<img src="${eq.logo}" width="20" height="20" style="object-fit: contain; margin-right: 8px;">` : `<span style="font-size:1.1rem; margin-right: 8px;">${eq.logo}</span>`;
                 
                 return `
                     <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
-                        <td style="padding: 8px 4px; font-weight: bold; color: var(--text-muted);">${eq.pos}</td>
+                        <td style="padding: 8px 4px; font-weight: bold; color: var(--text-muted);">${index + 1}</td>
                         <td style="padding: 8px 4px; display: flex; align-items: center; font-weight: 500;">
                             ${logoHtml} <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;">${eq.nombre}</span>
                         </td>
