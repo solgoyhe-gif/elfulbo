@@ -428,19 +428,20 @@ const App = (() => {
             console.warn('⚠️ [Grupos] ESPN no disponible o vacío:', error.message);
             proveedor = 'SISTEMA DE SIMULACIÓN VISUAL (MOCK 48 EQUIPOS)';
             
+            // Mock de Grupos CON IDs REALES DE ESPN PARA ASEGURAR QUE LAS ESTADÍSTICAS SE CARGUEN
             const mockEquipos = {
-                'GRUPO A': [{n:'México', fl:'🇲🇽', id:'1'}, {n:'Alemania', fl:'🇩🇪', id:'2'}, {n:'Japón', fl:'🇯🇵', id:'3'}, {n:'Mali', fl:'🇲🇱', id:'4'}],
-                'GRUPO B': [{n:'Canadá', fl:'🇨🇦', id:'5'}, {n:'España', fl:'🇪🇸', id:'6'}, {n:'Colombia', fl:'🇨🇴', id:'7'}, {n:'Corea del Sur', fl:'🇰🇷', id:'8'}],
-                'GRUPO C': [{n:'Estados Unidos', fl:'🇺🇸', id:'9'}, {n:'Francia', fl:'🇫🇷', id:'10'}, {n:'Senegal', fl:'🇸🇳', id:'11'}, {n:'Arabia Saudita', fl:'🇸🇦', id:'12'}],
-                'GRUPO D': [{n:'Argentina', fl:'🇦🇷', id:'13'}, {n:'Inglaterra', fl:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', id:'14'}, {n:'Ecuador', fl:'🇪🇨', id:'15'}, {n:'Costa Rica', fl:'🇨🇷', id:'16'}],
-                'GRUPO E': [{n:'Brasil', fl:'🇧🇷', id:'17'}, {n:'Países Bajos', fl:'🇳🇱', id:'18'}, {n:'Marruecos', fl:'🇲🇦', id:'19'}, {n:'Australia', fl:'🇦🇺', id:'20'}],
-                'GRUPO F': [{n:'Portugal', fl:'🇵🇹', id:'21'}, {n:'Croacia', fl:'🇭🇷', id:'22'}, {n:'Uruguay', fl:'🇺🇾', id:'23'}, {n:'Catar', fl:'🇶🇦', id:'24'}],
-                'GRUPO G': [{n:'Italia', fl:'🇮🇹', id:'25'}, {n:'Bélgica', fl:'🇧🇪', id:'26'}, {n:'Suecia', fl:'🇸🇪', id:'27'}, {n:'Egipto', fl:'🇪🇬', id:'28'}],
-                'GRUPO H': [{n:'Suiza', fl:'🇨🇭', id:'29'}, {n:'Nigeria', fl:'🇳🇬', id:'30'}, {n:'Irán', fl:'🇮🇷', id:'31'}, {n:'Gales', fl:'🏴󠁧󠁢󠁷󠁬󠁳󠁿', id:'32'}],
-                'GRUPO I': [{n:'Dinamarca', fl:'🇩🇰', id:'33'}, {n:'Serbia', fl:'🇷🇸', id:'34'}, {n:'Chile', fl:'🇨🇱', id:'35'}, {n:'Perú', fl:'🇵🇪', id:'36'}],
-                'GRUPO J': [{n:'Polonia', fl:'🇵🇱', id:'37'}, {n:'Costa de Marfil', fl:'🇨🇮', id:'38'}, {n:'Irak', fl:'🇮🇶', id:'39'}, {n:'Jamaica', fl:'🇯🇲', id:'40'}],
-                'GRUPO K': [{n:'Austria', fl:'🇦🇹', id:'41'}, {n:'Ucrania', fl:'🇺🇦', id:'42'}, {n:'Camerún', fl:'🇨🇲', id:'43'}, {n:'Argelia', fl:'🇩🇿', id:'44'}],
-                'GRUPO L': [{n:'Turquía', fl:'🇹🇷', id:'45'}, {n:'Hungría', fl:'🇭🇺', id:'46'}, {n:'Panamá', fl:'🇵🇦', id:'47'}, {n:'Venezuela', fl:'🇻🇪', id:'48'}]
+                'GRUPO A': [{n:'México', fl:'🇲🇽', id:'203'}, {n:'Alemania', fl:'🇩🇪', id:'481'}, {n:'Japón', fl:'🇯🇵', id:'627'}, {n:'Mali', fl:'🇲🇱', id:'636'}],
+                'GRUPO B': [{n:'Canadá', fl:'🇨🇦', id:'1845'}, {n:'España', fl:'🇪🇸', id:'483'}, {n:'Colombia', fl:'🇨🇴', id:'211'}, {n:'Corea del Sur', fl:'🇰🇷', id:'632'}],
+                'GRUPO C': [{n:'Estados Unidos', fl:'🇺🇸', id:'660'}, {n:'Francia', fl:'🇫🇷', id:'478'}, {n:'Senegal', fl:'🇸🇳', id:'651'}, {n:'Arabia Saudita', fl:'🇸🇦', id:'648'}],
+                'GRUPO D': [{n:'Argentina', fl:'🇦🇷', id:'202'}, {n:'Inglaterra', fl:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', id:'474'}, {n:'Ecuador', fl:'🇪🇨', id:'212'}, {n:'Costa Rica', fl:'🇨🇷', id:'210'}],
+                'GRUPO E': [{n:'Brasil', fl:'🇧🇷', id:'205'}, {n:'Países Bajos', fl:'🇳🇱', id:'449'}, {n:'Marruecos', fl:'🇲🇦', id:'639'}, {n:'Australia', fl:'🇦🇺', id:'628'}],
+                'GRUPO F': [{n:'Portugal', fl:'🇵🇹', id:'482'}, {n:'Croacia', fl:'🇭🇷', id:'477'}, {n:'Uruguay', fl:'🇺🇾', id:'214'}, {n:'Catar', fl:'🇶🇦', id:'646'}],
+                'GRUPO G': [{n:'Italia', fl:'🇮🇹', id:'104'}, {n:'Bélgica', fl:'🇧🇪', id:'473'}, {n:'Suecia', fl:'🇸🇪', id:'484'}, {n:'Egipto', fl:'🇪🇬', id:'630'}],
+                'GRUPO H': [{n:'Suiza', fl:'🇨🇭', id:'485'}, {n:'Nigeria', fl:'🇳🇬', id:'643'}, {n:'Irán', fl:'🇮🇷', id:'631'}, {n:'Gales', fl:'🏴󠁧󠁢󠁷󠁬󠁳󠁿', id:'476'}],
+                'GRUPO I': [{n:'Dinamarca', fl:'🇩🇰', id:'479'}, {n:'Serbia', fl:'🇷🇸', id:'486'}, {n:'Chile', fl:'🇨🇱', id:'207'}, {n:'Perú', fl:'🇵🇪', id:'213'}],
+                'GRUPO J': [{n:'Polonia', fl:'🇵🇱', id:'480'}, {n:'Costa de Marfil', fl:'🇨🇮', id:'633'}, {n:'Irak', fl:'🇮🇶', id:'644'}, {n:'Jamaica', fl:'🇯🇲', id:'654'}],
+                'GRUPO K': [{n:'Austria', fl:'🇦🇹', id:'472'}, {n:'Ucrania', fl:'🇺🇦', id:'2970'}, {n:'Camerún', fl:'🇨🇲', id:'629'}, {n:'Argelia', fl:'🇩🇿', id:'626'}],
+                'GRUPO L': [{n:'Turquía', fl:'🇹🇷', id:'487'}, {n:'Hungría', fl:'🇭🇺', id:'488'}, {n:'Panamá', fl:'🇵🇦', id:'659'}, {n:'Venezuela', fl:'🇻🇪', id:'215'}]
             };
 
             for (const [nombreGrupo, equiposArr] of Object.entries(mockEquipos)) {
@@ -570,12 +571,27 @@ const App = (() => {
             }
         } catch (err) {
             console.warn("Usando mock estricto para detalle de grupo", err);
-            equipos = [
-                {id: '1', nombre: `Líder ${grupoNombre}`, logo: '⭐', pj: 3, gf: 5, gc: 1, dif: 4, pts: 9},
-                {id: '2', nombre: `Escolta ${grupoNombre}`, logo: '⚡', pj: 3, gf: 3, gc: 2, dif: 1, pts: 6},
-                {id: '3', nombre: `Tercero ${grupoNombre}`, logo: '⚔️', pj: 3, gf: 2, gc: 4, dif: -2, pts: 3},
-                {id: '4', nombre: `Cuarto ${grupoNombre}`, logo: '🛡️', pj: 3, gf: 0, gc: 3, dif: -3, pts: 0}
-            ];
+            
+            // Replicamos el mapeo de IDs reales para que los links sigan funcionando
+            const mapMockGrup = {
+                'GRUPO A': [{n:'México', fl:'🇲🇽', id:'203'}, {n:'Alemania', fl:'🇩🇪', id:'481'}, {n:'Japón', fl:'🇯🇵', id:'627'}, {n:'Mali', fl:'🇲🇱', id:'636'}],
+                'GRUPO B': [{n:'Canadá', fl:'🇨🇦', id:'1845'}, {n:'España', fl:'🇪🇸', id:'483'}, {n:'Colombia', fl:'🇨🇴', id:'211'}, {n:'Corea del Sur', fl:'🇰🇷', id:'632'}],
+                'GRUPO C': [{n:'Estados Unidos', fl:'🇺🇸', id:'660'}, {n:'Francia', fl:'🇫🇷', id:'478'}, {n:'Senegal', fl:'🇸🇳', id:'651'}, {n:'Arabia Saudita', fl:'🇸🇦', id:'648'}],
+                'GRUPO D': [{n:'Argentina', fl:'🇦🇷', id:'202'}, {n:'Inglaterra', fl:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', id:'474'}, {n:'Ecuador', fl:'🇪🇨', id:'212'}, {n:'Costa Rica', fl:'🇨🇷', id:'210'}],
+                'GRUPO E': [{n:'Brasil', fl:'🇧🇷', id:'205'}, {n:'Países Bajos', fl:'🇳🇱', id:'449'}, {n:'Marruecos', fl:'🇲🇦', id:'639'}, {n:'Australia', fl:'🇦🇺', id:'628'}],
+                'GRUPO F': [{n:'Portugal', fl:'🇵🇹', id:'482'}, {n:'Croacia', fl:'🇭🇷', id:'477'}, {n:'Uruguay', fl:'🇺🇾', id:'214'}, {n:'Catar', fl:'🇶🇦', id:'646'}],
+                'GRUPO G': [{n:'Italia', fl:'🇮🇹', id:'104'}, {n:'Bélgica', fl:'🇧🇪', id:'473'}, {n:'Suecia', fl:'🇸🇪', id:'484'}, {n:'Egipto', fl:'🇪🇬', id:'630'}],
+                'GRUPO H': [{n:'Suiza', fl:'🇨🇭', id:'485'}, {n:'Nigeria', fl:'🇳🇬', id:'643'}, {n:'Irán', fl:'🇮🇷', id:'631'}, {n:'Gales', fl:'🏴󠁧󠁢󠁷󠁬󠁳󠁿', id:'476'}],
+                'GRUPO I': [{n:'Dinamarca', fl:'🇩🇰', id:'479'}, {n:'Serbia', fl:'🇷🇸', id:'486'}, {n:'Chile', fl:'🇨🇱', id:'207'}, {n:'Perú', fl:'🇵🇪', id:'213'}],
+                'GRUPO J': [{n:'Polonia', fl:'🇵🇱', id:'480'}, {n:'Costa de Marfil', fl:'🇨🇮', id:'633'}, {n:'Irak', fl:'🇮🇶', id:'644'}, {n:'Jamaica', fl:'🇯🇲', id:'654'}],
+                'GRUPO K': [{n:'Austria', fl:'🇦🇹', id:'472'}, {n:'Ucrania', fl:'🇺🇦', id:'2970'}, {n:'Camerún', fl:'🇨🇲', id:'629'}, {n:'Argelia', fl:'🇩🇿', id:'626'}],
+                'GRUPO L': [{n:'Turquía', fl:'🇹🇷', id:'487'}, {n:'Hungría', fl:'🇭🇺', id:'488'}, {n:'Panamá', fl:'🇵🇦', id:'659'}, {n:'Venezuela', fl:'🇻🇪', id:'215'}]
+            };
+
+            const target = mapMockGrup[grupoNombre] || mapMockGrup['GRUPO D'];
+            equipos = target.map((eq, i) => ({
+                id: eq.id, nombre: eq.n, logo: eq.fl, pj: 0, gf: 0, gc: 0, dif: 0, pts: 0
+            }));
         }
 
         let filasHtml = equipos.map((eq, idx) => {
@@ -651,99 +667,64 @@ const App = (() => {
         let convocados = [];
         let stats = { goles: [], asistencias: [], amarillas: [], rojas: [] };
 
-        // Función reutilizable para parsear la respuesta de ESPN
-        const extraerDatos = (rosterJSON, teamJSON) => {
-            let tempConvocados = [];
-            let tempStats = { goles: [], asistencias: [], amarillas: [], rojas: [] };
-            
-            // 1. Extraer Atletas (Roster)
-            let atletasArray = [];
-            if (rosterJSON.athletes && rosterJSON.athletes[0] && rosterJSON.athletes[0].items) {
-                atletasArray = rosterJSON.athletes[0].items;
-            } else if (teamJSON.team && teamJSON.team.athletes) {
-                atletasArray = teamJSON.team.athletes;
-            }
-
-            atletasArray.forEach(ath => {
-                tempConvocados.push({
-                    numero: ath.jersey || '-',
-                    nombre: ath.displayName || ath.fullName || 'Jugador',
-                    posicion: ath.position?.abbreviation || ath.position?.name || 'N/A'
-                });
-                
-                // 2. Extraer Estadísticas embebidas en el atleta (si ESPN las envía aquí)
-                if (ath.statistics && ath.statistics.length > 0) {
-                    const getStat = (statName) => {
-                        const s = ath.statistics.find(st => st.name === statName);
-                        return s ? parseInt(s.value, 10) : 0;
-                    };
-                    const g = getStat('goals');
-                    const a = getStat('assists');
-                    const y = getStat('yellowCards');
-                    const r = getStat('redCards');
-
-                    if (g > 0) tempStats.goles.push({ nombre: ath.displayName, valor: g });
-                    if (a > 0) tempStats.asistencias.push({ nombre: ath.displayName, valor: a });
-                    if (y > 0) tempStats.amarillas.push({ nombre: ath.displayName, valor: y });
-                    if (r > 0) tempStats.rojas.push({ nombre: ath.displayName, valor: r });
-                }
-            });
-
-            // 3. Extraer Líderes (Si el array anterior de estadísticas estaba vacío)
-            if (tempStats.goles.length === 0 && teamJSON.team?.leaders) {
-                const parseLeader = (nameKey) => {
-                    const cat = teamJSON.team.leaders.find(c => c.name === nameKey);
-                    if (!cat || !cat.leaders) return [];
-                    return cat.leaders.map(l => ({
-                        nombre: l.athlete?.displayName || l.athlete?.shortName || l.athlete?.fullName || 'Jugador',
-                        valor: parseInt(l.value, 10) || parseInt(l.displayValue, 10) || 0
-                    })).filter(l => l.valor > 0);
-                };
-                
-                tempStats.goles = parseLeader('goals');
-                tempStats.asistencias = parseLeader('assists');
-                tempStats.amarillas = parseLeader('yellowCards');
-                tempStats.rojas = parseLeader('redCards');
-            }
-
-            return { tempConvocados, tempStats };
-        };
-
         if (equipoId && equipoId !== 'undefined' && equipoId !== 'null') {
-            try {
-                // INTENTO 1: Obtenemos el Roster y Stats de las competiciones actuales del equipo
-                const [rosterRes, teamRes] = await Promise.all([
-                    fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/all/teams/${equipoId}/roster`)}`),
-                    fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/all/teams/${equipoId}`)}`)
-                ]);
-                
-                const rosterData = rosterRes.ok ? await rosterRes.json() : {};
-                const teamData = teamRes.ok ? await teamRes.json() : {};
-                
-                let { tempConvocados, tempStats } = extraerDatos(rosterData, teamData);
+            
+            // Loop agresivo sobre 3 endpoints distintos para asegurar que extraemos el Roster correcto
+            const rosterUrls = [
+                `https://site.api.espn.com/apis/site/v2/sports/soccer/all/teams/${equipoId}/roster`,
+                `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/teams/${equipoId}/roster`,
+                `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/teams/${equipoId}/roster?season=2022`
+            ];
 
-                // INTENTO 2 (Fallback): Si la actual está vacía (torneo no empezó), sacamos los números reales del Mundial 2022
-                if (tempConvocados.length === 0 || tempStats.goles.length === 0) {
-                    console.log("Stats actuales vacías. Extrayendo datos históricos oficiales (Mundial 2022)...");
-                    const [fallbackRoster, fallbackTeam] = await Promise.all([
-                        fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/teams/${equipoId}/roster?season=2022`)}`),
-                        fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/teams/${equipoId}?season=2022`)}`)
-                    ]);
-                    
-                    const fRosterData = fallbackRoster.ok ? await fallbackRoster.json() : {};
-                    const fTeamData = fallbackTeam.ok ? await fallbackTeam.json() : {};
-                    
-                    const fallback = extraerDatos(fRosterData, fTeamData);
-                    
-                    if (fallback.tempConvocados.length > 0) tempConvocados = fallback.tempConvocados;
-                    if (fallback.tempStats.goles.length > 0) tempStats = fallback.tempStats;
-                }
+            for (let url of rosterUrls) {
+                try {
+                    const req = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(url)}`);
+                    const data = await req.json();
+                    if (data.athletes && data.athletes[0] && data.athletes[0].items && data.athletes[0].items.length > 0) {
+                        convocados = data.athletes[0].items.map(ath => ({
+                            numero: ath.jersey || '-',
+                            nombre: ath.displayName || ath.fullName || 'Jugador',
+                            posicion: ath.position?.abbreviation || ath.position?.name || 'N/A'
+                        }));
+                        break; 
+                    }
+                } catch (e) {}
+            }
 
-                convocados = tempConvocados;
-                stats = tempStats;
+            // Loop agresivo sobre 3 endpoints distintos para asegurar que extraemos Estadísticas Reales
+            // Priorizamos season=2022 primero porque las selecciones nacionales suelen tener "0" fuera de época de mundial.
+            const statsUrls = [
+                `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/teams/${equipoId}?season=2022`,
+                `https://site.api.espn.com/apis/site/v2/sports/soccer/all/teams/${equipoId}`,
+                `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/teams/${equipoId}`
+            ];
 
-            } catch (err) {
-                console.warn("Error en la extracción en vivo de ESPN", err);
+            for (let url of statsUrls) {
+                try {
+                    const req = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(url)}`);
+                    const data = await req.json();
+                    
+                    if (data.team && data.team.leaders && data.team.leaders.length > 0) {
+                        const parseLeader = (nameKey) => {
+                            const cat = data.team.leaders.find(c => c.name === nameKey);
+                            if (!cat || !cat.leaders) return [];
+                            return cat.leaders.map(l => ({
+                                nombre: l.athlete?.displayName || l.athlete?.shortName || l.athlete?.fullName || 'Jugador',
+                                valor: parseInt(l.value, 10) || parseInt(l.displayValue, 10) || 0
+                            })).filter(l => l.valor > 0);
+                        };
+                        
+                        stats.goles = parseLeader('goals');
+                        stats.asistencias = parseLeader('assists');
+                        stats.amarillas = parseLeader('yellowCards');
+                        stats.rojas = parseLeader('redCards');
+                        
+                        // Si logramos sacar goles o amarillas, detenemos la búsqueda (los datos son útiles)
+                        if (stats.goles.length > 0 || stats.amarillas.length > 0) {
+                            break;
+                        }
+                    }
+                } catch (e) {}
             }
         }
 
