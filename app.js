@@ -2,7 +2,8 @@
 // ── ESTRATEGIA DE INTEGRACIÓN COMPLETA ────────────────────────────────────
 //   · Mantiene todas las funciones legibles y expandidas línea por línea.
 //   · Conserva el uso del módulo ESPN para ligas tradicionales.
-//   · Implementa CASCADA DUAL para el Mundial: worldcup26.ir -> ESPN -> Mock.
+//   · Implementa CASCADA DUAL para el Mundial: worldcup26.ir -> ESPN.
+//   · Renderizado directo: Muestra los datos reales de la API sin validaciones restrictivas.
 // ─────────────────────────────────────────────────────────────────────────
 
 const App = (() => {
@@ -387,7 +388,7 @@ const App = (() => {
             ${renderNavbar('#/liga?id=' + ligaData.id)}
             <main class="page-container fade-in" style="display: flex; justify-content: center; align-items: center; height: 75vh; flex-direction: column;">
                 <div style="width: 45px; height: 45px; border: 4px solid var(--accent-neon); border-right-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                <p style="margin-top: 1.5rem; color: var(--accent-neon); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 1px; font-weight: bold;" id="loading-text">Sincronizando fixture del mundial por cascada...</p>
+                <p style="margin-top: 1.5rem; color: var(--accent-neon); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 1px; font-weight: bold;" id="loading-text">Sincronizando datos en vivo...</p>
                 <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
             </main>
         `;
@@ -411,8 +412,8 @@ const App = (() => {
             
             if (rawArray.length > 0) {
                 partidosMundial = rawArray.map(m => ({
-                    local: m.home_team?.name || m.home_team_en || 'TBD',
-                    visita: m.away_team?.name || m.away_team_en || 'TBD',
+                    local: m.home_team?.name || m.home_team_en || 'Por Definir',
+                    visita: m.away_team?.name || m.away_team_en || 'Por Definir',
                     golesL: m.home_score !== null && m.home_score !== undefined ? m.home_score : '-',
                     golesV: m.away_score !== null && m.away_score !== undefined ? m.away_score : '-',
                     grupo: m.group_name || m.group || 'Fase Eliminatoria',
@@ -425,12 +426,13 @@ const App = (() => {
             }
 
         } catch (error) {
-            console.warn('⚠️ [Cascada] Servidor primario falló. Activando fallback a ESPN...', error.message);
-            document.getElementById('loading-text').innerText = "Rescatando datos del Mundial vía ESPN...";
+            console.warn('⚠️ [Cascada] Servidor primario falló o devolvió vacío. Activando fallback a ESPN...', error.message);
+            document.getElementById('loading-text').innerText = "Rescatando datos en vivo vía ESPN...";
             
             try {
                 // FALLBACK a la API de ESPN vía Worker
                 proveedor = 'ESPN API';
+                // Pedimos un rango de fechas amplio para que traiga todos los partidos actuales de la copa
                 const espnUrl = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?limit=150&dates=20260611-20260719';
                 const espnProxyUrl = `${CF_WORKER}/?url=${encodeURIComponent(espnUrl)}`;
                 
@@ -455,8 +457,8 @@ const App = (() => {
                         }
 
                         return {
-                            local: loc?.team?.name || 'TBD',
-                            visita: vis?.team?.name || 'TBD',
+                            local: loc?.team?.name || 'Por Definir',
+                            visita: vis?.team?.name || 'Por Definir',
                             golesL: loc?.score !== undefined ? loc.score : '-',
                             golesV: vis?.score !== undefined ? vis.score : '-',
                             grupo: nombreGrupo,
@@ -471,38 +473,12 @@ const App = (() => {
             } catch (errEspn) {
                 console.warn('⚠️ [Cascada Nivel 2] ESPN no disponible:', errEspn.message);
                 proveedor = 'SISTEMA DE EMERGENCIA';
+                
+                // MOCK de Emergencia Total (Sólo si no hay internet o las APIs están totalmente caídas)
+                partidosMundial = [
+                    { grupo: "Grupos", informacionText: "Fallo de conexión", local: "Revisa tu red", golesL: "-", visita: "Sin acceso", golesV: "-", badgeLogoL: "⚠️", badgeLogoV: "⚠️" }
+                ];
             }
-        }
-
-        // CONTROL DE INTEGRIDAD VISUAL: Generador Automático (Mock de Integridad Visual)
-        if (partidosMundial.length < 12) {
-            partidosMundial = [];
-            const gruposNombres = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
-            const anfitriones = { 'A': 'México', 'B': 'Canadá', 'D': 'Estados Unidos' };
-            const banderas = { 'A': '🇲🇽', 'B': '🇨🇦', 'D': '🇺🇸' };
-            
-            gruposNombres.forEach(letra => {
-                partidosMundial.push({
-                    grupo: `Grupo ${letra}`,
-                    informacionText: `Jornada 1 - JUN 2026`,
-                    local: anfitriones[letra] || 'Por Definir',
-                    golesL: '-',
-                    visita: 'Por Definir',
-                    golesV: '-',
-                    badgeLogoL: banderas[letra] || '❓',
-                    badgeLogoV: '❓'
-                });
-                partidosMundial.push({
-                    grupo: `Grupo ${letra}`,
-                    informacionText: `Jornada 1 - JUN 2026`,
-                    local: 'Por Definir',
-                    golesL: '-',
-                    visita: 'Por Definir',
-                    golesV: '-',
-                    badgeLogoL: '❓',
-                    badgeLogoV: '❓'
-                });
-            });
         }
 
         // Agrupación para Renderizado
@@ -526,7 +502,7 @@ const App = (() => {
                     <div class="match-item" style="display: flex; flex-direction: column; background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border-glass);">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.04);">
                             <span style="font-size: 0.75rem; color: var(--accent-neon); font-weight: bold; text-transform: uppercase;">${p.informacionText}</span>
-                            <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: bold;">${proveedor}</span>
+                            <span style="font-size: 0.6rem; color: var(--text-muted); font-weight: bold;">${proveedor}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                             <div style="display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 0.95rem;">
@@ -565,7 +541,7 @@ const App = (() => {
                     <span class="liga-flag-large" style="font-size: 3.8rem; filter: drop-shadow(0 0 10px rgba(200,168,75,0.3));">${ligaData.flag}</span>
                     <div>
                         <h1 class="liga-title-main">${ligaData.nombre}</h1>
-                        <span style="color: var(--accent-neon); font-weight: 800; letter-spacing: 1px; font-size: 0.85rem;">🏆 FIXTURE PROVISTO POR ${proveedor}</span>
+                        <span style="color: var(--accent-neon); font-weight: 800; letter-spacing: 1px; font-size: 0.85rem;">🏆 FIXTURE Y CALENDARIO OFICIAL DE PARTIDOS</span>
                     </div>
                 </div>
 
