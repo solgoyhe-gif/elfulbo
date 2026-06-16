@@ -559,20 +559,7 @@ const App = (() => {
         `;
     };
 
-    // ── HELPER: traduce ligaId interno → código ESPN real ─────────────────────
-    // Punto de entrada único para la traducción. Agregar aquí nuevas ligas si es necesario.
-    const getEspnLeague = (ligaId) => {
-        const LIGA_MAP = {
-            'world_cup': 'fifa.world',
-            'wc':        'fifa.world',
-            // Ligas de clubes: ESPN usa los mismos slugs que el objeto LIGAS,
-            // salvo excepciones puntuales listadas acá.
-            // Ejemplos posibles a verificar:
-            // 'premier_league': 'eng.1',
-            // 'la_liga':        'esp.1',
-        };
-        return LIGA_MAP[ligaId] ?? ligaId;
-    };
+    // getEspnLeague eliminado — usar ESPN.getSlug(ligaId) directamente (definido en espn.js)
 
     // ── VISTA MUNDIAL: PERFIL DE EQUIPO, ESTADÍSTICAS REALES Y ANÁLISIS ──
     const renderEquipoDetalle = async (equipoId, ligaId, nombreEquipoDecoded) => {
@@ -658,10 +645,8 @@ const App = (() => {
 
         if (equipoId && equipoId !== 'undefined') {
             try {
-                // ── FIX PRINCIPAL: usar el código ESPN correcto según la liga ──────────
-                // Antes: siempre usaba 'all' → ESPN devolvía {} (vacío, 200 OK sin datos)
-                // Ahora: traduce ligaId interno ('world_cup') al slug real ('fifa.world')
-                const espnLeague = getEspnLeague(ligaId);
+                // Traduce ligaId interno → slug ESPN real (centralizado en espn.js)
+                const espnLeague = ESPN.getSlug(ligaId) ?? ligaId;
 
                 const [rosterRes, teamRes] = await Promise.all([
                     fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/teams/${equipoId}/roster`)}`),
