@@ -1,9 +1,9 @@
 // app.js - Enrutador Principal e Interfaz Dinámica SPA
 // ── ESTRATEGIA DE INTEGRACIÓN COMPLETA ────────────────────────────────────
 //   · Conserva el uso del módulo ESPN para ligas tradicionales.
-//   · Implementa Tablas de Posiciones Generales y Detalladas por Grupo.
-//   · Implementa Perfil de Equipo con Estadísticas de Jugadores (Goles/Tarjetas).
+//   · Implementa Tabla de Posiciones por Grupos para el Mundial 2026.
 //   · NÚMEROS IZQUIERDOS ORDENADOS MATEMÁTICAMENTE (1 al 4 forzado).
+//   · ESTADÍSTICAS Y PLANTILLAS REALES (Cero mocks, conexión en vivo a ESPN).
 // ─────────────────────────────────────────────────────────────────────────
 
 const App = (() => {
@@ -403,7 +403,7 @@ const App = (() => {
                         const findStat = (name) => stats.find(s => s.name === name)?.value || 0;
                         
                         return {
-                            id: e.team.id, // ID real para enviar a la vista de equipo
+                            id: e.team.id,
                             nombre: e.team.name,
                             logo: e.team.logos?.[0]?.href || '🌐',
                             pj: findStat('gamesPlayed'),
@@ -412,14 +412,12 @@ const App = (() => {
                         };
                     }) || [];
 
-                    // Orden estricto interno por Puntos y Diferencia de Gol para que se acomoden bien
                     equipos.sort((a, b) => b.pts - a.pts || b.dif - a.dif);
 
                     let nombreGrupo = grupo.name.replace(/Group /i, 'GRUPO ').toUpperCase();
                     return { nombre: nombreGrupo, equipos: equipos };
                 });
 
-                // Orden estricto de los grupos de la A a la L
                 gruposData.sort((a, b) => a.nombre.localeCompare(b.nombre));
 
             } else {
@@ -430,7 +428,6 @@ const App = (() => {
             console.warn('⚠️ [Grupos] ESPN no disponible o vacío:', error.message);
             proveedor = 'SISTEMA DE SIMULACIÓN VISUAL (MOCK 48 EQUIPOS)';
             
-            // Mock de Grupos
             const mockEquipos = {
                 'GRUPO A': [{n:'México', fl:'🇲🇽', id:'1'}, {n:'Alemania', fl:'🇩🇪', id:'2'}, {n:'Japón', fl:'🇯🇵', id:'3'}, {n:'Mali', fl:'🇲🇱', id:'4'}],
                 'GRUPO B': [{n:'Canadá', fl:'🇨🇦', id:'5'}, {n:'España', fl:'🇪🇸', id:'6'}, {n:'Colombia', fl:'🇨🇴', id:'7'}, {n:'Corea del Sur', fl:'🇰🇷', id:'8'}],
@@ -479,7 +476,6 @@ const App = (() => {
                 `;
             }).join('');
 
-            // Hacemos que el título del grupo sea clickeable para ver el detalle
             grillaGruposHtml += `
                 <div class="glass-panel" style="padding: 1.2rem; min-height: 220px; transition: transform 0.2s;">
                     <h3 class="panel-title" style="text-align: center; color: var(--accent-neon); border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; margin-bottom: 12px; font-size: 1.2rem; letter-spacing: 1px; cursor: pointer;" onclick="window.location.hash='#/grupo?id=${encodeURIComponent(grupo.nombre)}'">
@@ -574,7 +570,6 @@ const App = (() => {
             }
         } catch (err) {
             console.warn("Usando mock estricto para detalle de grupo", err);
-            // Mock de seguridad para la vista
             equipos = [
                 {id: '1', nombre: `Líder ${grupoNombre}`, logo: '⭐', pj: 3, gf: 5, gc: 1, dif: 4, pts: 9},
                 {id: '2', nombre: `Escolta ${grupoNombre}`, logo: '⚡', pj: 3, gf: 3, gc: 2, dif: 1, pts: 6},
@@ -637,7 +632,7 @@ const App = (() => {
         `;
     };
 
-    // ── VISTA EXCLUSIVA 3: PERFIL DE EQUIPO Y ESTADÍSTICAS DE JUGADORES ──────
+    // ── VISTA EXCLUSIVA 3: PERFIL DE EQUIPO CON ESTADÍSTICAS REALES EN VIVO ──
     const renderEquipoDetalle = async (equipoId, ligaId, nombreEquipoDecoded) => {
         const name = decodeURIComponent(nombreEquipoDecoded || 'Selección');
         
@@ -647,32 +642,78 @@ const App = (() => {
                 <a href="javascript:history.back()" style="color: var(--text-muted); text-decoration: none; display: inline-block; margin-bottom: 1rem;">← Volver a la Tabla</a>
                 <div style="display: flex; justify-content: center; align-items: center; height: 30vh; flex-direction: column;">
                     <div style="width: 45px; height: 45px; border: 4px solid var(--accent-neon); border-right-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                    <p style="margin-top: 1.5rem; color: var(--accent-neon); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 1px;">Recopilando datos de jugadores...</p>
+                    <p style="margin-top: 1.5rem; color: var(--accent-neon); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 1px;">Recopilando datos oficiales en vivo...</p>
                 </div>
             </main>
         `;
 
-        // Generador visual de estadísticas para probar la UI (Dado que ESPN restringe estos datos por CORS en torneos)
-        // Crea nombres genéricos o verosímiles basados en el nombre del equipo para dar realismo a la maqueta
-        const generarMockPlayer = (tipo, cantidad) => {
-            const apellidos = ['García', 'Smith', 'Müller', 'Silva', 'Rossi', 'Kim', 'Diop', 'Al-Dawsari', 'Jones', 'González'];
-            const randomList = [];
-            for(let i=0; i<cantidad; i++){
-                randomList.push({
-                    nombre: `J. ${apellidos[Math.floor(Math.random() * apellidos.length)]}`,
-                    valor: Math.floor(Math.random() * 3) + 1
-                });
-            }
-            return randomList.sort((a,b) => b.valor - a.valor);
-        };
+        const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
+        let convocados = [];
+        let stats = { goles: [], asistencias: [], amarillas: [], rojas: [] };
 
-        const goleadores = generarMockPlayer('goles', 3);
-        const asistidores = generarMockPlayer('asistencias', 3);
-        const amarillas = generarMockPlayer('amarillas', 4);
-        const rojas = generarMockPlayer('rojas', 1);
+        if (equipoId && equipoId !== 'undefined' && equipoId !== 'null') {
+            try {
+                const teamUrl = `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/teams/${equipoId}`;
+                const proxyUrl = `${CF_WORKER}/?url=${encodeURIComponent(teamUrl)}`;
+                const resp = await fetch(proxyUrl);
+                
+                if (resp.ok) {
+                    const data = await resp.json();
+                    const athletes = data.team?.athletes || [];
+                    
+                    // 1. Extraemos la Plantilla Real
+                    athletes.forEach(ath => {
+                        convocados.push({
+                            numero: ath.jersey || '-',
+                            nombre: ath.displayName || ath.fullName || 'Jugador',
+                            posicion: ath.position?.abbreviation || 'N/A'
+                        });
+
+                        // 2. Extraemos Estadísticas Individuales Directas (Si existen)
+                        if (ath.statistics) {
+                            ath.statistics.forEach(s => {
+                                const val = parseInt(s.value, 10) || 0;
+                                if (val > 0) {
+                                    if (s.name === 'goals') stats.goles.push({ nombre: ath.displayName, valor: val });
+                                    if (s.name === 'assists') stats.asistencias.push({ nombre: ath.displayName, valor: val });
+                                    if (s.name === 'yellowCards') stats.amarillas.push({ nombre: ath.displayName, valor: val });
+                                    if (s.name === 'redCards') stats.rojas.push({ nombre: ath.displayName, valor: val });
+                                }
+                            });
+                        }
+                    });
+
+                    // 3. Fallback: Si no hay stats en 'athletes', intentamos extraer de 'leaders' globales del equipo
+                    if (stats.goles.length === 0 && data.team?.leaders) {
+                        const parseLeader = (nameKey) => {
+                            const cat = data.team.leaders.find(c => c.name === nameKey);
+                            if (!cat || !cat.leaders) return [];
+                            return cat.leaders.map(l => ({
+                                nombre: l.athlete?.displayName || l.athlete?.shortName || 'Jugador',
+                                valor: l.value || 0
+                            })).filter(l => l.valor > 0);
+                        };
+                        
+                        stats.goles = parseLeader('goals');
+                        stats.asistencias = parseLeader('assists');
+                        stats.amarillas = parseLeader('yellowCards');
+                        stats.rojas = parseLeader('redCards');
+                    }
+                }
+            } catch (err) {
+                console.warn("No se pudieron obtener datos en vivo del equipo", err);
+            }
+        }
+
+        // Ordenamos las listas de mayor a menor y cortamos en los Top 5
+        const ordenarYCortar = (arr) => arr.sort((a,b) => b.valor - a.valor).slice(0, 5);
+        const goleadores = ordenarYCortar(stats.goles);
+        const asistidores = ordenarYCortar(stats.asistencias);
+        const amarillas = ordenarYCortar(stats.amarillas);
+        const rojas = ordenarYCortar(stats.rojas);
 
         const renderLista = (lista, icono, unidad) => {
-            if(lista.length === 0) return `<p style="color:var(--text-muted); font-size:0.85rem; padding: 10px 0;">Sin registros aún.</p>`;
+            if(!lista || lista.length === 0) return `<p style="color:var(--text-muted); font-size:0.85rem; padding: 10px 0; text-align: center; font-style: italic;">No hay registros oficiales aún.</p>`;
             return lista.map(item => `
                 <div style="display:flex; justify-content: space-between; align-items:center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
                     <div style="display:flex; align-items:center; gap: 8px;">
@@ -684,6 +725,23 @@ const App = (() => {
             `).join('');
         };
 
+        // Render Plantilla Real
+        let rosterHtml = '';
+        if (convocados.length > 0) {
+            rosterHtml = convocados.map(j => `
+                <div class="roster-item">
+                    <span class="player-num">${j.numero}</span>
+                    <span class="player-name">${j.nombre}</span>
+                    <span class="player-pos">${j.posicion}</span>
+                </div>
+            `).join('');
+        } else {
+            rosterHtml = `<p style="color:var(--text-muted); font-style: italic;">La API no proveyó la lista de convocados para este equipo.</p>`;
+        }
+
+        // Extraer los dorsales reales de los primeros 11 para la vista táctica
+        const getDorsal = (idx, fallback) => convocados[idx]?.numero !== '-' ? convocados[idx].numero : fallback;
+
         appContainer.innerHTML = `
             ${renderNavbar('#/liga?id=' + ligaId)}
             <main class="page-container fade-in">
@@ -693,7 +751,7 @@ const App = (() => {
                     <div class="team-shield" style="width: 70px; height: 70px; font-size: 2rem; background: var(--surface-color); border: 2px solid var(--border-glass);">${name.charAt(0)}</div>
                     <div>
                         <h1 class="equipo-title" style="margin-bottom: 4px;">${name}</h1>
-                        <span style="color: var(--accent-neon); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem;">Estadísticas de Plantilla</span>
+                        <span style="color: var(--accent-neon); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem;">Estadísticas de Plantilla en Vivo</span>
                     </div>
                 </div>
 
@@ -722,41 +780,31 @@ const App = (() => {
                 </div>
 
                 <div class="equipo-grid">
-                    <div class="glass-panel" style="padding: 1.5rem;">
-                        <h3 class="panel-title">Lista de Convocados Base</h3>
+                    <div class="glass-panel" style="padding: 1.5rem; max-height: 500px; overflow-y: auto;">
+                        <h3 class="panel-title">Lista de Convocados Oficial</h3>
                         <div class="roster-list">
-                            <div class="roster-item"><span class="player-num">1</span><span class="player-name">Portero Titular</span><span class="player-pos">POR</span></div>
-                            <div class="roster-item"><span class="player-num">4</span><span class="player-name">Defensa Lateral Izquierdo</span><span class="player-pos">DEF</span></div>
-                            <div class="roster-item"><span class="player-num">3</span><span class="player-name">Defensa Central Izquierdo</span><span class="player-pos">DEF</span></div>
-                            <div class="roster-item"><span class="player-num">2</span><span class="player-name">Defensa Central Derecho</span><span class="player-pos">DEF</span></div>
-                            <div class="roster-item"><span class="player-num">5</span><span class="player-name">Defensa Lateral Derecho</span><span class="player-pos">DEF</span></div>
-                            <div class="roster-item"><span class="player-num">8</span><span class="player-name">Mediocentro Organizador</span><span class="player-pos">MED</span></div>
-                            <div class="roster-item"><span class="player-num">6</span><span class="player-name">Pivote Defensivo</span><span class="player-pos">MED</span></div>
-                            <div class="roster-item"><span class="player-num">10</span><span class="player-name">Volante Ofensivo</span><span class="player-pos">MED</span></div>
-                            <div class="roster-item"><span class="player-num">7</span><span class="player-name">Extremo Izquierdo</span><span class="player-pos">DEL</span></div>
-                            <div class="roster-item"><span class="player-num">9</span><span class="player-name">Delantero Centro</span><span class="player-pos">DEL</span></div>
-                            <div class="roster-item"><span class="player-num">11</span><span class="player-name">Extremo Derecho</span><span class="player-pos">DEL</span></div>
+                            ${rosterHtml}
                         </div>
                     </div>
 
                     <div class="glass-panel" style="padding: 1.5rem;">
-                        <h3 class="panel-title">Disposición en Campo (4-3-3)</h3>
+                        <h3 class="panel-title">Disposición Base (4-3-3)</h3>
                         <div class="pitch-perspective tactical-board">
                             <div class="pitch-vertical">
                                 <div class="area-top-v"></div>
                                 <div class="area-bottom-v"></div>
                                 
-                                <div class="player-token pos-gk">1</div>
-                                <div class="player-token pos-df1">4</div>
-                                <div class="player-token pos-df2">3</div>
-                                <div class="player-token pos-df3">2</div>
-                                <div class="player-token pos-df4">5</div>
-                                <div class="player-token pos-md1">8</div>
-                                <div class="player-token pos-md2">6</div>
-                                <div class="player-token pos-md3">10</div>
-                                <div class="player-token pos-fw1">7</div>
-                                <div class="player-token pos-fw2">9</div>
-                                <div class="player-token pos-fw3">11</div>
+                                <div class="player-token pos-gk">${getDorsal(0, '1')}</div>
+                                <div class="player-token pos-df1">${getDorsal(1, '4')}</div>
+                                <div class="player-token pos-df2">${getDorsal(2, '3')}</div>
+                                <div class="player-token pos-df3">${getDorsal(3, '2')}</div>
+                                <div class="player-token pos-df4">${getDorsal(4, '5')}</div>
+                                <div class="player-token pos-md1">${getDorsal(5, '8')}</div>
+                                <div class="player-token pos-md2">${getDorsal(6, '6')}</div>
+                                <div class="player-token pos-md3">${getDorsal(7, '10')}</div>
+                                <div class="player-token pos-fw1">${getDorsal(8, '7')}</div>
+                                <div class="player-token pos-fw2">${getDorsal(9, '9')}</div>
+                                <div class="player-token pos-fw3">${getDorsal(10, '11')}</div>
                             </div>
                         </div>
                     </div>
