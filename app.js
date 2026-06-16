@@ -358,23 +358,21 @@ const App = (() => {
                 throw new Error('Array de grupos vacío');
             }
         } catch (error) {
-            // ── MOCK ACTUALIZADO: sorteo real del Mundial 2026 ────────────────
-            // Fuente: sorteo oficial FIFA, diciembre 2024
-            // Los grupos A-C son de las sedes (USA, Canadá, México) — aún sin definir
-            // el resto refleja el sorteo real
+            // ── MOCK: sorteo oficial Mundial 2026 (draw dic 2025, playoffs mar 2026) ──
+            // IDs verificados contra ESPN fifa.world/teams (jun 2026)
             const mockEquipos = {
-                'GRUPO A': [{n:'Estados Unidos', fl:'🇺🇸', id:'660'}, {n:'Panamá', fl:'🇵🇦', id:'659'}, {n:'Serbia', fl:'🇷🇸', id:'486'}, {n:'Ghana', fl:'🇬🇭', id:'631'}],
-                'GRUPO B': [{n:'México', fl:'🇲🇽', id:'203'}, {n:'Czechia', fl:'🇨🇿', id:'216'}, {n:'Corea del Sur', fl:'🇰🇷', id:'632'}, {n:'Sudáfrica', fl:'🇿🇦', id:'649'}],
-                'GRUPO C': [{n:'Canadá', fl:'🇨🇦', id:'1845'}, {n:'Honduras', fl:'🇭🇳', id:'658'}, {n:'Marruecos', fl:'🇲🇦', id:'639'}, {n:'Argelia', fl:'🇩🇿', id:'626'}],
-                'GRUPO D': [{n:'Argentina', fl:'🇦🇷', id:'202'}, {n:'Chile', fl:'🇨🇱', id:'207'}, {n:'Croacia', fl:'🇭🇷', id:'477'}, {n:'Hungría', fl:'🇭🇺', id:'488'}],
-                'GRUPO E': [{n:'España', fl:'🇪🇸', id:'483'}, {n:'Brasil', fl:'🇧🇷', id:'205'}, {n:'Japón', fl:'🇯🇵', id:'627'}, {n:'Costa Rica', fl:'🇨🇷', id:'210'}],
-                'GRUPO F': [{n:'Francia', fl:'🇫🇷', id:'478'}, {n:'Bélgica', fl:'🇧🇪', id:'473'}, {n:'Uruguay', fl:'🇺🇾', id:'214'}, {n:'Nigeria', fl:'🇳🇬', id:'643'}],
-                'GRUPO G': [{n:'Alemania', fl:'🇩🇪', id:'481'}, {n:'Colombia', fl:'🇨🇴', id:'211'}, {n:'Eslovenia', fl:'🇸🇮', id:'2970'}, {n:'Costa de Marfil', fl:'🇨🇮', id:'633'}],
-                'GRUPO H': [{n:'Portugal', fl:'🇵🇹', id:'482'}, {n:'Ecuador', fl:'🇪🇨', id:'212'}, {n:'Austria', fl:'🇦🇹', id:'472'}, {n:'Egipto', fl:'🇪🇬', id:'630'}],
-                'GRUPO I': [{n:'Inglaterra', fl:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', id:'474'}, {n:'Países Bajos', fl:'🇳🇱', id:'449'}, {n:'Senegal', fl:'🇸🇳', id:'651'}, {n:'Arabia Saudita', fl:'🇸🇦', id:'648'}],
-                'GRUPO J': [{n:'Italia', fl:'🇮🇹', id:'104'}, {n:'Paraguay', fl:'🇵🇾', id:'213'}, {n:'Australia', fl:'🇦🇺', id:'628'}, {n:'Mali', fl:'🇲🇱', id:'636'}],
-                'GRUPO K': [{n:'Suiza', fl:'🇨🇭', id:'485'}, {n:'Perú', fl:'🇵🇪', id:'213'}, {n:'Dinamarca', fl:'🇩🇰', id:'479'}, {n:'Irak', fl:'🇮🇶', id:'644'}],
-                'GRUPO L': [{n:'Venezuela', fl:'🇻🇪', id:'215'}, {n:'Noruega', fl:'🇳🇴', id:'448'}, {n:'Turquía', fl:'🇹🇷', id:'487'}, {n:'Camerún', fl:'🇨🇲', id:'629'}]
+                'GRUPO A': [{n:'México',        fl:'🇲🇽', id:'203'}, {n:'Sudáfrica',     fl:'🇿🇦', id:'467'}, {n:'Corea del Sur', fl:'🇰🇷', id:'451'}, {n:'Czechia',        fl:'🇨🇿', id:'450'}],
+                'GRUPO B': [{n:'Canadá',        fl:'🇨🇦', id:'206'}, {n:'Suiza',         fl:'🇨🇭', id:'475'}, {n:'Catar',         fl:'🇶🇦', id:'4398'},{n:'Bosnia-Herz.',   fl:'🇧🇦', id:'452'}],
+                'GRUPO C': [{n:'Brasil',        fl:'🇧🇷', id:'205'}, {n:'Marruecos',     fl:'🇲🇦', id:'2869'},{n:'Haití',         fl:'🇭🇹', id:'2654'},{n:'Escocia',        fl:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', id:'580'}],
+                'GRUPO D': [{n:'Estados Unidos',fl:'🇺🇸', id:'660'}, {n:'Paraguay',      fl:'🇵🇾', id:'210'}, {n:'Australia',     fl:'🇦🇺', id:'628'}, {n:'Türkiye',        fl:'🇹🇷', id:'465'}],
+                'GRUPO E': [{n:'Alemania',      fl:'🇩🇪', id:'481'}, {n:'Curaçao',       fl:'🇨🇼', id:'11678'},{n:'Costa de Marfil',fl:'🇨🇮', id:'4789'},{n:'Ecuador',       fl:'🇪🇨', id:'209'}],
+                'GRUPO F': [{n:'Países Bajos',  fl:'🇳🇱', id:'449'}, {n:'Japón',         fl:'🇯🇵', id:'627'}, {n:'Suecia',        fl:'🇸🇪', id:'466'}, {n:'Túnez',          fl:'🇹🇳', id:'659'}],
+                'GRUPO G': [{n:'Bélgica',       fl:'🇧🇪', id:'459'}, {n:'Egipto',        fl:'🇪🇬', id:'2620'},{n:'Irán',          fl:'🇮🇷', id:'469'}, {n:'Nueva Zelanda',  fl:'🇳🇿', id:'2666'}],
+                'GRUPO H': [{n:'España',        fl:'🇪🇸', id:'164'}, {n:'Cabo Verde',    fl:'🇨🇻', id:'2597'},{n:'Arabia Saudita',fl:'🇸🇦', id:'655'}, {n:'Uruguay',        fl:'🇺🇾', id:'212'}],
+                'GRUPO I': [{n:'Francia',       fl:'🇫🇷', id:'478'}, {n:'Senegal',       fl:'🇸🇳', id:'654'}, {n:'Noruega',       fl:'🇳🇴', id:'464'}, {n:'Irak',           fl:'🇮🇶', id:'4375'}],
+                'GRUPO J': [{n:'Argentina',     fl:'🇦🇷', id:'202'}, {n:'Argelia',       fl:'🇩🇿', id:'624'}, {n:'Austria',       fl:'🇦🇹', id:'474'}, {n:'Jordania',       fl:'🇯🇴', id:'2917'}],
+                'GRUPO K': [{n:'Portugal',      fl:'🇵🇹', id:'482'}, {n:'Congo RD',      fl:'🇨🇩', id:'2850'},{n:'Uzbekistán',    fl:'🇺🇿', id:'2570'},{n:'Colombia',       fl:'🇨🇴', id:'208'}],
+                'GRUPO L': [{n:'Inglaterra',    fl:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', id:'448'}, {n:'Croacia',       fl:'🇭🇷', id:'477'}, {n:'Ghana',         fl:'🇬🇭', id:'4469'},{n:'Panamá',         fl:'🇵🇦', id:'2659'}],
             };
 
             for (const [nombreGrupo, equiposArr] of Object.entries(mockEquipos)) {
@@ -488,18 +486,18 @@ const App = (() => {
             } else throw new Error();
         } catch (err) {
             const mapMockGrup = {
-                'GRUPO A': [{n:'Estados Unidos', fl:'🇺🇸', id:'660'}, {n:'Panamá', fl:'🇵🇦', id:'659'}, {n:'Serbia', fl:'🇷🇸', id:'486'}, {n:'Ghana', fl:'🇬🇭', id:'631'}],
-                'GRUPO B': [{n:'México', fl:'🇲🇽', id:'203'}, {n:'Czechia', fl:'🇨🇿', id:'216'}, {n:'Corea del Sur', fl:'🇰🇷', id:'632'}, {n:'Sudáfrica', fl:'🇿🇦', id:'649'}],
-                'GRUPO C': [{n:'Canadá', fl:'🇨🇦', id:'1845'}, {n:'Honduras', fl:'🇭🇳', id:'658'}, {n:'Marruecos', fl:'🇲🇦', id:'639'}, {n:'Argelia', fl:'🇩🇿', id:'626'}],
-                'GRUPO D': [{n:'Argentina', fl:'🇦🇷', id:'202'}, {n:'Chile', fl:'🇨🇱', id:'207'}, {n:'Croacia', fl:'🇭🇷', id:'477'}, {n:'Hungría', fl:'🇭🇺', id:'488'}],
-                'GRUPO E': [{n:'España', fl:'🇪🇸', id:'483'}, {n:'Brasil', fl:'🇧🇷', id:'205'}, {n:'Japón', fl:'🇯🇵', id:'627'}, {n:'Costa Rica', fl:'🇨🇷', id:'210'}],
-                'GRUPO F': [{n:'Francia', fl:'🇫🇷', id:'478'}, {n:'Bélgica', fl:'🇧🇪', id:'473'}, {n:'Uruguay', fl:'🇺🇾', id:'214'}, {n:'Nigeria', fl:'🇳🇬', id:'643'}],
-                'GRUPO G': [{n:'Alemania', fl:'🇩🇪', id:'481'}, {n:'Colombia', fl:'🇨🇴', id:'211'}, {n:'Eslovenia', fl:'🇸🇮', id:'2970'}, {n:'Costa de Marfil', fl:'🇨🇮', id:'633'}],
-                'GRUPO H': [{n:'Portugal', fl:'🇵🇹', id:'482'}, {n:'Ecuador', fl:'🇪🇨', id:'212'}, {n:'Austria', fl:'🇦🇹', id:'472'}, {n:'Egipto', fl:'🇪🇬', id:'630'}],
-                'GRUPO I': [{n:'Inglaterra', fl:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', id:'474'}, {n:'Países Bajos', fl:'🇳🇱', id:'449'}, {n:'Senegal', fl:'🇸🇳', id:'651'}, {n:'Arabia Saudita', fl:'🇸🇦', id:'648'}],
-                'GRUPO J': [{n:'Italia', fl:'🇮🇹', id:'104'}, {n:'Paraguay', fl:'🇵🇾', id:'213'}, {n:'Australia', fl:'🇦🇺', id:'628'}, {n:'Mali', fl:'🇲🇱', id:'636'}],
-                'GRUPO K': [{n:'Suiza', fl:'🇨🇭', id:'485'}, {n:'Perú', fl:'🇵🇪', id:'213'}, {n:'Dinamarca', fl:'🇩🇰', id:'479'}, {n:'Irak', fl:'🇮🇶', id:'644'}],
-                'GRUPO L': [{n:'Venezuela', fl:'🇻🇪', id:'215'}, {n:'Noruega', fl:'🇳🇴', id:'448'}, {n:'Turquía', fl:'🇹🇷', id:'487'}, {n:'Camerún', fl:'🇨🇲', id:'629'}]
+                'GRUPO A': [{n:'México',        fl:'🇲🇽', id:'203'}, {n:'Sudáfrica',     fl:'🇿🇦', id:'467'}, {n:'Corea del Sur', fl:'🇰🇷', id:'451'}, {n:'Czechia',        fl:'🇨🇿', id:'450'}],
+                'GRUPO B': [{n:'Canadá',        fl:'🇨🇦', id:'206'}, {n:'Suiza',         fl:'🇨🇭', id:'475'}, {n:'Catar',         fl:'🇶🇦', id:'4398'},{n:'Bosnia-Herz.',   fl:'🇧🇦', id:'452'}],
+                'GRUPO C': [{n:'Brasil',        fl:'🇧🇷', id:'205'}, {n:'Marruecos',     fl:'🇲🇦', id:'2869'},{n:'Haití',         fl:'🇭🇹', id:'2654'},{n:'Escocia',        fl:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', id:'580'}],
+                'GRUPO D': [{n:'Estados Unidos',fl:'🇺🇸', id:'660'}, {n:'Paraguay',      fl:'🇵🇾', id:'210'}, {n:'Australia',     fl:'🇦🇺', id:'628'}, {n:'Türkiye',        fl:'🇹🇷', id:'465'}],
+                'GRUPO E': [{n:'Alemania',      fl:'🇩🇪', id:'481'}, {n:'Curaçao',       fl:'🇨🇼', id:'11678'},{n:'Costa de Marfil',fl:'🇨🇮', id:'4789'},{n:'Ecuador',       fl:'🇪🇨', id:'209'}],
+                'GRUPO F': [{n:'Países Bajos',  fl:'🇳🇱', id:'449'}, {n:'Japón',         fl:'🇯🇵', id:'627'}, {n:'Suecia',        fl:'🇸🇪', id:'466'}, {n:'Túnez',          fl:'🇹🇳', id:'659'}],
+                'GRUPO G': [{n:'Bélgica',       fl:'🇧🇪', id:'459'}, {n:'Egipto',        fl:'🇪🇬', id:'2620'},{n:'Irán',          fl:'🇮🇷', id:'469'}, {n:'Nueva Zelanda',  fl:'🇳🇿', id:'2666'}],
+                'GRUPO H': [{n:'España',        fl:'🇪🇸', id:'164'}, {n:'Cabo Verde',    fl:'🇨🇻', id:'2597'},{n:'Arabia Saudita',fl:'🇸🇦', id:'655'}, {n:'Uruguay',        fl:'🇺🇾', id:'212'}],
+                'GRUPO I': [{n:'Francia',       fl:'🇫🇷', id:'478'}, {n:'Senegal',       fl:'🇸🇳', id:'654'}, {n:'Noruega',       fl:'🇳🇴', id:'464'}, {n:'Irak',           fl:'🇮🇶', id:'4375'}],
+                'GRUPO J': [{n:'Argentina',     fl:'🇦🇷', id:'202'}, {n:'Argelia',       fl:'🇩🇿', id:'624'}, {n:'Austria',       fl:'🇦🇹', id:'474'}, {n:'Jordania',       fl:'🇯🇴', id:'2917'}],
+                'GRUPO K': [{n:'Portugal',      fl:'🇵🇹', id:'482'}, {n:'Congo RD',      fl:'🇨🇩', id:'2850'},{n:'Uzbekistán',    fl:'🇺🇿', id:'2570'},{n:'Colombia',       fl:'🇨🇴', id:'208'}],
+                'GRUPO L': [{n:'Inglaterra',    fl:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', id:'448'}, {n:'Croacia',       fl:'🇭🇷', id:'477'}, {n:'Ghana',         fl:'🇬🇭', id:'4469'},{n:'Panamá',         fl:'🇵🇦', id:'2659'}],
             };
 
             const target = mapMockGrup[grupoNombre] || mapMockGrup['GRUPO A'];
