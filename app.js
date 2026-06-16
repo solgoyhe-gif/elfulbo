@@ -3,6 +3,7 @@
 //   · Mantiene todas las funciones legibles y expandidas línea por línea.
 //   · Conserva el uso del módulo ESPN para ligas tradicionales.
 //   · Implementa Tabla de Posiciones por Grupos para el Mundial 2026.
+//   · NÚMEROS IZQUIERDOS ORDENADOS MATEMÁTICAMENTE (1 al 4 forzado).
 // ─────────────────────────────────────────────────────────────────────────
 
 const App = (() => {
@@ -413,17 +414,24 @@ const App = (() => {
                         const findStat = (name) => stats.find(s => s.name === name)?.value || 0;
                         
                         return {
-                            pos: findStat('rank'),
                             nombre: e.team.name,
                             logo: e.team.logos?.[0]?.href || '🌐',
                             pj: findStat('gamesPlayed'),
-                            pts: findStat('points')
+                            pts: findStat('points'),
+                            dif: findStat('pointDifferential')
                         };
                     }) || [];
+
+                    // Orden estricto interno por Puntos y Diferencia de Gol para que se acomoden bien
+                    equipos.sort((a, b) => b.pts - a.pts || b.dif - a.dif);
 
                     let nombreGrupo = grupo.name.replace(/Group /i, 'GRUPO ').toUpperCase();
                     return { nombre: nombreGrupo, equipos: equipos };
                 });
+
+                // Orden estricto de los grupos de la A a la L
+                gruposData.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
             } else {
                 throw new Error('ESPN devolvió array de grupos vacío');
             }
@@ -432,7 +440,7 @@ const App = (() => {
             console.warn('⚠️ [Grupos] ESPN no disponible o vacío:', error.message);
             proveedor = 'SISTEMA DE SIMULACIÓN VISUAL (MOCK 48 EQUIPOS)';
             
-            // Mock Estructurado en caso de fallo o falta de datos en la API (12 grupos, 4 equipos c/u)
+            // Mock de Grupos para cuando falla la API
             const mockEquipos = {
                 'GRUPO A': [{n:'México', fl:'🇲🇽'}, {n:'Alemania', fl:'🇩🇪'}, {n:'Japón', fl:'🇯🇵'}, {n:'Mali', fl:'🇲🇱'}],
                 'GRUPO B': [{n:'Canadá', fl:'🇨🇦'}, {n:'España', fl:'🇪🇸'}, {n:'Colombia', fl:'🇨🇴'}, {n:'Corea del Sur', fl:'🇰🇷'}],
@@ -451,21 +459,22 @@ const App = (() => {
             for (const [nombreGrupo, equiposArr] of Object.entries(mockEquipos)) {
                 gruposData.push({
                     nombre: nombreGrupo,
-                    equipos: equiposArr.map((eq, i) => ({
-                        pos: i + 1,
+                    equipos: equiposArr.map(eq => ({
                         nombre: eq.n,
                         logo: eq.fl,
                         pj: 0,
-                        pts: 0
+                        pts: 0,
+                        dif: 0
                     }))
                 });
             }
+            gruposData.sort((a, b) => a.nombre.localeCompare(b.nombre));
         }
 
         // Renderizado del HTML estructurado por Tablas
         let grillaGruposHtml = '';
         gruposData.forEach(grupo => {
-            // Utilizamos el 'index' nativo del mapa para forzar la posición visual del 1 al 4
+            // FIX: El (index + 1) fuerza matemáticamente a que la columna izquierda sea 1, 2, 3, 4 siempre, sin importar la API.
             let filasTabla = grupo.equipos.map((eq, index) => {
                 const logoHtml = eq.logo.includes('http') ? `<img src="${eq.logo}" width="20" height="20" style="object-fit: contain; margin-right: 8px;">` : `<span style="font-size:1.1rem; margin-right: 8px;">${eq.logo}</span>`;
                 
