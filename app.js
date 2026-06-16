@@ -2,8 +2,8 @@
 // ── ESTRATEGIA DE INTEGRACIÓN COMPLETA ────────────────────────────────────
 //   · Mantiene todas las funciones legibles y expandidas línea por línea.
 //   · Conserva el uso del módulo ESPN para ligas tradicionales.
-//   · Implementa CASCADA DUAL para el Mundial: worldcup26.ir -> ESPN.
-//   · Renderizado directo: Muestra los datos reales de la API sin validaciones restrictivas.
+//   · Implementa CASCADA DUAL para el Mundial: worldcup26.ir -> ESPN -> Mock.
+//   · Parseo Regex agresivo para detectar y separar los "Grupos" correctamente.
 // ─────────────────────────────────────────────────────────────────────────
 
 const App = (() => {
@@ -382,7 +382,7 @@ const App = (() => {
         }
     };
 
-    // ── VISTA EXCLUSIVA: CALENDARIO MUNDIAL (CASCADA WORLDCUP26.IR -> ESPN) ──────────
+    // ── VISTA EXCLUSIVA: CALENDARIO MUNDIAL (CASCADA CON PARSEO DE GRUPOS MEJORADO) ──
     const renderCalendarioMundial = async (ligaData) => {
         appContainer.innerHTML = `
             ${renderNavbar('#/liga?id=' + ligaData.id)}
@@ -411,28 +411,33 @@ const App = (() => {
             const rawArray = parsedData.matches || parsedData.data || [];
             
             if (rawArray.length > 0) {
-                partidosMundial = rawArray.map(m => ({
-                    local: m.home_team?.name || m.home_team_en || 'Por Definir',
-                    visita: m.away_team?.name || m.away_team_en || 'Por Definir',
-                    golesL: m.home_score !== null && m.home_score !== undefined ? m.home_score : '-',
-                    golesV: m.away_score !== null && m.away_score !== undefined ? m.away_score : '-',
-                    grupo: m.group_name || m.group || 'Fase Eliminatoria',
-                    badgeLogoL: m.home_team?.logo || m.home_flag || '🌐',
-                    badgeLogoV: m.away_team?.logo || m.away_flag || '🌐',
-                    informacionText: m.time || m.status || 'Programado'
-                }));
+                partidosMundial = rawArray.map(m => {
+                    // Extraemos el grupo de forma más robusta
+                    let nombreGrupo = m.group_name || m.group || m.stage_name || 'Fase Eliminatoria';
+                    nombreGrupo = nombreGrupo.replace(/Group /i, 'Grupo ').toUpperCase();
+
+                    return {
+                        local: m.home_team?.name || m.home_team_en || 'Por Definir',
+                        visita: m.away_team?.name || m.away_team_en || 'Por Definir',
+                        golesL: m.home_score !== null && m.home_score !== undefined ? m.home_score : '-',
+                        golesV: m.away_score !== null && m.away_score !== undefined ? m.away_score : '-',
+                        grupo: nombreGrupo,
+                        badgeLogoL: m.home_team?.logo || m.home_flag || '🌐',
+                        badgeLogoV: m.away_team?.logo || m.away_flag || '🌐',
+                        informacionText: m.time || m.status || 'Programado'
+                    };
+                });
             } else {
                 throw new Error('worldcup26.ir devolvió array vacío');
             }
 
         } catch (error) {
-            console.warn('⚠️ [Cascada] Servidor primario falló o devolvió vacío. Activando fallback a ESPN...', error.message);
+            console.warn('⚠️ [Cascada] Servidor primario falló. Activando fallback a ESPN...', error.message);
             document.getElementById('loading-text').innerText = "Rescatando datos en vivo vía ESPN...";
             
             try {
                 // FALLBACK a la API de ESPN vía Worker
                 proveedor = 'ESPN API';
-                // Pedimos un rango de fechas amplio para que traiga todos los partidos actuales de la copa
                 const espnUrl = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?limit=150&dates=20260611-20260719';
                 const espnProxyUrl = `${CF_WORKER}/?url=${encodeURIComponent(espnUrl)}`;
                 
@@ -443,18 +448,30 @@ const App = (() => {
                 
                 if (parsedEspn.events && parsedEspn.events.length > 0) {
                     partidosMundial = parsedEspn.events.map(ev => {
-                        const comp = ev.competitions[0];
-                        const loc = comp.competitors.find(c => c.homeAway === 'home');
-                        const vis = comp.competitors.find(c => c.homeAway === 'away');
+                        const comp = ev.competitions[0] || {};
+                        const loc = comp.competitors?.find(c => c.homeAway === 'home');
+                        const vis = comp.competitors?.find(c => c.homeAway === 'away');
                         
-                        let nombreGrupo = 'Fase Eliminatoria';
-                        if (ev.group?.name) {
-                            nombreGrupo = ev.group.name;
-                        } else if (ev.name?.toLowerCase().includes('group')) {
-                            nombreGrupo = ev.name.split('-')[0].trim();
+                        // PARSEO AGRESIVO DEL GRUPO PARA SEPARARLOS CORRECTAMENTE
+                        let nombreGrupo = 'FASE DE GRUPOS';
+                        const notes = comp.notes?.[0]?.headline || ev.notes?.[0]?.headline || '';
+                        const groupInfo = comp.group?.name || ev.group?.name || '';
+                        const evName = ev.name || '';
+
+                        if (groupInfo) {
+                            nombreGrupo = groupInfo;
+                        } else if (notes.toLowerCase().includes('group') || notes.toLowerCase().includes('grupo')) {
+                            nombreGrupo = notes;
+                        } else if (evName.toLowerCase().includes('group')) {
+                            // Extrae "Group A", "Group B", etc. directamente del título del evento si ESPN lo concatena ahí.
+                            const match = evName.match(/group\s+[a-l]/i);
+                            if (match) nombreGrupo = match[0];
                         } else if (ev.season?.type === 1) {
-                            nombreGrupo = 'Fase de Grupos';
+                            nombreGrupo = 'FASE DE GRUPOS';
                         }
+
+                        // Normalizamos "Group A" a "GRUPO A" para que el HTML los apile bien
+                        nombreGrupo = nombreGrupo.replace(/Group /i, 'Grupo ').toUpperCase();
 
                         return {
                             local: loc?.team?.name || 'Por Definir',
@@ -474,14 +491,14 @@ const App = (() => {
                 console.warn('⚠️ [Cascada Nivel 2] ESPN no disponible:', errEspn.message);
                 proveedor = 'SISTEMA DE EMERGENCIA';
                 
-                // MOCK de Emergencia Total (Sólo si no hay internet o las APIs están totalmente caídas)
+                // MOCK de Emergencia Total
                 partidosMundial = [
                     { grupo: "Grupos", informacionText: "Fallo de conexión", local: "Revisa tu red", golesL: "-", visita: "Sin acceso", golesV: "-", badgeLogoL: "⚠️", badgeLogoV: "⚠️" }
                 ];
             }
         }
 
-        // Agrupación para Renderizado
+        // Agrupación estricta usando el nombre parseado
         const mapeoGrupos = {};
         partidosMundial.forEach(p => {
             const identificador = p.grupo;
@@ -491,8 +508,12 @@ const App = (() => {
             mapeoGrupos[identificador].push(p);
         });
 
+        // Ordenamos los grupos alfabéticamente (Grupo A, Grupo B, etc.)
+        const gruposOrdenados = Object.keys(mapeoGrupos).sort();
+
         let grillaGruposHtml = '';
-        for (const [tituloGrupo, partidos] of Object.entries(mapeoGrupos)) {
+        gruposOrdenados.forEach(tituloGrupo => {
+            const partidos = mapeoGrupos[tituloGrupo];
             
             let tarjetasPartidosHtml = partidos.map(p => {
                 const drawLogoL = p.badgeLogoL.includes('http') ? `<img src="${p.badgeLogoL}" width="22" height="22" style="object-fit: contain;">` : `<span style="font-size:1.1rem">${p.badgeLogoL}</span>`;
@@ -523,14 +544,14 @@ const App = (() => {
             grillaGruposHtml += `
                 <div class="glass-panel" style="padding: 1.5rem; display: flex; flex-direction: column; min-height: 250px;">
                     <h3 class="panel-title" style="text-align: center; color: var(--accent-neon); border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; margin-bottom: 14px; font-size: 1.3rem;">
-                        ${tituloGrupo.toUpperCase()}
+                        ${tituloGrupo}
                     </h3>
                     <div class="match-list" style="flex: 1; max-height: 380px; overflow-y: auto;">
                         ${tarjetasPartidosHtml}
                     </div>
                 </div>
             `;
-        }
+        });
 
         appContainer.innerHTML = `
             ${renderNavbar('#/liga?id=' + ligaData.id)}
