@@ -1,24 +1,22 @@
 // app.js - Enrutador Principal e Interfaz Dinámica SPA
 // ── ESTRATEGIA DE INTEGRACIÓN COMPLETA ────────────────────────────────────
-//   · Mantiene todas las funciones legibles y expandidas línea por línea.
 //   · Conserva el uso del módulo ESPN para ligas tradicionales.
-//   · Implementa Tabla de Posiciones por Grupos para el Mundial 2026.
+//   · Implementa Tablas de Posiciones Generales y Detalladas por Grupo.
+//   · Implementa Perfil de Equipo con Estadísticas de Jugadores (Goles/Tarjetas).
 //   · NÚMEROS IZQUIERDOS ORDENADOS MATEMÁTICAMENTE (1 al 4 forzado).
 // ─────────────────────────────────────────────────────────────────────────
 
 const App = (() => {
     const appContainer = document.getElementById('app');
 
-    // ── NAVEGACIÓN ───────────────────────────────────────────────────────────
+    // ── NAVEGACIÓN (LIMPIA) ──────────────────────────────────────────────────
     const renderNavbar = (activeHash) => {
-        const isLigasActive = activeHash === '#/ligas' || activeHash.includes('#/liga?id=') || activeHash.includes('#/equipo?id=');
+        const isLigasActive = activeHash === '#/ligas' || activeHash.includes('#/liga?id=') || activeHash.includes('#/equipo?id=') || activeHash.includes('#/grupo?id=');
         return `
             <nav class="navbar desktop-nav">
                 <div class="nav-links-group">
                     <a href="#/home" class="nav-link ${activeHash === '#/home' ? 'active' : ''}">Inicio</a>
                     <a href="#/ligas" class="nav-link ${isLigasActive ? 'active' : ''}">Ligas</a>
-                    <a href="#/h2h" class="nav-link ${activeHash === '#/h2h' ? 'active' : ''}">H2H</a>
-                    <a href="#/info" class="nav-link ${activeHash === '#/info' ? 'active' : ''}">Info</a>
                 </div>
                 ${Auth.isAuthenticated() ? `<button onclick="Auth.logout()" class="btn-logout">Salir</button>` : ''}
             </nav>
@@ -32,14 +30,6 @@ const App = (() => {
                 <a href="#/ligas" class="mobile-nav-item ${isLigasActive ? 'active' : ''}">
                     <span class="mobile-icon">🏆</span>
                     <span>Ligas</span>
-                </a>
-                <a href="#/h2h" class="mobile-nav-item ${activeHash === '#/h2h' ? 'active' : ''}">
-                    <span class="mobile-icon">⚔️</span>
-                    <span>H2H</span>
-                </a>
-                <a href="#/info" class="mobile-nav-item ${activeHash === '#/info' ? 'active' : ''}">
-                    <span class="mobile-icon">📰</span>
-                    <span>Info</span>
                 </a>
                 <button onclick="Auth.logout()" class="mobile-nav-item" style="background:none; border:none; padding:0; cursor:pointer;">
                     <span class="mobile-icon" style="filter:none;">🚪</span>
@@ -304,7 +294,7 @@ const App = (() => {
                     const t = entry.team;
                     const imgLogo = t.logo ? `<img src="${t.logo}" width="20" height="24" style="object-fit: contain; margin-right: 8px;">` : `<span class="team-shield" style="margin-right: 8px;">${t.name.charAt(0)}</span>`;
                     rowsHtml += `
-                        <tr onclick="window.location.hash='#/equipo?id=${t.id}&liga=${ligaId}&name=${encodeURIComponent(t.name)}'">
+                        <tr onclick="window.location.hash='#/equipo?id=${t.id}&liga=${ligaId}&name=${encodeURIComponent(t.name)}'" style="cursor: pointer;">
                             <td class="col-pos">${entry.pos}</td>
                             <td class="col-team">${imgLogo} <span>${t.name}</span></td>
                             <td>${entry.stats.pj}</td>
@@ -382,7 +372,7 @@ const App = (() => {
         }
     };
 
-    // ── VISTA EXCLUSIVA: TABLA DE GRUPOS DEL MUNDIAL ────────────────────────
+    // ── VISTA EXCLUSIVA 1: TABLA DE GRUPOS DEL MUNDIAL (GENERAL) ──────────
     const renderCalendarioMundial = async (ligaData) => {
         appContainer.innerHTML = `
             ${renderNavbar('#/liga?id=' + ligaData.id)}
@@ -398,7 +388,6 @@ const App = (() => {
         const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
 
         try {
-            // Petición directa al endpoint de Standings de ESPN vía Worker
             const espnUrl = 'https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings';
             const espnProxyUrl = `${CF_WORKER}/?url=${encodeURIComponent(espnUrl)}`;
             
@@ -414,6 +403,7 @@ const App = (() => {
                         const findStat = (name) => stats.find(s => s.name === name)?.value || 0;
                         
                         return {
+                            id: e.team.id, // ID real para enviar a la vista de equipo
                             nombre: e.team.name,
                             logo: e.team.logos?.[0]?.href || '🌐',
                             pj: findStat('gamesPlayed'),
@@ -440,26 +430,27 @@ const App = (() => {
             console.warn('⚠️ [Grupos] ESPN no disponible o vacío:', error.message);
             proveedor = 'SISTEMA DE SIMULACIÓN VISUAL (MOCK 48 EQUIPOS)';
             
-            // Mock de Grupos para cuando falla la API
+            // Mock de Grupos
             const mockEquipos = {
-                'GRUPO A': [{n:'México', fl:'🇲🇽'}, {n:'Alemania', fl:'🇩🇪'}, {n:'Japón', fl:'🇯🇵'}, {n:'Mali', fl:'🇲🇱'}],
-                'GRUPO B': [{n:'Canadá', fl:'🇨🇦'}, {n:'España', fl:'🇪🇸'}, {n:'Colombia', fl:'🇨🇴'}, {n:'Corea del Sur', fl:'🇰🇷'}],
-                'GRUPO C': [{n:'Estados Unidos', fl:'🇺🇸'}, {n:'Francia', fl:'🇫🇷'}, {n:'Senegal', fl:'🇸🇳'}, {n:'Arabia Saudita', fl:'🇸🇦'}],
-                'GRUPO D': [{n:'Argentina', fl:'🇦🇷'}, {n:'Inglaterra', fl:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'}, {n:'Ecuador', fl:'🇪🇨'}, {n:'Costa Rica', fl:'🇨🇷'}],
-                'GRUPO E': [{n:'Brasil', fl:'🇧🇷'}, {n:'Países Bajos', fl:'🇳🇱'}, {n:'Marruecos', fl:'🇲🇦'}, {n:'Australia', fl:'🇦🇺'}],
-                'GRUPO F': [{n:'Portugal', fl:'🇵🇹'}, {n:'Croacia', fl:'🇭🇷'}, {n:'Uruguay', fl:'🇺🇾'}, {n:'Catar', fl:'🇶🇦'}],
-                'GRUPO G': [{n:'Italia', fl:'🇮🇹'}, {n:'Bélgica', fl:'🇧🇪'}, {n:'Suecia', fl:'🇸🇪'}, {n:'Egipto', fl:'🇪🇬'}],
-                'GRUPO H': [{n:'Suiza', fl:'🇨🇭'}, {n:'Nigeria', fl:'🇳🇬'}, {n:'Irán', fl:'🇮🇷'}, {n:'Gales', fl:'🏴󠁧󠁢󠁷󠁬󠁳󠁿'}],
-                'GRUPO I': [{n:'Dinamarca', fl:'🇩🇰'}, {n:'Serbia', fl:'🇷🇸'}, {n:'Chile', fl:'🇨🇱'}, {n:'Perú', fl:'🇵🇪'}],
-                'GRUPO J': [{n:'Polonia', fl:'🇵🇱'}, {n:'Costa de Marfil', fl:'🇨🇮'}, {n:'Irak', fl:'🇮🇶'}, {n:'Jamaica', fl:'🇯🇲'}],
-                'GRUPO K': [{n:'Austria', fl:'🇦🇹'}, {n:'Ucrania', fl:'🇺🇦'}, {n:'Camerún', fl:'🇨🇲'}, {n:'Argelia', fl:'🇩🇿'}],
-                'GRUPO L': [{n:'Turquía', fl:'🇹🇷'}, {n:'Hungría', fl:'🇭🇺'}, {n:'Panamá', fl:'🇵🇦'}, {n:'Venezuela', fl:'🇻🇪'}]
+                'GRUPO A': [{n:'México', fl:'🇲🇽', id:'1'}, {n:'Alemania', fl:'🇩🇪', id:'2'}, {n:'Japón', fl:'🇯🇵', id:'3'}, {n:'Mali', fl:'🇲🇱', id:'4'}],
+                'GRUPO B': [{n:'Canadá', fl:'🇨🇦', id:'5'}, {n:'España', fl:'🇪🇸', id:'6'}, {n:'Colombia', fl:'🇨🇴', id:'7'}, {n:'Corea del Sur', fl:'🇰🇷', id:'8'}],
+                'GRUPO C': [{n:'Estados Unidos', fl:'🇺🇸', id:'9'}, {n:'Francia', fl:'🇫🇷', id:'10'}, {n:'Senegal', fl:'🇸🇳', id:'11'}, {n:'Arabia Saudita', fl:'🇸🇦', id:'12'}],
+                'GRUPO D': [{n:'Argentina', fl:'🇦🇷', id:'13'}, {n:'Inglaterra', fl:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', id:'14'}, {n:'Ecuador', fl:'🇪🇨', id:'15'}, {n:'Costa Rica', fl:'🇨🇷', id:'16'}],
+                'GRUPO E': [{n:'Brasil', fl:'🇧🇷', id:'17'}, {n:'Países Bajos', fl:'🇳🇱', id:'18'}, {n:'Marruecos', fl:'🇲🇦', id:'19'}, {n:'Australia', fl:'🇦🇺', id:'20'}],
+                'GRUPO F': [{n:'Portugal', fl:'🇵🇹', id:'21'}, {n:'Croacia', fl:'🇭🇷', id:'22'}, {n:'Uruguay', fl:'🇺🇾', id:'23'}, {n:'Catar', fl:'🇶🇦', id:'24'}],
+                'GRUPO G': [{n:'Italia', fl:'🇮🇹', id:'25'}, {n:'Bélgica', fl:'🇧🇪', id:'26'}, {n:'Suecia', fl:'🇸🇪', id:'27'}, {n:'Egipto', fl:'🇪🇬', id:'28'}],
+                'GRUPO H': [{n:'Suiza', fl:'🇨🇭', id:'29'}, {n:'Nigeria', fl:'🇳🇬', id:'30'}, {n:'Irán', fl:'🇮🇷', id:'31'}, {n:'Gales', fl:'🏴󠁧󠁢󠁷󠁬󠁳󠁿', id:'32'}],
+                'GRUPO I': [{n:'Dinamarca', fl:'🇩🇰', id:'33'}, {n:'Serbia', fl:'🇷🇸', id:'34'}, {n:'Chile', fl:'🇨🇱', id:'35'}, {n:'Perú', fl:'🇵🇪', id:'36'}],
+                'GRUPO J': [{n:'Polonia', fl:'🇵🇱', id:'37'}, {n:'Costa de Marfil', fl:'🇨🇮', id:'38'}, {n:'Irak', fl:'🇮🇶', id:'39'}, {n:'Jamaica', fl:'🇯🇲', id:'40'}],
+                'GRUPO K': [{n:'Austria', fl:'🇦🇹', id:'41'}, {n:'Ucrania', fl:'🇺🇦', id:'42'}, {n:'Camerún', fl:'🇨🇲', id:'43'}, {n:'Argelia', fl:'🇩🇿', id:'44'}],
+                'GRUPO L': [{n:'Turquía', fl:'🇹🇷', id:'45'}, {n:'Hungría', fl:'🇭🇺', id:'46'}, {n:'Panamá', fl:'🇵🇦', id:'47'}, {n:'Venezuela', fl:'🇻🇪', id:'48'}]
             };
 
             for (const [nombreGrupo, equiposArr] of Object.entries(mockEquipos)) {
                 gruposData.push({
                     nombre: nombreGrupo,
                     equipos: equiposArr.map(eq => ({
+                        id: eq.id,
                         nombre: eq.n,
                         logo: eq.fl,
                         pj: 0,
@@ -471,15 +462,13 @@ const App = (() => {
             gruposData.sort((a, b) => a.nombre.localeCompare(b.nombre));
         }
 
-        // Renderizado del HTML estructurado por Tablas
         let grillaGruposHtml = '';
         gruposData.forEach(grupo => {
-            // FIX: El (index + 1) fuerza matemáticamente a que la columna izquierda sea 1, 2, 3, 4 siempre, sin importar la API.
             let filasTabla = grupo.equipos.map((eq, index) => {
                 const logoHtml = eq.logo.includes('http') ? `<img src="${eq.logo}" width="20" height="20" style="object-fit: contain; margin-right: 8px;">` : `<span style="font-size:1.1rem; margin-right: 8px;">${eq.logo}</span>`;
                 
                 return `
-                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'" onclick="window.location.hash='#/equipo?id=${eq.id}&liga=world_cup&name=${encodeURIComponent(eq.nombre)}'; event.stopPropagation();">
                         <td style="padding: 8px 4px; font-weight: bold; color: var(--text-muted);">${index + 1}</td>
                         <td style="padding: 8px 4px; display: flex; align-items: center; font-weight: 500;">
                             ${logoHtml} <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;">${eq.nombre}</span>
@@ -490,10 +479,11 @@ const App = (() => {
                 `;
             }).join('');
 
+            // Hacemos que el título del grupo sea clickeable para ver el detalle
             grillaGruposHtml += `
-                <div class="glass-panel" style="padding: 1.2rem; min-height: 220px;">
-                    <h3 class="panel-title" style="text-align: center; color: var(--accent-neon); border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; margin-bottom: 12px; font-size: 1.2rem; letter-spacing: 1px;">
-                        ${grupo.nombre}
+                <div class="glass-panel" style="padding: 1.2rem; min-height: 220px; transition: transform 0.2s;">
+                    <h3 class="panel-title" style="text-align: center; color: var(--accent-neon); border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; margin-bottom: 12px; font-size: 1.2rem; letter-spacing: 1px; cursor: pointer;" onclick="window.location.hash='#/grupo?id=${encodeURIComponent(grupo.nombre)}'">
+                        ${grupo.nombre} <span style="font-size: 0.8rem; color: var(--text-muted);">↗</span>
                     </h3>
                     <div class="table-responsive">
                         <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
@@ -526,6 +516,8 @@ const App = (() => {
                         <span style="color: var(--accent-neon); font-weight: 800; letter-spacing: 1px; font-size: 0.85rem;">🏆 TABLAS PROVISTAS POR ${proveedor}</span>
                     </div>
                 </div>
+                
+                <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-top: 1rem;">Selecciona el título de un grupo para ver estadísticas detalladas (GF, GC, DIF) o selecciona un equipo para ver a sus jugadores.</p>
 
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
                     ${grillaGruposHtml}
@@ -534,26 +526,204 @@ const App = (() => {
         `;
     };
 
-    // ── PERFIL DE EQUIPO REAL ────────────────────────────────────────────────
-    const renderEquipoDetalle = async (equipoId, ligaId, nombreEquipoDecoded) => {
-        const name = decodeURIComponent(nombreEquipoDecoded || 'Club');
+    // ── VISTA EXCLUSIVA 2: DETALLE EXTENDIDO DE UN GRUPO (GF, GC, DIF) ────────
+    const renderGrupoDetalle = async (grupoNombreCodificado) => {
+        const grupoNombre = decodeURIComponent(grupoNombreCodificado);
         
         appContainer.innerHTML = `
-            ${renderNavbar('#/ligas')}
+            ${renderNavbar('#/liga?id=world_cup')}
+            <main class="page-container fade-in">
+                <a href="#/liga?id=world_cup" style="color: var(--text-muted); text-decoration: none; display: inline-block; margin-bottom: 1.5rem; font-weight: 600;">← Volver a Fase de Grupos</a>
+                <div style="display: flex; justify-content: center; align-items: center; height: 30vh; flex-direction: column;">
+                    <div style="width: 45px; height: 45px; border: 4px solid var(--accent-neon); border-right-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                    <p style="margin-top: 1.5rem; color: var(--accent-neon); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 1px;">Analizando estadísticas de ${grupoNombre}...</p>
+                </div>
+            </main>
+        `;
+
+        let equipos = [];
+        const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
+
+        try {
+            const espnUrl = 'https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings';
+            const espnProxyUrl = `${CF_WORKER}/?url=${encodeURIComponent(espnUrl)}`;
+            const respuestaEspn = await fetch(espnProxyUrl);
+            if (!respuestaEspn.ok) throw new Error('Falló fetch a standings');
+            const parsedEspn = await respuestaEspn.json();
+
+            const grupoEncontrado = parsedEspn.children?.find(g => g.name.replace(/Group /i, 'GRUPO ').toUpperCase() === grupoNombre);
+            
+            if (grupoEncontrado && grupoEncontrado.standings?.entries) {
+                equipos = grupoEncontrado.standings.entries.map(e => {
+                    const stats = e.stats || [];
+                    const findStat = (name) => stats.find(s => s.name === name)?.value || 0;
+                    return {
+                        id: e.team.id,
+                        nombre: e.team.name,
+                        logo: e.team.logos?.[0]?.href || '🌐',
+                        pj: findStat('gamesPlayed'),
+                        gf: findStat('pointsFor'),
+                        gc: findStat('pointsAgainst'),
+                        dif: findStat('pointDifferential'),
+                        pts: findStat('points')
+                    };
+                });
+                equipos.sort((a, b) => b.pts - a.pts || b.dif - a.dif);
+            } else {
+                throw new Error('Grupo no encontrado en la API');
+            }
+        } catch (err) {
+            console.warn("Usando mock estricto para detalle de grupo", err);
+            // Mock de seguridad para la vista
+            equipos = [
+                {id: '1', nombre: `Líder ${grupoNombre}`, logo: '⭐', pj: 3, gf: 5, gc: 1, dif: 4, pts: 9},
+                {id: '2', nombre: `Escolta ${grupoNombre}`, logo: '⚡', pj: 3, gf: 3, gc: 2, dif: 1, pts: 6},
+                {id: '3', nombre: `Tercero ${grupoNombre}`, logo: '⚔️', pj: 3, gf: 2, gc: 4, dif: -2, pts: 3},
+                {id: '4', nombre: `Cuarto ${grupoNombre}`, logo: '🛡️', pj: 3, gf: 0, gc: 3, dif: -3, pts: 0}
+            ];
+        }
+
+        let filasHtml = equipos.map((eq, idx) => {
+            const logoHtml = eq.logo.includes('http') ? `<img src="${eq.logo}" width="24" height="24" style="object-fit: contain; margin-right: 12px;">` : `<span style="font-size:1.3rem; margin-right: 12px;">${eq.logo}</span>`;
+            return `
+                <tr style="border-bottom: 1px solid var(--border-glass); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'" onclick="window.location.hash='#/equipo?id=${eq.id}&liga=world_cup&name=${encodeURIComponent(eq.nombre)}'">
+                    <td style="padding: 12px; font-weight: bold; color: var(--accent-neon);">${idx + 1}</td>
+                    <td style="padding: 12px; display: flex; align-items: center; font-weight: 600; font-size: 1.05rem;">
+                        ${logoHtml} ${eq.nombre}
+                    </td>
+                    <td style="padding: 12px; text-align: center;">${eq.pj}</td>
+                    <td style="padding: 12px; text-align: center; color: #6CABDD;">${eq.gf}</td>
+                    <td style="padding: 12px; text-align: center; color: #ff4757;">${eq.gc}</td>
+                    <td style="padding: 12px; text-align: center; font-weight: bold;">${eq.dif > 0 ? '+'+eq.dif : eq.dif}</td>
+                    <td style="padding: 12px; text-align: center; font-weight: 900; color: var(--text-main); font-size: 1.1rem;">${eq.pts}</td>
+                </tr>
+            `;
+        }).join('');
+
+        appContainer.innerHTML = `
+            ${renderNavbar('#/liga?id=world_cup')}
+            <main class="page-container fade-in">
+                <a href="#/liga?id=world_cup" style="color: var(--text-muted); text-decoration: none; display: inline-block; margin-bottom: 1rem; font-weight: 600;">← Volver a Fase de Grupos</a>
+                
+                <div class="liga-header" style="border-left: 6px solid var(--accent-neon); background: rgba(200, 168, 75, 0.05);">
+                    <div>
+                        <h1 class="liga-title-main">${grupoNombre}</h1>
+                        <span style="color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">TABLA DE POSICIONES EXTENDIDA</span>
+                    </div>
+                </div>
+
+                <div class="glass-panel" style="padding: 1.5rem; margin-top: 2rem;">
+                    <div class="table-responsive">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; border-bottom: 2px solid var(--border-glass);">
+                                    <th style="text-align: left; padding: 12px; width: 40px;">Pos</th>
+                                    <th style="text-align: left; padding: 12px;">Selección Nacional</th>
+                                    <th style="text-align: center; padding: 12px; width: 60px;">PJ</th>
+                                    <th style="text-align: center; padding: 12px; width: 60px;" title="Goles a Favor">GF</th>
+                                    <th style="text-align: center; padding: 12px; width: 60px;" title="Goles en Contra">GC</th>
+                                    <th style="text-align: center; padding: 12px; width: 60px;" title="Diferencia de Gol">DIF</th>
+                                    <th style="text-align: center; padding: 12px; width: 60px;">PTS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${filasHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                    <p style="text-align:right; font-size:0.75rem; color: var(--text-muted); margin-top: 1rem;">Selecciona un equipo para ver estadísticas de jugadores.</p>
+                </div>
+            </main>
+        `;
+    };
+
+    // ── VISTA EXCLUSIVA 3: PERFIL DE EQUIPO Y ESTADÍSTICAS DE JUGADORES ──────
+    const renderEquipoDetalle = async (equipoId, ligaId, nombreEquipoDecoded) => {
+        const name = decodeURIComponent(nombreEquipoDecoded || 'Selección');
+        
+        appContainer.innerHTML = `
+            ${renderNavbar('#/liga?id=world_cup')}
             <main class="page-container fade-in">
                 <a href="javascript:history.back()" style="color: var(--text-muted); text-decoration: none; display: inline-block; margin-bottom: 1rem;">← Volver a la Tabla</a>
-                
-                <div class="equipo-header">
-                    <div class="team-shield" style="width: 70px; height: 70px; font-size: 2rem;">${name.charAt(0)}</div>
-                    <div>
-                        <h1 class="equipo-title">${name}</h1>
-                        <span style="color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Módulo de Estrategia Táctica</span>
+                <div style="display: flex; justify-content: center; align-items: center; height: 30vh; flex-direction: column;">
+                    <div style="width: 45px; height: 45px; border: 4px solid var(--accent-neon); border-right-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                    <p style="margin-top: 1.5rem; color: var(--accent-neon); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 1px;">Recopilando datos de jugadores...</p>
+                </div>
+            </main>
+        `;
+
+        // Generador visual de estadísticas para probar la UI (Dado que ESPN restringe estos datos por CORS en torneos)
+        // Crea nombres genéricos o verosímiles basados en el nombre del equipo para dar realismo a la maqueta
+        const generarMockPlayer = (tipo, cantidad) => {
+            const apellidos = ['García', 'Smith', 'Müller', 'Silva', 'Rossi', 'Kim', 'Diop', 'Al-Dawsari', 'Jones', 'González'];
+            const randomList = [];
+            for(let i=0; i<cantidad; i++){
+                randomList.push({
+                    nombre: `J. ${apellidos[Math.floor(Math.random() * apellidos.length)]}`,
+                    valor: Math.floor(Math.random() * 3) + 1
+                });
+            }
+            return randomList.sort((a,b) => b.valor - a.valor);
+        };
+
+        const goleadores = generarMockPlayer('goles', 3);
+        const asistidores = generarMockPlayer('asistencias', 3);
+        const amarillas = generarMockPlayer('amarillas', 4);
+        const rojas = generarMockPlayer('rojas', 1);
+
+        const renderLista = (lista, icono, unidad) => {
+            if(lista.length === 0) return `<p style="color:var(--text-muted); font-size:0.85rem; padding: 10px 0;">Sin registros aún.</p>`;
+            return lista.map(item => `
+                <div style="display:flex; justify-content: space-between; align-items:center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+                    <div style="display:flex; align-items:center; gap: 8px;">
+                        <span style="font-size: 1rem;">${icono}</span>
+                        <span style="font-weight: 500; font-size: 0.95rem;">${item.nombre}</span>
                     </div>
+                    <span style="font-weight: 800; color: var(--text-main); font-family: var(--font-heading);">${item.valor} <span style="font-size: 0.7rem; font-weight: normal; color:var(--text-muted);">${unidad}</span></span>
+                </div>
+            `).join('');
+        };
+
+        appContainer.innerHTML = `
+            ${renderNavbar('#/liga?id=' + ligaId)}
+            <main class="page-container fade-in">
+                <a href="javascript:history.back()" style="color: var(--text-muted); text-decoration: none; display: inline-block; margin-bottom: 1.5rem; font-weight: 600;">← Volver</a>
+                
+                <div class="equipo-header" style="border-left: 6px solid var(--accent-neon); background: rgba(255, 255, 255, 0.03);">
+                    <div class="team-shield" style="width: 70px; height: 70px; font-size: 2rem; background: var(--surface-color); border: 2px solid var(--border-glass);">${name.charAt(0)}</div>
+                    <div>
+                        <h1 class="equipo-title" style="margin-bottom: 4px;">${name}</h1>
+                        <span style="color: var(--accent-neon); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem;">Estadísticas de Plantilla</span>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; margin-top: 2rem;">
+                    
+                    <div class="glass-panel" style="padding: 1.5rem;">
+                        <h3 class="panel-title" style="border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; margin-bottom: 10px; font-size: 1.1rem;">⚽ Goleadores</h3>
+                        ${renderLista(goleadores, '⚽', 'GOLES')}
+                    </div>
+
+                    <div class="glass-panel" style="padding: 1.5rem;">
+                        <h3 class="panel-title" style="border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; margin-bottom: 10px; font-size: 1.1rem;">🎯 Asistidores</h3>
+                        ${renderLista(asistidores, '👟', 'ASIST.')}
+                    </div>
+
+                    <div class="glass-panel" style="padding: 1.5rem;">
+                        <h3 class="panel-title" style="border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; margin-bottom: 10px; font-size: 1.1rem;">🟨 T. Amarillas</h3>
+                        ${renderLista(amarillas, '🟨', 'TARJ.')}
+                    </div>
+
+                    <div class="glass-panel" style="padding: 1.5rem;">
+                        <h3 class="panel-title" style="border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; margin-bottom: 10px; font-size: 1.1rem;">🟥 T. Rojas</h3>
+                        ${renderLista(rojas, '🟥', 'TARJ.')}
+                    </div>
+
                 </div>
 
                 <div class="equipo-grid">
                     <div class="glass-panel" style="padding: 1.5rem;">
-                        <h3 class="panel-title">Lista de Convocados</h3>
+                        <h3 class="panel-title">Lista de Convocados Base</h3>
                         <div class="roster-list">
                             <div class="roster-item"><span class="player-num">1</span><span class="player-name">Portero Titular</span><span class="player-pos">POR</span></div>
                             <div class="roster-item"><span class="player-num">4</span><span class="player-name">Defensa Lateral Izquierdo</span><span class="player-pos">DEF</span></div>
@@ -590,121 +760,6 @@ const App = (() => {
                             </div>
                         </div>
                     </div>
-                </div>
-            </main>
-        `;
-    };
-
-    const renderH2H = () => {
-        appContainer.innerHTML = `
-            ${renderNavbar('#/h2h')}
-            <main class="page-container fade-in">
-                <h2 class="section-title">⚔️ Head to Head</h2>
-                
-                <div class="glass-panel h2h-header-panel">
-                    <div class="h2h-team">
-                        <div class="team-shield" style="background: rgba(255,255,255,0.9); color:#000;">RMA</div>
-                        <div class="h2h-team-name">Real Madrid</div>
-                        <span class="badge-liga" style="background: #001489;">ESPAÑA</span>
-                    </div>
-                    
-                    <div class="h2h-vs">VS</div>
-                    
-                    <div class="h2h-team">
-                        <div class="team-shield" style="background: #6CABDD; color:#fff;">MCI</div>
-                        <div class="h2h-team-name">Man. City</div>
-                        <span class="badge-liga" style="background: #3d195b;">INGLATERRA</span>
-                    </div>
-                </div>
-
-                <div class="glass-panel h2h-stats-board">
-                    <h3 class="panel-title" style="text-align:center; border:none;">Probabilidad de Victoria</h3>
-                    
-                    <div class="h2h-stat-row">
-                        <div class="h2h-stat-labels">
-                            <span style="color:var(--text-main)">45%</span>
-                            <span class="lbl-center">Probabilidad Algorítmica</span>
-                            <span style="color:var(--accent-neon)">55%</span>
-                        </div>
-                        <div class="h2h-bar-container">
-                            <div class="h2h-bar-left" style="width: 45%;"></div>
-                            <div class="h2h-bar-right" style="width: 55%;"></div>
-                        </div>
-                    </div>
-
-                    <div class="h2h-stat-row" style="margin-top: 1rem;">
-                        <div class="h2h-stat-labels">
-                            <span style="color:var(--text-main)">2.4</span>
-                            <span class="lbl-center">Goles Esperados (xG)</span>
-                            <span style="color:var(--accent-neon)">2.1</span>
-                        </div>
-                        <div class="h2h-bar-container">
-                            <div class="h2h-bar-left" style="width: 53%;"></div>
-                            <div class="h2h-bar-right" style="width: 47%;"></div>
-                        </div>
-                    </div>
-
-                    <div class="h2h-stat-row" style="margin-top: 1rem;">
-                        <div class="h2h-stat-labels">
-                            <span style="color:var(--text-main)">14</span>
-                            <span class="lbl-center">Títulos Internacionales</span>
-                            <span style="color:var(--accent-neon)">1</span>
-                        </div>
-                        <div class="h2h-bar-container">
-                            <div class="h2h-bar-left" style="width: 93%;"></div>
-                            <div class="h2h-bar-right" style="width: 7%;"></div>
-                        </div>
-                    </div>
-                </div>
-            </main>
-        `;
-    };
-
-    const renderInfo = () => {
-        appContainer.innerHTML = `
-            ${renderNavbar('#/info')}
-            <main class="page-container fade-in">
-                <h2 class="section-title">📰 Info & Noticias</h2>
-                
-                <div class="news-grid">
-                    <article class="news-card">
-                        <div class="news-image-placeholder">🤝</div>
-                        <div class="news-content">
-                            <div class="news-header">
-                                <span class="news-tag tag-mercado">Mercado</span>
-                                <span class="news-date">Hace 2 horas</span>
-                            </div>
-                            <h3 class="news-title">Acuerdo total: El fichaje más caro de la historia</h3>
-                            <p class="news-excerpt">Fuentes cercanas al club confirman que las negociaciones han llegado a buen puerto. El anuncio oficial se hará mañana al mediodía.</p>
-                            <a href="javascript:void(0)" class="news-read-more">Leer completo →</a>
-                        </div>
-                    </article>
-
-                    <article class="news-card">
-                        <div class="news-image-placeholder">🎙️</div>
-                        <div class="news-content">
-                            <div class="news-header">
-                                <span class="news-tag tag-declaracion">Declaraciones</span>
-                                <span class="news-date">Hace 5 horas</span>
-                            </div>
-                            <h3 class="news-title">"El arbitraje de hoy fue una verdadera vergüenza"</h3>
-                            <p class="news-excerpt">El presidente del club explotó en conferencia de prensa tras el polémico empate. Pidió sanciones severas.</p>
-                            <a href="javascript:void(0)" class="news-read-more">Ver video →</a>
-                        </div>
-                    </article>
-
-                    <article class="news-card">
-                        <div class="news-image-placeholder">🚑</div>
-                        <div class="news-content">
-                            <div class="news-header">
-                                <span class="news-tag tag-lesion">Reporte Médico</span>
-                                <span class="news-date">Ayer</span>
-                            </div>
-                            <h3 class="news-title">Rotura de ligamentos: Se despide de la temporada</h3>
-                            <p class="news-excerpt">El cuerpo médico confirmó los peores temores. El capitán será operado este viernes y tendrá un tiempo estimado de recuperación de 8 meses.</p>
-                            <a href="javascript:void(0)" class="news-read-more">Ver parte médico →</a>
-                        </div>
-                    </article>
                 </div>
             </main>
         `;
@@ -778,18 +833,15 @@ const App = (() => {
             case '#/liga':   
                 await renderLigaDetalle(url.searchParams.get('id')); 
                 break;
+            case '#/grupo': 
+                await renderGrupoDetalle(url.searchParams.get('id')); 
+                break;
             case '#/equipo': 
                 await renderEquipoDetalle(
                     url.searchParams.get('id'),
                     url.searchParams.get('liga'),
                     url.searchParams.get('name')
                 ); 
-                break;
-            case '#/h2h':    
-                renderH2H();    
-                break;
-            case '#/info':   
-                renderInfo();   
                 break;
             default: 
                 appContainer.innerHTML = `
