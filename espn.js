@@ -2,69 +2,79 @@
  * espn.js — El Fulbo
  * Módulo de datos ESPN con endpoints correctos para soccer.
  *
- * FIXES:
- *   - Standings: /apis/site/v2/ devuelve {} vacío para soccer.
- *     El endpoint correcto es /apis/v2/sports/soccer/{slug}/standings
- *   - Scoreboard: /apis/site/v2/ sí funciona para soccer.
- *   - Estructura standings: /apis/v2/ devuelve children[].standings[].entries[]
- *
- * Sin API key, sin registro. Proxy Cloudflare propio + allorigins como fallback.
+ * FIXES aplicados:
+ *   - Standings: /apis/v2/ es el endpoint correcto para soccer.
+ *   - Scoreboard: /apis/site/v2/ funciona para soccer.
+ *   - TTL de standings reducido a 2hs durante torneos en vivo.
+ *   - copa_liga agregado al SLUG_MAP.
  */
 
 const ESPN = (() => {
 
     // ── Config ────────────────────────────────────────────────────────────────
     const CF_WORKER  = 'https://elfulbo.solgoyhe.workers.dev';
-    const ESPN_V2    = 'https://site.api.espn.com/apis/v2/sports/soccer';    // standings
-    const ESPN_SITE  = 'https://site.api.espn.com/apis/site/v2/sports/soccer'; // scoreboard, teams
-    const CACHE_TTL  = 24 * 60 * 60 * 1000; // 24 horas
+    const ESPN_V2    = 'https://site.api.espn.com/apis/v2/sports/soccer';
+    const ESPN_SITE  = 'https://site.api.espn.com/apis/site/v2/sports/soccer';
 
+    // TTL diferenciado: standings cambian después de cada partido
+    const TTL_STANDINGS  = 2 * 60 * 60 * 1000;  // 2 horas
+    const TTL_SCOREBOARD = 5 * 60 * 1000;        // 5 minutos (datos en vivo)
+    const TTL_TEAMS      = 24 * 60 * 60 * 1000;  // 24 horas (no cambian)
+
+    // ── SLUG_MAP: ligaId interno → slug ESPN ──────────────────────────────────
+    // REGLA: todo ligaId que aparezca en data.js/LIGAS debe tener entrada acá.
     const SLUG_MAP = {
+        // Europa Top 5
         premier:       'eng.1',
         bundesliga:    'ger.1',
         serie_a:       'ita.1',
         ligue1:        'fra.1',
         laliga:        'esp.1',
+        // Europa otras
         eredivisie:    'ned.1',
         primeira:      'por.1',
-        efl_cup:       'eng.league_cup',
+        // Copas nacionales
         fa_cup:        'eng.fa',
+        efl_cup:       'eng.league_cup',
+        // Internacionales
         champions:     'uefa.champions',
         europa_league: 'uefa.europa',
         conference:    'uefa.europa.conf',
         supercup_uefa: 'uefa.super_cup',
+        // Mundiales
         world_cup:     'fifa.world',
         amistosos_wc:  'fifa.friendly',
+        // Sudamérica
         libertadores:  'conmebol.libertadores',
         sudamericana:  'conmebol.sudamericana',
+        // Argentina — copa_liga no tiene slug ESPN oficial, se omite graciosamente
         liga_prof:     'arg.1',
-        copa_arg:      'arg.copa',
-        brasileirao:   'bra.1',
+        copa_liga:     null,  // ESPN no tiene este torneo — se maneja en el fallback
     };
 
-    // ── Caché ─────────────────────────────────────────────────────────────────
+    // ── Caché en memoria + localStorage ──────────────────────────────────────
     const _mem = {};
 
     const _lsGet = (key) => {
         try {
             const raw = localStorage.getItem(`elfulbo_${key}`);
             if (!raw) return null;
-            const { ts, data } = JSON.parse(raw);
-            if (Date.now() - ts > CACHE_TTL) { localStorage.removeItem(`elfulbo_${key}`); return null; }
+            const { ts, data, ttl } = JSON.parse(raw);
+            if (Date.now() - ts > ttl) { localStorage.removeItem(`elfulbo_${key}`); return null; }
             return data;
         } catch { return null; }
     };
 
-    const _lsSet = (key, data) => {
-        try { localStorage.setItem(`elfulbo_${key}`, JSON.stringify({ ts: Date.now(), data })); } catch {}
+    const _lsSet = (key, data, ttl) => {
+        try { localStorage.setItem(`elfulbo_${key}`, JSON.stringify({ ts: Date.now(), data, ttl })); } catch {}
     };
 
     // ── Fetch con cascada de proxies ──────────────────────────────────────────
     const _fetch = async (espnUrl) => {
         const encoded = encodeURIComponent(espnUrl);
         const proxies = [
-            { url: `${CF_WORKER}?url=${encoded}`,                   parse: r => r.json() },
-            { url: `https://api.allorigins.win/get?url=${encoded}`, parse: async r => JSON.parse((await r.json()).contents) },
+            { url: `${CF_WORKER}?url=${encoded}`,                    parse: r => r.json() },
+            { url: `https://api.allorigins.win/get?url=${encoded}`,  parse: async r => JSON.parse((await r.json()).contents) },
         ];
 
         for (const proxy of proxies) {
@@ -81,36 +91,35 @@ const ESPN = (() => {
 
     // ── API pública ───────────────────────────────────────────────────────────
 
+    /**
+     * Devuelve el slug ESPN para un ligaId interno.
+     * Retorna null si la liga no tiene slug (ej: copa_liga).
+     */
     const getSlug = (ligaId) => SLUG_MAP[ligaId] ?? null;
 
     /**
      * Tabla de posiciones.
-     * USA /apis/v2/ — el único endpoint que devuelve datos reales para soccer.
-     * Estructura: data.children[].standings[].entries[]  (varía según la liga)
+     * Endpoint: /apis/v2/sports/soccer/{slug}/standings
      */
     const getStandings = async (ligaId) => {
         const slug = getSlug(ligaId);
-        if (!slug) throw new Error(`Sin slug para liga: ${ligaId}`);
+        if (!slug) {
+            console.warn(`[ESPN] Sin slug para liga: ${ligaId} — standings no disponibles`);
+            return [];
+        }
 
         const cacheKey = `standings_${slug}`;
         if (_mem[cacheKey]) return _mem[cacheKey];
         const cached = _lsGet(cacheKey);
         if (cached) { _mem[cacheKey] = cached; return cached; }
 
-        // Endpoint correcto para soccer standings
         const url  = `${ESPN_V2}/${slug}/standings`;
         const data = await _fetch(url);
 
-        // /apis/v2/ puede devolver:
-        //   data.standings[0].entries[]          (ligas simples)
-        //   data.children[0].standings[0].entries[]  (ligas con conferencias/grupos)
         let entries = [];
-
         if (data?.standings?.[0]?.entries?.length) {
-            // Formato directo
             entries = data.standings[0].entries;
         } else if (data?.children?.length) {
-            // Formato con divisiones/grupos — juntamos todas las conferencias
             for (const child of data.children) {
                 const childEntries = child?.standings?.[0]?.entries ?? [];
                 entries = entries.concat(childEntries);
@@ -122,12 +131,10 @@ const ESPN = (() => {
         }
 
         const result = entries.map((entry, idx) => {
-            const team = entry.team;
+            const team  = entry.team;
             const stats = {};
             (entry.stats ?? []).forEach(s => {
-                // ESPN usa abreviaciones mixtas: GP, W, L, T, GF, GA, PTS, etc.
                 stats[s.abbreviation] = s.value;
-                // Guardar también por nombre largo por si la abrev cambia
                 if (s.name) stats[s.name] = s.value;
             });
 
@@ -154,28 +161,25 @@ const ESPN = (() => {
         });
 
         _mem[cacheKey] = result;
-        _lsSet(cacheKey, result);
+        _lsSet(cacheKey, result, TTL_STANDINGS);
         return result;
     };
 
     /**
      * Partidos / scoreboard.
-     * USA /apis/site/v2/ — sí funciona para scoreboard soccer.
-     * TTL corto (5 min) porque cambia en vivo.
+     * Endpoint: /apis/site/v2/sports/soccer/{slug}/scoreboard
+     * TTL corto (5 min) para datos en vivo.
      */
     const getScoreboard = async (ligaId) => {
         const slug = getSlug(ligaId);
-        if (!slug) throw new Error(`Sin slug para liga: ${ligaId}`);
+        if (!slug) {
+            console.warn(`[ESPN] Sin slug para liga: ${ligaId} — scoreboard no disponible`);
+            return [];
+        }
 
         const cacheKey = `scoreboard_${slug}`;
-        const SHORT_TTL = 5 * 60 * 1000;
-        try {
-            const raw = localStorage.getItem(`elfulbo_${cacheKey}`);
-            if (raw) {
-                const { ts, data } = JSON.parse(raw);
-                if (Date.now() - ts < SHORT_TTL) return data;
-            }
-        } catch {}
+        const cached = _lsGet(cacheKey);
+        if (cached) return cached;
 
         const url  = `${ESPN_SITE}/${slug}/scoreboard`;
         const data = await _fetch(url);
@@ -214,7 +218,7 @@ const ESPN = (() => {
             };
         });
 
-        try { localStorage.setItem(`elfulbo_${cacheKey}`, JSON.stringify({ ts: Date.now(), data: result })); } catch {}
+        _lsSet(cacheKey, result, TTL_SCOREBOARD);
         return result;
     };
 
@@ -223,7 +227,7 @@ const ESPN = (() => {
      */
     const getTeams = async (ligaId) => {
         const slug = getSlug(ligaId);
-        if (!slug) throw new Error(`Sin slug para liga: ${ligaId}`);
+        if (!slug) return [];
 
         const cacheKey = `teams_${slug}`;
         if (_mem[cacheKey]) return _mem[cacheKey];
@@ -233,7 +237,7 @@ const ESPN = (() => {
         const url  = `${ESPN_SITE}/${slug}/teams?limit=100`;
         const data = await _fetch(url);
 
-        const sportsArray = data?.sports?.[0];
+        const sportsArray  = data?.sports?.[0];
         const targetLeague =
             sportsArray?.leagues?.find(l => l.slug === slug) ||
             sportsArray?.leagues?.[0];
@@ -248,19 +252,20 @@ const ESPN = (() => {
         }));
 
         _mem[cacheKey] = result;
-        _lsSet(cacheKey, result);
+        _lsSet(cacheKey, result, TTL_TEAMS);
         return result;
     };
 
     /**
-     * Limpia toda la caché localStorage (útil para debug tras cambios de endpoint)
+     * Limpia toda la caché (útil para forzar datos frescos desde consola).
+     * Uso: ESPN.clearCache()
      */
     const clearCache = () => {
         Object.keys(localStorage)
             .filter(k => k.startsWith('elfulbo_'))
             .forEach(k => localStorage.removeItem(k));
         Object.keys(_mem).forEach(k => delete _mem[k]);
-        console.log('[ESPN] Caché limpiado');
+        console.log('[ESPN] Caché limpiado ✅');
     };
 
     return { getSlug, getStandings, getScoreboard, getTeams, clearCache };
