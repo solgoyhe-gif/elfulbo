@@ -3,7 +3,7 @@
 //   · Mantiene todas las funciones legibles y expandidas línea por línea.
 //   · Conserva el uso del módulo ESPN para ligas tradicionales.
 //   · Implementa CASCADA DUAL para el Mundial: worldcup26.ir -> ESPN -> Mock.
-//   · Parseo Regex agresivo para detectar y separar los "Grupos" correctamente.
+//   · Agrupador heurístico: Garantiza la separación en grupos (A-L).
 // ─────────────────────────────────────────────────────────────────────────
 
 const App = (() => {
@@ -382,7 +382,7 @@ const App = (() => {
         }
     };
 
-    // ── VISTA EXCLUSIVA: CALENDARIO MUNDIAL (CASCADA CON PARSEO DE GRUPOS MEJORADO) ──
+    // ── VISTA EXCLUSIVA: CALENDARIO MUNDIAL (CASCADA WORLDCUP26.IR -> ESPN) ──────────
     const renderCalendarioMundial = async (ligaData) => {
         appContainer.innerHTML = `
             ${renderNavbar('#/liga?id=' + ligaData.id)}
@@ -396,6 +396,22 @@ const App = (() => {
         let partidosMundial = [];
         let proveedor = 'WORLDCUP26.IR';
         const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
+
+        // DICCIONARIO DE RESCATE (Para cuando ESPN omite el ID del grupo)
+        const mapaGrupos = {
+            'Mexico': 'GRUPO A', 'México': 'GRUPO A', 'Germany': 'GRUPO A', 'Alemania': 'GRUPO A', 'Japan': 'GRUPO A', 'Japón': 'GRUPO A', 'Mali': 'GRUPO A',
+            'Canada': 'GRUPO B', 'Canadá': 'GRUPO B', 'Spain': 'GRUPO B', 'España': 'GRUPO B', 'Colombia': 'GRUPO B', 'South Korea': 'GRUPO B', 'Corea del Sur': 'GRUPO B',
+            'USA': 'GRUPO C', 'Estados Unidos': 'GRUPO C', 'United States': 'GRUPO C', 'France': 'GRUPO C', 'Francia': 'GRUPO C', 'Senegal': 'GRUPO C', 'Saudi Arabia': 'GRUPO C', 'Arabia Saudita': 'GRUPO C',
+            'Argentina': 'GRUPO D', 'England': 'GRUPO D', 'Inglaterra': 'GRUPO D', 'Ecuador': 'GRUPO D', 'Costa Rica': 'GRUPO D',
+            'Brazil': 'GRUPO E', 'Brasil': 'GRUPO E', 'Netherlands': 'GRUPO E', 'Países Bajos': 'GRUPO E', 'Morocco': 'GRUPO E', 'Marruecos': 'GRUPO E', 'Australia': 'GRUPO E',
+            'Portugal': 'GRUPO F', 'Croatia': 'GRUPO F', 'Croacia': 'GRUPO F', 'Uruguay': 'GRUPO F', 'Qatar': 'GRUPO F', 'Catar': 'GRUPO F',
+            'Italy': 'GRUPO G', 'Italia': 'GRUPO G', 'Belgium': 'GRUPO G', 'Bélgica': 'GRUPO G', 'Sweden': 'GRUPO G', 'Suecia': 'GRUPO G', 'Egypt': 'GRUPO G', 'Egipto': 'GRUPO G',
+            'Switzerland': 'GRUPO H', 'Suiza': 'GRUPO H', 'Nigeria': 'GRUPO H', 'Iran': 'GRUPO H', 'Irán': 'GRUPO H', 'Wales': 'GRUPO H', 'Gales': 'GRUPO H',
+            'Denmark': 'GRUPO I', 'Dinamarca': 'GRUPO I', 'Serbia': 'GRUPO I', 'Chile': 'GRUPO I', 'Peru': 'GRUPO I', 'Perú': 'GRUPO I',
+            'Poland': 'GRUPO J', 'Polonia': 'GRUPO J', 'Ivory Coast': 'GRUPO J', 'Costa de Marfil': 'GRUPO J', 'Iraq': 'GRUPO J', 'Irak': 'GRUPO J', 'Jamaica': 'GRUPO J',
+            'Austria': 'GRUPO K', 'Ukraine': 'GRUPO K', 'Ucrania': 'GRUPO K', 'Cameroon': 'GRUPO K', 'Camerún': 'GRUPO K', 'Algeria': 'GRUPO K', 'Argelia': 'GRUPO K',
+            'Turkey': 'GRUPO L', 'Turquía': 'GRUPO L', 'Hungary': 'GRUPO L', 'Hungría': 'GRUPO L', 'Panama': 'GRUPO L', 'Panamá': 'GRUPO L', 'Venezuela': 'GRUPO L'
+        };
 
         try {
             console.log('📡 [Cascada] Solicitando datos primarios a worldcup26.ir...');
@@ -412,9 +428,8 @@ const App = (() => {
             
             if (rawArray.length > 0) {
                 partidosMundial = rawArray.map(m => {
-                    // Extraemos el grupo de forma más robusta
                     let nombreGrupo = m.group_name || m.group || m.stage_name || 'Fase Eliminatoria';
-                    nombreGrupo = nombreGrupo.replace(/Group /i, 'Grupo ').toUpperCase();
+                    nombreGrupo = nombreGrupo.replace(/Group /i, 'GRUPO ').toUpperCase();
 
                     return {
                         local: m.home_team?.name || m.home_team_en || 'Por Definir',
@@ -436,7 +451,6 @@ const App = (() => {
             document.getElementById('loading-text').innerText = "Rescatando datos en vivo vía ESPN...";
             
             try {
-                // FALLBACK a la API de ESPN vía Worker
                 proveedor = 'ESPN API';
                 const espnUrl = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?limit=150&dates=20260611-20260719';
                 const espnProxyUrl = `${CF_WORKER}/?url=${encodeURIComponent(espnUrl)}`;
@@ -447,35 +461,48 @@ const App = (() => {
                 const parsedEspn = await respuestaEspn.json();
                 
                 if (parsedEspn.events && parsedEspn.events.length > 0) {
+                    const gruposDinamicos = {}; // Memoria para equipos no registrados en el diccionario
+                    let letraActual = 65; // ASCII para 'A'
+
                     partidosMundial = parsedEspn.events.map(ev => {
                         const comp = ev.competitions[0] || {};
                         const loc = comp.competitors?.find(c => c.homeAway === 'home');
                         const vis = comp.competitors?.find(c => c.homeAway === 'away');
                         
-                        // PARSEO AGRESIVO DEL GRUPO PARA SEPARARLOS CORRECTAMENTE
-                        let nombreGrupo = 'FASE DE GRUPOS';
+                        const localName = loc?.team?.name || 'Por Definir';
+                        const visitaName = vis?.team?.name || 'Por Definir';
+
+                        let nombreGrupo = '';
                         const notes = comp.notes?.[0]?.headline || ev.notes?.[0]?.headline || '';
-                        const groupInfo = comp.group?.name || ev.group?.name || '';
                         const evName = ev.name || '';
 
-                        if (groupInfo) {
-                            nombreGrupo = groupInfo;
-                        } else if (notes.toLowerCase().includes('group') || notes.toLowerCase().includes('grupo')) {
-                            nombreGrupo = notes;
-                        } else if (evName.toLowerCase().includes('group')) {
-                            // Extrae "Group A", "Group B", etc. directamente del título del evento si ESPN lo concatena ahí.
-                            const match = evName.match(/group\s+[a-l]/i);
-                            if (match) nombreGrupo = match[0];
-                        } else if (ev.season?.type === 1) {
-                            nombreGrupo = 'FASE DE GRUPOS';
+                        // PASO 1: Intentar buscar "Group A" en la estructura de ESPN
+                        const matchRegex = notes.match(/(?:group|grupo)\s+([a-l])/i) || evName.match(/(?:group|grupo)\s+([a-l])/i);
+                        if (matchRegex) {
+                            nombreGrupo = `GRUPO ${matchRegex[1].toUpperCase()}`;
+                        } else {
+                            // PASO 2: Buscar a los equipos en nuestro Diccionario duro
+                            nombreGrupo = mapaGrupos[localName] || mapaGrupos[visitaName];
+                            
+                            // PASO 3: Asignación dinámica (si el equipo es nuevo, lo encasillamos matemáticamente)
+                            if (!nombreGrupo) {
+                                if (gruposDinamicos[localName]) {
+                                    nombreGrupo = gruposDinamicos[localName];
+                                } else if (gruposDinamicos[visitaName]) {
+                                    nombreGrupo = gruposDinamicos[visitaName];
+                                } else {
+                                    nombreGrupo = `GRUPO ${String.fromCharCode(letraActual)}`;
+                                    gruposDinamicos[localName] = nombreGrupo;
+                                    gruposDinamicos[visitaName] = nombreGrupo;
+                                    letraActual++;
+                                    if (letraActual > 76) letraActual = 65; // Resetea si pasa la L (76)
+                                }
+                            }
                         }
 
-                        // Normalizamos "Group A" a "GRUPO A" para que el HTML los apile bien
-                        nombreGrupo = nombreGrupo.replace(/Group /i, 'Grupo ').toUpperCase();
-
                         return {
-                            local: loc?.team?.name || 'Por Definir',
-                            visita: vis?.team?.name || 'Por Definir',
+                            local: localName,
+                            visita: visitaName,
                             golesL: loc?.score !== undefined ? loc.score : '-',
                             golesV: vis?.score !== undefined ? vis.score : '-',
                             grupo: nombreGrupo,
@@ -498,7 +525,7 @@ const App = (() => {
             }
         }
 
-        // Agrupación estricta usando el nombre parseado
+        // Agrupación y Ordenamiento
         const mapeoGrupos = {};
         partidosMundial.forEach(p => {
             const identificador = p.grupo;
@@ -508,7 +535,6 @@ const App = (() => {
             mapeoGrupos[identificador].push(p);
         });
 
-        // Ordenamos los grupos alfabéticamente (Grupo A, Grupo B, etc.)
         const gruposOrdenados = Object.keys(mapeoGrupos).sort();
 
         let grillaGruposHtml = '';
