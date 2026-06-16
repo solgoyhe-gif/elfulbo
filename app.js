@@ -646,41 +646,66 @@ const App = (() => {
         let partidos = [];   // [{id, rival, resultado, estado, esLocal}]
 
         try {
-            const [rosterRes, scoreboardRes] = await Promise.all([
+            // Fechas del grupo stage del Mundial 2026: 11 al 27 de junio
+            // Se consultan en paralelo con ?dates=YYYYMMDD — mucho más completo que /schedule
+            // que solo devuelve el último partido cargado por ESPN.
+            const fechasGrupoStage = [];
+            for (let d = 11; d <= 27; d++) {
+                fechasGrupoStage.push(`20260${d < 10 ? '0' : ''}${d}`);
+            }
+
+            const [rosterRes, ...scoreboardsRes] = await Promise.all([
                 fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/teams/${equipoId}/roster`)}`),
-                fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/scoreboard`)}`)
+                ...fechasGrupoStage.map(fecha =>
+                    fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/scoreboard?dates=${fecha}`)}`)
+                )
             ]);
 
             if (rosterRes.ok) convocados = extraerConvocados(await rosterRes.json());
 
-            if (scoreboardRes.ok) {
-                const sb = await scoreboardRes.json();
-                (sb.events ?? []).forEach(ev => {
-                    const comp = ev.competitions?.[0];
-                    const home = comp?.competitors?.find(c => c.homeAway === 'home');
-                    const away = comp?.competitors?.find(c => c.homeAway === 'away');
-                    const esLocal = home?.team?.id === String(equipoId);
-                    const esVisita = away?.team?.id === String(equipoId);
-                    if (!esLocal && !esVisita) return;
+            // Procesar todos los scoreboards en paralelo y filtrar partidos del equipo
+            const todosEventos = (await Promise.all(
+                scoreboardsRes.map(r => r.ok ? r.json().catch(() => ({})) : Promise.resolve({}))
+            )).flatMap(sb => sb.events ?? []);
 
-                    const rival = esLocal ? (away?.team?.displayName ?? '?') : (home?.team?.displayName ?? '?');
-                    const scoreLocal = home?.score ?? '-';
-                    const scoreVisita = away?.score ?? '-';
-                    const estado = comp?.status?.type?.state ?? 'pre';
-                    const desc = comp?.status?.type?.shortDetail ?? '';
-                    const isLive = estado === 'in';
-                    const jugado = estado === 'post' || isLive;
+            // Deduplicar por event ID (un partido puede aparecer en varios días por timezone)
+            const vistos = new Set();
+            todosEventos.forEach(ev => {
+                if (vistos.has(ev.id)) return;
+                vistos.add(ev.id);
 
-                    partidos.push({
-                        id: ev.id,
-                        rival,
-                        resultado: jugado ? `${scoreLocal} - ${scoreVisita}` : desc || 'Próximo',
-                        estado,
-                        isLive,
-                        jugado
-                    });
+                const comp = ev.competitions?.[0];
+                const home = comp?.competitors?.find(c => c.homeAway === 'home');
+                const away = comp?.competitors?.find(c => c.homeAway === 'away');
+                const esLocal  = home?.team?.id === String(equipoId);
+                const esVisita = away?.team?.id === String(equipoId);
+                if (!esLocal && !esVisita) return;
+
+                const rival       = esLocal ? (away?.team?.displayName ?? '?') : (home?.team?.displayName ?? '?');
+                const scoreLocal  = home?.score ?? '-';
+                const scoreVisita = away?.score ?? '-';
+                const estado  = comp?.status?.type?.state ?? 'pre';
+                const desc    = comp?.status?.type?.shortDetail ?? '';
+                const isLive  = estado === 'in';
+                const jugado  = estado === 'post' || isLive;
+
+                partidos.push({
+                    id: ev.id,
+                    rival,
+                    resultado: jugado ? `${scoreLocal} - ${scoreVisita}` : desc || 'Próximo',
+                    estado,
+                    isLive,
+                    jugado
                 });
-            }
+            });
+
+            // Ordenar: jugados primero, luego próximos
+            partidos.sort((a, b) => {
+                if (a.jugado && !b.jugado) return -1;
+                if (!a.jugado && b.jugado) return 1;
+                return 0;
+            });
+
         } catch (err) { console.warn('[EL FULBO] Error cargando equipo:', err); }
 
         // ── Pizarra táctica ───────────────────────────────────────────────────
