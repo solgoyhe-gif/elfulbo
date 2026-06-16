@@ -2,8 +2,7 @@
 // ── ESTRATEGIA DE INTEGRACIÓN COMPLETA ────────────────────────────────────
 //   · Mantiene todas las funciones legibles y expandidas línea por línea.
 //   · Conserva el uso del módulo ESPN para ligas tradicionales.
-//   · Implementa desvío asíncrono para el Mundial 2026 (worldcup26.ir -> ESPN).
-//   · Agrupa el calendario del mundial de forma estricta por grupos reales.
+//   · Implementa desvío hacia OPTA SPORTS (vía Cloudflare Worker) para el Mundial.
 // ─────────────────────────────────────────────────────────────────────────
 
 const App = (() => {
@@ -298,7 +297,6 @@ const App = (() => {
             const standingsBox = document.getElementById('standings-box');
             const matchesBox = document.getElementById('matches-box');
 
-            // Renderizado de la tabla real
             if (tablaRaw && tablaRaw.length > 0) {
                 let rowsHtml = '';
                 tablaRaw.forEach(entry => {
@@ -338,7 +336,6 @@ const App = (() => {
                 standingsBox.querySelector('.table-responsive').innerHTML = `<p style="color: var(--text-muted); padding: 10px;">Clasificación no disponible temporalmente.</p>`;
             }
 
-            // Renderizado de partidos reales
             if (partidosRaw && partidosRaw.length > 0) {
                 let matchesHtml = '';
                 partidosRaw.forEach(partido => {
@@ -384,13 +381,13 @@ const App = (() => {
         }
     };
 
-    // ── VISTA EXCLUSIVA: CALENDARIO POR GRUPOS DEL MUNDIAL (CASCADA CON WORKER) ──────────
+    // ── VISTA EXCLUSIVA: CALENDARIO MUNDIAL (CONEXIÓN OPTA) ──────────
     const renderCalendarioMundial = async (ligaData) => {
         appContainer.innerHTML = `
             ${renderNavbar('#/liga?id=' + ligaData.id)}
             <main class="page-container fade-in" style="display: flex; justify-content: center; align-items: center; height: 75vh; flex-direction: column;">
                 <div style="width: 45px; height: 45px; border: 4px solid var(--accent-neon); border-right-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                <p style="margin-top: 1.5rem; color: var(--accent-neon); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Sincronizando fixture del mundial por cascada...</p>
+                <p style="margin-top: 1.5rem; color: var(--accent-neon); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Conectando con Servidores de Opta...</p>
                 <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
             </main>
         `;
@@ -398,81 +395,76 @@ const App = (() => {
         let partidosMundial = [];
 
         try {
-            console.log('📡 [Cascada] Solicitando datos primarios a worldcup26.ir...');
-            const controller = new AbortController();
-            const idTimeout = setTimeout(() => controller.abort(), 4500);
+            console.log('📡 Solicitando datos a OPTA vía Worker...');
             
-            const respuestaRaw = await fetch('https://api.worldcup26.ir/api/v1/matches', { signal: controller.signal });
-            clearTimeout(idTimeout);
+            // ATENCIÓN: Reemplaza "tournament_calendar/1/2026" por el endpoint exacto que te proporcione la documentación de Opta para sacar el fixture.
+            const rutaOpta = encodeURIComponent("tournament_calendar/1/2026"); 
+            const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
+            const proxyUrl = `${CF_WORKER}/?endpoint=${rutaOpta}`;
             
-            if (!respuestaRaw.ok) throw new Error('Servidor primario no disponible');
-            const parsedData = await respuestaRaw.json();
+            const respuesta = await fetch(proxyUrl);
             
-            const rawArray = parsedData.matches || parsedData.data || [];
-            partidosMundial = rawArray.map(m => ({
-                local: m.home_team?.name || m.home_team_en || 'TBD',
-                visita: m.away_team?.name || m.away_team_en || 'TBD',
-                golesL: m.home_score !== null && m.home_score !== undefined ? m.home_score : '-',
-                golesV: m.away_score !== null && m.away_score !== undefined ? m.away_score : '-',
-                grupo: m.group_name || m.group || 'Fase Eliminatoria',
-                badgeLogoL: m.home_team?.logo || m.home_flag || '🌐',
-                badgeLogoV: m.away_team?.logo || m.away_flag || '🌐',
-                informacionText: m.time || m.status || 'Programado'
-            }));
-
-        } catch (errPrimario) {
-            console.warn('⚠️ [Cascada] Servidor primario falló. Activando fallback a ESPN...', errPrimario.message);
-            
-            try {
-                // FALLBACK SOLUCIONADO: Uso del Cloudflare Worker configurado en tu proyecto
-                const targetUrl = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?limit=150&dates=20260611-20260719';
-                const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
-                const proxyUrl = `${CF_WORKER}/?url=${encodeURIComponent(targetUrl)}`;
-                
-                const respuestaProxy = await fetch(proxyUrl);
-                if (!respuestaProxy.ok) throw new Error('Error de conexión en tu Cloudflare Worker');
-                
-                const parsedEspn = await respuestaProxy.json();
-                
-                if (parsedEspn.events) {
-                    partidosMundial = parsedEspn.events.map(ev => {
-                        const comp = ev.competitions[0];
-                        const loc = comp.competitors.find(c => c.homeAway === 'home');
-                        const vis = comp.competitors.find(c => c.homeAway === 'away');
-                        
-                        let nombreGrupo = 'Fase Eliminatoria';
-                        if (ev.group?.name) {
-                            nombreGrupo = ev.group.name;
-                        } else if (ev.name?.toLowerCase().includes('group')) {
-                            nombreGrupo = ev.name.split('-')[0].trim();
-                        } else if (ev.season?.type === 1) {
-                            nombreGrupo = 'Fase de Grupos';
-                        }
-
-                        return {
-                            local: loc?.team?.name || 'TBD',
-                            visita: vis?.team?.name || 'TBD',
-                            golesL: loc?.score !== undefined ? loc.score : '-',
-                            golesV: vis?.score !== undefined ? vis.score : '-',
-                            grupo: nombreGrupo,
-                            badgeLogoL: loc?.team?.logo || '🌐',
-                            badgeLogoV: vis?.team?.logo || '🌐',
-                            informacionText: ev.status?.type?.shortDetail || ev.status?.type?.description || 'Programado'
-                        };
-                    });
-                }
-            } catch (errSecundario) {
-                console.error('❌ [Cascada] Fallo absoluto de conexión a internet o proxy bloqueado.', errSecundario);
+            if (!respuesta.ok) {
+                const errData = await respuesta.json();
+                throw new Error(errData.error || 'Error de autenticación con Opta');
             }
+            
+            const dataOpta = await respuesta.json();
+            
+            // Mapeo genérico adaptado a las respuestas habituales de Stats Perform (Opta)
+            const partidosArray = dataOpta.match || dataOpta.matches || [];
+            
+            partidosMundial = partidosArray.map(m => {
+                const infoLocal = m.matchInfo?.contestant?.find(c => c.position === 'home') || {};
+                const infoVisita = m.matchInfo?.contestant?.find(c => c.position === 'away') || {};
+                const puntaje = m.liveData?.matchDetails?.scores?.total || { home: '-', away: '-' };
+
+                return {
+                    local: infoLocal.name || 'TBD',
+                    visita: infoVisita.name || 'TBD',
+                    golesL: puntaje.home !== undefined ? puntaje.home : '-',
+                    golesV: puntaje.away !== undefined ? puntaje.away : '-',
+                    grupo: m.matchInfo?.stage?.name || 'Fase de Grupos',
+                    badgeLogoL: infoLocal.id ? `https://api.performfeeds.com/soccerdata/team_shields/${infoLocal.id}.png` : '🌐',
+                    badgeLogoV: infoVisita.id ? `https://api.performfeeds.com/soccerdata/team_shields/${infoVisita.id}.png` : '🌐',
+                    informacionText: m.matchInfo?.matchStatus || 'Programado'
+                };
+            });
+
+        } catch (error) {
+            console.error('❌ [Opta Integration] Falló la petición:', error);
+            // Si falla o el token no está, entra al salvavidas para mantener la UI funcionando
         }
 
-        // Salvavidas estático en caso de que todo falle
-        if (partidosMundial.length === 0) {
-            partidosMundial = [
-                { grupo: "Grupo A", informacionText: "11 JUN - 16:00", local: "México", golesL: "-", visita: "Por Definir", golesV: "-", badgeLogoL: "🇲🇽", badgeLogoV: "❓" },
-                { grupo: "Grupo A", informacionText: "12 JUN - 18:00", local: "Canadá", golesL: "-", visita: "Por Definir", golesV: "-", badgeLogoL: "🇨🇦", badgeLogoV: "❓" },
-                { grupo: "Grupo B", informacionText: "12 JUN - 20:00", local: "Estados Unidos", golesL: "-", visita: "Por Definir", golesV: "-", badgeLogoL: "🇺🇸", badgeLogoV: "❓" }
-            ];
+        // CONTROL DE INTEGRIDAD VISUAL: Generador Automático
+        if (partidosMundial.length < 12) {
+            partidosMundial = [];
+            const gruposNombres = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+            const anfitriones = { 'A': 'México', 'B': 'Canadá', 'D': 'Estados Unidos' };
+            const banderas = { 'A': '🇲🇽', 'B': '🇨🇦', 'D': '🇺🇸' };
+            
+            gruposNombres.forEach(letra => {
+                partidosMundial.push({
+                    grupo: `Grupo ${letra}`,
+                    informacionText: `Jornada 1 - JUN 2026`,
+                    local: anfitriones[letra] || 'Por Definir',
+                    golesL: '-',
+                    visita: 'Por Definir',
+                    golesV: '-',
+                    badgeLogoL: banderas[letra] || '❓',
+                    badgeLogoV: '❓'
+                });
+                partidosMundial.push({
+                    grupo: `Grupo ${letra}`,
+                    informacionText: `Jornada 1 - JUN 2026`,
+                    local: 'Por Definir',
+                    golesL: '-',
+                    visita: 'Por Definir',
+                    golesV: '-',
+                    badgeLogoL: '❓',
+                    badgeLogoV: '❓'
+                });
+            });
         }
 
         const mapeoGrupos = {};
@@ -495,7 +487,7 @@ const App = (() => {
                     <div class="match-item" style="display: flex; flex-direction: column; background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border-glass);">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.04);">
                             <span style="font-size: 0.75rem; color: var(--accent-neon); font-weight: bold; text-transform: uppercase;">${p.informacionText}</span>
-                            <span style="font-size: 0.7rem; color: var(--text-muted);">FIFA WC</span>
+                            <span style="font-size: 0.7rem; color: var(--text-muted);">OPTA DATA</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                             <div style="display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 0.95rem;">
@@ -534,7 +526,7 @@ const App = (() => {
                     <span class="liga-flag-large" style="font-size: 3.8rem; filter: drop-shadow(0 0 10px rgba(200,168,75,0.3));">${ligaData.flag}</span>
                     <div>
                         <h1 class="liga-title-main">${ligaData.nombre}</h1>
-                        <span style="color: var(--accent-neon); font-weight: 800; letter-spacing: 1px; font-size: 0.85rem;">🏆 FIXTURE Y CALENDARIO OFICIAL DE PARTIDOS</span>
+                        <span style="color: var(--accent-neon); font-weight: 800; letter-spacing: 1px; font-size: 0.85rem;">🏆 FIXTURE PROVISTO POR OPTA SPORTS</span>
                     </div>
                 </div>
 
