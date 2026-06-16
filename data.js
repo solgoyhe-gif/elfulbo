@@ -1,4 +1,6 @@
-// js/data.js - Base de Datos Estática y Motor de Red (API en Cascada)
+// data.js — El Fulbo
+// Base de datos estática de competiciones.
+// Los slugs ESPN de cada liga están centralizados en espn.js/SLUG_MAP.
 
 const LIGAS = {
     europa_top5: {
@@ -15,7 +17,7 @@ const LIGAS = {
         nombre: "Europa Otras",
         competiciones: [
             { id: "eredivisie", nombre: "Eredivisie",       pais: "Países Bajos", flag: "🇳🇱", badge_color: "#f76a1c" },
-            { id: "primeira",   nombre: "Primeira Liga",    pais: "Portugal",     flag: "🇵🇹", badge_color: "#006600" }
+            { id: "primera",    nombre: "Primeira Liga",    pais: "Portugal",     flag: "🇵🇹", badge_color: "#006600" }
         ]
     },
     copas_inglesas: {
@@ -51,108 +53,10 @@ const LIGAS = {
     argentina: {
         nombre: "Argentina",
         competiciones: [
-            { id: "liga_prof",    nombre: "Liga Profesional",    pais: "Argentina", flag: "🇦🇷", badge_color: "#4395d1" },
-            { id: "copa_liga",    nombre: "Copa de la Liga",     pais: "Argentina", flag: "🇦🇷", badge_color: "#1c355e" }
+            { id: "liga_prof", nombre: "Liga Profesional", pais: "Argentina", flag: "🇦🇷", badge_color: "#4395d1" },
+            // copa_liga: ESPN no tiene slug oficial para este torneo.
+            // Se muestra en el listado pero standings/scoreboard mostrarán mensaje de no disponible.
+            { id: "copa_liga", nombre: "Copa de la Liga",  pais: "Argentina", flag: "🇦🇷", badge_color: "#1c355e" }
         ]
     }
 };
-
-// ── MOTOR DE RED (CASCADA DE APIS) ───────────────────────────────────────────
-const ApiService = (() => {
-    // Endpoints Estratégicos
-    const URL_PRIMARY = 'https://api.worldcup26.ir/api/v1/matches'; // (Base referencial sin CORS issues)
-    const URL_FALLBACK = 'https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard';
-
-    // Fetch con límite de tiempo. Si un server no responde en X segundos, aborta y pasa al siguiente.
-    const fetchWithTimeout = async (url, options = {}, timeout = 5000) => {
-        const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), timeout);
-        try {
-            const response = await fetch(url, { ...options, signal: controller.signal });
-            clearTimeout(id);
-            return response;
-        } catch (error) {
-            clearTimeout(id);
-            throw error;
-        }
-    };
-
-    const getPartidos = async () => {
-        try {
-            // 1. INTENTO PRIMARIO: worldcup26.ir
-            console.log('📡 [API] Buscando en fuente primaria (worldcup26.ir)...');
-            const res = await fetchWithTimeout(URL_PRIMARY, {}, 4000);
-            
-            if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-            const data = await res.json();
-            return normalizeWorldCupData(data);
-
-        } catch (errorPrimario) {
-            console.warn('⚠️ [API] Fuente primaria caída o bloqueada. Iniciando CASCADA a ESPN...', errorPrimario.message);
-            
-            try {
-                // 2. INTENTO SECUNDARIO (FALLBACK): ESPN API
-                console.log('📡 [API] Buscando en fuente de respaldo (ESPN)...');
-                const resESPN = await fetchWithTimeout(URL_FALLBACK, {}, 5000);
-                
-                if (!resESPN.ok) throw new Error(`HTTP Error: ${resESPN.status}`);
-                const dataESPN = await resESPN.json();
-                return normalizeEspnData(dataESPN);
-
-            } catch (errorSecundario) {
-                console.error('❌ [API] Ambas fuentes caídas (Fallo de Red Local). Usando Mock de emergencia.', errorSecundario.message);
-                return getEmergencyMock();
-            }
-        }
-    };
-
-    // Formateadores: Las distintas APIs devuelven estructuras diferentes (JSON). 
-    // Estas funciones las homogeneizan para que nuestra UI no se rompa nunca.
-    
-    const normalizeWorldCupData = (data) => {
-        console.log("✅ [API] Datos de WorldCup cargados con éxito.");
-        // Ajustamos al formato que suele devolver este endpoint
-        const matches = data.data || data.matches || []; 
-        return matches.map(m => ({
-            id: m.id || Math.random(),
-            equipoLocal: m.home_team?.name || m.home_team_en || 'Local',
-            golesLocal: m.home_score !== null ? m.home_score : '-',
-            escudoLocal: m.home_team?.logo || m.home_flag || '🛡️',
-            equipoVisita: m.away_team?.name || m.away_team_en || 'Visita',
-            golesVisita: m.away_score !== null ? m.away_score : '-',
-            escudoVisita: m.away_team?.logo || m.away_flag || '🛡️',
-            estado: m.time || m.status || 'Finalizado'
-        }));
-    };
-
-    const normalizeEspnData = (data) => {
-        console.log("✅ [API] Fallback de ESPN cargado con éxito.");
-        if (!data.events) return [];
-        
-        return data.events.map(evento => {
-            const competicion = evento.competitions[0];
-            const local = competicion.competitors.find(c => c.homeAway === 'home');
-            const visita = competicion.competitors.find(c => c.homeAway === 'away');
-            
-            return {
-                id: evento.id,
-                fecha: evento.date,
-                estado: evento.status.type.description,
-                equipoLocal: local.team.name,
-                golesLocal: local.score !== undefined ? local.score : '-',
-                escudoLocal: local.team.logo || '🛡️',
-                equipoVisita: visita.team.name,
-                golesVisita: visita.score !== undefined ? visita.score : '-',
-                escudoVisita: visita.team.logo || '🛡️'
-            };
-        });
-    };
-
-    const getEmergencyMock = () => {
-        return [
-            { equipoLocal: "Offline", golesLocal: "-", equipoVisita: "Revisa tu red", golesVisita: "-", estado: "Error de Red", escudoLocal: '⚠️', escudoVisita: '⚠️' }
-        ];
-    };
-
-    return { getPartidos };
-})();
