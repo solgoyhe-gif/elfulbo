@@ -3,7 +3,7 @@
 //   · Conserva el uso del módulo ESPN para ligas tradicionales.
 //   · Implementa Tabla de Posiciones por Grupos para el Mundial 2026.
 //   · NÚMEROS IZQUIERDOS ORDENADOS MATEMÁTICAMENTE (1 al 4 forzado).
-//   · ESTADÍSTICAS Y PLANTILLAS REALES (Cero mocks, conexión en vivo a ESPN).
+//   · ESTADÍSTICAS Y PLANTILLAS 100% REALES (Conexión a ESPN Roster).
 // ─────────────────────────────────────────────────────────────────────────
 
 const App = (() => {
@@ -651,57 +651,99 @@ const App = (() => {
         let convocados = [];
         let stats = { goles: [], asistencias: [], amarillas: [], rojas: [] };
 
+        // Función reutilizable para parsear la respuesta de ESPN
+        const extraerDatos = (rosterJSON, teamJSON) => {
+            let tempConvocados = [];
+            let tempStats = { goles: [], asistencias: [], amarillas: [], rojas: [] };
+            
+            // 1. Extraer Atletas (Roster)
+            let atletasArray = [];
+            if (rosterJSON.athletes && rosterJSON.athletes[0] && rosterJSON.athletes[0].items) {
+                atletasArray = rosterJSON.athletes[0].items;
+            } else if (teamJSON.team && teamJSON.team.athletes) {
+                atletasArray = teamJSON.team.athletes;
+            }
+
+            atletasArray.forEach(ath => {
+                tempConvocados.push({
+                    numero: ath.jersey || '-',
+                    nombre: ath.displayName || ath.fullName || 'Jugador',
+                    posicion: ath.position?.abbreviation || ath.position?.name || 'N/A'
+                });
+                
+                // 2. Extraer Estadísticas embebidas en el atleta (si ESPN las envía aquí)
+                if (ath.statistics && ath.statistics.length > 0) {
+                    const getStat = (statName) => {
+                        const s = ath.statistics.find(st => st.name === statName);
+                        return s ? parseInt(s.value, 10) : 0;
+                    };
+                    const g = getStat('goals');
+                    const a = getStat('assists');
+                    const y = getStat('yellowCards');
+                    const r = getStat('redCards');
+
+                    if (g > 0) tempStats.goles.push({ nombre: ath.displayName, valor: g });
+                    if (a > 0) tempStats.asistencias.push({ nombre: ath.displayName, valor: a });
+                    if (y > 0) tempStats.amarillas.push({ nombre: ath.displayName, valor: y });
+                    if (r > 0) tempStats.rojas.push({ nombre: ath.displayName, valor: r });
+                }
+            });
+
+            // 3. Extraer Líderes (Si el array anterior de estadísticas estaba vacío)
+            if (tempStats.goles.length === 0 && teamJSON.team?.leaders) {
+                const parseLeader = (nameKey) => {
+                    const cat = teamJSON.team.leaders.find(c => c.name === nameKey);
+                    if (!cat || !cat.leaders) return [];
+                    return cat.leaders.map(l => ({
+                        nombre: l.athlete?.displayName || l.athlete?.shortName || l.athlete?.fullName || 'Jugador',
+                        valor: parseInt(l.value, 10) || parseInt(l.displayValue, 10) || 0
+                    })).filter(l => l.valor > 0);
+                };
+                
+                tempStats.goles = parseLeader('goals');
+                tempStats.asistencias = parseLeader('assists');
+                tempStats.amarillas = parseLeader('yellowCards');
+                tempStats.rojas = parseLeader('redCards');
+            }
+
+            return { tempConvocados, tempStats };
+        };
+
         if (equipoId && equipoId !== 'undefined' && equipoId !== 'null') {
             try {
-                const teamUrl = `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/teams/${equipoId}`;
-                const proxyUrl = `${CF_WORKER}/?url=${encodeURIComponent(teamUrl)}`;
-                const resp = await fetch(proxyUrl);
+                // INTENTO 1: Obtenemos el Roster y Stats de las competiciones actuales del equipo
+                const [rosterRes, teamRes] = await Promise.all([
+                    fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/all/teams/${equipoId}/roster`)}`),
+                    fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/all/teams/${equipoId}`)}`)
+                ]);
                 
-                if (resp.ok) {
-                    const data = await resp.json();
-                    const athletes = data.team?.athletes || [];
+                const rosterData = rosterRes.ok ? await rosterRes.json() : {};
+                const teamData = teamRes.ok ? await teamRes.json() : {};
+                
+                let { tempConvocados, tempStats } = extraerDatos(rosterData, teamData);
+
+                // INTENTO 2 (Fallback): Si la actual está vacía (torneo no empezó), sacamos los números reales del Mundial 2022
+                if (tempConvocados.length === 0 || tempStats.goles.length === 0) {
+                    console.log("Stats actuales vacías. Extrayendo datos históricos oficiales (Mundial 2022)...");
+                    const [fallbackRoster, fallbackTeam] = await Promise.all([
+                        fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/teams/${equipoId}/roster?season=2022`)}`),
+                        fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/teams/${equipoId}?season=2022`)}`)
+                    ]);
                     
-                    // 1. Extraemos la Plantilla Real
-                    athletes.forEach(ath => {
-                        convocados.push({
-                            numero: ath.jersey || '-',
-                            nombre: ath.displayName || ath.fullName || 'Jugador',
-                            posicion: ath.position?.abbreviation || 'N/A'
-                        });
-
-                        // 2. Extraemos Estadísticas Individuales Directas (Si existen)
-                        if (ath.statistics) {
-                            ath.statistics.forEach(s => {
-                                const val = parseInt(s.value, 10) || 0;
-                                if (val > 0) {
-                                    if (s.name === 'goals') stats.goles.push({ nombre: ath.displayName, valor: val });
-                                    if (s.name === 'assists') stats.asistencias.push({ nombre: ath.displayName, valor: val });
-                                    if (s.name === 'yellowCards') stats.amarillas.push({ nombre: ath.displayName, valor: val });
-                                    if (s.name === 'redCards') stats.rojas.push({ nombre: ath.displayName, valor: val });
-                                }
-                            });
-                        }
-                    });
-
-                    // 3. Fallback: Si no hay stats en 'athletes', intentamos extraer de 'leaders' globales del equipo
-                    if (stats.goles.length === 0 && data.team?.leaders) {
-                        const parseLeader = (nameKey) => {
-                            const cat = data.team.leaders.find(c => c.name === nameKey);
-                            if (!cat || !cat.leaders) return [];
-                            return cat.leaders.map(l => ({
-                                nombre: l.athlete?.displayName || l.athlete?.shortName || 'Jugador',
-                                valor: l.value || 0
-                            })).filter(l => l.valor > 0);
-                        };
-                        
-                        stats.goles = parseLeader('goals');
-                        stats.asistencias = parseLeader('assists');
-                        stats.amarillas = parseLeader('yellowCards');
-                        stats.rojas = parseLeader('redCards');
-                    }
+                    const fRosterData = fallbackRoster.ok ? await fallbackRoster.json() : {};
+                    const fTeamData = fallbackTeam.ok ? await fallbackTeam.json() : {};
+                    
+                    const fallback = extraerDatos(fRosterData, fTeamData);
+                    
+                    if (fallback.tempConvocados.length > 0) tempConvocados = fallback.tempConvocados;
+                    if (fallback.tempStats.goles.length > 0) tempStats = fallback.tempStats;
                 }
+
+                convocados = tempConvocados;
+                stats = tempStats;
+
             } catch (err) {
-                console.warn("No se pudieron obtener datos en vivo del equipo", err);
+                console.warn("Error en la extracción en vivo de ESPN", err);
             }
         }
 
@@ -725,7 +767,7 @@ const App = (() => {
             `).join('');
         };
 
-        // Render Plantilla Real
+        // RENDERIZADO DEL PLANTEL
         let rosterHtml = '';
         if (convocados.length > 0) {
             rosterHtml = convocados.map(j => `
@@ -736,11 +778,16 @@ const App = (() => {
                 </div>
             `).join('');
         } else {
-            rosterHtml = `<p style="color:var(--text-muted); font-style: italic;">La API no proveyó la lista de convocados para este equipo.</p>`;
+            rosterHtml = `<p style="color:var(--text-muted); font-style: italic; text-align:center;">La API no proveyó la lista de convocados para este equipo.</p>`;
         }
 
-        // Extraer los dorsales reales de los primeros 11 para la vista táctica
-        const getDorsal = (idx, fallback) => convocados[idx]?.numero !== '-' ? convocados[idx].numero : fallback;
+        // Lógica para poblar la cancha 3D con los números reales de camiseta de los jugadores
+        const porteros = convocados.filter(j => j.posicion === 'G' || j.posicion === 'POR');
+        const defensas = convocados.filter(j => j.posicion === 'D' || j.posicion === 'DEF');
+        const medios = convocados.filter(j => j.posicion === 'M' || j.posicion === 'MED');
+        const delanteros = convocados.filter(j => j.posicion === 'F' || j.posicion === 'A' || j.posicion === 'DEL');
+
+        const getDorsal = (arr, index, fallback) => (arr[index] && arr[index].numero !== '-') ? arr[index].numero : fallback;
 
         appContainer.innerHTML = `
             ${renderNavbar('#/liga?id=' + ligaId)}
@@ -794,17 +841,17 @@ const App = (() => {
                                 <div class="area-top-v"></div>
                                 <div class="area-bottom-v"></div>
                                 
-                                <div class="player-token pos-gk">${getDorsal(0, '1')}</div>
-                                <div class="player-token pos-df1">${getDorsal(1, '4')}</div>
-                                <div class="player-token pos-df2">${getDorsal(2, '3')}</div>
-                                <div class="player-token pos-df3">${getDorsal(3, '2')}</div>
-                                <div class="player-token pos-df4">${getDorsal(4, '5')}</div>
-                                <div class="player-token pos-md1">${getDorsal(5, '8')}</div>
-                                <div class="player-token pos-md2">${getDorsal(6, '6')}</div>
-                                <div class="player-token pos-md3">${getDorsal(7, '10')}</div>
-                                <div class="player-token pos-fw1">${getDorsal(8, '7')}</div>
-                                <div class="player-token pos-fw2">${getDorsal(9, '9')}</div>
-                                <div class="player-token pos-fw3">${getDorsal(10, '11')}</div>
+                                <div class="player-token pos-gk">${getDorsal(porteros, 0, '1')}</div>
+                                <div class="player-token pos-df1">${getDorsal(defensas, 0, '4')}</div>
+                                <div class="player-token pos-df2">${getDorsal(defensas, 1, '3')}</div>
+                                <div class="player-token pos-df3">${getDorsal(defensas, 2, '2')}</div>
+                                <div class="player-token pos-df4">${getDorsal(defensas, 3, '5')}</div>
+                                <div class="player-token pos-md1">${getDorsal(medios, 0, '8')}</div>
+                                <div class="player-token pos-md2">${getDorsal(medios, 1, '6')}</div>
+                                <div class="player-token pos-md3">${getDorsal(medios, 2, '10')}</div>
+                                <div class="player-token pos-fw1">${getDorsal(delanteros, 0, '7')}</div>
+                                <div class="player-token pos-fw2">${getDorsal(delanteros, 1, '9')}</div>
+                                <div class="player-token pos-fw3">${getDorsal(delanteros, 2, '11')}</div>
                             </div>
                         </div>
                     </div>
