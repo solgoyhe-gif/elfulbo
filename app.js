@@ -2,8 +2,7 @@
 // ── ESTRATEGIA DE INTEGRACIÓN COMPLETA ────────────────────────────────────
 //   · Mantiene todas las funciones legibles y expandidas línea por línea.
 //   · Conserva el uso del módulo ESPN para ligas tradicionales.
-//   · Implementa CASCADA DUAL para el Mundial: worldcup26.ir -> ESPN -> Mock.
-//   · Asignación estricta: Hard-Mapping de 48 equipos a sus grupos reales.
+//   · Implementa Tabla de Posiciones por Grupos para el Mundial 2026.
 // ─────────────────────────────────────────────────────────────────────────
 
 const App = (() => {
@@ -382,196 +381,124 @@ const App = (() => {
         }
     };
 
-    // ── VISTA EXCLUSIVA: CALENDARIO MUNDIAL (CASCADA CON HARD-MAPPING) ──────────
+    // ── VISTA EXCLUSIVA: TABLA DE GRUPOS DEL MUNDIAL ────────────────────────
     const renderCalendarioMundial = async (ligaData) => {
         appContainer.innerHTML = `
             ${renderNavbar('#/liga?id=' + ligaData.id)}
             <main class="page-container fade-in" style="display: flex; justify-content: center; align-items: center; height: 75vh; flex-direction: column;">
                 <div style="width: 45px; height: 45px; border: 4px solid var(--accent-neon); border-right-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                <p style="margin-top: 1.5rem; color: var(--accent-neon); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 1px; font-weight: bold;" id="loading-text">Sincronizando datos en vivo...</p>
+                <p style="margin-top: 1.5rem; color: var(--accent-neon); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 1px; font-weight: bold;" id="loading-text">Sincronizando grupos en vivo...</p>
                 <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
             </main>
         `;
 
-        let partidosMundial = [];
-        let proveedor = 'WORLDCUP26.IR';
+        let gruposData = [];
+        let proveedor = 'ESPN API';
         const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
 
-        // DICCIONARIO OMNIPRESENTE (Soporta Nombres completos y Abreviaturas de ESPN)
-        const mapaGrupos = {
-            'MEX':'GRUPO A', 'Mexico':'GRUPO A', 'México':'GRUPO A', 'GER':'GRUPO A', 'Germany':'GRUPO A', 'Alemania':'GRUPO A', 'JPN':'GRUPO A', 'Japan':'GRUPO A', 'Japón':'GRUPO A', 'MLI':'GRUPO A', 'Mali':'GRUPO A',
-            'CAN':'GRUPO B', 'Canada':'GRUPO B', 'Canadá':'GRUPO B', 'ESP':'GRUPO B', 'Spain':'GRUPO B', 'España':'GRUPO B', 'COL':'GRUPO B', 'Colombia':'GRUPO B', 'KOR':'GRUPO B', 'South Korea':'GRUPO B', 'Corea del Sur':'GRUPO B',
-            'USA':'GRUPO C', 'Estados Unidos':'GRUPO C', 'United States':'GRUPO C', 'FRA':'GRUPO C', 'France':'GRUPO C', 'Francia':'GRUPO C', 'SEN':'GRUPO C', 'Senegal':'GRUPO C', 'KSA':'GRUPO C', 'Saudi Arabia':'GRUPO C', 'Arabia Saudita':'GRUPO C',
-            'ARG':'GRUPO D', 'Argentina':'GRUPO D', 'ENG':'GRUPO D', 'England':'GRUPO D', 'Inglaterra':'GRUPO D', 'ECU':'GRUPO D', 'Ecuador':'GRUPO D', 'CRC':'GRUPO D', 'Costa Rica':'GRUPO D',
-            'BRA':'GRUPO E', 'Brazil':'GRUPO E', 'Brasil':'GRUPO E', 'NED':'GRUPO E', 'Netherlands':'GRUPO E', 'Países Bajos':'GRUPO E', 'MAR':'GRUPO E', 'Morocco':'GRUPO E', 'Marruecos':'GRUPO E', 'AUS':'GRUPO E', 'Australia':'GRUPO E',
-            'POR':'GRUPO F', 'Portugal':'GRUPO F', 'CRO':'GRUPO F', 'Croatia':'GRUPO F', 'Croacia':'GRUPO F', 'URU':'GRUPO F', 'Uruguay':'GRUPO F', 'QAT':'GRUPO F', 'Qatar':'GRUPO F', 'Catar':'GRUPO F',
-            'ITA':'GRUPO G', 'Italy':'GRUPO G', 'Italia':'GRUPO G', 'BEL':'GRUPO G', 'Belgium':'GRUPO G', 'Bélgica':'GRUPO G', 'SWE':'GRUPO G', 'Sweden':'GRUPO G', 'Suecia':'GRUPO G', 'EGY':'GRUPO G', 'Egypt':'GRUPO G', 'Egipto':'GRUPO G',
-            'SUI':'GRUPO H', 'Switzerland':'GRUPO H', 'Suiza':'GRUPO H', 'NGA':'GRUPO H', 'Nigeria':'GRUPO H', 'IRN':'GRUPO H', 'Iran':'GRUPO H', 'Irán':'GRUPO H', 'WAL':'GRUPO H', 'Wales':'GRUPO H', 'Gales':'GRUPO H',
-            'DEN':'GRUPO I', 'Denmark':'GRUPO I', 'Dinamarca':'GRUPO I', 'SRB':'GRUPO I', 'Serbia':'GRUPO I', 'CHI':'GRUPO I', 'Chile':'GRUPO I', 'PER':'GRUPO I', 'Peru':'GRUPO I', 'Perú':'GRUPO I',
-            'POL':'GRUPO J', 'Poland':'GRUPO J', 'Polonia':'GRUPO J', 'CIV':'GRUPO J', 'Ivory Coast':'GRUPO J', 'Costa de Marfil':'GRUPO J', 'IRQ':'GRUPO J', 'Iraq':'GRUPO J', 'Irak':'GRUPO J', 'JAM':'GRUPO J', 'Jamaica':'GRUPO J',
-            'AUT':'GRUPO K', 'Austria':'GRUPO K', 'UKR':'GRUPO K', 'Ukraine':'GRUPO K', 'Ucrania':'GRUPO K', 'CMR':'GRUPO K', 'Cameroon':'GRUPO K', 'Camerún':'GRUPO K', 'ALG':'GRUPO K', 'Algeria':'GRUPO K', 'Argelia':'GRUPO K',
-            'TUR':'GRUPO L', 'Turkey':'GRUPO L', 'Turquía':'GRUPO L', 'HUN':'GRUPO L', 'Hungary':'GRUPO L', 'Hungría':'GRUPO L', 'PAN':'GRUPO L', 'Panama':'GRUPO L', 'Panamá':'GRUPO L', 'VEN':'GRUPO L', 'Venezuela':'GRUPO L'
-        };
-
         try {
-            console.log('📡 [Cascada] Solicitando datos primarios a worldcup26.ir...');
-            const controller = new AbortController();
-            const idTimeout = setTimeout(() => controller.abort(), 4500);
+            // Petición directa al endpoint de Standings de ESPN vía Worker
+            const espnUrl = 'https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings';
+            const espnProxyUrl = `${CF_WORKER}/?url=${encodeURIComponent(espnUrl)}`;
             
-            const respuestaRaw = await fetch('https://api.worldcup26.ir/api/v1/matches', { signal: controller.signal });
-            clearTimeout(idTimeout);
+            const respuestaEspn = await fetch(espnProxyUrl);
+            if (!respuestaEspn.ok) throw new Error('ESPN Standings falló');
             
-            if (!respuestaRaw.ok) throw new Error('Servidor primario no disponible');
-            const parsedData = await respuestaRaw.json();
-            
-            const rawArray = parsedData.matches || parsedData.data || [];
-            
-            if (rawArray.length > 0) {
-                partidosMundial = rawArray.map(m => {
-                    const localName = m.home_team?.name || m.home_team_en || 'Por Definir';
-                    const visitaName = m.away_team?.name || m.away_team_en || 'Por Definir';
-                    
-                    // Aseguramos el grupo verificando el Diccionario primero
-                    let nombreGrupo = mapaGrupos[localName] || mapaGrupos[visitaName];
-                    if (!nombreGrupo) {
-                        let apiGroup = m.group_name || m.group || m.stage_name || 'Fase Eliminatoria';
-                        nombreGrupo = apiGroup.replace(/Group /i, 'GRUPO ').toUpperCase();
-                    }
+            const parsedEspn = await respuestaEspn.json();
 
-                    return {
-                        local: localName,
-                        visita: visitaName,
-                        golesL: m.home_score !== null && m.home_score !== undefined ? m.home_score : '-',
-                        golesV: m.away_score !== null && m.away_score !== undefined ? m.away_score : '-',
-                        grupo: nombreGrupo,
-                        badgeLogoL: m.home_team?.logo || m.home_flag || '🌐',
-                        badgeLogoV: m.away_team?.logo || m.away_flag || '🌐',
-                        informacionText: m.time || m.status || 'Programado'
-                    };
+            if (parsedEspn.children && parsedEspn.children.length > 0) {
+                gruposData = parsedEspn.children.map(grupo => {
+                    const equipos = grupo.standings?.entries?.map(e => {
+                        const stats = e.stats || [];
+                        const findStat = (name) => stats.find(s => s.name === name)?.value || 0;
+                        
+                        return {
+                            pos: findStat('rank'),
+                            nombre: e.team.name,
+                            logo: e.team.logos?.[0]?.href || '🌐',
+                            pj: findStat('gamesPlayed'),
+                            pts: findStat('points')
+                        };
+                    }) || [];
+
+                    let nombreGrupo = grupo.name.replace(/Group /i, 'GRUPO ').toUpperCase();
+                    return { nombre: nombreGrupo, equipos: equipos };
                 });
             } else {
-                throw new Error('worldcup26.ir devolvió array vacío');
+                throw new Error('ESPN devolvió array de grupos vacío');
             }
 
         } catch (error) {
-            console.warn('⚠️ [Cascada] Servidor primario falló. Activando fallback a ESPN...', error.message);
-            document.getElementById('loading-text').innerText = "Rescatando datos en vivo vía ESPN...";
+            console.warn('⚠️ [Grupos] ESPN no disponible o vacío:', error.message);
+            proveedor = 'SISTEMA DE SIMULACIÓN VISUAL (MOCK 48 EQUIPOS)';
             
-            try {
-                proveedor = 'ESPN API';
-                const espnUrl = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?limit=150&dates=20260611-20260719';
-                const espnProxyUrl = `${CF_WORKER}/?url=${encodeURIComponent(espnUrl)}`;
-                
-                const respuestaEspn = await fetch(espnProxyUrl);
-                if (!respuestaEspn.ok) throw new Error('ESPN Fallback falló');
-                
-                const parsedEspn = await respuestaEspn.json();
-                
-                if (parsedEspn.events && parsedEspn.events.length > 0) {
-                    partidosMundial = parsedEspn.events.map(ev => {
-                        const comp = ev.competitions[0] || {};
-                        const loc = comp.competitors?.find(c => c.homeAway === 'home');
-                        const vis = comp.competitors?.find(c => c.homeAway === 'away');
-                        
-                        const localName = loc?.team?.name || 'Por Definir';
-                        const visitaName = vis?.team?.name || 'Por Definir';
-                        const localAbbr = loc?.team?.abbreviation || '';
-                        const visitaAbbr = vis?.team?.abbreviation || '';
+            // Mock Estructurado en caso de fallo o falta de datos en la API (12 grupos, 4 equipos c/u)
+            const mockEquipos = {
+                'GRUPO A': [{n:'México', fl:'🇲🇽'}, {n:'Alemania', fl:'🇩🇪'}, {n:'Japón', fl:'🇯🇵'}, {n:'Mali', fl:'🇲🇱'}],
+                'GRUPO B': [{n:'Canadá', fl:'🇨🇦'}, {n:'España', fl:'🇪🇸'}, {n:'Colombia', fl:'🇨🇴'}, {n:'Corea del Sur', fl:'🇰🇷'}],
+                'GRUPO C': [{n:'Estados Unidos', fl:'🇺🇸'}, {n:'Francia', fl:'🇫🇷'}, {n:'Senegal', fl:'🇸🇳'}, {n:'Arabia Saudita', fl:'🇸🇦'}],
+                'GRUPO D': [{n:'Argentina', fl:'🇦🇷'}, {n:'Inglaterra', fl:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'}, {n:'Ecuador', fl:'🇪🇨'}, {n:'Costa Rica', fl:'🇨🇷'}],
+                'GRUPO E': [{n:'Brasil', fl:'🇧🇷'}, {n:'Países Bajos', fl:'🇳🇱'}, {n:'Marruecos', fl:'🇲🇦'}, {n:'Australia', fl:'🇦🇺'}],
+                'GRUPO F': [{n:'Portugal', fl:'🇵🇹'}, {n:'Croacia', fl:'🇭🇷'}, {n:'Uruguay', fl:'🇺🇾'}, {n:'Catar', fl:'🇶🇦'}],
+                'GRUPO G': [{n:'Italia', fl:'🇮🇹'}, {n:'Bélgica', fl:'🇧🇪'}, {n:'Suecia', fl:'🇸🇪'}, {n:'Egipto', fl:'🇪🇬'}],
+                'GRUPO H': [{n:'Suiza', fl:'🇨🇭'}, {n:'Nigeria', fl:'🇳🇬'}, {n:'Irán', fl:'🇮🇷'}, {n:'Gales', fl:'🏴󠁧󠁢󠁷󠁬󠁳󠁿'}],
+                'GRUPO I': [{n:'Dinamarca', fl:'🇩🇰'}, {n:'Serbia', fl:'🇷🇸'}, {n:'Chile', fl:'🇨🇱'}, {n:'Perú', fl:'🇵🇪'}],
+                'GRUPO J': [{n:'Polonia', fl:'🇵🇱'}, {n:'Costa de Marfil', fl:'🇨🇮'}, {n:'Irak', fl:'🇮🇶'}, {n:'Jamaica', fl:'🇯🇲'}],
+                'GRUPO K': [{n:'Austria', fl:'🇦🇹'}, {n:'Ucrania', fl:'🇺🇦'}, {n:'Camerún', fl:'🇨🇲'}, {n:'Argelia', fl:'🇩🇿'}],
+                'GRUPO L': [{n:'Turquía', fl:'🇹🇷'}, {n:'Hungría', fl:'🇭🇺'}, {n:'Panamá', fl:'🇵🇦'}, {n:'Venezuela', fl:'🇻🇪'}]
+            };
 
-                        // PRIORIDAD ABSOLUTA: Extraer grupo por diccionario según nombre o abreviación oficial (ej. ARG)
-                        let nombreGrupo = mapaGrupos[localAbbr] || mapaGrupos[visitaAbbr] || mapaGrupos[localName] || mapaGrupos[visitaName];
-
-                        // PRIORIDAD 2: Si el equipo es desconocido, intentar extraer mediante Regex del JSON
-                        if (!nombreGrupo) {
-                            const notes = comp.notes?.[0]?.headline || ev.notes?.[0]?.headline || '';
-                            const groupInfo = comp.group?.name || ev.group?.name || '';
-                            const evName = ev.name || '';
-                            
-                            const matchRegex = notes.match(/(?:group|grupo)\s+([a-l])/i) || 
-                                               evName.match(/(?:group|grupo)\s+([a-l])/i) || 
-                                               groupInfo.match(/(?:group|grupo)\s+([a-l])/i);
-                            
-                            if (matchRegex) {
-                                nombreGrupo = `GRUPO ${matchRegex[1].toUpperCase()}`;
-                            } else {
-                                nombreGrupo = 'FASE ELIMINATORIA';
-                            }
-                        }
-
-                        return {
-                            local: localName,
-                            visita: visitaName,
-                            golesL: loc?.score !== undefined ? loc.score : '-',
-                            golesV: vis?.score !== undefined ? vis.score : '-',
-                            grupo: nombreGrupo,
-                            badgeLogoL: loc?.team?.logo || '🌐',
-                            badgeLogoV: vis?.team?.logo || '🌐',
-                            informacionText: ev.status?.type?.shortDetail || ev.status?.type?.description || 'Programado'
-                        };
-                    });
-                } else {
-                    throw new Error('ESPN devolvió array vacío');
-                }
-            } catch (errEspn) {
-                console.warn('⚠️ [Cascada Nivel 2] ESPN no disponible:', errEspn.message);
-                proveedor = 'SISTEMA DE EMERGENCIA';
-                
-                partidosMundial = [
-                    { grupo: "Grupos", informacionText: "Fallo de conexión", local: "Revisa tu red", golesL: "-", visita: "Sin acceso", golesV: "-", badgeLogoL: "⚠️", badgeLogoV: "⚠️" }
-                ];
+            for (const [nombreGrupo, equiposArr] of Object.entries(mockEquipos)) {
+                gruposData.push({
+                    nombre: nombreGrupo,
+                    equipos: equiposArr.map((eq, i) => ({
+                        pos: i + 1,
+                        nombre: eq.n,
+                        logo: eq.fl,
+                        pj: 0,
+                        pts: 0
+                    }))
+                });
             }
         }
 
-        // Agrupación y Ordenamiento
-        const mapeoGrupos = {};
-        partidosMundial.forEach(p => {
-            const identificador = p.grupo;
-            if (!mapeoGrupos[identificador]) {
-                mapeoGrupos[identificador] = [];
-            }
-            mapeoGrupos[identificador].push(p);
-        });
-
-        // Forzamos el orden estricto (A, B, C...)
-        const gruposOrdenados = Object.keys(mapeoGrupos).sort();
-
+        // Renderizado del HTML estructurado por Tablas
         let grillaGruposHtml = '';
-        gruposOrdenados.forEach(tituloGrupo => {
-            const partidos = mapeoGrupos[tituloGrupo];
-            
-            let tarjetasPartidosHtml = partidos.map(p => {
-                const drawLogoL = p.badgeLogoL.includes('http') ? `<img src="${p.badgeLogoL}" width="22" height="22" style="object-fit: contain;">` : `<span style="font-size:1.1rem">${p.badgeLogoL}</span>`;
-                const drawLogoV = p.badgeLogoV.includes('http') ? `<img src="${p.badgeLogoV}" width="22" height="22" style="object-fit: contain;">` : `<span style="font-size:1.1rem">${p.badgeLogoV}</span>`;
+        gruposData.forEach(grupo => {
+            let filasTabla = grupo.equipos.map(eq => {
+                const logoHtml = eq.logo.includes('http') ? `<img src="${eq.logo}" width="20" height="20" style="object-fit: contain; margin-right: 8px;">` : `<span style="font-size:1.1rem; margin-right: 8px;">${eq.logo}</span>`;
                 
                 return `
-                    <div class="match-item" style="display: flex; flex-direction: column; background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border-glass);">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.04);">
-                            <span style="font-size: 0.75rem; color: var(--accent-neon); font-weight: bold; text-transform: uppercase;">${p.informacionText}</span>
-                            <span style="font-size: 0.6rem; color: var(--text-muted); font-weight: bold;">${proveedor}</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <div style="display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 0.95rem;">
-                                ${drawLogoL} <span>${p.local}</span>
-                            </div>
-                            <span style="font-weight: 800; font-size: 1.1rem; color: var(--text-main);">${p.golesL}</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div style="display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 0.95rem;">
-                                ${drawLogoV} <span>${p.visita}</span>
-                            </div>
-                            <span style="font-weight: 800; font-size: 1.1rem; color: var(--text-main);">${p.golesV}</span>
-                        </div>
-                    </div>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                        <td style="padding: 8px 4px; font-weight: bold; color: var(--text-muted);">${eq.pos}</td>
+                        <td style="padding: 8px 4px; display: flex; align-items: center; font-weight: 500;">
+                            ${logoHtml} <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;">${eq.nombre}</span>
+                        </td>
+                        <td style="padding: 8px 4px; text-align: center; color: var(--text-muted);">${eq.pj}</td>
+                        <td style="padding: 8px 4px; text-align: center; font-weight: bold; color: var(--accent-neon);">${eq.pts}</td>
+                    </tr>
                 `;
             }).join('');
 
             grillaGruposHtml += `
-                <div class="glass-panel" style="padding: 1.5rem; display: flex; flex-direction: column; min-height: 250px;">
-                    <h3 class="panel-title" style="text-align: center; color: var(--accent-neon); border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; margin-bottom: 14px; font-size: 1.3rem;">
-                        ${tituloGrupo}
+                <div class="glass-panel" style="padding: 1.2rem; min-height: 220px;">
+                    <h3 class="panel-title" style="text-align: center; color: var(--accent-neon); border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; margin-bottom: 12px; font-size: 1.2rem; letter-spacing: 1px;">
+                        ${grupo.nombre}
                     </h3>
-                    <div class="match-list" style="flex: 1; max-height: 380px; overflow-y: auto;">
-                        ${tarjetasPartidosHtml}
+                    <div class="table-responsive">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                            <thead>
+                                <tr style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; border-bottom: 1px solid var(--border-glass);">
+                                    <th style="text-align: left; padding: 4px; width: 30px;">#</th>
+                                    <th style="text-align: left; padding: 4px;">Equipo</th>
+                                    <th style="text-align: center; padding: 4px; width: 40px;">PJ</th>
+                                    <th style="text-align: center; padding: 4px; width: 40px;">PTS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${filasTabla}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             `;
@@ -585,12 +512,12 @@ const App = (() => {
                 <div class="liga-header" style="border-left: 6px solid ${ligaData.badge_color}; background: radial-gradient(circle at left, rgba(200, 168, 75, 0.12) 0%, transparent 60%);">
                     <span class="liga-flag-large" style="font-size: 3.8rem; filter: drop-shadow(0 0 10px rgba(200,168,75,0.3));">${ligaData.flag}</span>
                     <div>
-                        <h1 class="liga-title-main">${ligaData.nombre}</h1>
-                        <span style="color: var(--accent-neon); font-weight: 800; letter-spacing: 1px; font-size: 0.85rem;">🏆 FIXTURE Y CALENDARIO OFICIAL DE PARTIDOS</span>
+                        <h1 class="liga-title-main">Fase de Grupos</h1>
+                        <span style="color: var(--accent-neon); font-weight: 800; letter-spacing: 1px; font-size: 0.85rem;">🏆 TABLAS PROVISTAS POR ${proveedor}</span>
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
                     ${grillaGruposHtml}
                 </div>
             </main>
