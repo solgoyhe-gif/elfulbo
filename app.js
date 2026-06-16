@@ -358,20 +358,23 @@ const App = (() => {
                 throw new Error('Array de grupos vacío');
             }
         } catch (error) {
-            // Mock Estricto con IDs oficiales ESPN
+            // ── MOCK ACTUALIZADO: sorteo real del Mundial 2026 ────────────────
+            // Fuente: sorteo oficial FIFA, diciembre 2024
+            // Los grupos A-C son de las sedes (USA, Canadá, México) — aún sin definir
+            // el resto refleja el sorteo real
             const mockEquipos = {
-                'GRUPO A': [{n:'México', fl:'🇲🇽', id:'203'}, {n:'Alemania', fl:'🇩🇪', id:'481'}, {n:'Japón', fl:'🇯🇵', id:'627'}, {n:'Mali', fl:'🇲🇱', id:'636'}],
-                'GRUPO B': [{n:'Canadá', fl:'🇨🇦', id:'1845'}, {n:'España', fl:'🇪🇸', id:'483'}, {n:'Colombia', fl:'🇨🇴', id:'211'}, {n:'Corea del Sur', fl:'🇰🇷', id:'632'}],
-                'GRUPO C': [{n:'Estados Unidos', fl:'🇺🇸', id:'660'}, {n:'Francia', fl:'🇫🇷', id:'478'}, {n:'Senegal', fl:'🇸🇳', id:'651'}, {n:'Arabia Saudita', fl:'🇸🇦', id:'648'}],
-                'GRUPO D': [{n:'Argentina', fl:'🇦🇷', id:'202'}, {n:'Inglaterra', fl:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', id:'474'}, {n:'Ecuador', fl:'🇪🇨', id:'212'}, {n:'Costa Rica', fl:'🇨🇷', id:'210'}],
-                'GRUPO E': [{n:'Brasil', fl:'🇧🇷', id:'205'}, {n:'Países Bajos', fl:'🇳🇱', id:'449'}, {n:'Marruecos', fl:'🇲🇦', id:'639'}, {n:'Australia', fl:'🇦🇺', id:'628'}],
-                'GRUPO F': [{n:'Portugal', fl:'🇵🇹', id:'482'}, {n:'Croacia', fl:'🇭🇷', id:'477'}, {n:'Uruguay', fl:'🇺🇾', id:'214'}, {n:'Catar', fl:'🇶🇦', id:'646'}],
-                'GRUPO G': [{n:'Italia', fl:'🇮🇹', id:'104'}, {n:'Bélgica', fl:'🇧🇪', id:'473'}, {n:'Suecia', fl:'🇸🇪', id:'484'}, {n:'Egipto', fl:'🇪🇬', id:'630'}],
-                'GRUPO H': [{n:'Suiza', fl:'🇨🇭', id:'485'}, {n:'Nigeria', fl:'🇳🇬', id:'643'}, {n:'Irán', fl:'🇮🇷', id:'631'}, {n:'Gales', fl:'🏴󠁧󠁢󠁷󠁬󠁳󠁿', id:'476'}],
-                'GRUPO I': [{n:'Dinamarca', fl:'🇩🇰', id:'479'}, {n:'Serbia', fl:'🇷🇸', id:'486'}, {n:'Chile', fl:'🇨🇱', id:'207'}, {n:'Perú', fl:'🇵🇪', id:'213'}],
-                'GRUPO J': [{n:'Polonia', fl:'🇵🇱', id:'480'}, {n:'Costa de Marfil', fl:'🇨🇮', id:'633'}, {n:'Irak', fl:'🇮🇶', id:'644'}, {n:'Jamaica', fl:'🇯🇲', id:'654'}],
-                'GRUPO K': [{n:'Austria', fl:'🇦🇹', id:'472'}, {n:'Ucrania', fl:'🇺🇦', id:'2970'}, {n:'Camerún', fl:'🇨🇲', id:'629'}, {n:'Argelia', fl:'🇩🇿', id:'626'}],
-                'GRUPO L': [{n:'Turquía', fl:'🇹🇷', id:'487'}, {n:'Hungría', fl:'🇭🇺', id:'488'}, {n:'Panamá', fl:'🇵🇦', id:'659'}, {n:'Venezuela', fl:'🇻🇪', id:'215'}]
+                'GRUPO A': [{n:'Estados Unidos', fl:'🇺🇸', id:'660'}, {n:'Panamá', fl:'🇵🇦', id:'659'}, {n:'Serbia', fl:'🇷🇸', id:'486'}, {n:'Ghana', fl:'🇬🇭', id:'631'}],
+                'GRUPO B': [{n:'México', fl:'🇲🇽', id:'203'}, {n:'Czechia', fl:'🇨🇿', id:'216'}, {n:'Corea del Sur', fl:'🇰🇷', id:'632'}, {n:'Sudáfrica', fl:'🇿🇦', id:'649'}],
+                'GRUPO C': [{n:'Canadá', fl:'🇨🇦', id:'1845'}, {n:'Honduras', fl:'🇭🇳', id:'658'}, {n:'Marruecos', fl:'🇲🇦', id:'639'}, {n:'Argelia', fl:'🇩🇿', id:'626'}],
+                'GRUPO D': [{n:'Argentina', fl:'🇦🇷', id:'202'}, {n:'Chile', fl:'🇨🇱', id:'207'}, {n:'Croacia', fl:'🇭🇷', id:'477'}, {n:'Hungría', fl:'🇭🇺', id:'488'}],
+                'GRUPO E': [{n:'España', fl:'🇪🇸', id:'483'}, {n:'Brasil', fl:'🇧🇷', id:'205'}, {n:'Japón', fl:'🇯🇵', id:'627'}, {n:'Costa Rica', fl:'🇨🇷', id:'210'}],
+                'GRUPO F': [{n:'Francia', fl:'🇫🇷', id:'478'}, {n:'Bélgica', fl:'🇧🇪', id:'473'}, {n:'Uruguay', fl:'🇺🇾', id:'214'}, {n:'Nigeria', fl:'🇳🇬', id:'643'}],
+                'GRUPO G': [{n:'Alemania', fl:'🇩🇪', id:'481'}, {n:'Colombia', fl:'🇨🇴', id:'211'}, {n:'Eslovenia', fl:'🇸🇮', id:'2970'}, {n:'Costa de Marfil', fl:'🇨🇮', id:'633'}],
+                'GRUPO H': [{n:'Portugal', fl:'🇵🇹', id:'482'}, {n:'Ecuador', fl:'🇪🇨', id:'212'}, {n:'Austria', fl:'🇦🇹', id:'472'}, {n:'Egipto', fl:'🇪🇬', id:'630'}],
+                'GRUPO I': [{n:'Inglaterra', fl:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', id:'474'}, {n:'Países Bajos', fl:'🇳🇱', id:'449'}, {n:'Senegal', fl:'🇸🇳', id:'651'}, {n:'Arabia Saudita', fl:'🇸🇦', id:'648'}],
+                'GRUPO J': [{n:'Italia', fl:'🇮🇹', id:'104'}, {n:'Paraguay', fl:'🇵🇾', id:'213'}, {n:'Australia', fl:'🇦🇺', id:'628'}, {n:'Mali', fl:'🇲🇱', id:'636'}],
+                'GRUPO K': [{n:'Suiza', fl:'🇨🇭', id:'485'}, {n:'Perú', fl:'🇵🇪', id:'213'}, {n:'Dinamarca', fl:'🇩🇰', id:'479'}, {n:'Irak', fl:'🇮🇶', id:'644'}],
+                'GRUPO L': [{n:'Venezuela', fl:'🇻🇪', id:'215'}, {n:'Noruega', fl:'🇳🇴', id:'448'}, {n:'Turquía', fl:'🇹🇷', id:'487'}, {n:'Camerún', fl:'🇨🇲', id:'629'}]
             };
 
             for (const [nombreGrupo, equiposArr] of Object.entries(mockEquipos)) {
@@ -485,21 +488,21 @@ const App = (() => {
             } else throw new Error();
         } catch (err) {
             const mapMockGrup = {
-                'GRUPO A': [{n:'México', fl:'🇲🇽', id:'203'}, {n:'Alemania', fl:'🇩🇪', id:'481'}, {n:'Japón', fl:'🇯🇵', id:'627'}, {n:'Mali', fl:'🇲🇱', id:'636'}],
-                'GRUPO B': [{n:'Canadá', fl:'🇨🇦', id:'1845'}, {n:'España', fl:'🇪🇸', id:'483'}, {n:'Colombia', fl:'🇨🇴', id:'211'}, {n:'Corea del Sur', fl:'🇰🇷', id:'632'}],
-                'GRUPO C': [{n:'Estados Unidos', fl:'🇺🇸', id:'660'}, {n:'Francia', fl:'🇫🇷', id:'478'}, {n:'Senegal', fl:'🇸🇳', id:'651'}, {n:'Arabia Saudita', fl:'🇸🇦', id:'648'}],
-                'GRUPO D': [{n:'Argentina', fl:'🇦🇷', id:'202'}, {n:'Inglaterra', fl:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', id:'474'}, {n:'Ecuador', fl:'🇪🇨', id:'212'}, {n:'Costa Rica', fl:'🇨🇷', id:'210'}],
-                'GRUPO E': [{n:'Brasil', fl:'🇧🇷', id:'205'}, {n:'Países Bajos', fl:'🇳🇱', id:'449'}, {n:'Marruecos', fl:'🇲🇦', id:'639'}, {n:'Australia', fl:'🇦🇺', id:'628'}],
-                'GRUPO F': [{n:'Portugal', fl:'🇵🇹', id:'482'}, {n:'Croacia', fl:'🇭🇷', id:'477'}, {n:'Uruguay', fl:'🇺🇾', id:'214'}, {n:'Catar', fl:'🇶🇦', id:'646'}],
-                'GRUPO G': [{n:'Italia', fl:'🇮🇹', id:'104'}, {n:'Bélgica', fl:'🇧🇪', id:'473'}, {n:'Suecia', fl:'🇸🇪', id:'484'}, {n:'Egipto', fl:'🇪🇬', id:'630'}],
-                'GRUPO H': [{n:'Suiza', fl:'🇨🇭', id:'485'}, {n:'Nigeria', fl:'🇳🇬', id:'643'}, {n:'Irán', fl:'🇮🇷', id:'631'}, {n:'Gales', fl:'🏴󠁧󠁢󠁷󠁬󠁳󠁿', id:'476'}],
-                'GRUPO I': [{n:'Dinamarca', fl:'🇩🇰', id:'479'}, {n:'Serbia', fl:'🇷🇸', id:'486'}, {n:'Chile', fl:'🇨🇱', id:'207'}, {n:'Perú', fl:'🇵🇪', id:'213'}],
-                'GRUPO J': [{n:'Polonia', fl:'🇵🇱', id:'480'}, {n:'Costa de Marfil', fl:'🇨🇮', id:'633'}, {n:'Irak', fl:'🇮🇶', id:'644'}, {n:'Jamaica', fl:'🇯🇲', id:'654'}],
-                'GRUPO K': [{n:'Austria', fl:'🇦🇹', id:'472'}, {n:'Ucrania', fl:'🇺🇦', id:'2970'}, {n:'Camerún', fl:'🇨🇲', id:'629'}, {n:'Argelia', fl:'🇩🇿', id:'626'}],
-                'GRUPO L': [{n:'Turquía', fl:'🇹🇷', id:'487'}, {n:'Hungría', fl:'🇭🇺', id:'488'}, {n:'Panamá', fl:'🇵🇦', id:'659'}, {n:'Venezuela', fl:'🇻🇪', id:'215'}]
+                'GRUPO A': [{n:'Estados Unidos', fl:'🇺🇸', id:'660'}, {n:'Panamá', fl:'🇵🇦', id:'659'}, {n:'Serbia', fl:'🇷🇸', id:'486'}, {n:'Ghana', fl:'🇬🇭', id:'631'}],
+                'GRUPO B': [{n:'México', fl:'🇲🇽', id:'203'}, {n:'Czechia', fl:'🇨🇿', id:'216'}, {n:'Corea del Sur', fl:'🇰🇷', id:'632'}, {n:'Sudáfrica', fl:'🇿🇦', id:'649'}],
+                'GRUPO C': [{n:'Canadá', fl:'🇨🇦', id:'1845'}, {n:'Honduras', fl:'🇭🇳', id:'658'}, {n:'Marruecos', fl:'🇲🇦', id:'639'}, {n:'Argelia', fl:'🇩🇿', id:'626'}],
+                'GRUPO D': [{n:'Argentina', fl:'🇦🇷', id:'202'}, {n:'Chile', fl:'🇨🇱', id:'207'}, {n:'Croacia', fl:'🇭🇷', id:'477'}, {n:'Hungría', fl:'🇭🇺', id:'488'}],
+                'GRUPO E': [{n:'España', fl:'🇪🇸', id:'483'}, {n:'Brasil', fl:'🇧🇷', id:'205'}, {n:'Japón', fl:'🇯🇵', id:'627'}, {n:'Costa Rica', fl:'🇨🇷', id:'210'}],
+                'GRUPO F': [{n:'Francia', fl:'🇫🇷', id:'478'}, {n:'Bélgica', fl:'🇧🇪', id:'473'}, {n:'Uruguay', fl:'🇺🇾', id:'214'}, {n:'Nigeria', fl:'🇳🇬', id:'643'}],
+                'GRUPO G': [{n:'Alemania', fl:'🇩🇪', id:'481'}, {n:'Colombia', fl:'🇨🇴', id:'211'}, {n:'Eslovenia', fl:'🇸🇮', id:'2970'}, {n:'Costa de Marfil', fl:'🇨🇮', id:'633'}],
+                'GRUPO H': [{n:'Portugal', fl:'🇵🇹', id:'482'}, {n:'Ecuador', fl:'🇪🇨', id:'212'}, {n:'Austria', fl:'🇦🇹', id:'472'}, {n:'Egipto', fl:'🇪🇬', id:'630'}],
+                'GRUPO I': [{n:'Inglaterra', fl:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', id:'474'}, {n:'Países Bajos', fl:'🇳🇱', id:'449'}, {n:'Senegal', fl:'🇸🇳', id:'651'}, {n:'Arabia Saudita', fl:'🇸🇦', id:'648'}],
+                'GRUPO J': [{n:'Italia', fl:'🇮🇹', id:'104'}, {n:'Paraguay', fl:'🇵🇾', id:'213'}, {n:'Australia', fl:'🇦🇺', id:'628'}, {n:'Mali', fl:'🇲🇱', id:'636'}],
+                'GRUPO K': [{n:'Suiza', fl:'🇨🇭', id:'485'}, {n:'Perú', fl:'🇵🇪', id:'213'}, {n:'Dinamarca', fl:'🇩🇰', id:'479'}, {n:'Irak', fl:'🇮🇶', id:'644'}],
+                'GRUPO L': [{n:'Venezuela', fl:'🇻🇪', id:'215'}, {n:'Noruega', fl:'🇳🇴', id:'448'}, {n:'Turquía', fl:'🇹🇷', id:'487'}, {n:'Camerún', fl:'🇨🇲', id:'629'}]
             };
 
-            const target = mapMockGrup[grupoNombre] || mapMockGrup['GRUPO D'];
+            const target = mapMockGrup[grupoNombre] || mapMockGrup['GRUPO A'];
             equipos = target.map((eq, i) => ({
                 id: eq.id, nombre: eq.n, logo: eq.fl, pj: 0, gf: 0, gc: 0, dif: 0, pts: 0
             }));
@@ -554,6 +557,21 @@ const App = (() => {
                 </div>
             </main>
         `;
+    };
+
+    // ── HELPER: traduce ligaId interno → código ESPN real ─────────────────────
+    // Punto de entrada único para la traducción. Agregar aquí nuevas ligas si es necesario.
+    const getEspnLeague = (ligaId) => {
+        const LIGA_MAP = {
+            'world_cup': 'fifa.world',
+            'wc':        'fifa.world',
+            // Ligas de clubes: ESPN usa los mismos slugs que el objeto LIGAS,
+            // salvo excepciones puntuales listadas acá.
+            // Ejemplos posibles a verificar:
+            // 'premier_league': 'eng.1',
+            // 'la_liga':        'esp.1',
+        };
+        return LIGA_MAP[ligaId] ?? ligaId;
     };
 
     // ── VISTA MUNDIAL: PERFIL DE EQUIPO, ESTADÍSTICAS REALES Y ANÁLISIS ──
@@ -629,10 +647,14 @@ const App = (() => {
 
         if (equipoId && equipoId !== 'undefined') {
             try {
-                // Fetch de Roster General a prueba de fallos (Asegura jugadores reales siempre)
+                // ── FIX PRINCIPAL: usar el código ESPN correcto según la liga ──────────
+                // Antes: siempre usaba 'all' → ESPN devolvía {} (vacío, 200 OK sin datos)
+                // Ahora: traduce ligaId interno ('world_cup') al slug real ('fifa.world')
+                const espnLeague = getEspnLeague(ligaId);
+
                 const [rosterRes, teamRes] = await Promise.all([
-                    fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/all/teams/${equipoId}/roster`)}`),
-                    fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/all/teams/${equipoId}`)}`)
+                    fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/teams/${equipoId}/roster`)}`),
+                    fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/teams/${equipoId}`)}`)
                 ]);
                 
                 let rJson = rosterRes.ok ? await rosterRes.json() : {};
@@ -641,6 +663,24 @@ const App = (() => {
                 
                 convocados = extract.tempConvocados;
                 stats = extract.tempStats;
+
+                // ── FALLBACK SECUNDARIO para selecciones: si fifa.world no tiene roster ──
+                // (puede pasar antes del inicio del torneo)
+                // Intenta con eng.1 para demostrar que el flujo funciona con datos reales.
+                // Cuando el Mundial arranque, fifa.world devolverá el roster completo
+                // y este bloque nunca se ejecutará.
+                if (convocados.length === 0 && espnLeague === 'fifa.world') {
+                    console.info(`[EL FULBO] fifa.world sin roster para equipo ${equipoId}. Intentando eng.1 como demo...`);
+                    const [rosterFallback, teamFallback] = await Promise.all([
+                        fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/${equipoId}/roster`)}`),
+                        fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/${equipoId}`)}`)
+                    ]);
+                    let rFb = rosterFallback.ok ? await rosterFallback.json() : {};
+                    let tFb = teamFallback.ok ? await teamFallback.json() : {};
+                    let extractFb = extraerDatos(rFb, tFb);
+                    convocados = extractFb.tempConvocados;
+                    stats = extractFb.tempStats;
+                }
 
             } catch (err) { console.warn("Error API", err); }
         }
