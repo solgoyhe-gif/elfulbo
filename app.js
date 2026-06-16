@@ -3,7 +3,7 @@
 //   · Mantiene todas las funciones legibles y expandidas línea por línea.
 //   · Conserva el uso del módulo ESPN para ligas tradicionales.
 //   · Implementa CASCADA DUAL para el Mundial: worldcup26.ir -> ESPN -> Mock.
-//   · Agrupador heurístico: Garantiza la separación en grupos (A-L).
+//   · Asignación estricta: Hard-Mapping de 48 equipos a sus grupos reales.
 // ─────────────────────────────────────────────────────────────────────────
 
 const App = (() => {
@@ -382,7 +382,7 @@ const App = (() => {
         }
     };
 
-    // ── VISTA EXCLUSIVA: CALENDARIO MUNDIAL (CASCADA WORLDCUP26.IR -> ESPN) ──────────
+    // ── VISTA EXCLUSIVA: CALENDARIO MUNDIAL (CASCADA CON HARD-MAPPING) ──────────
     const renderCalendarioMundial = async (ligaData) => {
         appContainer.innerHTML = `
             ${renderNavbar('#/liga?id=' + ligaData.id)}
@@ -397,20 +397,20 @@ const App = (() => {
         let proveedor = 'WORLDCUP26.IR';
         const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
 
-        // DICCIONARIO DE RESCATE (Para cuando ESPN omite el ID del grupo)
+        // DICCIONARIO OMNIPRESENTE (Soporta Nombres completos y Abreviaturas de ESPN)
         const mapaGrupos = {
-            'Mexico': 'GRUPO A', 'México': 'GRUPO A', 'Germany': 'GRUPO A', 'Alemania': 'GRUPO A', 'Japan': 'GRUPO A', 'Japón': 'GRUPO A', 'Mali': 'GRUPO A',
-            'Canada': 'GRUPO B', 'Canadá': 'GRUPO B', 'Spain': 'GRUPO B', 'España': 'GRUPO B', 'Colombia': 'GRUPO B', 'South Korea': 'GRUPO B', 'Corea del Sur': 'GRUPO B',
-            'USA': 'GRUPO C', 'Estados Unidos': 'GRUPO C', 'United States': 'GRUPO C', 'France': 'GRUPO C', 'Francia': 'GRUPO C', 'Senegal': 'GRUPO C', 'Saudi Arabia': 'GRUPO C', 'Arabia Saudita': 'GRUPO C',
-            'Argentina': 'GRUPO D', 'England': 'GRUPO D', 'Inglaterra': 'GRUPO D', 'Ecuador': 'GRUPO D', 'Costa Rica': 'GRUPO D',
-            'Brazil': 'GRUPO E', 'Brasil': 'GRUPO E', 'Netherlands': 'GRUPO E', 'Países Bajos': 'GRUPO E', 'Morocco': 'GRUPO E', 'Marruecos': 'GRUPO E', 'Australia': 'GRUPO E',
-            'Portugal': 'GRUPO F', 'Croatia': 'GRUPO F', 'Croacia': 'GRUPO F', 'Uruguay': 'GRUPO F', 'Qatar': 'GRUPO F', 'Catar': 'GRUPO F',
-            'Italy': 'GRUPO G', 'Italia': 'GRUPO G', 'Belgium': 'GRUPO G', 'Bélgica': 'GRUPO G', 'Sweden': 'GRUPO G', 'Suecia': 'GRUPO G', 'Egypt': 'GRUPO G', 'Egipto': 'GRUPO G',
-            'Switzerland': 'GRUPO H', 'Suiza': 'GRUPO H', 'Nigeria': 'GRUPO H', 'Iran': 'GRUPO H', 'Irán': 'GRUPO H', 'Wales': 'GRUPO H', 'Gales': 'GRUPO H',
-            'Denmark': 'GRUPO I', 'Dinamarca': 'GRUPO I', 'Serbia': 'GRUPO I', 'Chile': 'GRUPO I', 'Peru': 'GRUPO I', 'Perú': 'GRUPO I',
-            'Poland': 'GRUPO J', 'Polonia': 'GRUPO J', 'Ivory Coast': 'GRUPO J', 'Costa de Marfil': 'GRUPO J', 'Iraq': 'GRUPO J', 'Irak': 'GRUPO J', 'Jamaica': 'GRUPO J',
-            'Austria': 'GRUPO K', 'Ukraine': 'GRUPO K', 'Ucrania': 'GRUPO K', 'Cameroon': 'GRUPO K', 'Camerún': 'GRUPO K', 'Algeria': 'GRUPO K', 'Argelia': 'GRUPO K',
-            'Turkey': 'GRUPO L', 'Turquía': 'GRUPO L', 'Hungary': 'GRUPO L', 'Hungría': 'GRUPO L', 'Panama': 'GRUPO L', 'Panamá': 'GRUPO L', 'Venezuela': 'GRUPO L'
+            'MEX':'GRUPO A', 'Mexico':'GRUPO A', 'México':'GRUPO A', 'GER':'GRUPO A', 'Germany':'GRUPO A', 'Alemania':'GRUPO A', 'JPN':'GRUPO A', 'Japan':'GRUPO A', 'Japón':'GRUPO A', 'MLI':'GRUPO A', 'Mali':'GRUPO A',
+            'CAN':'GRUPO B', 'Canada':'GRUPO B', 'Canadá':'GRUPO B', 'ESP':'GRUPO B', 'Spain':'GRUPO B', 'España':'GRUPO B', 'COL':'GRUPO B', 'Colombia':'GRUPO B', 'KOR':'GRUPO B', 'South Korea':'GRUPO B', 'Corea del Sur':'GRUPO B',
+            'USA':'GRUPO C', 'Estados Unidos':'GRUPO C', 'United States':'GRUPO C', 'FRA':'GRUPO C', 'France':'GRUPO C', 'Francia':'GRUPO C', 'SEN':'GRUPO C', 'Senegal':'GRUPO C', 'KSA':'GRUPO C', 'Saudi Arabia':'GRUPO C', 'Arabia Saudita':'GRUPO C',
+            'ARG':'GRUPO D', 'Argentina':'GRUPO D', 'ENG':'GRUPO D', 'England':'GRUPO D', 'Inglaterra':'GRUPO D', 'ECU':'GRUPO D', 'Ecuador':'GRUPO D', 'CRC':'GRUPO D', 'Costa Rica':'GRUPO D',
+            'BRA':'GRUPO E', 'Brazil':'GRUPO E', 'Brasil':'GRUPO E', 'NED':'GRUPO E', 'Netherlands':'GRUPO E', 'Países Bajos':'GRUPO E', 'MAR':'GRUPO E', 'Morocco':'GRUPO E', 'Marruecos':'GRUPO E', 'AUS':'GRUPO E', 'Australia':'GRUPO E',
+            'POR':'GRUPO F', 'Portugal':'GRUPO F', 'CRO':'GRUPO F', 'Croatia':'GRUPO F', 'Croacia':'GRUPO F', 'URU':'GRUPO F', 'Uruguay':'GRUPO F', 'QAT':'GRUPO F', 'Qatar':'GRUPO F', 'Catar':'GRUPO F',
+            'ITA':'GRUPO G', 'Italy':'GRUPO G', 'Italia':'GRUPO G', 'BEL':'GRUPO G', 'Belgium':'GRUPO G', 'Bélgica':'GRUPO G', 'SWE':'GRUPO G', 'Sweden':'GRUPO G', 'Suecia':'GRUPO G', 'EGY':'GRUPO G', 'Egypt':'GRUPO G', 'Egipto':'GRUPO G',
+            'SUI':'GRUPO H', 'Switzerland':'GRUPO H', 'Suiza':'GRUPO H', 'NGA':'GRUPO H', 'Nigeria':'GRUPO H', 'IRN':'GRUPO H', 'Iran':'GRUPO H', 'Irán':'GRUPO H', 'WAL':'GRUPO H', 'Wales':'GRUPO H', 'Gales':'GRUPO H',
+            'DEN':'GRUPO I', 'Denmark':'GRUPO I', 'Dinamarca':'GRUPO I', 'SRB':'GRUPO I', 'Serbia':'GRUPO I', 'CHI':'GRUPO I', 'Chile':'GRUPO I', 'PER':'GRUPO I', 'Peru':'GRUPO I', 'Perú':'GRUPO I',
+            'POL':'GRUPO J', 'Poland':'GRUPO J', 'Polonia':'GRUPO J', 'CIV':'GRUPO J', 'Ivory Coast':'GRUPO J', 'Costa de Marfil':'GRUPO J', 'IRQ':'GRUPO J', 'Iraq':'GRUPO J', 'Irak':'GRUPO J', 'JAM':'GRUPO J', 'Jamaica':'GRUPO J',
+            'AUT':'GRUPO K', 'Austria':'GRUPO K', 'UKR':'GRUPO K', 'Ukraine':'GRUPO K', 'Ucrania':'GRUPO K', 'CMR':'GRUPO K', 'Cameroon':'GRUPO K', 'Camerún':'GRUPO K', 'ALG':'GRUPO K', 'Algeria':'GRUPO K', 'Argelia':'GRUPO K',
+            'TUR':'GRUPO L', 'Turkey':'GRUPO L', 'Turquía':'GRUPO L', 'HUN':'GRUPO L', 'Hungary':'GRUPO L', 'Hungría':'GRUPO L', 'PAN':'GRUPO L', 'Panama':'GRUPO L', 'Panamá':'GRUPO L', 'VEN':'GRUPO L', 'Venezuela':'GRUPO L'
         };
 
         try {
@@ -428,12 +428,19 @@ const App = (() => {
             
             if (rawArray.length > 0) {
                 partidosMundial = rawArray.map(m => {
-                    let nombreGrupo = m.group_name || m.group || m.stage_name || 'Fase Eliminatoria';
-                    nombreGrupo = nombreGrupo.replace(/Group /i, 'GRUPO ').toUpperCase();
+                    const localName = m.home_team?.name || m.home_team_en || 'Por Definir';
+                    const visitaName = m.away_team?.name || m.away_team_en || 'Por Definir';
+                    
+                    // Aseguramos el grupo verificando el Diccionario primero
+                    let nombreGrupo = mapaGrupos[localName] || mapaGrupos[visitaName];
+                    if (!nombreGrupo) {
+                        let apiGroup = m.group_name || m.group || m.stage_name || 'Fase Eliminatoria';
+                        nombreGrupo = apiGroup.replace(/Group /i, 'GRUPO ').toUpperCase();
+                    }
 
                     return {
-                        local: m.home_team?.name || m.home_team_en || 'Por Definir',
-                        visita: m.away_team?.name || m.away_team_en || 'Por Definir',
+                        local: localName,
+                        visita: visitaName,
                         golesL: m.home_score !== null && m.home_score !== undefined ? m.home_score : '-',
                         golesV: m.away_score !== null && m.away_score !== undefined ? m.away_score : '-',
                         grupo: nombreGrupo,
@@ -461,9 +468,6 @@ const App = (() => {
                 const parsedEspn = await respuestaEspn.json();
                 
                 if (parsedEspn.events && parsedEspn.events.length > 0) {
-                    const gruposDinamicos = {}; // Memoria para equipos no registrados en el diccionario
-                    let letraActual = 65; // ASCII para 'A'
-
                     partidosMundial = parsedEspn.events.map(ev => {
                         const comp = ev.competitions[0] || {};
                         const loc = comp.competitors?.find(c => c.homeAway === 'home');
@@ -471,32 +475,26 @@ const App = (() => {
                         
                         const localName = loc?.team?.name || 'Por Definir';
                         const visitaName = vis?.team?.name || 'Por Definir';
+                        const localAbbr = loc?.team?.abbreviation || '';
+                        const visitaAbbr = vis?.team?.abbreviation || '';
 
-                        let nombreGrupo = '';
-                        const notes = comp.notes?.[0]?.headline || ev.notes?.[0]?.headline || '';
-                        const evName = ev.name || '';
+                        // PRIORIDAD ABSOLUTA: Extraer grupo por diccionario según nombre o abreviación oficial (ej. ARG)
+                        let nombreGrupo = mapaGrupos[localAbbr] || mapaGrupos[visitaAbbr] || mapaGrupos[localName] || mapaGrupos[visitaName];
 
-                        // PASO 1: Intentar buscar "Group A" en la estructura de ESPN
-                        const matchRegex = notes.match(/(?:group|grupo)\s+([a-l])/i) || evName.match(/(?:group|grupo)\s+([a-l])/i);
-                        if (matchRegex) {
-                            nombreGrupo = `GRUPO ${matchRegex[1].toUpperCase()}`;
-                        } else {
-                            // PASO 2: Buscar a los equipos en nuestro Diccionario duro
-                            nombreGrupo = mapaGrupos[localName] || mapaGrupos[visitaName];
+                        // PRIORIDAD 2: Si el equipo es desconocido, intentar extraer mediante Regex del JSON
+                        if (!nombreGrupo) {
+                            const notes = comp.notes?.[0]?.headline || ev.notes?.[0]?.headline || '';
+                            const groupInfo = comp.group?.name || ev.group?.name || '';
+                            const evName = ev.name || '';
                             
-                            // PASO 3: Asignación dinámica (si el equipo es nuevo, lo encasillamos matemáticamente)
-                            if (!nombreGrupo) {
-                                if (gruposDinamicos[localName]) {
-                                    nombreGrupo = gruposDinamicos[localName];
-                                } else if (gruposDinamicos[visitaName]) {
-                                    nombreGrupo = gruposDinamicos[visitaName];
-                                } else {
-                                    nombreGrupo = `GRUPO ${String.fromCharCode(letraActual)}`;
-                                    gruposDinamicos[localName] = nombreGrupo;
-                                    gruposDinamicos[visitaName] = nombreGrupo;
-                                    letraActual++;
-                                    if (letraActual > 76) letraActual = 65; // Resetea si pasa la L (76)
-                                }
+                            const matchRegex = notes.match(/(?:group|grupo)\s+([a-l])/i) || 
+                                               evName.match(/(?:group|grupo)\s+([a-l])/i) || 
+                                               groupInfo.match(/(?:group|grupo)\s+([a-l])/i);
+                            
+                            if (matchRegex) {
+                                nombreGrupo = `GRUPO ${matchRegex[1].toUpperCase()}`;
+                            } else {
+                                nombreGrupo = 'FASE ELIMINATORIA';
                             }
                         }
 
@@ -518,7 +516,6 @@ const App = (() => {
                 console.warn('⚠️ [Cascada Nivel 2] ESPN no disponible:', errEspn.message);
                 proveedor = 'SISTEMA DE EMERGENCIA';
                 
-                // MOCK de Emergencia Total
                 partidosMundial = [
                     { grupo: "Grupos", informacionText: "Fallo de conexión", local: "Revisa tu red", golesL: "-", visita: "Sin acceso", golesV: "-", badgeLogoL: "⚠️", badgeLogoV: "⚠️" }
                 ];
@@ -535,6 +532,7 @@ const App = (() => {
             mapeoGrupos[identificador].push(p);
         });
 
+        // Forzamos el orden estricto (A, B, C...)
         const gruposOrdenados = Object.keys(mapeoGrupos).sort();
 
         let grillaGruposHtml = '';
