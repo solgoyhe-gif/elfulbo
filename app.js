@@ -598,8 +598,19 @@ const App = (() => {
             let tempStats = { goles: [], asistencias: [], amarillas: [], rojas: [] };
             
             let atletasArray = [];
-            if (rosterJSON.athletes && rosterJSON.athletes[0] && rosterJSON.athletes[0].items) atletasArray = rosterJSON.athletes[0].items;
-            else if (teamJSON.team && teamJSON.team.athletes) atletasArray = teamJSON.team.athletes;
+            if (Array.isArray(rosterJSON.athletes)) {
+                // fifa.world: athletes es array plano de jugadores {id, displayName, position, jersey, ...}
+                // Verificar si es array plano (jugadores directos) o array de grupos con .items
+                if (rosterJSON.athletes.length > 0 && rosterJSON.athletes[0].items) {
+                    // Estructura agrupada por posición (ligas de clubes): [{items: [...]}, ...]
+                    atletasArray = rosterJSON.athletes.flatMap(grupo => grupo.items || []);
+                } else {
+                    // Estructura plana (selecciones nacionales / fifa.world): [{id, displayName, ...}, ...]
+                    atletasArray = rosterJSON.athletes;
+                }
+            } else if (teamJSON.team && teamJSON.team.athletes) {
+                atletasArray = teamJSON.team.athletes;
+            }
 
             if (atletasArray && atletasArray.length > 0) {
                 atletasArray.forEach(ath => {
