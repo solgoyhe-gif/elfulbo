@@ -651,7 +651,7 @@ const App = (() => {
             // que solo devuelve el último partido cargado por ESPN.
             const fechasGrupoStage = [];
             for (let d = 11; d <= 27; d++) {
-                fechasGrupoStage.push(`20260${d < 10 ? '0' : ''}${d}`);
+                fechasGrupoStage.push(`202606${d}`);
             }
 
             const [rosterRes, ...scoreboardsRes] = await Promise.all([
