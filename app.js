@@ -4,7 +4,7 @@
 //   · Tablas de Posiciones por Grupos para el Mundial 2026.
 //   · Conexión inquebrantable a ESPN Roster (/all/teams/).
 //   · Inyección de Estadísticas Verosímiles en Jugadores Reales (Si la API devuelve 0).
-//   · Pizarra Táctica Flexbox y Centro de Análisis Integrado.
+//   · Pizarra Táctica con fotos reales y solo el equipo propio.
 // ─────────────────────────────────────────────────────────────────────────
 
 const App = (() => {
@@ -80,9 +80,7 @@ const App = (() => {
                         <th style="width: 50px;">PTS</th>
                     </tr>
                 </thead>
-                <tbody>
-                    ${rows}
-                </tbody>
+                <tbody>${rows}</tbody>
             </table>
         `;
     };
@@ -176,7 +174,7 @@ const App = (() => {
             <main class="page-container fade-in">
                 <h2 class="section-title">🏆 Competiciones Disponibles</h2>
         `;
-        
+
         for (const key in LIGAS) {
             const categoria = LIGAS[key];
             html += `
@@ -184,7 +182,7 @@ const App = (() => {
                     <h3 class="category-title">${categoria.nombre}</h3>
                     <div class="leagues-grid">
             `;
-            
+
             categoria.competiciones.forEach(liga => {
                 html += `
                     <div class="glass-card league-card" onclick="window.location.hash='#/liga?id=${liga.id}'">
@@ -199,10 +197,10 @@ const App = (() => {
                     </div>
                 `;
             });
-            
+
             html += `</div></div>`;
         }
-        
+
         html += `</main>`;
         appContainer.innerHTML = html;
     };
@@ -252,14 +250,19 @@ const App = (() => {
             ]);
 
             const standingsBox = document.getElementById('standings-box');
-            const matchesBox = document.getElementById('matches-box');
+            const matchesBox   = document.getElementById('matches-box');
 
             if (tablaRaw && tablaRaw.length > 0) {
                 let rowsHtml = tablaRaw.map(entry => {
                     const t = entry.team;
-                    const imgLogo = t.logo ? `<img src="${t.logo}" width="20" height="24" style="object-fit: contain; margin-right: 8px;">` : `<span class="team-shield" style="margin-right: 8px;">${t.name.charAt(0)}</span>`;
+                    const imgLogo = t.logo
+                        ? `<img src="${t.logo}" width="20" height="24" style="object-fit: contain; margin-right: 8px;">`
+                        : `<span class="team-shield" style="margin-right: 8px;">${t.name.charAt(0)}</span>`;
                     return `
-                        <tr onclick="window.location.hash='#/equipo?id=${t.id}&liga=${ligaId}&name=${encodeURIComponent(t.name)}'" style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+                        <tr onclick="window.location.hash='#/equipo?id=${t.id}&liga=${ligaId}&name=${encodeURIComponent(t.name)}'"
+                            style="cursor: pointer; transition: background 0.2s;"
+                            onmouseover="this.style.background='rgba(255,255,255,0.05)'"
+                            onmouseout="this.style.background='transparent'">
                             <td class="col-pos">${entry.pos}</td>
                             <td class="col-team">${imgLogo} <span>${t.name}</span></td>
                             <td>${entry.stats.pj}</td>
@@ -270,7 +273,7 @@ const App = (() => {
                         </tr>
                     `;
                 }).join('');
-                
+
                 standingsBox.querySelector('.table-responsive').innerHTML = `
                     <table class="standings-table">
                         <thead><tr><th class="col-pos">#</th><th>Equipo</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th class="col-pts">PTS</th></tr></thead>
@@ -284,8 +287,8 @@ const App = (() => {
             if (partidosRaw && partidosRaw.length > 0) {
                 let matchesHtml = partidosRaw.map(partido => {
                     const statusDesc = partido.status?.description ?? partido.status?.state ?? '';
-                    const isLive = partido.status?.state === 'in' || statusDesc.toLowerCase().includes("'");
-                    const liveBadge = isLive ? `<span style="color: #ff4757; font-size: 0.7rem; font-weight: bold; animation: pulse 1s infinite; margin-left: 6px;">● VIVO</span>` : '';
+                    const isLive     = partido.status?.state === 'in' || statusDesc.toLowerCase().includes("'");
+                    const liveBadge  = isLive ? `<span style="color: #ff4757; font-size: 0.7rem; font-weight: bold; animation: pulse 1s infinite; margin-left: 6px;">● VIVO</span>` : '';
                     const homeLogoHtml = partido.homeTeam?.logo ? `<img src="${partido.homeTeam.logo}" width="18" height="18" style="object-fit:contain; margin-right:6px; vertical-align:middle;">` : '';
                     const awayLogoHtml = partido.awayTeam?.logo ? `<img src="${partido.awayTeam.logo}" width="18" height="18" style="object-fit:contain; margin-right:6px; vertical-align:middle;">` : '';
 
@@ -307,7 +310,7 @@ const App = (() => {
                         </div>
                     `;
                 }).join('');
-                
+
                 matchesBox.innerHTML = `<h3 class="panel-title" style="color: ${ligaData.badge_color};">Resultados / Marcadores</h3><div class="match-list" style="max-height: 450px; overflow-y: auto;">${matchesHtml}</div>`;
             }
         } catch (err) { console.error("Error cargando datos de liga:", err); }
@@ -328,38 +331,36 @@ const App = (() => {
         const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
 
         try {
-            const espnUrl = 'https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings';
+            const espnUrl      = 'https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings';
             const espnProxyUrl = `${CF_WORKER}/?url=${encodeURIComponent(espnUrl)}`;
             const respuestaEspn = await fetch(espnProxyUrl);
             if (!respuestaEspn.ok) throw new Error('ESPN Standings falló');
-            
+
             const parsedEspn = await respuestaEspn.json();
 
             if (parsedEspn.children && parsedEspn.children.length > 0) {
                 gruposData = parsedEspn.children.map(grupo => {
                     const equipos = grupo.standings?.entries?.map(e => {
-                        const stats = e.stats || [];
+                        const stats    = e.stats || [];
                         const findStat = (name) => stats.find(s => s.name === name)?.value || 0;
                         return {
-                            id: e.team.id,
+                            id:     e.team.id,
                             nombre: e.team.name,
-                            logo: e.team.logos?.[0]?.href || '🌐',
-                            pj: findStat('gamesPlayed'),
-                            pts: findStat('points'),
-                            dif: findStat('pointDifferential')
+                            logo:   e.team.logos?.[0]?.href || '🌐',
+                            pj:     findStat('gamesPlayed'),
+                            pts:    findStat('points'),
+                            dif:    findStat('pointDifferential')
                         };
                     }) || [];
 
                     equipos.sort((a, b) => b.pts - a.pts || b.dif - a.dif);
-                    return { nombre: grupo.name.replace(/Group /i, 'GRUPO ').toUpperCase(), equipos: equipos };
+                    return { nombre: grupo.name.replace(/Group /i, 'GRUPO ').toUpperCase(), equipos };
                 });
                 gruposData.sort((a, b) => a.nombre.localeCompare(b.nombre));
             } else {
                 throw new Error('Array de grupos vacío');
             }
         } catch (error) {
-            // ── MOCK: sorteo oficial Mundial 2026 (draw dic 2025, playoffs mar 2026) ──
-            // IDs verificados contra ESPN fifa.world/teams (jun 2026)
             const mockEquipos = {
                 'GRUPO A': [{n:'México',        fl:'🇲🇽', id:'203'}, {n:'Sudáfrica',     fl:'🇿🇦', id:'467'}, {n:'Corea del Sur', fl:'🇰🇷', id:'451'}, {n:'Czechia',        fl:'🇨🇿', id:'450'}],
                 'GRUPO B': [{n:'Canadá',        fl:'🇨🇦', id:'206'}, {n:'Suiza',         fl:'🇨🇭', id:'475'}, {n:'Catar',         fl:'🇶🇦', id:'4398'},{n:'Bosnia-Herz.',   fl:'🇧🇦', id:'452'}],
@@ -377,10 +378,8 @@ const App = (() => {
 
             for (const [nombreGrupo, equiposArr] of Object.entries(mockEquipos)) {
                 gruposData.push({
-                    nombre: nombreGrupo,
-                    equipos: equiposArr.map(eq => ({
-                        id: eq.id, nombre: eq.n, logo: eq.fl, pj: 0, pts: 0, dif: 0
-                    }))
+                    nombre:  nombreGrupo,
+                    equipos: equiposArr.map(eq => ({ id: eq.id, nombre: eq.n, logo: eq.fl, pj: 0, pts: 0, dif: 0 }))
                 });
             }
             gruposData.sort((a, b) => a.nombre.localeCompare(b.nombre));
@@ -388,9 +387,14 @@ const App = (() => {
 
         let grillaGruposHtml = gruposData.map(grupo => {
             let filasTabla = grupo.equipos.map((eq, index) => {
-                const logoHtml = eq.logo.includes('http') ? `<img src="${eq.logo}" width="20" height="20" style="object-fit: contain; margin-right: 8px;">` : `<span style="font-size:1.1rem; margin-right: 8px;">${eq.logo}</span>`;
+                const logoHtml = eq.logo.includes('http')
+                    ? `<img src="${eq.logo}" width="20" height="20" style="object-fit: contain; margin-right: 8px;">`
+                    : `<span style="font-size:1.1rem; margin-right: 8px;">${eq.logo}</span>`;
                 return `
-                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'" onclick="window.location.hash='#/equipo?id=${eq.id}&liga=world_cup&name=${encodeURIComponent(eq.nombre)}'; event.stopPropagation();">
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; transition: background 0.2s;"
+                        onmouseover="this.style.background='rgba(255,255,255,0.05)'"
+                        onmouseout="this.style.background='transparent'"
+                        onclick="window.location.hash='#/equipo?id=${eq.id}&liga=world_cup&name=${encodeURIComponent(eq.nombre)}'; event.stopPropagation();">
                         <td style="padding: 8px 4px; font-weight: bold; color: var(--text-muted);">${index + 1}</td>
                         <td style="padding: 8px 4px; display: flex; align-items: center; font-weight: 500;">
                             ${logoHtml} <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;">${eq.nombre}</span>
@@ -403,7 +407,8 @@ const App = (() => {
 
             return `
                 <div class="glass-panel" style="padding: 1.2rem; min-height: 220px; transition: transform 0.2s;">
-                    <h3 class="panel-title" style="text-align: center; color: var(--accent-neon); border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; margin-bottom: 12px; font-size: 1.2rem; letter-spacing: 1px; cursor: pointer;" onclick="window.location.hash='#/grupo?id=${encodeURIComponent(grupo.nombre)}'">
+                    <h3 class="panel-title" style="text-align: center; color: var(--accent-neon); border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; margin-bottom: 12px; font-size: 1.2rem; letter-spacing: 1px; cursor: pointer;"
+                        onclick="window.location.hash='#/grupo?id=${encodeURIComponent(grupo.nombre)}'">
                         ${grupo.nombre} <span style="font-size: 0.8rem; color: var(--text-muted);">↗</span>
                     </h3>
                     <div class="table-responsive">
@@ -442,10 +447,10 @@ const App = (() => {
         `;
     };
 
-    // ── VISTA MUNDIAL: DETALLE DE GRUPO (GF, GC, DIF) ────────
+    // ── VISTA MUNDIAL: DETALLE DE GRUPO ──────────────────────────────────────
     const renderGrupoDetalle = async (grupoNombreCodificado) => {
         const grupoNombre = decodeURIComponent(grupoNombreCodificado);
-        
+
         appContainer.innerHTML = `
             ${renderNavbar('#/liga?id=world_cup')}
             <main class="page-container fade-in">
@@ -461,25 +466,24 @@ const App = (() => {
         const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
 
         try {
-            const espnProxyUrl = `${CF_WORKER}/?url=${encodeURIComponent('https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings')}`;
+            const espnProxyUrl  = `${CF_WORKER}/?url=${encodeURIComponent('https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings')}`;
             const respuestaEspn = await fetch(espnProxyUrl);
-            const parsedEspn = await respuestaEspn.json();
-
+            const parsedEspn    = await respuestaEspn.json();
             const grupoEncontrado = parsedEspn.children?.find(g => g.name.replace(/Group /i, 'GRUPO ').toUpperCase() === grupoNombre);
-            
+
             if (grupoEncontrado && grupoEncontrado.standings?.entries) {
                 equipos = grupoEncontrado.standings.entries.map(e => {
-                    const stats = e.stats || [];
+                    const stats    = e.stats || [];
                     const findStat = (name) => stats.find(s => s.name === name)?.value || 0;
                     return {
-                        id: e.team.id,
+                        id:     e.team.id,
                         nombre: e.team.name,
-                        logo: e.team.logos?.[0]?.href || '🌐',
-                        pj: findStat('gamesPlayed'),
-                        gf: findStat('pointsFor'),
-                        gc: findStat('pointsAgainst'),
-                        dif: findStat('pointDifferential'),
-                        pts: findStat('points')
+                        logo:   e.team.logos?.[0]?.href || '🌐',
+                        pj:     findStat('gamesPlayed'),
+                        gf:     findStat('pointsFor'),
+                        gc:     findStat('pointsAgainst'),
+                        dif:    findStat('pointDifferential'),
+                        pts:    findStat('points')
                     };
                 });
                 equipos.sort((a, b) => b.pts - a.pts || b.dif - a.dif);
@@ -499,25 +503,25 @@ const App = (() => {
                 'GRUPO K': [{n:'Portugal',      fl:'🇵🇹', id:'482'}, {n:'Congo RD',      fl:'🇨🇩', id:'2850'},{n:'Uzbekistán',    fl:'🇺🇿', id:'2570'},{n:'Colombia',       fl:'🇨🇴', id:'208'}],
                 'GRUPO L': [{n:'Inglaterra',    fl:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', id:'448'}, {n:'Croacia',       fl:'🇭🇷', id:'477'}, {n:'Ghana',         fl:'🇬🇭', id:'4469'},{n:'Panamá',         fl:'🇵🇦', id:'2659'}],
             };
-
             const target = mapMockGrup[grupoNombre] || mapMockGrup['GRUPO A'];
-            equipos = target.map((eq, i) => ({
-                id: eq.id, nombre: eq.n, logo: eq.fl, pj: 0, gf: 0, gc: 0, dif: 0, pts: 0
-            }));
+            equipos = target.map(eq => ({ id: eq.id, nombre: eq.n, logo: eq.fl, pj: 0, gf: 0, gc: 0, dif: 0, pts: 0 }));
         }
 
         let filasHtml = equipos.map((eq, idx) => {
-            const logoHtml = eq.logo.includes('http') ? `<img src="${eq.logo}" width="24" height="24" style="object-fit: contain; margin-right: 12px;">` : `<span style="font-size:1.3rem; margin-right: 12px;">${eq.logo}</span>`;
+            const logoHtml = eq.logo.includes('http')
+                ? `<img src="${eq.logo}" width="24" height="24" style="object-fit: contain; margin-right: 12px;">`
+                : `<span style="font-size:1.3rem; margin-right: 12px;">${eq.logo}</span>`;
             return `
-                <tr style="border-bottom: 1px solid var(--border-glass); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'" onclick="window.location.hash='#/equipo?id=${eq.id}&liga=world_cup&name=${encodeURIComponent(eq.nombre)}'">
+                <tr style="border-bottom: 1px solid var(--border-glass); cursor: pointer; transition: background 0.2s;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.05)'"
+                    onmouseout="this.style.background='transparent'"
+                    onclick="window.location.hash='#/equipo?id=${eq.id}&liga=world_cup&name=${encodeURIComponent(eq.nombre)}'">
                     <td style="padding: 12px; font-weight: bold; color: var(--accent-neon);">${idx + 1}</td>
-                    <td style="padding: 12px; display: flex; align-items: center; font-weight: 600; font-size: 1.05rem;">
-                        ${logoHtml} ${eq.nombre}
-                    </td>
+                    <td style="padding: 12px; display: flex; align-items: center; font-weight: 600; font-size: 1.05rem;">${logoHtml} ${eq.nombre}</td>
                     <td style="padding: 12px; text-align: center;">${eq.pj}</td>
                     <td style="padding: 12px; text-align: center; color: #6CABDD;">${eq.gf}</td>
                     <td style="padding: 12px; text-align: center; color: #ff4757;">${eq.gc}</td>
-                    <td style="padding: 12px; text-align: center; font-weight: bold;">${eq.dif > 0 ? '+'+eq.dif : eq.dif}</td>
+                    <td style="padding: 12px; text-align: center; font-weight: bold;">${eq.dif > 0 ? '+' + eq.dif : eq.dif}</td>
                     <td style="padding: 12px; text-align: center; font-weight: 900; color: var(--text-main); font-size: 1.1rem;">${eq.pts}</td>
                 </tr>
             `;
@@ -527,14 +531,12 @@ const App = (() => {
             ${renderNavbar('#/liga?id=world_cup')}
             <main class="page-container fade-in">
                 <a href="#/liga?id=world_cup" style="color: var(--text-muted); text-decoration: none; display: inline-block; margin-bottom: 1rem; font-weight: 600;">← Volver a Fase de Grupos</a>
-                
                 <div class="liga-header" style="border-left: 6px solid var(--accent-neon); background: rgba(200, 168, 75, 0.05);">
                     <div>
                         <h1 class="liga-title-main">${grupoNombre}</h1>
                         <span style="color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">TABLA DE POSICIONES EXTENDIDA</span>
                     </div>
                 </div>
-
                 <div class="glass-panel" style="padding: 1.5rem; margin-top: 2rem;">
                     <div class="table-responsive">
                         <table style="width: 100%; border-collapse: collapse;">
@@ -557,15 +559,12 @@ const App = (() => {
         `;
     };
 
-    // getEspnLeague eliminado — usar ESPN.getSlug(ligaId) directamente (definido en espn.js)
-
-    // ── VISTA MUNDIAL: PERFIL DE EQUIPO, ESTADÍSTICAS REALES Y ANÁLISIS ──
+    // ── VISTA: PERFIL DE EQUIPO ───────────────────────────────────────────────
     const renderEquipoDetalle = async (equipoId, ligaId, nombreEquipoDecoded) => {
-        const name = decodeURIComponent(nombreEquipoDecoded || 'Selección');
-        const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
+        const name       = decodeURIComponent(nombreEquipoDecoded || 'Selección');
+        const CF_WORKER  = 'https://elfulbo.solgoyhe.workers.dev';
         const espnLeague = ESPN.getSlug(ligaId) ?? ligaId;
 
-        // ── Pantalla de carga inicial ─────────────────────────────────────────
         appContainer.innerHTML = `
             ${renderNavbar('#/liga?id=' + ligaId)}
             <main class="page-container fade-in">
@@ -591,14 +590,12 @@ const App = (() => {
             `).join('');
         };
 
-        // ── Extrae stats reales de un summary de partido ──────────────────────
         const extraerStatsDeSummary = (summaryJSON, teamId) => {
             const stats = { goles: [], asistencias: [], amarillas: [], rojas: [] };
-            
-            // Goles y asistencias desde keyEvents
+
             const goles = (summaryJSON.keyEvents ?? []).filter(e => e.scoringPlay === true && e.team?.id === String(teamId));
             goles.forEach(g => {
-                const goleador = g.participants?.[0]?.athlete?.displayName;
+                const goleador  = g.participants?.[0]?.athlete?.displayName;
                 const asistidor = g.participants?.[1]?.athlete?.displayName;
                 if (goleador) {
                     const existing = stats.goles.find(x => x.nombre === goleador);
@@ -612,13 +609,12 @@ const App = (() => {
                 }
             });
 
-            // Tarjetas desde rosters[].roster[].stats
             const teamRoster = (summaryJSON.rosters ?? []).find(r => r.team?.id === String(teamId));
             (teamRoster?.roster ?? []).forEach(j => {
                 const getStat = (n) => j.stats?.find(s => s.name === n)?.value ?? 0;
-                const am = getStat('yellowCards');
-                const ro = getStat('redCards');
-                const nombre = j.athlete?.displayName;
+                const am      = getStat('yellowCards');
+                const ro      = getStat('redCards');
+                const nombre  = j.athlete?.displayName;
                 if (am > 0) stats.amarillas.push({ nombre, valor: am });
                 if (ro > 0) stats.rojas.push({ nombre, valor: ro });
             });
@@ -626,7 +622,6 @@ const App = (() => {
             return stats;
         };
 
-        // ── Extrae convocados del roster general ──────────────────────────────
         const extraerConvocados = (rosterJSON) => {
             let atletasArray = [];
             if (Array.isArray(rosterJSON.athletes)) {
@@ -642,18 +637,13 @@ const App = (() => {
             }));
         };
 
-        // ── Fetch paralelo: roster + partidos del equipo ──────────────────────
+        // ── Fetch paralelo: roster + scoreboards ──────────────────────────────
         let convocados = [];
-        let partidos = [];   // [{id, rival, resultado, estado, esLocal}]
+        let partidos   = [];
 
         try {
-            // Fechas del grupo stage del Mundial 2026: 11 al 27 de junio
-            // Se consultan en paralelo con ?dates=YYYYMMDD — mucho más completo que /schedule
-            // que solo devuelve el último partido cargado por ESPN.
             const fechasGrupoStage = [];
-            for (let d = 11; d <= 27; d++) {
-                fechasGrupoStage.push(`202606${d}`);
-            }
+            for (let d = 11; d <= 27; d++) fechasGrupoStage.push(`202606${d}`);
 
             const [rosterRes, ...scoreboardsRes] = await Promise.all([
                 fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/teams/${equipoId}/roster`)}`),
@@ -664,20 +654,18 @@ const App = (() => {
 
             if (rosterRes.ok) convocados = extraerConvocados(await rosterRes.json());
 
-            // Procesar todos los scoreboards en paralelo y filtrar partidos del equipo
             const todosEventos = (await Promise.all(
                 scoreboardsRes.map(r => r.ok ? r.json().catch(() => ({})) : Promise.resolve({}))
             )).flatMap(sb => sb.events ?? []);
 
-            // Deduplicar por event ID (un partido puede aparecer en varios días por timezone)
             const vistos = new Set();
             todosEventos.forEach(ev => {
                 if (vistos.has(ev.id)) return;
                 vistos.add(ev.id);
 
-                const comp = ev.competitions?.[0];
-                const home = comp?.competitors?.find(c => c.homeAway === 'home');
-                const away = comp?.competitors?.find(c => c.homeAway === 'away');
+                const comp     = ev.competitions?.[0];
+                const home     = comp?.competitors?.find(c => c.homeAway === 'home');
+                const away     = comp?.competitors?.find(c => c.homeAway === 'away');
                 const esLocal  = home?.team?.id === String(equipoId);
                 const esVisita = away?.team?.id === String(equipoId);
                 if (!esLocal && !esVisita) return;
@@ -685,22 +673,14 @@ const App = (() => {
                 const rival       = esLocal ? (away?.team?.displayName ?? '?') : (home?.team?.displayName ?? '?');
                 const scoreLocal  = home?.score ?? '-';
                 const scoreVisita = away?.score ?? '-';
-                const estado  = comp?.status?.type?.state ?? 'pre';
-                const desc    = comp?.status?.type?.shortDetail ?? '';
-                const isLive  = estado === 'in';
-                const jugado  = estado === 'post' || isLive;
+                const estado      = comp?.status?.type?.state ?? 'pre';
+                const desc        = comp?.status?.type?.shortDetail ?? '';
+                const isLive      = estado === 'in';
+                const jugado      = estado === 'post' || isLive;
 
-                partidos.push({
-                    id: ev.id,
-                    rival,
-                    resultado: jugado ? `${scoreLocal} - ${scoreVisita}` : desc || 'Próximo',
-                    estado,
-                    isLive,
-                    jugado
-                });
+                partidos.push({ id: ev.id, rival, resultado: jugado ? `${scoreLocal} - ${scoreVisita}` : desc || 'Próximo', estado, isLive, jugado });
             });
 
-            // Ordenar: jugados primero, luego próximos
             partidos.sort((a, b) => {
                 if (a.jugado && !b.jugado) return -1;
                 if (!a.jugado && b.jugado) return 1;
@@ -709,16 +689,11 @@ const App = (() => {
 
         } catch (err) { console.warn('[EL FULBO] Error cargando equipo:', err); }
 
-        // ── Pizarra táctica ───────────────────────────────────────────────────
-        const porteros   = convocados.filter(j => ['G', 'POR', 'GK'].includes(j.posicion));
-        const defensas   = convocados.filter(j => ['D', 'DEF', 'CB', 'LB', 'RB'].includes(j.posicion));
-        const medios     = convocados.filter(j => ['M', 'MED', 'CM', 'CDM', 'CAM', 'RM', 'LM'].includes(j.posicion));
-        const delanteros = convocados.filter(j => ['F', 'A', 'DEL', 'ST', 'RW', 'LW', 'CF'].includes(j.posicion));
-        const getDorsal  = (arr, i, fb) => (arr[i] && arr[i].numero !== '-') ? arr[i].numero : fb;
-
+        // ── HTML de convocados ────────────────────────────────────────────────
         const rosterHtml = convocados.length > 0
             ? convocados.map(j => `
-                <div class="roster-item-js" data-id="${j.id ?? j.numero}" style="display:flex; align-items:center; justify-content:space-between; padding: 8px; border-bottom: 1px solid var(--border-glass); transition: background 0.2s, border-left 0.2s;">
+                <div class="roster-item-js" data-id="${j.id ?? j.numero}"
+                    style="display:flex; align-items:center; justify-content:space-between; padding: 8px; border-bottom: 1px solid var(--border-glass); transition: background 0.2s, border-left 0.2s;">
                     <div style="display:flex; align-items:center; gap: 10px;">
                         <span style="background:rgba(255,255,255,0.1); width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:50%; font-weight:bold; font-size:0.85rem;">${j.numero}</span>
                         <span>${j.nombre}</span>
@@ -778,55 +753,209 @@ const App = (() => {
                         <h3 class="panel-title" id="pizarra-titulo" style="margin-bottom:0.5rem;">Disposición Táctica</h3>
                         <div id="pizarra-container" style="width:100%; overflow:hidden; border-radius:8px;">
                             <svg id="pizarra-svg" viewBox="0 0 400 560" xmlns="http://www.w3.org/2000/svg" style="width:100%; display:block;">
-                                <!-- Campo verde -->
-                                <rect width="400" height="560" fill="#2d7a3a" rx="8"/>
-                                <!-- Líneas del campo -->
-                                <rect x="20" y="20" width="360" height="520" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+                                <defs></defs>
+                                <!-- Franjas de césped -->
+                                <rect width="400" height="560" fill="#27792a" rx="8"/>
+                                <rect x="0"  y="0"   width="400" height="70"  fill="#1e6622" rx="8"/>
+                                <rect x="0"  y="140" width="400" height="70"  fill="#1e6622"/>
+                                <rect x="0"  y="280" width="400" height="70"  fill="#1e6622"/>
+                                <rect x="0"  y="420" width="400" height="70"  fill="#1e6622"/>
+                                <!-- Borde del campo -->
+                                <rect x="20" y="20" width="360" height="520" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
                                 <!-- Línea del medio -->
-                                <line x1="20" y1="280" x2="380" y2="280" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+                                <line x1="20" y1="280" x2="380" y2="280" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
                                 <!-- Círculo central -->
-                                <circle cx="200" cy="280" r="50" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
-                                <circle cx="200" cy="280" r="2" fill="rgba(255,255,255,0.6)"/>
+                                <circle cx="200" cy="280" r="52" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+                                <circle cx="200" cy="280" r="2.5" fill="rgba(255,255,255,0.7)"/>
                                 <!-- Área grande arriba -->
-                                <rect x="90" y="20" width="220" height="80" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+                                <rect x="88"  y="20"  width="224" height="82" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
                                 <!-- Área chica arriba -->
-                                <rect x="145" y="20" width="110" height="35" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+                                <rect x="144" y="20"  width="112" height="34" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
                                 <!-- Área grande abajo -->
-                                <rect x="90" y="460" width="220" height="80" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+                                <rect x="88"  y="458" width="224" height="82" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
                                 <!-- Área chica abajo -->
-                                <rect x="145" y="505" width="110" height="35" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
-                                <!-- Punto penal arriba -->
-                                <circle cx="200" cy="75" r="2.5" fill="rgba(255,255,255,0.6)"/>
-                                <!-- Punto penal abajo -->
-                                <circle cx="200" cy="485" r="2.5" fill="rgba(255,255,255,0.6)"/>
-                                <!-- Arco arriba -->
-                                <rect x="160" y="14" width="80" height="10" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2"/>
-                                <!-- Arco abajo -->
-                                <rect x="160" y="536" width="80" height="10" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2"/>
-                                <!-- Franja de césped -->
-                                <rect x="20" y="20" width="360" height="65" fill="rgba(0,0,0,0.06)"/>
-                                <rect x="20" y="150" width="360" height="65" fill="rgba(0,0,0,0.06)"/>
-                                <rect x="20" y="280" width="360" height="65" fill="rgba(0,0,0,0.06)"/>
-                                <rect x="20" y="410" width="360" height="65" fill="rgba(0,0,0,0.06)"/>
-                                <!-- Jugadores se renderizan por JS -->
+                                <rect x="144" y="506" width="112" height="34" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+                                <!-- Puntos de penal -->
+                                <circle cx="200" cy="76"  r="2.5" fill="rgba(255,255,255,0.7)"/>
+                                <circle cx="200" cy="484" r="2.5" fill="rgba(255,255,255,0.7)"/>
+                                <!-- Arcos -->
+                                <rect x="160" y="12"  width="80" height="10" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/>
+                                <rect x="160" y="538" width="80" height="10" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/>
+                                <!-- Arcos de penales -->
+                                <path d="M138,102 A62,62 0 0,0 262,102" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+                                <path d="M138,458 A62,62 0 0,1 262,458" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+                                <!-- Corners -->
+                                <path d="M28,20 A8,8 0 0,1 20,28"   fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+                                <path d="M372,20 A8,8 0 0,0 380,28" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+                                <path d="M28,540 A8,8 0 0,0 20,532" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+                                <path d="M372,540 A8,8 0 0,1 380,532" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+                                <!-- Capa de jugadores -->
                                 <g id="tokens-layer"></g>
                             </svg>
-                            <p id="pizarra-placeholder" style="display:none; text-align:center; color:rgba(255,255,255,0.3); font-size:0.85rem; padding:1rem;">Seleccioná un partido</p>
                         </div>
                     </div>
                 </div>
             </main>
         `;
 
-        // ── Función global para cargar stats de un partido ────────────────────
+        // ── Función para dibujar un jugador en la pizarra ─────────────────────
+        const _dibujarJugadorSVG = (svg, jugador, x, y) => {
+            const ns      = 'http://www.w3.org/2000/svg';
+            const R       = 20;
+            const numero  = jugador.jersey ?? '';
+            const foto    = jugador.athlete?.headshot?.href ?? null;
+            const jId     = jugador.athlete?.id ?? jugador.jersey ?? Math.random().toString(36).slice(2);
+            const nombre  = (() => {
+                const dn    = jugador.athlete?.displayName ?? '';
+                const parts = dn.trim().split(' ');
+                return (parts[parts.length - 1] ?? dn).substring(0, 10);
+            })();
+
+            const g = document.createElementNS(ns, 'g');
+            g.setAttribute('transform', `translate(${x},${y})`);
+            g.setAttribute('class', 'token-jugador');
+            g.setAttribute('data-id', String(jId));
+            g.style.cursor = 'pointer';
+            g.addEventListener('click', () => window._resaltarJugador(String(jId), g));
+
+            // clipPath para la foto circular
+            let defs = svg.querySelector('defs');
+            if (!defs) { defs = document.createElementNS(ns, 'defs'); svg.prepend(defs); }
+            const clipId   = `clip-${jId}-${Math.random().toString(36).slice(2, 6)}`;
+            const clip     = document.createElementNS(ns, 'clipPath');
+            clip.setAttribute('id', clipId);
+            const clipCirc = document.createElementNS(ns, 'circle');
+            clipCirc.setAttribute('cx', '0'); clipCirc.setAttribute('cy', '0'); clipCirc.setAttribute('r', R);
+            clip.appendChild(clipCirc);
+            defs.appendChild(clip);
+
+            // Fondo del círculo
+            const bg = document.createElementNS(ns, 'circle');
+            bg.setAttribute('cx', '0'); bg.setAttribute('cy', '0'); bg.setAttribute('r', R);
+            bg.setAttribute('fill', '#2a2a4a');
+            bg.setAttribute('stroke', 'rgba(255,255,255,0.35)'); bg.setAttribute('stroke-width', '1.5');
+            g.appendChild(bg);
+
+            if (foto) {
+                const img = document.createElementNS(ns, 'image');
+                img.setAttribute('href', foto);
+                img.setAttribute('x', -R); img.setAttribute('y', -R);
+                img.setAttribute('width', R * 2); img.setAttribute('height', R * 2);
+                img.setAttribute('clip-path', `url(#${clipId})`);
+                img.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+                g.appendChild(img);
+            } else {
+                // Iniciales como fallback
+                const iniciales = (jugador.athlete?.displayName ?? '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                const ini = document.createElementNS(ns, 'text');
+                ini.setAttribute('x', '0'); ini.setAttribute('y', '1');
+                ini.setAttribute('text-anchor', 'middle'); ini.setAttribute('dominant-baseline', 'middle');
+                ini.setAttribute('font-size', '11'); ini.setAttribute('font-weight', '700');
+                ini.setAttribute('fill', '#c8c8e0'); ini.setAttribute('font-family', 'system-ui');
+                ini.textContent = iniciales;
+                g.appendChild(ini);
+            }
+
+            // Badge número (esquina inferior derecha del círculo)
+            const numBg = document.createElementNS(ns, 'rect');
+            numBg.setAttribute('x', R - 10); numBg.setAttribute('y', R - 11);
+            numBg.setAttribute('width', '16'); numBg.setAttribute('height', '13');
+            numBg.setAttribute('rx', '3'); numBg.setAttribute('fill', '#1a1a2e');
+            g.appendChild(numBg);
+
+            const numEl = document.createElementNS(ns, 'text');
+            numEl.setAttribute('x', R - 2); numEl.setAttribute('y', R - 3);
+            numEl.setAttribute('text-anchor', 'middle'); numEl.setAttribute('dominant-baseline', 'middle');
+            numEl.setAttribute('font-size', '8'); numEl.setAttribute('font-weight', '800');
+            numEl.setAttribute('fill', '#ffffff'); numEl.setAttribute('font-family', 'system-ui');
+            numEl.textContent = numero;
+            g.appendChild(numEl);
+
+            // Pastilla con nombre
+            const nameBg = document.createElementNS(ns, 'rect');
+            nameBg.setAttribute('x', '-26'); nameBg.setAttribute('y', String(R + 3));
+            nameBg.setAttribute('width', '52'); nameBg.setAttribute('height', '14');
+            nameBg.setAttribute('rx', '4'); nameBg.setAttribute('fill', 'rgba(0,0,0,0.7)');
+            g.appendChild(nameBg);
+
+            const nameEl = document.createElementNS(ns, 'text');
+            nameEl.setAttribute('x', '0'); nameEl.setAttribute('y', String(R + 11));
+            nameEl.setAttribute('text-anchor', 'middle'); nameEl.setAttribute('dominant-baseline', 'middle');
+            nameEl.setAttribute('font-size', '7.5'); nameEl.setAttribute('font-weight', '600');
+            nameEl.setAttribute('fill', '#ffffff'); nameEl.setAttribute('font-family', 'system-ui');
+            nameEl.textContent = nombre;
+            g.appendChild(nameEl);
+
+            return g;
+        };
+
+        // ── Función para renderizar la pizarra completa ───────────────────────
+        const _renderizarPizarra = (summaryJSON) => {
+            const tituloEl   = document.getElementById('pizarra-titulo');
+            const pizarraSvg = document.getElementById('pizarra-svg');
+            const tokensLayer = pizarraSvg?.querySelector('#tokens-layer');
+            if (!pizarraSvg || !tokensLayer) return;
+
+            const teamRoster = (summaryJSON.rosters ?? []).find(r => r.team?.id === String(equipoId));
+            const formacion  = teamRoster?.formation ?? '?';
+            const titulares  = (teamRoster?.roster ?? [])
+                .filter(j => j.starter && j.formationPlace >= 1 && j.formationPlace <= 11)
+                .sort((a, b) => a.formationPlace - b.formationPlace);
+
+            if (tituloEl) tituloEl.textContent = `Disposición Táctica (${formacion})`;
+
+            // Limpiar capa de jugadores y defs anteriores
+            tokensLayer.innerHTML = '';
+            const defsEl = pizarraSvg.querySelector('defs');
+            if (defsEl) defsEl.innerHTML = '';
+
+            if (titulares.length === 0) return;
+
+            // Agrupar por fila según posición
+            const filaDePos = (abbr = '') => {
+                const a = abbr.toUpperCase();
+                if (['G', 'GK'].includes(a))                                                  return 0;
+                if (['RB','LB','CB','CD','RWB','LWB','D'].some(p => a.startsWith(p)))         return 1;
+                if (['ST','CF','RW','LW','FW','F'].some(p => a.startsWith(p)))                return 3;
+                return 2; // mediocampo por defecto
+            };
+
+            const rows = { 0: [], 1: [], 2: [], 3: [] };
+            titulares.forEach(j => rows[filaDePos(j.position?.abbreviation ?? '')].push(j));
+
+            // Vista de frente: GK abajo (y=520), delanteros arriba (y=70)
+            const rowsActivas = [0, 1, 2, 3].filter(r => rows[r].length > 0);
+            const yGK  = 520;
+            const yFWD = 70;
+
+            const coordsMap = new Map();
+            rowsActivas.forEach((fila, idx) => {
+                const jugsFila = rows[fila];
+                const t = rowsActivas.length === 1 ? 0 : idx / (rowsActivas.length - 1);
+                const y = yGK - t * (yGK - yFWD);
+                jugsFila.forEach((j, i) => {
+                    const cant = jugsFila.length;
+                    const x    = cant === 1 ? 200 : 44 + (i / (cant - 1)) * 312;
+                    coordsMap.set(j.formationPlace, { x, y });
+                });
+            });
+
+            titulares.forEach(j => {
+                const coords = coordsMap.get(j.formationPlace);
+                if (!coords) return;
+                const token = _dibujarJugadorSVG(pizarraSvg, j, coords.x, coords.y);
+                tokensLayer.appendChild(token);
+            });
+        };
+
+        // ── Seleccionar partido y cargar stats + pizarra ──────────────────────
         window._seleccionarPartido = async (idx) => {
-            // Actualizar chips
             partidos.forEach((_, i) => {
                 const chip = document.getElementById(`chip-partido-${i}`);
                 if (!chip) return;
-                chip.style.border = i === idx ? '2px solid var(--accent-neon)' : '2px solid var(--border-glass)';
+                chip.style.border     = i === idx ? '2px solid var(--accent-neon)' : '2px solid var(--border-glass)';
                 chip.style.background = i === idx ? 'rgba(57,255,20,0.12)' : 'rgba(255,255,255,0.04)';
-                chip.style.color = i === idx ? 'var(--accent-neon)' : 'var(--text-muted)';
+                chip.style.color      = i === idx ? 'var(--accent-neon)' : 'var(--text-muted)';
             });
 
             const container = document.getElementById('stats-partido-container');
@@ -834,7 +963,6 @@ const App = (() => {
 
             const partido = partidos[idx];
 
-            // Si no está jugado, mostrar mensaje
             if (!partido.jugado) {
                 container.innerHTML = `
                     <div class="glass-panel" style="padding: 1.5rem; grid-column: 1 / -1; text-align:center;">
@@ -845,7 +973,6 @@ const App = (() => {
                 return;
             }
 
-            // Loading
             container.innerHTML = `
                 <div class="glass-panel" style="padding: 1.5rem; grid-column: 1 / -1; text-align:center;">
                     <div style="width:30px; height:30px; border:3px solid var(--accent-neon); border-right-color:transparent; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto;"></div>
@@ -853,11 +980,10 @@ const App = (() => {
                 </div>`;
 
             try {
-                const summaryRes = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/summary?event=${partido.id}`)}`);
+                const summaryRes  = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/summary?event=${partido.id}`)}`);
                 const summaryJSON = summaryRes.ok ? await summaryRes.json() : {};
-                const stats = extraerStatsDeSummary(summaryJSON, equipoId);
+                const stats       = extraerStatsDeSummary(summaryJSON, equipoId);
 
-                // ── Stats ─────────────────────────────────────────────────────
                 container.innerHTML = `
                     <div class="glass-panel" style="padding: 1.5rem;">
                         <h3 class="panel-title" style="border-bottom:1px solid var(--border-glass); padding-bottom:8px; margin-bottom:10px; font-size:1.1rem;">⚽ Goleadores</h3>
@@ -876,127 +1002,45 @@ const App = (() => {
                         ${renderLista(stats.rojas, '🟥', 'TARJ.')}
                     </div>`;
 
-                // ── Pizarra SVG con camisetas ─────────────────────────────────
-                const tituloEl = document.getElementById('pizarra-titulo');
-                const tokensLayer = document.getElementById('tokens-layer');
-                const teamRoster     = (summaryJSON.rosters ?? []).find(r => r.team?.id === String(equipoId));
-                const rivalRosterId  = (summaryJSON.rosters ?? []).find(r => r.team?.id !== String(equipoId));
-                const formacion      = teamRoster?.formation ?? '?';
-                const titulares      = (teamRoster?.roster ?? []).filter(j => j.starter && j.formationPlace >= 1 && j.formationPlace <= 11).sort((a,b) => a.formationPlace - b.formationPlace);
-                const titularesRival = (rivalRosterId?.roster ?? []).filter(j => j.starter && j.formationPlace >= 1 && j.formationPlace <= 11).sort((a,b) => a.formationPlace - b.formationPlace);
-
-                if (tituloEl) tituloEl.textContent = `Disposición Táctica (${formacion})`;
-
-                // Función que calcula coordenadas SVG (viewBox 400x560)
-                const calcCoords = (jugadores, esLocal) => {
-                    const filaDeJugador = (abbr = '') => {
-                        const a = abbr.toUpperCase();
-                        if (['G','GK'].includes(a)) return 0;
-                        if (['RB','LB','CB','CD','CD-R','CD-L','RWB','LWB'].includes(a)) return 1;
-                        if (['CF','CF-R','CF-L','ST','ST-R','ST-L','RW','LW','FW'].includes(a)) return 3;
-                        return 2;
-                    };
-                    const ordenX = (abbr = '') => {
-                        const a = abbr.toUpperCase();
-                        if (a.endsWith('-L') || ['LB','LWB','LM','LW','CF-L','ST-L'].includes(a)) return 0;
-                        if (a.endsWith('-R') || ['RB','RWB','RM','RW','CF-R','ST-R'].includes(a)) return 2;
-                        return 1;
-                    };
-                    const filaMap = {0:[],1:[],2:[],3:[]};
-                    jugadores.forEach(j => filaMap[filaDeJugador(j.position?.abbreviation)].push(j));
-                    const filasActivas = [0,1,2,3].filter(f => filaMap[f].length > 0);
-                    const coordMap = new Map();
-                    // Local: portero abajo (y alto), delanteros arriba (y bajo)
-                    // Rival: portero arriba (y bajo), delanteros abajo (y alto)
-                    const yInicio = esLocal ? 520 : 40;
-                    const yFin    = esLocal ? 160 : 400;
-                    filasActivas.forEach((fila, posEnGrid) => {
-                        const jug = [...filaMap[fila]].sort((a,b) => ordenX(a.position?.abbreviation) - ordenX(b.position?.abbreviation));
-                        const t   = filasActivas.length === 1 ? 0 : posEnGrid / (filasActivas.length - 1);
-                        const y   = esLocal ? yInicio - t * (yInicio - yFin) : yInicio + t * (yFin - yInicio);
-                        jug.forEach((j, i) => {
-                            const cant = jug.length;
-                            const x = cant === 1 ? 200 : 40 + (i / (cant - 1)) * 320;
-                            coordMap.set(j.formationPlace, { x, y });
-                        });
-                    });
-                    return coordMap;
-                };
-
-                // SVG camiseta path (simplificada)
-                const camisetaSVG = (cx, cy, color, numColor, numero, apellido, clickId) => {
-                    const w = 22, h = 18, hom = 5;
-                    return `
-                    <g transform="translate(${cx},${cy})" style="cursor:pointer;" class="token-jugador" data-id="${clickId}" onclick="window._resaltarJugador('${clickId}', this)">
-                        <path d="M-${w/2},-${h/2} L-${w/2-hom},-${h/2-hom} L-${w/2-hom*2},-${h/2} L-${w/2-hom*2},-${h/2}+2 L-${w/2},0 L-${w/2},${h/2} L${w/2},${h/2} L${w/2},0 L${w/2+hom*2},-${h/2}+2 L${w/2+hom*2},-${h/2} L${w/2+hom},-${h/2-hom} L${w/2},-${h/2} L${w/4},-${h/2-4} L-${w/4},-${h/2-4} Z"
-                            fill="${color}" stroke="rgba(0,0,0,0.5)" stroke-width="1"/>
-                        <text x="0" y="5" text-anchor="middle" font-size="9" font-weight="bold" fill="${numColor}" font-family="Arial,sans-serif">${numero ?? ''}</text>
-                        <text x="0" y="${h/2+10}" text-anchor="middle" font-size="7" fill="white" font-family="Arial,sans-serif" font-weight="600"
-                            style="text-shadow:0 1px 2px #000">${apellido}</text>
-                    </g>`;
-                };
-
-                if (tokensLayer && titulares.length > 0) {
-                    const coordsLocal = calcCoords(titulares, true);
-                    const coordsRival = calcCoords(titularesRival, false);
-
-                    let tokensHtml = '';
-
-                    // Rival (arriba, camiseta oscura)
-                    titularesRival.forEach(j => {
-                        const c = coordsRival.get(j.formationPlace);
-                        if (!c) return;
-                        const apellido = (j.athlete?.shortName ?? j.athlete?.displayName?.split(' ').pop() ?? '').substring(0, 8);
-                        tokensHtml += camisetaSVG(c.x, c.y, '#cc3333', '#fff', j.jersey, apellido, `r_${j.athlete?.id}`);
-                    });
-
-                    // Local (abajo, camiseta clara)
-                    titulares.forEach(j => {
-                        const c = coordsLocal.get(j.formationPlace);
-                        if (!c) return;
-                        const apellido = (j.athlete?.shortName ?? j.athlete?.displayName?.split(' ').pop() ?? '').substring(0, 8);
-                        tokensHtml += camisetaSVG(c.x, c.y, '#f0f0f0', '#222', j.jersey, apellido, j.athlete?.id);
-                    });
-
-                    tokensLayer.innerHTML = tokensHtml;
-                }
+                // Renderizar pizarra con solo el equipo propio
+                _renderizarPizarra(summaryJSON);
 
             } catch (err) {
                 container.innerHTML = `<div class="glass-panel" style="padding:1.5rem; grid-column:1/-1; text-align:center;"><p style="color:var(--text-muted);">Error cargando estadísticas.</p></div>`;
             }
         };
 
-        // ── Resaltar jugador en lista al clickear en la pizarra ──────────────
+        // ── Resaltar jugador al clickear en la pizarra ────────────────────────
         window._resaltarJugador = (jugadorId, tokenEl) => {
-            // Quitar resaltado anterior
-            document.querySelectorAll('.roster-item-highlight').forEach(el => {
-                el.classList.remove('roster-item-highlight');
-                el.style.background = '';
-                el.style.borderLeft = '';
+            // Quitar resaltado anterior en lista
+            document.querySelectorAll('.roster-item-js').forEach(el => {
+                el.style.background  = '';
+                el.style.borderLeft  = '';
             });
-            document.querySelectorAll('.token-jugador div:first-child').forEach(el => {
-                el.style.transform = '';
-                el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.6)';
+            // Quitar resaltado anterior en pizarra
+            document.querySelectorAll('.token-jugador circle:first-child').forEach(el => {
+                el.setAttribute('stroke', 'rgba(255,255,255,0.35)');
+                el.setAttribute('stroke-width', '1.5');
             });
 
-            // Resaltar token en pizarra
-            const tokenCircle = tokenEl?.querySelector('div:first-child');
-            if (tokenCircle) {
-                tokenCircle.style.transform = 'scale(1.3)';
-                tokenCircle.style.boxShadow = '0 0 12px var(--accent-neon)';
+            // Resaltar círculo del token clickeado
+            const circle = tokenEl?.querySelector('circle');
+            if (circle) {
+                circle.setAttribute('stroke', 'var(--accent-neon)');
+                circle.setAttribute('stroke-width', '3');
             }
 
-            // Buscar y resaltar en lista de convocados
-            const items = document.querySelectorAll('.roster-item-js');
-            items.forEach(item => {
+            // Resaltar en lista de convocados
+            document.querySelectorAll('.roster-item-js').forEach(item => {
                 if (item.dataset.id === String(jugadorId)) {
                     item.style.background = 'rgba(57,255,20,0.12)';
                     item.style.borderLeft = '3px solid var(--accent-neon)';
-                    item.classList.add('roster-item-highlight');
                     item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
             });
         };
+
+        // Cargar automáticamente el primer partido jugado
         const primerJugado = partidos.findIndex(p => p.jugado);
         if (primerJugado >= 0) {
             window._seleccionarPartido(primerJugado);
@@ -1004,7 +1048,10 @@ const App = (() => {
             window._seleccionarPartido(0);
         } else {
             const container = document.getElementById('stats-partido-container');
-            if (container) container.innerHTML = `<div class="glass-panel" style="padding:1.5rem; grid-column:1/-1; text-align:center;"><p style="color:var(--text-muted); font-style:italic;">Este equipo aún no tiene partidos registrados en ESPN.</p></div>`;
+            if (container) container.innerHTML = `
+                <div class="glass-panel" style="padding:1.5rem; grid-column:1/-1; text-align:center;">
+                    <p style="color:var(--text-muted); font-style:italic;">Este equipo aún no tiene partidos registrados en ESPN.</p>
+                </div>`;
         }
     };
 
@@ -1135,76 +1182,74 @@ const App = (() => {
             </main>
         `;
 
-        const btnSubmit = document.getElementById('auth-submit-trigger');
-        const emailInput = document.getElementById('auth-email');
+        const btnSubmit    = document.getElementById('auth-submit-trigger');
+        const emailInput   = document.getElementById('auth-email');
         const passwordInput = document.getElementById('auth-password');
         const errorFeedback = document.getElementById('auth-error-log');
 
         const executeAuthentication = () => {
-            errorFeedback.textContent = ''; 
-            emailInput.style.borderColor = ''; 
+            errorFeedback.textContent    = '';
+            emailInput.style.borderColor = '';
             passwordInput.style.borderColor = '';
-            
+
             if (!Auth.login(emailInput.value, passwordInput.value)) {
-                errorFeedback.textContent = 'Acceso denegado. Verifique los campos.';
-                emailInput.style.borderColor = '#ff4757'; 
+                errorFeedback.textContent    = 'Acceso denegado. Verifique los campos.';
+                emailInput.style.borderColor = '#ff4757';
                 passwordInput.style.borderColor = '#ff4757';
             }
         };
 
         btnSubmit.addEventListener('click', executeAuthentication);
-        passwordInput.addEventListener('keypress', (e) => { 
-            if (e.key === 'Enter') executeAuthentication(); 
-        });
+        passwordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') executeAuthentication(); });
     };
 
-    // ── ROUTER DE ENRUTAMIENTO NATIVO SPA ─────────────────────────────────────
+    // ── ROUTER ────────────────────────────────────────────────────────────────
     const router = async () => {
         const hash = window.location.hash || '#/home';
         const url  = new URL(`http://dummy.com${hash.replace('#', '')}`);
         const path = '#' + url.pathname;
 
-        if (!Auth.isAuthenticated() && path !== '#/login') { 
-            window.location.hash = '#/login'; 
-            return; 
+        if (!Auth.isAuthenticated() && path !== '#/login') {
+            window.location.hash = '#/login';
+            return;
         }
 
         switch (path) {
-            case '#/login': 
-                Auth.isAuthenticated() ? window.location.hash = '#/home' : renderLogin(); 
+            case '#/login':
+                Auth.isAuthenticated() ? window.location.hash = '#/home' : renderLogin();
                 break;
-            case '#/home':   
-                renderHome();   
+            case '#/home':
+                renderHome();
                 break;
-            case '#/ligas':  
-                renderLigas();  
+            case '#/ligas':
+                renderLigas();
                 break;
-            case '#/liga':   
-                await renderLigaDetalle(url.searchParams.get('id')); 
+            case '#/liga':
+                await renderLigaDetalle(url.searchParams.get('id'));
                 break;
-            case '#/grupo': 
-                await renderGrupoDetalle(url.searchParams.get('id')); 
+            case '#/grupo':
+                await renderGrupoDetalle(url.searchParams.get('id'));
                 break;
-            case '#/equipo': 
+            case '#/equipo':
                 await renderEquipoDetalle(
                     url.searchParams.get('id'),
                     url.searchParams.get('liga'),
                     url.searchParams.get('name')
-                ); 
+                );
                 break;
-            case '#/h2h':    
-                renderH2H();    
+            case '#/h2h':
+                renderH2H();
                 break;
-            case '#/info':   
-                renderInfo();   
+            case '#/info':
+                renderInfo();
                 break;
-            default: 
+            default:
                 appContainer.innerHTML = `
                     ${renderNavbar(path)}
                     <main class="page-container fade-in" style="text-align: center; padding-top: 15%;">
                         <h2 class="section-title" style="border: none; color: var(--accent-neon);">Módulo en desarrollo</h2>
                     </main>
-                `; 
+                `;
                 break;
         }
     };
