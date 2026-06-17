@@ -777,10 +777,12 @@ const App = (() => {
                     <div class="glass-panel" style="padding: 1.5rem; overflow: hidden;">
                         <h3 class="panel-title" id="pizarra-titulo">Disposición Táctica</h3>
                         <div id="pizarra-container" style="position:relative; width:100%; height:400px; background:#1a472a; border:2px solid rgba(255,255,255,0.2); border-radius:10px; overflow:hidden; box-shadow:inset 0 0 50px rgba(0,0,0,0.5);">
-                            <div style="position:absolute; top:50%; left:0; right:0; border-top:2px solid rgba(255,255,255,0.3); transform:translateY(-50%);"></div>
-                            <div style="position:absolute; top:50%; left:50%; width:80px; height:80px; border:2px solid rgba(255,255,255,0.3); border-radius:50%; transform:translate(-50%,-50%);"></div>
-                            <div style="position:absolute; bottom:0; left:50%; width:140px; height:60px; border:2px solid rgba(255,255,255,0.3); border-bottom:none; transform:translateX(-50%);"></div>
-                            <div style="position:absolute; top:0; left:50%; width:140px; height:60px; border:2px solid rgba(255,255,255,0.3); border-top:none; transform:translateX(-50%);"></div>
+                            <div style="position:absolute;top:50%;left:0;right:0;border-top:2px solid rgba(255,255,255,0.3);transform:translateY(-50%);"></div>
+                            <div style="position:absolute;top:50%;left:50%;width:80px;height:80px;border:2px solid rgba(255,255,255,0.3);border-radius:50%;transform:translate(-50%,-50%);"></div>
+                            <div style="position:absolute;top:0;left:50%;width:40%;height:18%;border:2px solid rgba(255,255,255,0.3);border-top:none;transform:translateX(-50%);"></div>
+                            <div style="position:absolute;bottom:0;left:50%;width:40%;height:18%;border:2px solid rgba(255,255,255,0.3);border-bottom:none;transform:translateX(-50%);"></div>
+                            <div style="position:absolute;top:0;left:50%;width:20%;height:8%;border:2px solid rgba(255,255,255,0.3);border-top:none;transform:translateX(-50%);"></div>
+                            <div style="position:absolute;bottom:0;left:50%;width:20%;height:8%;border:2px solid rgba(255,255,255,0.3);border-bottom:none;transform:translateX(-50%);"></div>
                             <p style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:rgba(255,255,255,0.3); font-size:0.85rem; white-space:nowrap; z-index:1;">Seleccioná un partido</p>
                         </div>
                     </div>
@@ -869,11 +871,11 @@ const App = (() => {
                         return 2; // todo lo demás: CM, RM, LM, CDM, CAM, etc. → mediocampo
                     };
 
-                    // Orden X dentro de cada fila: R=izq cancha → centro → L=der cancha
+                    // Orden X dentro de cada fila: L=izquierda → centro → R=derecha
                     const ordenX = (abbr = '') => {
                         const a = abbr.toUpperCase();
-                        if (a.endsWith('-R') || ['RB','RWB','RM','RW','CF-R','ST-R'].includes(a)) return 0;
-                        if (a.endsWith('-L') || ['LB','LWB','LM','LW','CF-L','ST-L'].includes(a)) return 2;
+                        if (a.endsWith('-L') || ['LB','LWB','LM','LW','CF-L','ST-L'].includes(a)) return 0;
+                        if (a.endsWith('-R') || ['RB','RWB','RM','RW','CF-R','ST-R'].includes(a)) return 2;
                         return 1;
                     };
 
@@ -905,8 +907,10 @@ const App = (() => {
                     const lineasCampo = `
                         <div style="position:absolute;top:50%;left:0;right:0;border-top:2px solid rgba(255,255,255,0.3);transform:translateY(-50%);"></div>
                         <div style="position:absolute;top:50%;left:50%;width:80px;height:80px;border:2px solid rgba(255,255,255,0.3);border-radius:50%;transform:translate(-50%,-50%);"></div>
-                        <div style="position:absolute;bottom:0;left:50%;width:140px;height:60px;border:2px solid rgba(255,255,255,0.3);border-bottom:none;transform:translateX(-50%);"></div>
-                        <div style="position:absolute;top:0;left:50%;width:140px;height:60px;border:2px solid rgba(255,255,255,0.3);border-top:none;transform:translateX(-50%);"></div>
+                        <div style="position:absolute;top:0;left:50%;width:40%;height:18%;border:2px solid rgba(255,255,255,0.3);border-top:none;transform:translateX(-50%);"></div>
+                        <div style="position:absolute;bottom:0;left:50%;width:40%;height:18%;border:2px solid rgba(255,255,255,0.3);border-bottom:none;transform:translateX(-50%);"></div>
+                        <div style="position:absolute;top:0;left:50%;width:20%;height:8%;border:2px solid rgba(255,255,255,0.3);border-top:none;transform:translateX(-50%);"></div>
+                        <div style="position:absolute;bottom:0;left:50%;width:20%;height:8%;border:2px solid rgba(255,255,255,0.3);border-bottom:none;transform:translateX(-50%);"></div>
                     `;
 
                     const tokensHtml = titulares.map(j => {
