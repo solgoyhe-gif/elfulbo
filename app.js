@@ -885,19 +885,16 @@ const App = (() => {
                         filaMap[tipoPosicion(abbr)].push(j);
                     });
 
-                    // Balanceo: si delantera tiene solo 1-2 y hay LM/RM en mediocampo con muchos, redistribuir
-                    if (filaMap[3].length <= 2 && filaMap[2].length >= 4) {
-                        // Mover extremos (LM/RM) de mediocampo a delantera
+                    // Balanceo: si mediocampo tiene 4+ y delantera tiene 2, mover extremos (LM/RM) a delantera
+                    if (filaMap[3].length === 2 && filaMap[2].length >= 4) {
                         const extremos = filaMap[2].filter(j => {
                             const a = (j.position?.abbreviation ?? '').toUpperCase();
                             return ['LM', 'RM', 'LW', 'RW'].includes(a);
                         });
-                        if (extremos.length > 0 && filaMap[3].length + extremos.length <= 3) {
-                            extremos.forEach(j => {
-                                filaMap[2] = filaMap[2].filter(x => x !== j);
-                                filaMap[3].push(j);
-                            });
-                        }
+                        extremos.forEach(j => {
+                            filaMap[2] = filaMap[2].filter(x => x !== j);
+                            filaMap[3].push(j);
+                        });
                     }
 
                     // Calcular coordenadas
