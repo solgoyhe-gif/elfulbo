@@ -798,14 +798,13 @@ const App = (() => {
             </main>
         `;
 
-        // ── Función para dibujar un jugador en la pizarra ─────────────────────
+        // ── Función para dibujar un jugador en la pizarra (sin fotos) ────────
         const _dibujarJugadorSVG = (svg, jugador, x, y) => {
-            const ns      = 'http://www.w3.org/2000/svg';
-            const R       = 20;
-            const numero  = jugador.jersey ?? '';
-            const foto    = jugador.athlete?.headshot?.href ?? null;
-            const jId     = jugador.athlete?.id ?? jugador.jersey ?? Math.random().toString(36).slice(2);
-            const nombre  = (() => {
+            const ns     = 'http://www.w3.org/2000/svg';
+            const R      = 20;
+            const numero = jugador.jersey ?? '';
+            const jId    = jugador.athlete?.id ?? jugador.jersey ?? Math.random().toString(36).slice(2);
+            const nombre = (() => {
                 const dn    = jugador.athlete?.displayName ?? '';
                 const parts = dn.trim().split(' ');
                 return (parts[parts.length - 1] ?? dn).substring(0, 10);
@@ -818,71 +817,42 @@ const App = (() => {
             g.style.cursor = 'pointer';
             g.addEventListener('click', () => window._resaltarJugador(String(jId), g));
 
-            // clipPath para la foto circular
-            let defs = svg.querySelector('defs');
-            if (!defs) { defs = document.createElementNS(ns, 'defs'); svg.prepend(defs); }
-            const clipId   = `clip-${jId}-${Math.random().toString(36).slice(2, 6)}`;
-            const clip     = document.createElementNS(ns, 'clipPath');
-            clip.setAttribute('id', clipId);
-            const clipCirc = document.createElementNS(ns, 'circle');
-            clipCirc.setAttribute('cx', '0'); clipCirc.setAttribute('cy', '0'); clipCirc.setAttribute('r', R);
-            clip.appendChild(clipCirc);
-            defs.appendChild(clip);
-
-            // Fondo del círculo
+            // Círculo principal
             const bg = document.createElementNS(ns, 'circle');
             bg.setAttribute('cx', '0'); bg.setAttribute('cy', '0'); bg.setAttribute('r', R);
-            bg.setAttribute('fill', '#2a2a4a');
-            bg.setAttribute('stroke', 'rgba(255,255,255,0.35)'); bg.setAttribute('stroke-width', '1.5');
+            bg.setAttribute('fill', '#3a3a6a');
+            bg.setAttribute('stroke', 'rgba(255,255,255,0.4)');
+            bg.setAttribute('stroke-width', '1.5');
             g.appendChild(bg);
 
-            if (foto) {
-                const img = document.createElementNS(ns, 'image');
-                img.setAttribute('href', foto);
-                img.setAttribute('x', -R); img.setAttribute('y', -R);
-                img.setAttribute('width', R * 2); img.setAttribute('height', R * 2);
-                img.setAttribute('clip-path', `url(#${clipId})`);
-                img.setAttribute('preserveAspectRatio', 'xMidYMid slice');
-                g.appendChild(img);
-            } else {
-                // Iniciales como fallback
-                const iniciales = (jugador.athlete?.displayName ?? '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-                const ini = document.createElementNS(ns, 'text');
-                ini.setAttribute('x', '0'); ini.setAttribute('y', '1');
-                ini.setAttribute('text-anchor', 'middle'); ini.setAttribute('dominant-baseline', 'middle');
-                ini.setAttribute('font-size', '11'); ini.setAttribute('font-weight', '700');
-                ini.setAttribute('fill', '#c8c8e0'); ini.setAttribute('font-family', 'system-ui');
-                ini.textContent = iniciales;
-                g.appendChild(ini);
-            }
-
-            // Badge número (esquina inferior derecha del círculo)
-            const numBg = document.createElementNS(ns, 'rect');
-            numBg.setAttribute('x', R - 10); numBg.setAttribute('y', R - 11);
-            numBg.setAttribute('width', '16'); numBg.setAttribute('height', '13');
-            numBg.setAttribute('rx', '3'); numBg.setAttribute('fill', '#1a1a2e');
-            g.appendChild(numBg);
-
+            // Número dentro del círculo
             const numEl = document.createElementNS(ns, 'text');
-            numEl.setAttribute('x', R - 2); numEl.setAttribute('y', R - 3);
-            numEl.setAttribute('text-anchor', 'middle'); numEl.setAttribute('dominant-baseline', 'middle');
-            numEl.setAttribute('font-size', '8'); numEl.setAttribute('font-weight', '800');
-            numEl.setAttribute('fill', '#ffffff'); numEl.setAttribute('font-family', 'system-ui');
+            numEl.setAttribute('x', '0'); numEl.setAttribute('y', '1');
+            numEl.setAttribute('text-anchor', 'middle');
+            numEl.setAttribute('dominant-baseline', 'middle');
+            numEl.setAttribute('font-size', '11');
+            numEl.setAttribute('font-weight', '800');
+            numEl.setAttribute('fill', '#ffffff');
+            numEl.setAttribute('font-family', 'system-ui, sans-serif');
             numEl.textContent = numero;
             g.appendChild(numEl);
 
-            // Pastilla con nombre
+            // Pastilla con nombre debajo
             const nameBg = document.createElementNS(ns, 'rect');
             nameBg.setAttribute('x', '-26'); nameBg.setAttribute('y', String(R + 3));
             nameBg.setAttribute('width', '52'); nameBg.setAttribute('height', '14');
-            nameBg.setAttribute('rx', '4'); nameBg.setAttribute('fill', 'rgba(0,0,0,0.7)');
+            nameBg.setAttribute('rx', '4');
+            nameBg.setAttribute('fill', 'rgba(0,0,0,0.65)');
             g.appendChild(nameBg);
 
             const nameEl = document.createElementNS(ns, 'text');
             nameEl.setAttribute('x', '0'); nameEl.setAttribute('y', String(R + 11));
-            nameEl.setAttribute('text-anchor', 'middle'); nameEl.setAttribute('dominant-baseline', 'middle');
-            nameEl.setAttribute('font-size', '7.5'); nameEl.setAttribute('font-weight', '600');
-            nameEl.setAttribute('fill', '#ffffff'); nameEl.setAttribute('font-family', 'system-ui');
+            nameEl.setAttribute('text-anchor', 'middle');
+            nameEl.setAttribute('dominant-baseline', 'middle');
+            nameEl.setAttribute('font-size', '7.5');
+            nameEl.setAttribute('font-weight', '600');
+            nameEl.setAttribute('fill', '#ffffff');
+            nameEl.setAttribute('font-family', 'system-ui, sans-serif');
             nameEl.textContent = nombre;
             g.appendChild(nameEl);
 
@@ -891,8 +861,8 @@ const App = (() => {
 
         // ── Función para renderizar la pizarra completa ───────────────────────
         const _renderizarPizarra = (summaryJSON) => {
-            const tituloEl   = document.getElementById('pizarra-titulo');
-            const pizarraSvg = document.getElementById('pizarra-svg');
+            const tituloEl    = document.getElementById('pizarra-titulo');
+            const pizarraSvg  = document.getElementById('pizarra-svg');
             const tokensLayer = pizarraSvg?.querySelector('#tokens-layer');
             if (!pizarraSvg || !tokensLayer) return;
 
@@ -904,38 +874,53 @@ const App = (() => {
 
             if (tituloEl) tituloEl.textContent = `Disposición Táctica (${formacion})`;
 
-            // Limpiar capa de jugadores y defs anteriores
             tokensLayer.innerHTML = '';
-            const defsEl = pizarraSvg.querySelector('defs');
-            if (defsEl) defsEl.innerHTML = '';
 
             if (titulares.length === 0) return;
 
-            // Agrupar por fila según posición
+            // ── Clasificar posición en fila numérica ──────────────────────────
+            // ESPN selecciones nacionales usa: G, D, M, F
+            // ESPN clubes usa: GK, CB, LB, RB, CDM, CM, CAM, LW, RW, ST, CF, etc.
             const filaDePos = (abbr = '') => {
-                const a = abbr.toUpperCase();
-                if (['G', 'GK'].includes(a))                                                  return 0;
-                if (['RB','LB','CB','CD','RWB','LWB','D'].some(p => a.startsWith(p)))         return 1;
-                if (['ST','CF','RW','LW','FW','F'].some(p => a.startsWith(p)))                return 3;
-                return 2; // mediocampo por defecto
+                const a = abbr.toUpperCase().trim();
+                // Portero
+                if (a === 'G' || a === 'GK' || a === 'POR') return 0;
+                // Defensa
+                if (a === 'D' || a.startsWith('CB') || a.startsWith('CD') ||
+                    a.startsWith('LB') || a.startsWith('RB') ||
+                    a.startsWith('LWB') || a.startsWith('RWB')) return 1;
+                // Delantero
+                if (a === 'F' || a.startsWith('ST') || a.startsWith('CF') ||
+                    a.startsWith('LW') || a.startsWith('RW') || a === 'FW') return 3;
+                // Mediocampo (todo lo demás: M, CM, CDM, CAM, RM, LM, AM...)
+                return 2;
             };
 
             const rows = { 0: [], 1: [], 2: [], 3: [] };
-            titulares.forEach(j => rows[filaDePos(j.position?.abbreviation ?? '')].push(j));
+            titulares.forEach(j => {
+                const fila = filaDePos(j.position?.abbreviation ?? '');
+                rows[fila].push(j);
+            });
 
-            // Vista de frente: GK abajo (y=520), delanteros arriba (y=70)
-            const rowsActivas = [0, 1, 2, 3].filter(r => rows[r].length > 0);
-            const yGK  = 520;
-            const yFWD = 70;
+            // ── Coordenadas Y por fila ────────────────────────────────────────
+            // Vista de frente: portero (fila 0) ABAJO, delanteros (fila 3) ARRIBA
+            // SVG: y=0 es arriba, y=560 es abajo
+            const yPorFila = { 0: 510, 1: 390, 2: 265, 3: 115 };
+
+            // Si no hay delanteros detectados o no hay mediocampos, redistribuir
+            // usando las filas realmente ocupadas para llenar el espacio verticalmente
+            const filasOcupadas = [0, 1, 2, 3].filter(f => rows[f].length > 0);
+            const yInicio = 510; // portero
+            const yFin    = 80;  // delanteros / última línea ofensiva
 
             const coordsMap = new Map();
-            rowsActivas.forEach((fila, idx) => {
+            filasOcupadas.forEach((fila, idx) => {
                 const jugsFila = rows[fila];
-                const t = rowsActivas.length === 1 ? 0 : idx / (rowsActivas.length - 1);
-                const y = yGK - t * (yGK - yFWD);
+                const t = filasOcupadas.length === 1 ? 0 : idx / (filasOcupadas.length - 1);
+                const y = Math.round(yInicio - t * (yInicio - yFin));
                 jugsFila.forEach((j, i) => {
                     const cant = jugsFila.length;
-                    const x    = cant === 1 ? 200 : 44 + (i / (cant - 1)) * 312;
+                    const x    = cant === 1 ? 200 : Math.round(44 + (i / (cant - 1)) * 312);
                     coordsMap.set(j.formationPlace, { x, y });
                 });
             });
