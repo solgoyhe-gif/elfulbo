@@ -774,16 +774,44 @@ const App = (() => {
                         <h3 class="panel-title">Lista de Convocados</h3>
                         ${rosterHtml}
                     </div>
-                    <div class="glass-panel" style="padding: 1.5rem; overflow: hidden;">
-                        <h3 class="panel-title" id="pizarra-titulo">Disposición Táctica</h3>
-                        <div id="pizarra-container" style="position:relative; width:100%; height:400px; background:#1a472a; border:2px solid rgba(255,255,255,0.2); border-radius:10px; overflow:hidden; box-shadow:inset 0 0 50px rgba(0,0,0,0.5);">
-                            <div style="position:absolute;top:50%;left:0;right:0;border-top:2px solid rgba(255,255,255,0.3);transform:translateY(-50%);"></div>
-                            <div style="position:absolute;top:50%;left:50%;width:80px;height:80px;border:2px solid rgba(255,255,255,0.3);border-radius:50%;transform:translate(-50%,-50%);"></div>
-                            <div style="position:absolute;top:0;left:50%;width:40%;height:18%;border:2px solid rgba(255,255,255,0.3);border-top:none;transform:translateX(-50%);"></div>
-                            <div style="position:absolute;bottom:0;left:50%;width:40%;height:18%;border:2px solid rgba(255,255,255,0.3);border-bottom:none;transform:translateX(-50%);"></div>
-                            <div style="position:absolute;top:0;left:50%;width:20%;height:8%;border:2px solid rgba(255,255,255,0.3);border-top:none;transform:translateX(-50%);"></div>
-                            <div style="position:absolute;bottom:0;left:50%;width:20%;height:8%;border:2px solid rgba(255,255,255,0.3);border-bottom:none;transform:translateX(-50%);"></div>
-                            <p style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:rgba(255,255,255,0.3); font-size:0.85rem; white-space:nowrap; z-index:1;">Seleccioná un partido</p>
+                    <div class="glass-panel" style="padding: 1rem; overflow: hidden;">
+                        <h3 class="panel-title" id="pizarra-titulo" style="margin-bottom:0.5rem;">Disposición Táctica</h3>
+                        <div id="pizarra-container" style="width:100%; overflow:hidden; border-radius:8px;">
+                            <svg id="pizarra-svg" viewBox="0 0 400 560" xmlns="http://www.w3.org/2000/svg" style="width:100%; display:block;">
+                                <!-- Campo verde -->
+                                <rect width="400" height="560" fill="#2d7a3a" rx="8"/>
+                                <!-- Líneas del campo -->
+                                <rect x="20" y="20" width="360" height="520" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+                                <!-- Línea del medio -->
+                                <line x1="20" y1="280" x2="380" y2="280" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+                                <!-- Círculo central -->
+                                <circle cx="200" cy="280" r="50" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+                                <circle cx="200" cy="280" r="2" fill="rgba(255,255,255,0.6)"/>
+                                <!-- Área grande arriba -->
+                                <rect x="90" y="20" width="220" height="80" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+                                <!-- Área chica arriba -->
+                                <rect x="145" y="20" width="110" height="35" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+                                <!-- Área grande abajo -->
+                                <rect x="90" y="460" width="220" height="80" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+                                <!-- Área chica abajo -->
+                                <rect x="145" y="505" width="110" height="35" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+                                <!-- Punto penal arriba -->
+                                <circle cx="200" cy="75" r="2.5" fill="rgba(255,255,255,0.6)"/>
+                                <!-- Punto penal abajo -->
+                                <circle cx="200" cy="485" r="2.5" fill="rgba(255,255,255,0.6)"/>
+                                <!-- Arco arriba -->
+                                <rect x="160" y="14" width="80" height="10" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2"/>
+                                <!-- Arco abajo -->
+                                <rect x="160" y="536" width="80" height="10" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2"/>
+                                <!-- Franja de césped -->
+                                <rect x="20" y="20" width="360" height="65" fill="rgba(0,0,0,0.06)"/>
+                                <rect x="20" y="150" width="360" height="65" fill="rgba(0,0,0,0.06)"/>
+                                <rect x="20" y="280" width="360" height="65" fill="rgba(0,0,0,0.06)"/>
+                                <rect x="20" y="410" width="360" height="65" fill="rgba(0,0,0,0.06)"/>
+                                <!-- Jugadores se renderizan por JS -->
+                                <g id="tokens-layer"></g>
+                            </svg>
+                            <p id="pizarra-placeholder" style="display:none; text-align:center; color:rgba(255,255,255,0.3); font-size:0.85rem; padding:1rem;">Seleccioná un partido</p>
                         </div>
                     </div>
                 </div>
@@ -848,87 +876,89 @@ const App = (() => {
                         ${renderLista(stats.rojas, '🟥', 'TARJ.')}
                     </div>`;
 
-                // ── Pizarra dinámica con formationPlace real ──────────────────
-                const teamRoster = (summaryJSON.rosters ?? []).find(r => r.team?.id === String(equipoId));
-                const formacion  = teamRoster?.formation ?? '?';
-                const titulares  = (teamRoster?.roster ?? [])
-                    .filter(j => j.starter && j.formationPlace >= 1 && j.formationPlace <= 11)
-                    .sort((a, b) => a.formationPlace - b.formationPlace);
+                // ── Pizarra SVG con camisetas ─────────────────────────────────
+                const tituloEl = document.getElementById('pizarra-titulo');
+                const tokensLayer = document.getElementById('tokens-layer');
+                const teamRoster     = (summaryJSON.rosters ?? []).find(r => r.team?.id === String(equipoId));
+                const rivalRosterId  = (summaryJSON.rosters ?? []).find(r => r.team?.id !== String(equipoId));
+                const formacion      = teamRoster?.formation ?? '?';
+                const titulares      = (teamRoster?.roster ?? []).filter(j => j.starter && j.formationPlace >= 1 && j.formationPlace <= 11).sort((a,b) => a.formationPlace - b.formationPlace);
+                const titularesRival = (rivalRosterId?.roster ?? []).filter(j => j.starter && j.formationPlace >= 1 && j.formationPlace <= 11).sort((a,b) => a.formationPlace - b.formationPlace);
 
-                const pizarraEl  = document.getElementById('pizarra-container');
-                const tituloEl   = document.getElementById('pizarra-titulo');
                 if (tituloEl) tituloEl.textContent = `Disposición Táctica (${formacion})`;
 
-                if (pizarraEl && titulares.length > 0) {
-                    // ── Agrupación por tipo de posición ───────────────────────
-                    // ESPN mezcla formationPlace entre líneas, no es confiable para filas.
-                    // Usamos la abreviación de posición para asignar fila correcta.
+                // Función que calcula coordenadas SVG (viewBox 400x560)
+                const calcCoords = (jugadores, esLocal) => {
                     const filaDeJugador = (abbr = '') => {
                         const a = abbr.toUpperCase();
-                        if (['G', 'GK'].includes(a))                                          return 0; // portero
-                        if (['RB','LB','CB','CD','CD-R','CD-L','RWB','LWB'].includes(a))      return 1; // defensa
-                        if (['CF','CF-R','CF-L','ST','ST-R','ST-L','RW','LW','FW'].includes(a)) return 3; // delantero
-                        return 2; // todo lo demás: CM, RM, LM, CDM, CAM, etc. → mediocampo
+                        if (['G','GK'].includes(a)) return 0;
+                        if (['RB','LB','CB','CD','CD-R','CD-L','RWB','LWB'].includes(a)) return 1;
+                        if (['CF','CF-R','CF-L','ST','ST-R','ST-L','RW','LW','FW'].includes(a)) return 3;
+                        return 2;
                     };
-
-                    // Orden X dentro de cada fila: L=izquierda → centro → R=derecha
                     const ordenX = (abbr = '') => {
                         const a = abbr.toUpperCase();
                         if (a.endsWith('-L') || ['LB','LWB','LM','LW','CF-L','ST-L'].includes(a)) return 0;
                         if (a.endsWith('-R') || ['RB','RWB','RM','RW','CF-R','ST-R'].includes(a)) return 2;
                         return 1;
                     };
-
-                    // Agrupar
-                    const filaMap = { 0: [], 1: [], 2: [], 3: [] };
-                    titulares.forEach(j => filaMap[filaDeJugador(j.position?.abbreviation)].push(j));
-
-                    // Calcular coordenadas
+                    const filaMap = {0:[],1:[],2:[],3:[]};
+                    jugadores.forEach(j => filaMap[filaDeJugador(j.position?.abbreviation)].push(j));
                     const filasActivas = [0,1,2,3].filter(f => filaMap[f].length > 0);
                     const coordMap = new Map();
-
+                    // Local: portero abajo (y alto), delanteros arriba (y bajo)
+                    // Rival: portero arriba (y bajo), delanteros abajo (y alto)
+                    const yInicio = esLocal ? 520 : 40;
+                    const yFin    = esLocal ? 160 : 400;
                     filasActivas.forEach((fila, posEnGrid) => {
-                        const jugadoresFila = [...filaMap[fila]].sort((a,b) =>
-                            ordenX(a.position?.abbreviation) - ordenX(b.position?.abbreviation)
-                        );
-                        const yPct = 88 - posEnGrid * (78 / (filasActivas.length - 1));
-                        jugadoresFila.forEach((j, i) => {
-                            const cant = jugadoresFila.length;
-                            const xPct = cant === 1 ? 50 : 10 + (i / (cant - 1)) * 80;
-                            coordMap.set(j.formationPlace, { x: xPct, y: yPct });
+                        const jug = [...filaMap[fila]].sort((a,b) => ordenX(a.position?.abbreviation) - ordenX(b.position?.abbreviation));
+                        const t   = filasActivas.length === 1 ? 0 : posEnGrid / (filasActivas.length - 1);
+                        const y   = esLocal ? yInicio - t * (yInicio - yFin) : yInicio + t * (yFin - yInicio);
+                        jug.forEach((j, i) => {
+                            const cant = jug.length;
+                            const x = cant === 1 ? 200 : 40 + (i / (cant - 1)) * 320;
+                            coordMap.set(j.formationPlace, { x, y });
                         });
                     });
+                    return coordMap;
+                };
 
-                    // Formación real para el título
-                    const formReal = [filaMap[1].length, filaMap[2].length, filaMap[3].length]
-                        .filter(n => n > 0).join('-');
-                    if (tituloEl) tituloEl.textContent = `Disposición Táctica (${formReal || formacion})`;
+                // SVG camiseta path (simplificada)
+                const camisetaSVG = (cx, cy, color, numColor, numero, apellido, clickId) => {
+                    const w = 22, h = 18, hom = 5;
+                    return `
+                    <g transform="translate(${cx},${cy})" style="cursor:pointer;" class="token-jugador" data-id="${clickId}" onclick="window._resaltarJugador('${clickId}', this)">
+                        <path d="M-${w/2},-${h/2} L-${w/2-hom},-${h/2-hom} L-${w/2-hom*2},-${h/2} L-${w/2-hom*2},-${h/2}+2 L-${w/2},0 L-${w/2},${h/2} L${w/2},${h/2} L${w/2},0 L${w/2+hom*2},-${h/2}+2 L${w/2+hom*2},-${h/2} L${w/2+hom},-${h/2-hom} L${w/2},-${h/2} L${w/4},-${h/2-4} L-${w/4},-${h/2-4} Z"
+                            fill="${color}" stroke="rgba(0,0,0,0.5)" stroke-width="1"/>
+                        <text x="0" y="5" text-anchor="middle" font-size="9" font-weight="bold" fill="${numColor}" font-family="Arial,sans-serif">${numero ?? ''}</text>
+                        <text x="0" y="${h/2+10}" text-anchor="middle" font-size="7" fill="white" font-family="Arial,sans-serif" font-weight="600"
+                            style="text-shadow:0 1px 2px #000">${apellido}</text>
+                    </g>`;
+                };
 
-                    const lineasCampo = `
-                        <div style="position:absolute;top:50%;left:0;right:0;border-top:2px solid rgba(255,255,255,0.3);transform:translateY(-50%);"></div>
-                        <div style="position:absolute;top:50%;left:50%;width:80px;height:80px;border:2px solid rgba(255,255,255,0.3);border-radius:50%;transform:translate(-50%,-50%);"></div>
-                        <div style="position:absolute;top:0;left:50%;width:40%;height:18%;border:2px solid rgba(255,255,255,0.3);border-top:none;transform:translateX(-50%);"></div>
-                        <div style="position:absolute;bottom:0;left:50%;width:40%;height:18%;border:2px solid rgba(255,255,255,0.3);border-bottom:none;transform:translateX(-50%);"></div>
-                        <div style="position:absolute;top:0;left:50%;width:20%;height:8%;border:2px solid rgba(255,255,255,0.3);border-top:none;transform:translateX(-50%);"></div>
-                        <div style="position:absolute;bottom:0;left:50%;width:20%;height:8%;border:2px solid rgba(255,255,255,0.3);border-bottom:none;transform:translateX(-50%);"></div>
-                    `;
+                if (tokensLayer && titulares.length > 0) {
+                    const coordsLocal = calcCoords(titulares, true);
+                    const coordsRival = calcCoords(titularesRival, false);
 
-                    const tokensHtml = titulares.map(j => {
-                        const coord = coordMap.get(j.formationPlace);
-                        if (!coord) return '';
-                        const esPortero = filaDeJugador(j.position?.abbreviation) === 0;
-                        const apellido  = j.athlete?.shortName ?? j.athlete?.displayName?.split(' ').pop() ?? '';
-                        const jugadorId = j.athlete?.id ?? j.jersey;
-                        return `
-                            <div class="token-jugador" data-id="${jugadorId}"
-                                style="position:absolute;left:${coord.x}%;top:${coord.y}%;transform:translate(-50%,-50%);z-index:3;text-align:center;cursor:pointer;"
-                                onclick="window._resaltarJugador('${jugadorId}', this)">
-                                <div style="background:${esPortero ? 'var(--accent-neon)' : '#fff'};color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:0.75rem;box-shadow:0 2px 8px rgba(0,0,0,0.6);margin:0 auto;transition:transform 0.2s,box-shadow 0.2s;">${j.jersey ?? '?'}</div>
-                                <div style="color:#fff;font-size:0.6rem;font-weight:600;margin-top:2px;text-shadow:0 1px 3px #000;max-width:50px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${apellido}</div>
-                            </div>`;
-                    }).join('');
+                    let tokensHtml = '';
 
-                    pizarraEl.innerHTML = lineasCampo + tokensHtml;
+                    // Rival (arriba, camiseta oscura)
+                    titularesRival.forEach(j => {
+                        const c = coordsRival.get(j.formationPlace);
+                        if (!c) return;
+                        const apellido = (j.athlete?.shortName ?? j.athlete?.displayName?.split(' ').pop() ?? '').substring(0, 8);
+                        tokensHtml += camisetaSVG(c.x, c.y, '#cc3333', '#fff', j.jersey, apellido, `r_${j.athlete?.id}`);
+                    });
+
+                    // Local (abajo, camiseta clara)
+                    titulares.forEach(j => {
+                        const c = coordsLocal.get(j.formationPlace);
+                        if (!c) return;
+                        const apellido = (j.athlete?.shortName ?? j.athlete?.displayName?.split(' ').pop() ?? '').substring(0, 8);
+                        tokensHtml += camisetaSVG(c.x, c.y, '#f0f0f0', '#222', j.jersey, apellido, j.athlete?.id);
+                    });
+
+                    tokensLayer.innerHTML = tokensHtml;
                 }
 
             } catch (err) {
