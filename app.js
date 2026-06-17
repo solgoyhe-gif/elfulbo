@@ -774,31 +774,13 @@ const App = (() => {
                         ${rosterHtml}
                     </div>
                     <div class="glass-panel" style="padding: 1.5rem; overflow: hidden;">
-                        <h3 class="panel-title">Disposición Táctica (4-3-3)</h3>
-                        <div style="position:relative; width:100%; height:400px; background:#1a472a; border:2px solid rgba(255,255,255,0.2); border-radius:10px; display:flex; flex-direction:column; justify-content:space-around; padding:15px 0; overflow:hidden; box-shadow:inset 0 0 50px rgba(0,0,0,0.5);">
+                        <h3 class="panel-title" id="pizarra-titulo">Disposición Táctica</h3>
+                        <div id="pizarra-container" style="position:relative; width:100%; height:400px; background:#1a472a; border:2px solid rgba(255,255,255,0.2); border-radius:10px; overflow:hidden; box-shadow:inset 0 0 50px rgba(0,0,0,0.5);">
                             <div style="position:absolute; top:50%; left:0; right:0; border-top:2px solid rgba(255,255,255,0.3); transform:translateY(-50%);"></div>
                             <div style="position:absolute; top:50%; left:50%; width:80px; height:80px; border:2px solid rgba(255,255,255,0.3); border-radius:50%; transform:translate(-50%,-50%);"></div>
                             <div style="position:absolute; bottom:0; left:50%; width:140px; height:60px; border:2px solid rgba(255,255,255,0.3); border-bottom:none; transform:translateX(-50%);"></div>
                             <div style="position:absolute; top:0; left:50%; width:140px; height:60px; border:2px solid rgba(255,255,255,0.3); border-top:none; transform:translateX(-50%);"></div>
-                            <div style="display:flex; justify-content:space-evenly; width:100%; z-index:2;">
-                                <div style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${getDorsal(delanteros,0,'7')}</div>
-                                <div style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5); margin-top:-15px;">${getDorsal(delanteros,1,'9')}</div>
-                                <div style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${getDorsal(delanteros,2,'11')}</div>
-                            </div>
-                            <div style="display:flex; justify-content:space-evenly; width:100%; z-index:2; margin-top:-20px;">
-                                <div style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${getDorsal(medios,0,'8')}</div>
-                                <div style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5); margin-top:15px;">${getDorsal(medios,1,'6')}</div>
-                                <div style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${getDorsal(medios,2,'10')}</div>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; padding:0 10%; width:100%; z-index:2; margin-top:10px;">
-                                <div style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${getDorsal(defensas,0,'4')}</div>
-                                <div style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5); margin-top:15px;">${getDorsal(defensas,1,'3')}</div>
-                                <div style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5); margin-top:15px;">${getDorsal(defensas,2,'2')}</div>
-                                <div style="background:#fff; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${getDorsal(defensas,3,'5')}</div>
-                            </div>
-                            <div style="display:flex; justify-content:center; width:100%; z-index:2;">
-                                <div style="background:var(--accent-neon); color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${getDorsal(porteros,0,'1')}</div>
-                            </div>
+                            <p style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:rgba(255,255,255,0.3); font-size:0.85rem; white-space:nowrap; z-index:1;">Seleccioná un partido</p>
                         </div>
                     </div>
                 </div>
@@ -844,6 +826,7 @@ const App = (() => {
                 const summaryJSON = summaryRes.ok ? await summaryRes.json() : {};
                 const stats = extraerStatsDeSummary(summaryJSON, equipoId);
 
+                // ── Stats ─────────────────────────────────────────────────────
                 container.innerHTML = `
                     <div class="glass-panel" style="padding: 1.5rem;">
                         <h3 class="panel-title" style="border-bottom:1px solid var(--border-glass); padding-bottom:8px; margin-bottom:10px; font-size:1.1rem;">⚽ Goleadores</h3>
@@ -861,6 +844,63 @@ const App = (() => {
                         <h3 class="panel-title" style="border-bottom:1px solid var(--border-glass); padding-bottom:8px; margin-bottom:10px; font-size:1.1rem;">🟥 T. Rojas</h3>
                         ${renderLista(stats.rojas, '🟥', 'TARJ.')}
                     </div>`;
+
+                // ── Pizarra dinámica con formationPlace real ──────────────────
+                const teamRoster = (summaryJSON.rosters ?? []).find(r => r.team?.id === String(equipoId));
+                const formacion  = teamRoster?.formation ?? '?';
+                const titulares  = (teamRoster?.roster ?? [])
+                    .filter(j => j.starter && j.formationPlace >= 1 && j.formationPlace <= 11)
+                    .sort((a, b) => a.formationPlace - b.formationPlace);
+
+                const pizarraEl  = document.getElementById('pizarra-container');
+                const tituloEl   = document.getElementById('pizarra-titulo');
+                if (tituloEl) tituloEl.textContent = `Disposición Táctica (${formacion})`;
+
+                if (pizarraEl && titulares.length > 0) {
+                    // Coordenadas (x%, y%) para cada formationPlace 1-11
+                    // y% = 0 es arco propio (abajo), 100 es arco rival (arriba)
+                    // Se calculan dinámicamente según la formación
+                    const partes   = formacion.split('-').map(Number);
+                    const filas    = [1, ...partes]; // [portero, ...líneas]
+                    const coordMap = {};
+                    let place = 1;
+
+                    filas.forEach((cantJugadores, filaIdx) => {
+                        // y%: portero abajo (88%), líneas siguientes hacia arriba
+                        const yPct = 88 - filaIdx * (80 / (filas.length - 1));
+                        for (let j = 0; j < cantJugadores; j++) {
+                            const xPct = cantJugadores === 1
+                                ? 50
+                                : 10 + (j / (cantJugadores - 1)) * 80;
+                            coordMap[place] = { x: xPct, y: yPct };
+                            place++;
+                        }
+                    });
+
+                    // Preservar líneas del campo y agregar tokens
+                    const lineasCampo = `
+                        <div style="position:absolute; top:50%; left:0; right:0; border-top:2px solid rgba(255,255,255,0.3); transform:translateY(-50%);"></div>
+                        <div style="position:absolute; top:50%; left:50%; width:80px; height:80px; border:2px solid rgba(255,255,255,0.3); border-radius:50%; transform:translate(-50%,-50%);"></div>
+                        <div style="position:absolute; bottom:0; left:50%; width:140px; height:60px; border:2px solid rgba(255,255,255,0.3); border-bottom:none; transform:translateX(-50%);"></div>
+                        <div style="position:absolute; top:0; left:50%; width:140px; height:60px; border:2px solid rgba(255,255,255,0.3); border-top:none; transform:translateX(-50%);"></div>
+                    `;
+
+                    const tokensHtml = titulares.map(j => {
+                        const coord = coordMap[j.formationPlace];
+                        if (!coord) return '';
+                        const esPortero = j.formationPlace === 1;
+                        const bg = esPortero ? 'var(--accent-neon)' : '#fff';
+                        const color = '#000';
+                        return `
+                            <div style="position:absolute; left:${coord.x}%; top:${coord.y}%; transform:translate(-50%,-50%); z-index:3; text-align:center;">
+                                <div style="background:${bg}; color:${color}; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:0.75rem; box-shadow:0 2px 8px rgba(0,0,0,0.6); margin:0 auto;">${j.jersey ?? '?'}</div>
+                                <div style="color:#fff; font-size:0.6rem; font-weight:600; margin-top:2px; text-shadow:0 1px 3px #000; max-width:50px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${j.athlete?.shortName ?? j.athlete?.displayName?.split(' ').pop() ?? ''}</div>
+                            </div>`;
+                    }).join('');
+
+                    pizarraEl.innerHTML = lineasCampo + tokensHtml;
+                }
+
             } catch (err) {
                 container.innerHTML = `<div class="glass-panel" style="padding:1.5rem; grid-column:1/-1; text-align:center;"><p style="color:var(--text-muted);">Error cargando estadísticas.</p></div>`;
             }
