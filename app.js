@@ -147,7 +147,7 @@ const App = (() => {
                 </section>
 
                 <section class="panel-center">
-                    <div style="position: absolute; top: 0; font-family: var(--font-heading); font-size: 2rem; font-weight: 800; letter-spacing: 2px; z-index: 10; text-shadow: 0 5px 15px #000;">EL FULBO</div>
+                    <div style="position: absolute; top: 0; font-family: var(--font-heading); font-size: 2rem; font-weight: 800; letter-spacing: 2px; z-index: 10; text-shadow: 0 5px 15px #000;">FULBO</div>
                     <div class="pitch-perspective">
                         <div class="pitch-horizontal"><div class="area-left"></div><div class="area-right"></div></div>
                     </div>
@@ -635,6 +635,7 @@ const App = (() => {
                     : rosterJSON.athletes;
             }
             return atletasArray.map(ath => ({
+                id:       ath.id ?? ath.uid ?? null,
                 numero:   ath.jersey || '-',
                 nombre:   ath.displayName || ath.fullName || 'Jugador',
                 posicion: ath.position?.abbreviation || ath.position?.name || 'N/A'
@@ -717,7 +718,7 @@ const App = (() => {
 
         const rosterHtml = convocados.length > 0
             ? convocados.map(j => `
-                <div style="display:flex; align-items:center; justify-content:space-between; padding: 8px; border-bottom: 1px solid var(--border-glass);">
+                <div class="roster-item-js" data-id="${j.id ?? j.numero}" style="display:flex; align-items:center; justify-content:space-between; padding: 8px; border-bottom: 1px solid var(--border-glass); transition: background 0.2s, border-left 0.2s;">
                     <div style="display:flex; align-items:center; gap: 10px;">
                         <span style="background:rgba(255,255,255,0.1); width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:50%; font-weight:bold; font-size:0.85rem;">${j.numero}</span>
                         <span>${j.nombre}</span>
@@ -857,87 +858,69 @@ const App = (() => {
                 if (tituloEl) tituloEl.textContent = `Disposición Táctica (${formacion})`;
 
                 if (pizarraEl && titulares.length > 0) {
-                    // ── Agrupación por tipo de posición (ignora formación ESPN que puede ser incorrecta) ──
-                    const tipoPosicion = (abbr = '') => {
+                    // ── Agrupación por tipo de posición ───────────────────────
+                    // ESPN mezcla formationPlace entre líneas, no es confiable para filas.
+                    // Usamos la abreviación de posición para asignar fila correcta.
+                    const filaDeJugador = (abbr = '') => {
                         const a = abbr.toUpperCase();
-                        if (['G', 'GK'].includes(a)) return 0;                                          // portero
-                        if (['RB', 'LB', 'CB', 'CD-R', 'CD-L', 'RWB', 'LWB', 'CD'].includes(a)) return 1; // defensa
-                        if (['RM', 'LM', 'CM', 'CM-R', 'CM-L', 'CDM', 'CAM', 'CAM-R', 'CAM-L', 'DM'].includes(a)) return 2; // medio
-                        if (['CF', 'CF-R', 'CF-L', 'ST', 'RW', 'LW', 'FW'].includes(a)) return 3;     // delantero
-                        // Almada aparece como LM pero juega de extremo — si está en place 11 es delantero
-                        return 2; // default mediocampo
+                        if (['G', 'GK'].includes(a))                                          return 0; // portero
+                        if (['RB','LB','CB','CD','CD-R','CD-L','RWB','LWB'].includes(a))      return 1; // defensa
+                        if (['CF','CF-R','CF-L','ST','ST-R','ST-L','RW','LW','FW'].includes(a)) return 3; // delantero
+                        return 2; // todo lo demás: CM, RM, LM, CDM, CAM, etc. → mediocampo
                     };
 
-                    // Ordenar dentro de cada fila: R → centro → L
+                    // Orden X dentro de cada fila: R=izq cancha → centro → L=der cancha
                     const ordenX = (abbr = '') => {
                         const a = abbr.toUpperCase();
-                        if (a.endsWith('-R') || ['RB', 'RWB', 'RM', 'RW'].includes(a)) return 0;
-                        if (a.endsWith('-L') || ['LB', 'LWB', 'LM', 'LW'].includes(a)) return 2;
+                        if (a.endsWith('-R') || ['RB','RWB','RM','RW','CF-R','ST-R'].includes(a)) return 0;
+                        if (a.endsWith('-L') || ['LB','LWB','LM','LW','CF-L','ST-L'].includes(a)) return 2;
                         return 1;
                     };
 
-                    // Agrupar titulares por fila
+                    // Agrupar
                     const filaMap = { 0: [], 1: [], 2: [], 3: [] };
-                    titulares.forEach(j => {
-                        const abbr = j.position?.abbreviation ?? '';
-                        // Caso especial: Almada (LM, place 11) juega de extremo en este equipo
-                        // Si hay 3+ jugadores en "medio" y solo 2 en "delantero", mover LM a delantero
-                        filaMap[tipoPosicion(abbr)].push(j);
-                    });
-
-                    // Balanceo: si mediocampo tiene 4+ y delantera tiene 2, mover extremos (LM/RM) a delantera
-                    if (filaMap[3].length === 2 && filaMap[2].length >= 4) {
-                        const extremos = filaMap[2].filter(j => {
-                            const a = (j.position?.abbreviation ?? '').toUpperCase();
-                            return ['LM', 'RM', 'LW', 'RW'].includes(a);
-                        });
-                        extremos.forEach(j => {
-                            filaMap[2] = filaMap[2].filter(x => x !== j);
-                            filaMap[3].push(j);
-                        });
-                    }
+                    titulares.forEach(j => filaMap[filaDeJugador(j.position?.abbreviation)].push(j));
 
                     // Calcular coordenadas
-                    const filasConJugadores = [0, 1, 2, 3].filter(f => filaMap[f].length > 0);
-                    const coords = new Map();
+                    const filasActivas = [0,1,2,3].filter(f => filaMap[f].length > 0);
+                    const coordMap = new Map();
 
-                    filasConJugadores.forEach((filaIdx, posEnGrid) => {
-                        const jugadoresFila = [...filaMap[filaIdx]].sort((a, b) =>
+                    filasActivas.forEach((fila, posEnGrid) => {
+                        const jugadoresFila = [...filaMap[fila]].sort((a,b) =>
                             ordenX(a.position?.abbreviation) - ordenX(b.position?.abbreviation)
                         );
-                        const totalFilas = filasConJugadores.length;
-                        const yPct = 88 - posEnGrid * (78 / (totalFilas - 1));
+                        const yPct = 88 - posEnGrid * (78 / (filasActivas.length - 1));
                         jugadoresFila.forEach((j, i) => {
                             const cant = jugadoresFila.length;
                             const xPct = cant === 1 ? 50 : 10 + (i / (cant - 1)) * 80;
-                            coords.set(j.formationPlace, { x: xPct, y: yPct });
+                            coordMap.set(j.formationPlace, { x: xPct, y: yPct });
                         });
                     });
 
-                    // Detectar formación real para el título
-                    const formacionReal = [
-                        filaMap[1].length,
-                        filaMap[2].length,
-                        filaMap[3].length
-                    ].filter(n => n > 0).join('-');
-                    if (tituloEl) tituloEl.textContent = `Disposición Táctica (${formacionReal || formacion})`;
+                    // Formación real para el título
+                    const formReal = [filaMap[1].length, filaMap[2].length, filaMap[3].length]
+                        .filter(n => n > 0).join('-');
+                    if (tituloEl) tituloEl.textContent = `Disposición Táctica (${formReal || formacion})`;
 
                     const lineasCampo = `
-                        <div style="position:absolute; top:50%; left:0; right:0; border-top:2px solid rgba(255,255,255,0.3); transform:translateY(-50%);"></div>
-                        <div style="position:absolute; top:50%; left:50%; width:80px; height:80px; border:2px solid rgba(255,255,255,0.3); border-radius:50%; transform:translate(-50%,-50%);"></div>
-                        <div style="position:absolute; bottom:0; left:50%; width:140px; height:60px; border:2px solid rgba(255,255,255,0.3); border-bottom:none; transform:translateX(-50%);"></div>
-                        <div style="position:absolute; top:0; left:50%; width:140px; height:60px; border:2px solid rgba(255,255,255,0.3); border-top:none; transform:translateX(-50%);"></div>
+                        <div style="position:absolute;top:50%;left:0;right:0;border-top:2px solid rgba(255,255,255,0.3);transform:translateY(-50%);"></div>
+                        <div style="position:absolute;top:50%;left:50%;width:80px;height:80px;border:2px solid rgba(255,255,255,0.3);border-radius:50%;transform:translate(-50%,-50%);"></div>
+                        <div style="position:absolute;bottom:0;left:50%;width:140px;height:60px;border:2px solid rgba(255,255,255,0.3);border-bottom:none;transform:translateX(-50%);"></div>
+                        <div style="position:absolute;top:0;left:50%;width:140px;height:60px;border:2px solid rgba(255,255,255,0.3);border-top:none;transform:translateX(-50%);"></div>
                     `;
 
                     const tokensHtml = titulares.map(j => {
-                        const coord = coords.get(j.formationPlace);
+                        const coord = coordMap.get(j.formationPlace);
                         if (!coord) return '';
-                        const esPortero = (j.position?.abbreviation ?? '').toUpperCase() === 'G';
+                        const esPortero = filaDeJugador(j.position?.abbreviation) === 0;
                         const apellido  = j.athlete?.shortName ?? j.athlete?.displayName?.split(' ').pop() ?? '';
+                        const jugadorId = j.athlete?.id ?? j.jersey;
                         return `
-                            <div style="position:absolute; left:${coord.x}%; top:${coord.y}%; transform:translate(-50%,-50%); z-index:3; text-align:center;">
-                                <div style="background:${esPortero ? 'var(--accent-neon)' : '#fff'}; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:0.75rem; box-shadow:0 2px 8px rgba(0,0,0,0.6); margin:0 auto;">${j.jersey ?? '?'}</div>
-                                <div style="color:#fff; font-size:0.6rem; font-weight:600; margin-top:2px; text-shadow:0 1px 3px #000; max-width:50px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${apellido}</div>
+                            <div class="token-jugador" data-id="${jugadorId}"
+                                style="position:absolute;left:${coord.x}%;top:${coord.y}%;transform:translate(-50%,-50%);z-index:3;text-align:center;cursor:pointer;"
+                                onclick="window._resaltarJugador('${jugadorId}', this)">
+                                <div style="background:${esPortero ? 'var(--accent-neon)' : '#fff'};color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:0.75rem;box-shadow:0 2px 8px rgba(0,0,0,0.6);margin:0 auto;transition:transform 0.2s,box-shadow 0.2s;">${j.jersey ?? '?'}</div>
+                                <div style="color:#fff;font-size:0.6rem;font-weight:600;margin-top:2px;text-shadow:0 1px 3px #000;max-width:50px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${apellido}</div>
                             </div>`;
                     }).join('');
 
@@ -949,7 +932,37 @@ const App = (() => {
             }
         };
 
-        // Cargar automáticamente el primer partido jugado
+        // ── Resaltar jugador en lista al clickear en la pizarra ──────────────
+        window._resaltarJugador = (jugadorId, tokenEl) => {
+            // Quitar resaltado anterior
+            document.querySelectorAll('.roster-item-highlight').forEach(el => {
+                el.classList.remove('roster-item-highlight');
+                el.style.background = '';
+                el.style.borderLeft = '';
+            });
+            document.querySelectorAll('.token-jugador div:first-child').forEach(el => {
+                el.style.transform = '';
+                el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.6)';
+            });
+
+            // Resaltar token en pizarra
+            const tokenCircle = tokenEl?.querySelector('div:first-child');
+            if (tokenCircle) {
+                tokenCircle.style.transform = 'scale(1.3)';
+                tokenCircle.style.boxShadow = '0 0 12px var(--accent-neon)';
+            }
+
+            // Buscar y resaltar en lista de convocados
+            const items = document.querySelectorAll('.roster-item-js');
+            items.forEach(item => {
+                if (item.dataset.id === String(jugadorId)) {
+                    item.style.background = 'rgba(57,255,20,0.12)';
+                    item.style.borderLeft = '3px solid var(--accent-neon)';
+                    item.classList.add('roster-item-highlight');
+                    item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            });
+        };
         const primerJugado = partidos.findIndex(p => p.jugado);
         if (primerJugado >= 0) {
             window._seleccionarPartido(primerJugado);
