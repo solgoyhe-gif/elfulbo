@@ -857,36 +857,73 @@ const App = (() => {
                 if (tituloEl) tituloEl.textContent = `Disposición Táctica (${formacion})`;
 
                 if (pizarraEl && titulares.length > 0) {
-                    // ── Distribución por filas ────────────────────────────────
-                    // Y por fila según formación, X distribuido uniformemente
-                    // dentro de cada fila para evitar amontonamiento
-                    const partes = formacion.split('-').map(Number);
-                    const filas  = [1, ...partes]; // [portero, ...líneas]
+                    // ── Agrupación por tipo de posición (ignora formación ESPN que puede ser incorrecta) ──
+                    const tipoPosicion = (abbr = '') => {
+                        const a = abbr.toUpperCase();
+                        if (['G', 'GK'].includes(a)) return 0;                                          // portero
+                        if (['RB', 'LB', 'CB', 'CD-R', 'CD-L', 'RWB', 'LWB', 'CD'].includes(a)) return 1; // defensa
+                        if (['RM', 'LM', 'CM', 'CM-R', 'CM-L', 'CDM', 'CAM', 'CAM-R', 'CAM-L', 'DM'].includes(a)) return 2; // medio
+                        if (['CF', 'CF-R', 'CF-L', 'ST', 'RW', 'LW', 'FW'].includes(a)) return 3;     // delantero
+                        // Almada aparece como LM pero juega de extremo — si está en place 11 es delantero
+                        return 2; // default mediocampo
+                    };
 
-                    // Asignar cada titular a su fila y calcular coordenadas
-                    const coords = {}; // formationPlace → {x, y}
-                    let place = 1;
-                    filas.forEach((cant, filaIdx) => {
-                        const yPct = 88 - filaIdx * (78 / (filas.length - 1));
-                        // Obtener los titulares de esta fila
-                        const enEstaFila = titulares.filter(j =>
-                            j.formationPlace >= place && j.formationPlace < place + cant
-                        );
-                        // Ordenar por sufijo de posición: R → centro → L
-                        const ordenX = (abbr = '') => {
-                            const a = abbr.toUpperCase();
-                            if (a.endsWith('-R') || a === 'RB' || a === 'RWB' || a === 'RM' || a === 'RW') return 0;
-                            if (a.endsWith('-L') || a === 'LB' || a === 'LWB' || a === 'LM' || a === 'LW') return 2;
-                            return 1; // centro
-                        };
-                        enEstaFila.sort((a, b) => ordenX(a.position?.abbreviation) - ordenX(b.position?.abbreviation));
+                    // Ordenar dentro de cada fila: R → centro → L
+                    const ordenX = (abbr = '') => {
+                        const a = abbr.toUpperCase();
+                        if (a.endsWith('-R') || ['RB', 'RWB', 'RM', 'RW'].includes(a)) return 0;
+                        if (a.endsWith('-L') || ['LB', 'LWB', 'LM', 'LW'].includes(a)) return 2;
+                        return 1;
+                    };
 
-                        enEstaFila.forEach((j, i) => {
-                            const xPct = cant === 1 ? 50 : 10 + (i / (cant - 1)) * 80;
-                            coords[j.formationPlace] = { x: xPct, y: yPct };
-                        });
-                        place += cant;
+                    // Agrupar titulares por fila
+                    const filaMap = { 0: [], 1: [], 2: [], 3: [] };
+                    titulares.forEach(j => {
+                        const abbr = j.position?.abbreviation ?? '';
+                        // Caso especial: Almada (LM, place 11) juega de extremo en este equipo
+                        // Si hay 3+ jugadores en "medio" y solo 2 en "delantero", mover LM a delantero
+                        filaMap[tipoPosicion(abbr)].push(j);
                     });
+
+                    // Balanceo: si delantera tiene solo 1-2 y hay LM/RM en mediocampo con muchos, redistribuir
+                    if (filaMap[3].length <= 2 && filaMap[2].length >= 4) {
+                        // Mover extremos (LM/RM) de mediocampo a delantera
+                        const extremos = filaMap[2].filter(j => {
+                            const a = (j.position?.abbreviation ?? '').toUpperCase();
+                            return ['LM', 'RM', 'LW', 'RW'].includes(a);
+                        });
+                        if (extremos.length > 0 && filaMap[3].length + extremos.length <= 3) {
+                            extremos.forEach(j => {
+                                filaMap[2] = filaMap[2].filter(x => x !== j);
+                                filaMap[3].push(j);
+                            });
+                        }
+                    }
+
+                    // Calcular coordenadas
+                    const filasConJugadores = [0, 1, 2, 3].filter(f => filaMap[f].length > 0);
+                    const coords = new Map();
+
+                    filasConJugadores.forEach((filaIdx, posEnGrid) => {
+                        const jugadoresFila = [...filaMap[filaIdx]].sort((a, b) =>
+                            ordenX(a.position?.abbreviation) - ordenX(b.position?.abbreviation)
+                        );
+                        const totalFilas = filasConJugadores.length;
+                        const yPct = 88 - posEnGrid * (78 / (totalFilas - 1));
+                        jugadoresFila.forEach((j, i) => {
+                            const cant = jugadoresFila.length;
+                            const xPct = cant === 1 ? 50 : 10 + (i / (cant - 1)) * 80;
+                            coords.set(j.formationPlace, { x: xPct, y: yPct });
+                        });
+                    });
+
+                    // Detectar formación real para el título
+                    const formacionReal = [
+                        filaMap[1].length,
+                        filaMap[2].length,
+                        filaMap[3].length
+                    ].filter(n => n > 0).join('-');
+                    if (tituloEl) tituloEl.textContent = `Disposición Táctica (${formacionReal || formacion})`;
 
                     const lineasCampo = `
                         <div style="position:absolute; top:50%; left:0; right:0; border-top:2px solid rgba(255,255,255,0.3); transform:translateY(-50%);"></div>
@@ -896,9 +933,9 @@ const App = (() => {
                     `;
 
                     const tokensHtml = titulares.map(j => {
-                        const coord = coords[j.formationPlace];
+                        const coord = coords.get(j.formationPlace);
                         if (!coord) return '';
-                        const esPortero = j.formationPlace === 1;
+                        const esPortero = (j.position?.abbreviation ?? '').toUpperCase() === 'G';
                         const apellido  = j.athlete?.shortName ?? j.athlete?.displayName?.split(' ').pop() ?? '';
                         return `
                             <div style="position:absolute; left:${coord.x}%; top:${coord.y}%; transform:translate(-50%,-50%); z-index:3; text-align:center;">
