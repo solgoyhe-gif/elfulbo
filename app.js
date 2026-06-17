@@ -857,27 +857,50 @@ const App = (() => {
                 if (tituloEl) tituloEl.textContent = `Disposición Táctica (${formacion})`;
 
                 if (pizarraEl && titulares.length > 0) {
-                    // Coordenadas (x%, y%) para cada formationPlace 1-11
-                    // y% = 0 es arco propio (abajo), 100 es arco rival (arriba)
-                    // Se calculan dinámicamente según la formación
-                    const partes   = formacion.split('-').map(Number);
-                    const filas    = [1, ...partes]; // [portero, ...líneas]
-                    const coordMap = {};
-                    let place = 1;
+                    // ── Coordenadas por posición ESPN ─────────────────────────
+                    // X se determina por la abreviación de posición (R=derecha, L=izquierda, C=centro)
+                    // Y se determina por la fila (formationPlace dentro de la formación)
 
-                    filas.forEach((cantJugadores, filaIdx) => {
-                        // y%: portero abajo (88%), líneas siguientes hacia arriba
-                        const yPct = 88 - filaIdx * (80 / (filas.length - 1));
-                        for (let j = 0; j < cantJugadores; j++) {
-                            const xPct = cantJugadores === 1
-                                ? 50
-                                : 10 + (j / (cantJugadores - 1)) * 80;
-                            coordMap[place] = { x: xPct, y: yPct };
+                    // Mapa de X% según sufijo de posición ESPN
+                    const xPorPosicion = (abbr) => {
+                        if (!abbr) return 50;
+                        const a = abbr.toUpperCase();
+                        // Portero
+                        if (a === 'G' || a === 'GK') return 50;
+                        // Laterales
+                        if (a === 'RB' || a === 'RWB') return 82;
+                        if (a === 'LB' || a === 'LWB') return 18;
+                        // Centrales
+                        if (a === 'CB' || a === 'CD') return 50;
+                        if (a.includes('CD-R') || a.includes('CB-R')) return 62;
+                        if (a.includes('CD-L') || a.includes('CB-L')) return 38;
+                        // Mediocampo
+                        if (a === 'RM' || a === 'RW' || a === 'CM-R' || a === 'CAM-R') return 80;
+                        if (a === 'LM' || a === 'LW' || a === 'CM-L' || a === 'CAM-L') return 20;
+                        if (a === 'CM' || a === 'CDM' || a === 'CAM') return 50;
+                        if (a.includes('-R')) return 75;
+                        if (a.includes('-L')) return 25;
+                        // Delanteros
+                        if (a === 'CF-R' || a === 'ST-R' || a === 'RW') return 70;
+                        if (a === 'CF-L' || a === 'ST-L' || a === 'LW') return 30;
+                        if (a === 'CF' || a === 'ST') return 50;
+                        return 50;
+                    };
+
+                    // Y se calcula por fila según formationPlace
+                    // Separamos los titulares en filas según la formación
+                    const partes = formacion.split('-').map(Number);
+                    const filas  = [1, ...partes]; // [1 portero, ...líneas]
+                    let place = 1;
+                    const yPorPlace = {};
+                    filas.forEach((cant, filaIdx) => {
+                        const yPct = 88 - filaIdx * (78 / (filas.length - 1));
+                        for (let j = 0; j < cant; j++) {
+                            yPorPlace[place] = yPct;
                             place++;
                         }
                     });
 
-                    // Preservar líneas del campo y agregar tokens
                     const lineasCampo = `
                         <div style="position:absolute; top:50%; left:0; right:0; border-top:2px solid rgba(255,255,255,0.3); transform:translateY(-50%);"></div>
                         <div style="position:absolute; top:50%; left:50%; width:80px; height:80px; border:2px solid rgba(255,255,255,0.3); border-radius:50%; transform:translate(-50%,-50%);"></div>
@@ -886,15 +909,15 @@ const App = (() => {
                     `;
 
                     const tokensHtml = titulares.map(j => {
-                        const coord = coordMap[j.formationPlace];
-                        if (!coord) return '';
+                        const posAbbr = j.position?.abbreviation ?? '';
+                        const xPct    = xPorPosicion(posAbbr);
+                        const yPct    = yPorPlace[j.formationPlace] ?? 50;
                         const esPortero = j.formationPlace === 1;
-                        const bg = esPortero ? 'var(--accent-neon)' : '#fff';
-                        const color = '#000';
+                        const apellido  = j.athlete?.shortName ?? j.athlete?.displayName?.split(' ').pop() ?? '';
                         return `
-                            <div style="position:absolute; left:${coord.x}%; top:${coord.y}%; transform:translate(-50%,-50%); z-index:3; text-align:center;">
-                                <div style="background:${bg}; color:${color}; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:0.75rem; box-shadow:0 2px 8px rgba(0,0,0,0.6); margin:0 auto;">${j.jersey ?? '?'}</div>
-                                <div style="color:#fff; font-size:0.6rem; font-weight:600; margin-top:2px; text-shadow:0 1px 3px #000; max-width:50px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${j.athlete?.shortName ?? j.athlete?.displayName?.split(' ').pop() ?? ''}</div>
+                            <div style="position:absolute; left:${xPct}%; top:${yPct}%; transform:translate(-50%,-50%); z-index:3; text-align:center;">
+                                <div style="background:${esPortero ? 'var(--accent-neon)' : '#fff'}; color:#000; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:0.75rem; box-shadow:0 2px 8px rgba(0,0,0,0.6); margin:0 auto;">${j.jersey ?? '?'}</div>
+                                <div style="color:#fff; font-size:0.6rem; font-weight:600; margin-top:2px; text-shadow:0 1px 3px #000; max-width:50px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${apellido}</div>
                             </div>`;
                     }).join('');
 
