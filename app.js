@@ -933,9 +933,11 @@ const App = (() => {
                     let x;
                     if (cant === 1) {
                         x = 200;
-                    } else if (cant === 2) {
-                        // Dos jugadores: posiciones fijas centradas
+                    } else if (cant === 2 && fila === 3 && jugsFila.some(j => j.position?.abbreviation?.toUpperCase() === 'ST')) {
+                        // Dos delanteros con ST: posiciones fijas centradas
                         x = i === 0 ? 150 : 250;
+                    } else if (cant === 2) {
+                        x = Math.round(50 + (i / (cant - 1)) * 300);
                     } else {
                         x = Math.round(50 + (i / (cant - 1)) * 300);
                     }
