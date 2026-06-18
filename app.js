@@ -132,6 +132,11 @@ const App = (() => {
                 let x;
                 if (n === 1) {
                     x = svgW / 2;
+                } else if (n === 2 && fila === 3) {
+                    // CF-L y CF-R: centrados en 150/250 (no en los extremos)
+                    x = i === 0
+                        ? Math.round(svgW * 0.375)  // 150 en 400
+                        : Math.round(svgW * 0.625); // 250 en 400
                 } else {
                     x = Math.round(xMin + (i / (n - 1)) * (xMax - xMin));
                 }
