@@ -877,19 +877,34 @@ const App = (() => {
             if (titulares.length === 0) return;
 
             // ── Clasificar fila según abreviación REAL de ESPN ────────────────
-            // Verificado contra partido Argentina vs Argelia (event 760433):
-            // G → portero
-            // LB, RB, CD-L, CD-R, CB-L, CB-R → defensa
-            // LM, RM, CM-L, CM-R, CDM, CAM, AM-L, AM-R, DM → mediocampo
-            // CF-L, CF-R, ST-L, ST-R, LW, RW, F → delantero
+            // Verificado contra ARG vs ALG (760433) y RMA vs ATM (392450 UCL 2014)
+            //
+            // PORTERO:    G, GK
+            // DEFENSA:    LB, RB, LWB, RWB, CD-L, CD-R, CB-L, CB-R, CB
+            // MEDIOCAMPO: LM, RM, CM, CM-L, CM-R, CDM, DM, AM, AM-L, AM-R, CAM, M
+            // DELANTERO:  LF, RF, CF-L, CF-R, F, FW, ST, ST-L, ST-R, LW, RW
             const filaDePos = (abbr = '') => {
                 const a = abbr.toUpperCase().trim();
                 if (a === 'G' || a === 'GK') return 0;
-                if (a.startsWith('CD') || a.startsWith('CB') ||
-                    a === 'LB' || a === 'RB' || a === 'LWB' || a === 'RWB') return 1;
-                if (a.startsWith('CF') || a.startsWith('ST') ||
-                    a === 'LW' || a === 'RW' || a === 'F' || a === 'FW') return 3;
-                return 2; // LM, RM, CM-L, CM-R, CDM, CAM, AM-L, AM-R, DM, M
+                if (['LB','RB','LWB','RWB','CB'].includes(a) ||
+                    a.startsWith('CD-') || a.startsWith('CB-')) return 1;
+                if (['LF','RF','F','FW','LW','RW'].includes(a) ||
+                    a.startsWith('CF-') || a.startsWith('ST')) return 3;
+                return 2; // todo lo demás es mediocampo
+            };
+
+            // ── Orden X dentro de cada fila (izquierda → derecha) ────────────
+            // Mapeado directamente de las siglas ESPN verificadas
+            const ordenLR = (abbr = '') => {
+                const a = abbr.toUpperCase().trim();
+                // Izquierda (0)
+                if (['LB','LWB','LM','LW','LF','AM-L','CM-L','CF-L','ST-L'].includes(a)) return 0;
+                // Derecha (2)
+                if (['RB','RWB','RM','RW','RF','AM-R','CM-R','CF-R','ST-R'].includes(a)) return 2;
+                // Centro (1): G, CD-L/CD-R se ordenan por -L primero, -R después
+                if (a === 'CD-L' || a === 'CB-L') return 0;
+                if (a === 'CD-R' || a === 'CB-R') return 2;
+                return 1;
             };
 
             // ── Agrupar titulares por fila ────────────────────────────────────
@@ -898,14 +913,7 @@ const App = (() => {
                 rows[filaDePos(j.position?.abbreviation ?? '')].push(j);
             });
 
-            // Ordenar dentro de cada fila de izquierda a derecha
-            // ESPN usa sufijos -L (izquierda) y -R (derecha) → ordenar por eso
-            const ordenLR = (abbr = '') => {
-                const a = abbr.toUpperCase();
-                if (a.endsWith('-L') || a === 'LB' || a === 'LM' || a === 'LW' || a === 'LWB') return 0;
-                if (a.endsWith('-R') || a === 'RB' || a === 'RM' || a === 'RW' || a === 'RWB') return 2;
-                return 1; // centro
-            };
+            // Ordenar cada fila de izquierda a derecha
             [1, 2, 3].forEach(f => rows[f].sort((a, b) =>
                 ordenLR(a.position?.abbreviation ?? '') - ordenLR(b.position?.abbreviation ?? '')
             ));
@@ -922,7 +930,15 @@ const App = (() => {
                 const y = Math.round(yInicio - t * (yInicio - yFin));
                 jugsFila.forEach((j, i) => {
                     const cant = jugsFila.length;
-                    const x    = cant === 1 ? 200 : Math.round(50 + (i / (cant - 1)) * 300);
+                    let x;
+                    if (cant === 1) {
+                        x = 200;
+                    } else if (cant === 2) {
+                        // Dos jugadores: posiciones fijas centradas
+                        x = i === 0 ? 150 : 250;
+                    } else {
+                        x = Math.round(50 + (i / (cant - 1)) * 300);
+                    }
                     coordsMap.set(j.formationPlace, { x, y });
                 });
             });
@@ -1133,14 +1149,18 @@ const App = (() => {
             const filaDePos = (abbr = '') => {
                 const a = abbr.toUpperCase().trim();
                 if (a === 'G' || a === 'GK') return 0;
-                if (a.startsWith('CD') || a.startsWith('CB') || a === 'LB' || a === 'RB' || a === 'LWB' || a === 'RWB') return 1;
-                if (a.startsWith('CF') || a.startsWith('ST') || a === 'LW' || a === 'RW' || a === 'F' || a === 'FW') return 3;
+                if (['LB','RB','LWB','RWB','CB'].includes(a) ||
+                    a.startsWith('CD-') || a.startsWith('CB-')) return 1;
+                if (['LF','RF','F','FW','LW','RW'].includes(a) ||
+                    a.startsWith('CF-') || a.startsWith('ST')) return 3;
                 return 2;
             };
             const ordenLR = (abbr = '') => {
-                const a = abbr.toUpperCase();
-                if (a.endsWith('-L') || ['LB','LM','LW','LWB'].includes(a)) return 0;
-                if (a.endsWith('-R') || ['RB','RM','RW','RWB'].includes(a)) return 2;
+                const a = abbr.toUpperCase().trim();
+                if (['LB','LWB','LM','LW','LF','AM-L','CM-L','CF-L','ST-L'].includes(a)) return 0;
+                if (['RB','RWB','RM','RW','RF','AM-R','CM-R','CF-R','ST-R'].includes(a)) return 2;
+                if (a === 'CD-L' || a === 'CB-L') return 0;
+                if (a === 'CD-R' || a === 'CB-R') return 2;
                 return 1;
             };
             const rows = { 0:[], 1:[], 2:[], 3:[] };
