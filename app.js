@@ -913,7 +913,7 @@ const App = (() => {
             // ── Coordenadas Y: GK abajo (510), delanteros arriba (80) ─────────
             const filasOcupadas = [0, 1, 2, 3].filter(f => rows[f].length > 0);
             const yInicio = 510;
-            const yFin    = 80;
+            const yFin    = 118; // punta de la medialuna del área rival
 
             const coordsMap = new Map();
             filasOcupadas.forEach((fila, idx) => {
