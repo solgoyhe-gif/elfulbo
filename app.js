@@ -869,49 +869,51 @@ const App = (() => {
             const teamRoster = (summaryJSON.rosters ?? []).find(r => r.team?.id === String(equipoId));
             const formacion  = teamRoster?.formation ?? '?';
             const titulares  = (teamRoster?.roster ?? [])
-                .filter(j => j.starter && j.formationPlace >= 1 && j.formationPlace <= 11)
+                .filter(j => j.starter === true && j.formationPlace >= 1 && j.formationPlace <= 11)
                 .sort((a, b) => a.formationPlace - b.formationPlace);
 
             if (tituloEl) tituloEl.textContent = `Disposición Táctica (${formacion})`;
-
             tokensLayer.innerHTML = '';
-
             if (titulares.length === 0) return;
 
-            // ── Clasificar posición en fila numérica ──────────────────────────
-            // ESPN selecciones nacionales usa: G, D, M, F
-            // ESPN clubes usa: GK, CB, LB, RB, CDM, CM, CAM, LW, RW, ST, CF, etc.
+            // ── Clasificar fila según abreviación REAL de ESPN ────────────────
+            // Verificado contra partido Argentina vs Argelia (event 760433):
+            // G → portero
+            // LB, RB, CD-L, CD-R, CB-L, CB-R → defensa
+            // LM, RM, CM-L, CM-R, CDM, CAM, AM-L, AM-R, DM → mediocampo
+            // CF-L, CF-R, ST-L, ST-R, LW, RW, F → delantero
             const filaDePos = (abbr = '') => {
                 const a = abbr.toUpperCase().trim();
-                // Portero
-                if (a === 'G' || a === 'GK' || a === 'POR') return 0;
-                // Defensa
-                if (a === 'D' || a.startsWith('CB') || a.startsWith('CD') ||
-                    a.startsWith('LB') || a.startsWith('RB') ||
-                    a.startsWith('LWB') || a.startsWith('RWB')) return 1;
-                // Delantero
-                if (a === 'F' || a.startsWith('ST') || a.startsWith('CF') ||
-                    a.startsWith('LW') || a.startsWith('RW') || a === 'FW') return 3;
-                // Mediocampo (todo lo demás: M, CM, CDM, CAM, RM, LM, AM...)
-                return 2;
+                if (a === 'G' || a === 'GK') return 0;
+                if (a.startsWith('CD') || a.startsWith('CB') ||
+                    a === 'LB' || a === 'RB' || a === 'LWB' || a === 'RWB') return 1;
+                if (a.startsWith('CF') || a.startsWith('ST') ||
+                    a === 'LW' || a === 'RW' || a === 'F' || a === 'FW') return 3;
+                return 2; // LM, RM, CM-L, CM-R, CDM, CAM, AM-L, AM-R, DM, M
             };
 
+            // ── Agrupar titulares por fila ────────────────────────────────────
             const rows = { 0: [], 1: [], 2: [], 3: [] };
             titulares.forEach(j => {
-                const fila = filaDePos(j.position?.abbreviation ?? '');
-                rows[fila].push(j);
+                rows[filaDePos(j.position?.abbreviation ?? '')].push(j);
             });
 
-            // ── Coordenadas Y por fila ────────────────────────────────────────
-            // Vista de frente: portero (fila 0) ABAJO, delanteros (fila 3) ARRIBA
-            // SVG: y=0 es arriba, y=560 es abajo
-            const yPorFila = { 0: 510, 1: 390, 2: 265, 3: 115 };
+            // Ordenar dentro de cada fila de izquierda a derecha
+            // ESPN usa sufijos -L (izquierda) y -R (derecha) → ordenar por eso
+            const ordenLR = (abbr = '') => {
+                const a = abbr.toUpperCase();
+                if (a.endsWith('-L') || a === 'LB' || a === 'LM' || a === 'LW' || a === 'LWB') return 0;
+                if (a.endsWith('-R') || a === 'RB' || a === 'RM' || a === 'RW' || a === 'RWB') return 2;
+                return 1; // centro
+            };
+            [1, 2, 3].forEach(f => rows[f].sort((a, b) =>
+                ordenLR(a.position?.abbreviation ?? '') - ordenLR(b.position?.abbreviation ?? '')
+            ));
 
-            // Si no hay delanteros detectados o no hay mediocampos, redistribuir
-            // usando las filas realmente ocupadas para llenar el espacio verticalmente
+            // ── Coordenadas Y: GK abajo (510), delanteros arriba (80) ─────────
             const filasOcupadas = [0, 1, 2, 3].filter(f => rows[f].length > 0);
-            const yInicio = 510; // portero
-            const yFin    = 80;  // delanteros / última línea ofensiva
+            const yInicio = 510;
+            const yFin    = 80;
 
             const coordsMap = new Map();
             filasOcupadas.forEach((fila, idx) => {
@@ -920,7 +922,7 @@ const App = (() => {
                 const y = Math.round(yInicio - t * (yInicio - yFin));
                 jugsFila.forEach((j, i) => {
                     const cant = jugsFila.length;
-                    const x    = cant === 1 ? 200 : Math.round(44 + (i / (cant - 1)) * 312);
+                    const x    = cant === 1 ? 200 : Math.round(50 + (i / (cant - 1)) * 300);
                     coordsMap.set(j.formationPlace, { x, y });
                 });
             });
@@ -928,8 +930,7 @@ const App = (() => {
             titulares.forEach(j => {
                 const coords = coordsMap.get(j.formationPlace);
                 if (!coords) return;
-                const token = _dibujarJugadorSVG(pizarraSvg, j, coords.x, coords.y);
-                tokensLayer.appendChild(token);
+                tokensLayer.appendChild(_dibujarJugadorSVG(pizarraSvg, j, coords.x, coords.y));
             });
         };
 
