@@ -1387,17 +1387,11 @@ const App = (() => {
                 const rosterHome = (summaryData.rosters ?? []).find(r => r.team?.id === homeId);
                 const rosterAway = (summaryData.rosters ?? []).find(r => r.team?.id === awayId);
 
-                // Stats del partido
-                const getStatFromSummary = (rosterId, statName) => {
-                    const r = (summaryData.rosters ?? []).find(r => r.team?.id === rosterId);
-                    return 0; // las stats vienen en competitions, no en rosters
-                };
-
-                // Buscar stats en el scoreboard original
-                const compStats = summaryData.header?.competitions?.[0];
-                const compHome  = compStats?.competitors?.find(c => c.team?.id === homeId);
-                const compAway  = compStats?.competitors?.find(c => c.team?.id === awayId);
-                const getStat   = (comp, name) => parseFloat(comp?.statistics?.find(s => s.name === name)?.displayValue ?? '0') || 0;
+                // Stats del partido — vienen en boxscore.teams identificadas por team.id
+                const boxTeamHome = (summaryData.boxscore?.teams ?? []).find(t => t.team?.id === homeId);
+                const boxTeamAway = (summaryData.boxscore?.teams ?? []).find(t => t.team?.id === awayId);
+                const getStat = (boxTeam, name) =>
+                    parseFloat(boxTeam?.statistics?.find(s => s.name === name)?.displayValue ?? '0') || 0;
 
                 // Goleadores
                 const goleadoresHome = [], goleadoresAway = [];
@@ -1417,13 +1411,13 @@ const App = (() => {
                         <div style="text-align:right;">${goleadoresAway.map(g => `<span style="font-size:0.7rem;">${g.minuto}</span> ${g.nombre} ⚽`).join('<br>')}</div>
                     </div>` : ''}
 
-                    ${(compHome || compAway) ? `
+                    ${(boxTeamHome || boxTeamAway) ? `
                     <div style="border-top:1px solid var(--border-glass); padding-top:1rem; margin-bottom:1rem;">
-                        ${statBar(getStat(compHome,'possessionPct'), getStat(compAway,'possessionPct'), 'POSESIÓN %')}
-                        ${statBar(getStat(compHome,'totalShots'), getStat(compAway,'totalShots'), 'TIROS TOTALES')}
-                        ${statBar(getStat(compHome,'shotsOnTarget'), getStat(compAway,'shotsOnTarget'), 'TIROS A PUERTA')}
-                        ${statBar(getStat(compHome,'wonCorners'), getStat(compAway,'wonCorners'), 'CORNERS')}
-                        ${statBar(getStat(compHome,'foulsCommitted'), getStat(compAway,'foulsCommitted'), 'FALTAS')}
+                        ${statBar(getStat(boxTeamHome,'possessionPct'), getStat(boxTeamAway,'possessionPct'), 'POSESIÓN %')}
+                        ${statBar(getStat(boxTeamHome,'totalShots'), getStat(boxTeamAway,'totalShots'), 'TIROS TOTALES')}
+                        ${statBar(getStat(boxTeamHome,'shotsOnTarget'), getStat(boxTeamAway,'shotsOnTarget'), 'TIROS A PUERTA')}
+                        ${statBar(getStat(boxTeamHome,'wonCorners'), getStat(boxTeamAway,'wonCorners'), 'CORNERS')}
+                        ${statBar(getStat(boxTeamHome,'foulsCommitted'), getStat(boxTeamAway,'foulsCommitted'), 'FALTAS')}
                     </div>` : ''}
 
                     ${(rosterHome || rosterAway) ? `
