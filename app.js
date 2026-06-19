@@ -1266,6 +1266,15 @@ const App = (() => {
                     return;
                 }
 
+                // Ordenar: en vivo → finalizado → próximo
+                const prioridad = (ev) => {
+                    const estado = ev.competitions?.[0]?.status?.type?.state;
+                    if (estado === 'in')   return 0;
+                    if (estado === 'post') return 1;
+                    return 2;
+                };
+                eventos.sort((a, b) => prioridad(a) - prioridad(b));
+
                 // Renderizar cada partido como card
                 container.innerHTML = eventos.map((ev, idx) => {
                     const comp   = ev.competitions?.[0];
