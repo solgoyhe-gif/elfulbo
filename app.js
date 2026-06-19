@@ -56,19 +56,24 @@ const App = (() => {
         'CM-R': { fila: 2, orden: 5 },
         'RM':   { fila: 2, orden: 6 },
 
-        // ── Fila 3: Ataque (izquierda → derecha) ──────────────────────────────
-        'LF':   { fila: 3, orden: 0 },
-        'LW':   { fila: 3, orden: 0 },
-        'CF-L': { fila: 3, orden: 0 },
-        'ST':   { fila: 3, orden: 1 },
-        'F':    { fila: 3, orden: 1 },
-        'FW':   { fila: 3, orden: 1 },
-        'CF':   { fila: 3, orden: 1 },
-        'ST-L': { fila: 3, orden: 0 },
-        'ST-R': { fila: 3, orden: 2 },
-        'CF-R': { fila: 3, orden: 2 },
-        'RW':   { fila: 3, orden: 2 },
-        'RF':   { fila: 3, orden: 2 },
+        // ── Fila 3: Enganche (fila propia entre medio y ataque) ──────────────
+        'CAM':  { fila: 3, orden: 1 },
+        'AM':   { fila: 3, orden: 1 },
+
+        // ── Fila 4: Ataque (izquierda → derecha) ──────────────────────────────
+        'LF':   { fila: 4, orden: 0 },
+        'LW':   { fila: 4, orden: 0 },
+        'CF-L': { fila: 4, orden: 0 },
+        'ST':   { fila: 4, orden: 1 },
+        'F':    { fila: 4, orden: 1 },
+        'FW':   { fila: 4, orden: 1 },
+        'CF':   { fila: 4, orden: 1 },
+        'M':    { fila: 4, orden: 1 },
+        'ST-L': { fila: 4, orden: 0 },
+        'ST-R': { fila: 4, orden: 2 },
+        'CF-R': { fila: 4, orden: 2 },
+        'RW':   { fila: 4, orden: 2 },
+        'RF':   { fila: 4, orden: 2 },
     };
 
     // ── Fallback: si la sigla no está en el mapa, la deduce por prefijo ──────
@@ -83,10 +88,11 @@ const App = (() => {
         if (a.startsWith('CB') || a.startsWith('CD')) return { fila: 1, orden: 1 };
         if (a.startsWith('LM') || (a.startsWith('LW') && !a.startsWith('LWB'))) return { fila: 2, orden: 0 };
         if (a.startsWith('RM') || (a.startsWith('RW') && !a.startsWith('RWB'))) return { fila: 2, orden: 5 };
-        if (a.startsWith('CM') || a.startsWith('DM') || a.startsWith('AM') || a.startsWith('CAM')) return { fila: 2, orden: 3 };
-        if (a.startsWith('LF') || a.startsWith('CF-L') || a.startsWith('ST-L')) return { fila: 3, orden: 0 };
-        if (a.startsWith('RF') || a.startsWith('CF-R') || a.startsWith('ST-R')) return { fila: 3, orden: 2 };
-        if (a.startsWith('ST') || a.startsWith('CF') || a === 'F' || a === 'FW') return { fila: 3, orden: 1 };
+        if (a.startsWith('CM') || a.startsWith('DM')) return { fila: 2, orden: 3 };
+        if (a.startsWith('AM') || a.startsWith('CAM')) return { fila: 3, orden: 1 };
+        if (a.startsWith('LF') || a.startsWith('CF-L') || a.startsWith('ST-L')) return { fila: 4, orden: 0 };
+        if (a.startsWith('RF') || a.startsWith('CF-R') || a.startsWith('ST-R')) return { fila: 4, orden: 2 };
+        if (a.startsWith('ST') || a.startsWith('CF') || a === 'F' || a === 'FW') return { fila: 4, orden: 1 };
 
         return { fila: 2, orden: 3 }; // default: mediocampo centro
     };
@@ -96,19 +102,19 @@ const App = (() => {
     // Devuelve Map<formationPlace, {x, y}>
     const _calcularPosicionesTacticas = (titulares, svgW = 400, svgH = 560) => {
         // Agrupar por fila
-        const filas = { 0: [], 1: [], 2: [], 3: [] };
+        const filas = { 0: [], 1: [], 2: [], 3: [], 4: [] };
         titulares.forEach(j => {
             const sig = _getSiglaData(j.position?.abbreviation ?? '');
             filas[sig.fila].push({ ...j, _orden: sig.orden });
         });
 
         // Ordenar cada fila por orden (izq → der)
-        [0, 1, 2, 3].forEach(f => {
+        [0, 1, 2, 3, 4].forEach(f => {
             filas[f].sort((a, b) => a._orden - b._orden);
         });
 
         // Filas con jugadores
-        const filasOcupadas = [0, 1, 2, 3].filter(f => filas[f].length > 0);
+        const filasOcupadas = [0, 1, 2, 3, 4].filter(f => filas[f].length > 0);
 
         // Coordenadas Y: GK abajo, delanteros arriba
         const yGK  = svgH * 0.91;  // ≈ 510 en 560
