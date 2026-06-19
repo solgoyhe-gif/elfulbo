@@ -1601,38 +1601,67 @@ const App = (() => {
                         border-bottom:1px solid var(--border-glass);">
                         ${grupo.emoji} ${grupo.label}
                     </h3>
-                    ${grupo.items.map(art => {
+                    ${grupo.items.map((art, artIdx) => {
                         const img    = art.images?.find(i => i.type === 'header')?.url ?? '';
                         const tiempo = tiempoRelativo(art.published ?? art.lastModified ?? '');
-                        const link   = art.links?.web?.href ?? 'javascript:void(0)';
+                        const artId  = 'art-' + grupo.label.replace(/\s/g,'-') + '-' + artIdx;
                         return `
-                            <a href="${link}" target="_blank" rel="noopener" style="text-decoration:none; color:inherit; display:block; margin-bottom:0.8rem;">
-                                <div class="glass-panel" style="padding:1rem; display:flex; gap:1rem; align-items:flex-start; transition:background 0.2s;"
-                                    onmouseover="this.style.background='rgba(255,255,255,0.06)'"
-                                    onmouseout="this.style.background=''">
-                                    ${img ? `
-                                        <img src="${img}" alt="" width="90" height="60"
-                                            style="object-fit:cover; border-radius:6px; flex-shrink:0;"
-                                            onerror="this.style.display='none'">
-                                    ` : `
-                                        <div style="width:90px; height:60px; border-radius:6px; background:rgba(255,255,255,0.06);
-                                            display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1.5rem;">
-                                            ${grupo.emoji}
-                                        </div>
-                                    `}
-                                    <div style="flex:1; min-width:0;">
-                                        <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:5px;">${tiempo}</div>
-                                        <p style="font-weight:700; font-size:0.9rem; line-height:1.3; margin:0 0 5px 0;
-                                            white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                            <div class="glass-panel" style="padding:1rem; display:flex; gap:1rem; align-items:flex-start;
+                                transition:background 0.2s; cursor:pointer; margin-bottom:0.8rem;"
+                                onmouseover="this.style.background='rgba(255,255,255,0.06)'"
+                                onmouseout="this.style.background=''"
+                                onclick="window._abrirNoticia('${artId}')">
+                                ${img ? `
+                                    <img src="${img}" alt="" width="90" height="60"
+                                        style="object-fit:cover; border-radius:6px; flex-shrink:0;"
+                                        onerror="this.style.display='none'">
+                                ` : `
+                                    <div style="width:90px; height:60px; border-radius:6px; background:rgba(255,255,255,0.06);
+                                        display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1.5rem;">
+                                        ${grupo.emoji}
+                                    </div>
+                                `}
+                                <div style="flex:1; min-width:0;">
+                                    <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:5px;">${tiempo}</div>
+                                    <p style="font-weight:700; font-size:0.9rem; line-height:1.3; margin:0 0 5px 0;
+                                        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                        ${art.headline}
+                                    </p>
+                                    <p style="font-size:0.78rem; color:var(--text-muted); margin:0; line-height:1.4;
+                                        display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                                        ${art.description}
+                                    </p>
+                                </div>
+                            </div>
+                            <!-- Modal de noticia -->
+                            <div id="${artId}" style="display:none; position:fixed; inset:0; z-index:9999;
+                                background:rgba(0,0,0,0.85); overflow-y:auto; padding:1rem;">
+                                <div style="max-width:680px; margin:0 auto; padding-bottom:4rem;">
+                                    <button onclick="window._cerrarNoticia('${artId}')"
+                                        style="background:rgba(255,255,255,0.08); border:1px solid var(--border-glass);
+                                        color:var(--text-main); padding:8px 16px; border-radius:8px; cursor:pointer;
+                                        font-family:var(--font-heading); font-weight:700; font-size:0.85rem;
+                                        margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
+                                        ← Volver
+                                    </button>
+                                    <div class="glass-panel" style="padding:1.5rem;">
+                                        ${img ? `<img src="${img}" alt="" style="width:100%; border-radius:8px; margin-bottom:1.2rem; object-fit:cover; max-height:280px;">` : ''}
+                                        <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">${tiempo}</div>
+                                        <h2 style="font-family:var(--font-heading); font-size:1.3rem; font-weight:800; line-height:1.3; margin:0 0 1rem 0;">
                                             ${art.headline}
-                                        </p>
-                                        <p style="font-size:0.78rem; color:var(--text-muted); margin:0; line-height:1.4;
-                                            display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                                        </h2>
+                                        <p style="font-size:0.95rem; color:var(--text-muted); line-height:1.6; margin:0 0 1.5rem 0;">
                                             ${art.description}
                                         </p>
+                                        <a href="${art.links?.web?.href ?? '#'}" target="_blank" rel="noopener"
+                                            style="display:inline-block; padding:10px 20px; background:var(--accent-neon);
+                                            color:#000; font-weight:800; font-family:var(--font-heading); border-radius:8px;
+                                            text-decoration:none; font-size:0.9rem; letter-spacing:1px;">
+                                            VER NOTA COMPLETA EN ESPN →
+                                        </a>
                                     </div>
                                 </div>
-                            </a>`;
+                            </div>`;
                     }).join('')}
                 </div>
             `).join('');
@@ -1645,6 +1674,20 @@ const App = (() => {
                     <p style="color:var(--text-muted);">No se pudieron cargar las noticias.</p>
                 </div>`;
         }
+
+        // Funciones de modal de noticias
+        window._abrirNoticia = (id) => {
+            const modal = document.getElementById(id);
+            if (!modal) return;
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        };
+        window._cerrarNoticia = (id) => {
+            const modal = document.getElementById(id);
+            if (!modal) return;
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        };
     };
 
     // ── LOGIN ─────────────────────────────────────────────────────────────────
