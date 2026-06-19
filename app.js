@@ -1449,7 +1449,38 @@ const App = (() => {
         };
 
         // Cargar día default
-        window._seleccionarDia(diaDefault.fecha);
+        let _diaActivo = diaDefault.fecha;
+        let _autoRefreshInterval = null;
+
+        // Sobrescribir _seleccionarDia para trackear el día activo
+        const _seleccionarDiaOriginal = window._seleccionarDia;
+        window._seleccionarDia = async (fecha) => {
+            _diaActivo = fecha;
+            await _seleccionarDiaOriginal(fecha);
+        };
+
+        // Auto-refresh cada 30s solo si hay partidos en vivo
+        const _iniciarAutoRefresh = () => {
+            if (_autoRefreshInterval) clearInterval(_autoRefreshInterval);
+            _autoRefreshInterval = setInterval(async () => {
+                // Solo refrescar si seguimos en la vista H2H
+                if (!document.getElementById('h2h-partidos-dia')) {
+                    clearInterval(_autoRefreshInterval);
+                    return;
+                }
+                // Chequear si hay algún partido en vivo antes de recargar
+                try {
+                    const res = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${_diaActivo}`)}`);
+                    const data = res.ok ? await res.json() : {};
+                    const hayEnVivo = (data.events ?? []).some(ev => ev.competitions?.[0]?.status?.type?.state === 'in');
+                    if (hayEnVivo) {
+                        await _seleccionarDiaOriginal(_diaActivo);
+                    }
+                } catch(e) { /* silencioso */ }
+            }, 30000);
+        };
+
+        window._seleccionarDia(diaDefault.fecha).then(_iniciarAutoRefresh);
     };
 
     // ── INFO ──────────────────────────────────────────────────────────────────
