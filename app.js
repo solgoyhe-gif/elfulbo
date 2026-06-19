@@ -1128,91 +1128,80 @@ const App = (() => {
     const renderH2H = async () => {
         const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
 
-        const EQUIPOS_MUNDIAL = [
-            {id:'203',n:'México',fl:'🇲🇽'},{id:'467',n:'Sudáfrica',fl:'🇿🇦'},{id:'451',n:'Corea del Sur',fl:'🇰🇷'},{id:'450',n:'Czechia',fl:'🇨🇿'},
-            {id:'206',n:'Canadá',fl:'🇨🇦'},{id:'475',n:'Suiza',fl:'🇨🇭'},{id:'4398',n:'Catar',fl:'🇶🇦'},{id:'452',n:'Bosnia-Herz.',fl:'🇧🇦'},
-            {id:'205',n:'Brasil',fl:'🇧🇷'},{id:'2869',n:'Marruecos',fl:'🇲🇦'},{id:'2654',n:'Haití',fl:'🇭🇹'},{id:'580',n:'Escocia',fl:'🏴󠁧󠁢󠁳󠁣󠁴󠁿'},
-            {id:'660',n:'Estados Unidos',fl:'🇺🇸'},{id:'210',n:'Paraguay',fl:'🇵🇾'},{id:'628',n:'Australia',fl:'🇦🇺'},{id:'465',n:'Türkiye',fl:'🇹🇷'},
-            {id:'481',n:'Alemania',fl:'🇩🇪'},{id:'11678',n:'Curaçao',fl:'🇨🇼'},{id:'4789',n:'Costa de Marfil',fl:'🇨🇮'},{id:'209',n:'Ecuador',fl:'🇪🇨'},
-            {id:'449',n:'Países Bajos',fl:'🇳🇱'},{id:'627',n:'Japón',fl:'🇯🇵'},{id:'466',n:'Suecia',fl:'🇸🇪'},{id:'659',n:'Túnez',fl:'🇹🇳'},
-            {id:'459',n:'Bélgica',fl:'🇧🇪'},{id:'2620',n:'Egipto',fl:'🇪🇬'},{id:'469',n:'Irán',fl:'🇮🇷'},{id:'2666',n:'Nueva Zelanda',fl:'🇳🇿'},
-            {id:'164',n:'España',fl:'🇪🇸'},{id:'2597',n:'Cabo Verde',fl:'🇨🇻'},{id:'655',n:'Arabia Saudita',fl:'🇸🇦'},{id:'212',n:'Uruguay',fl:'🇺🇾'},
-            {id:'478',n:'Francia',fl:'🇫🇷'},{id:'654',n:'Senegal',fl:'🇸🇳'},{id:'464',n:'Noruega',fl:'🇳🇴'},{id:'4375',n:'Irak',fl:'🇮🇶'},
-            {id:'202',n:'Argentina',fl:'🇦🇷'},{id:'624',n:'Argelia',fl:'🇩🇿'},{id:'474',n:'Austria',fl:'🇦🇹'},{id:'2917',n:'Jordania',fl:'🇯🇴'},
-            {id:'482',n:'Portugal',fl:'🇵🇹'},{id:'2850',n:'Congo RD',fl:'🇨🇩'},{id:'2570',n:'Uzbekistán',fl:'🇺🇿'},{id:'208',n:'Colombia',fl:'🇨🇴'},
-            {id:'448',n:'Inglaterra',fl:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'},{id:'477',n:'Croacia',fl:'🇭🇷'},{id:'4469',n:'Ghana',fl:'🇬🇭'},{id:'2659',n:'Panamá',fl:'🇵🇦'},
-        ];
+        // Días del Mundial fase de grupos (UTC-3 Argentina)
+        const DIAS_MUNDIAL = [];
+        for (let d = 11; d <= 27; d++) {
+            const fecha = `202606${String(d).padStart(2, '0')}`;
+            const label = new Date(`2026-06-${String(d).padStart(2, '0')}T12:00:00-03:00`)
+                .toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' });
+            DIAS_MUNDIAL.push({ fecha, label });
+        }
 
-        const opcionesHTML = EQUIPOS_MUNDIAL.map(e =>
-            `<option value="${e.id}">${e.fl} ${e.n}</option>`
-        ).join('');
+        // Día actual en Argentina (UTC-3)
+        const hoyAR = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }));
+        const hoyStr = `${hoyAR.getFullYear()}${String(hoyAR.getMonth()+1).padStart(2,'0')}${String(hoyAR.getDate()).padStart(2,'0')}`;
+        const diaDefault = DIAS_MUNDIAL.find(d => d.fecha === hoyStr) ?? DIAS_MUNDIAL[0];
 
+        // ── Estructura base ───────────────────────────────────────────────────
         appContainer.innerHTML = `
             ${renderNavbar('#/h2h')}
             <main class="page-container fade-in" style="max-width: 700px; margin: 0 auto;">
-                <h2 class="section-title">⚔️ Head to Head</h2>
+                <h2 class="section-title">⚔️ Partidos del Mundial</h2>
 
-                <div class="glass-panel" style="padding: 1.5rem; margin-bottom: 1.5rem;">
-                    <div style="display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem;">
-                        <div>
-                            <label style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:6px;">Equipo Local</label>
-                            <select id="h2h-team-a" style="width:100%; background:var(--surface-color); color:var(--text-main); border:1px solid var(--border-glass); border-radius:8px; padding:10px; font-size:0.9rem; cursor:pointer;">
-                                ${opcionesHTML}
-                            </select>
-                        </div>
-                        <div style="text-align:center; font-family:var(--font-heading); font-size:1.4rem; font-weight:900; color:var(--accent-neon);">VS</div>
-                        <div>
-                            <label style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:6px;">Equipo Visitante</label>
-                            <select id="h2h-team-b" style="width:100%; background:var(--surface-color); color:var(--text-main); border:1px solid var(--border-glass); border-radius:8px; padding:10px; font-size:0.9rem; cursor:pointer;">
-                                ${opcionesHTML}
-                            </select>
-                        </div>
+                <!-- Selector de fechas -->
+                <div style="overflow-x: auto; padding-bottom: 8px; margin-bottom: 1.5rem; scrollbar-width: thin;">
+                    <div style="display: flex; gap: 8px; width: max-content;">
+                        ${DIAS_MUNDIAL.map(d => `
+                            <button id="btn-dia-${d.fecha}" onclick="window._seleccionarDia('${d.fecha}')"
+                                style="flex-shrink:0; padding: 8px 16px; border-radius: 20px;
+                                    border: 2px solid ${d.fecha === diaDefault.fecha ? 'var(--accent-neon)' : 'var(--border-glass)'};
+                                    background: ${d.fecha === diaDefault.fecha ? 'rgba(57,255,20,0.12)' : 'rgba(255,255,255,0.04)'};
+                                    color: ${d.fecha === diaDefault.fecha ? 'var(--accent-neon)' : 'var(--text-muted)'};
+                                    cursor: pointer; font-family: var(--font-heading); font-weight: 700;
+                                    font-size: 0.8rem; white-space: nowrap; transition: all 0.2s; text-transform: uppercase;">
+                                ${d.label}
+                            </button>`).join('')}
                     </div>
-                    <button id="h2h-buscar" style="width:100%; margin-top:1rem; padding:12px; background:var(--accent-neon); color:#000; font-weight:800; font-family:var(--font-heading); border:none; border-radius:8px; cursor:pointer; font-size:1rem; letter-spacing:1px; transition: opacity 0.2s;">
-                        ANALIZAR
-                    </button>
                 </div>
 
-                <div id="h2h-resultado"></div>
+                <!-- Partidos del día -->
+                <div id="h2h-partidos-dia">
+                    <div style="text-align:center; padding:3rem;">
+                        <div style="width:40px; height:40px; border:3px solid var(--accent-neon); border-right-color:transparent; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto;"></div>
+                        <p style="color:var(--accent-neon); margin-top:1rem; font-family:var(--font-heading); text-transform:uppercase; letter-spacing:1px;">Cargando partidos...</p>
+                    </div>
+                </div>
             </main>
         `;
 
-        document.getElementById('h2h-team-a').value = '202';
-        document.getElementById('h2h-team-b').value = '478';
-
-        // ── Stat bar ─────────────────────────────────────────────────────────
-        const statBar = (labelA, valA, labelB, valB, titulo) => {
+        // ── Helper: stat bar ──────────────────────────────────────────────────
+        const statBar = (valA, valB, titulo) => {
             const total = (valA + valB) || 1;
             const pctA  = Math.round((valA / total) * 100);
             const pctB  = 100 - pctA;
             return `
-                <div style="margin-bottom:1.2rem;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                        <span style="font-weight:700; font-size:1rem; color:var(--text-main);">${valA}</span>
-                        <span style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">${titulo}</span>
-                        <span style="font-weight:700; font-size:1rem; color:var(--accent-neon);">${valB}</span>
+                <div style="margin-bottom:1rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <span style="font-weight:700; font-size:0.95rem;">${valA}</span>
+                        <span style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">${titulo}</span>
+                        <span style="font-weight:700; font-size:0.95rem; color:var(--accent-neon);">${valB}</span>
                     </div>
-                    <div style="display:flex; height:6px; border-radius:3px; overflow:hidden; background:rgba(255,255,255,0.08);">
+                    <div style="display:flex; height:5px; border-radius:3px; overflow:hidden; background:rgba(255,255,255,0.08);">
                         <div style="width:${pctA}%; background:var(--text-main); transition:width 0.6s;"></div>
                         <div style="width:${pctB}%; background:var(--accent-neon); transition:width 0.6s;"></div>
                     </div>
-                </div>
-            `;
+                </div>`;
         };
 
-        // ── Mini pizarra SVG (H2H) — usa el sistema centralizado ─────────────
+        // ── Helper: mini pizarra ──────────────────────────────────────────────
         const miniPizarra = (roster, teamId, colorCamiseta, colorNum) => {
-            if (!roster) return '<p style="color:var(--text-muted); text-align:center; font-size:0.85rem; padding:1rem;">Sin datos de alineación.</p>';
-
+            if (!roster) return '<p style="color:var(--text-muted); text-align:center; font-size:0.8rem; padding:0.5rem;">Sin datos de alineación.</p>';
             const titulares = (roster.roster ?? [])
                 .filter(j => j.starter === true && j.formationPlace >= 1 && j.formationPlace <= 11)
                 .sort((a, b) => a.formationPlace - b.formationPlace);
+            if (titulares.length === 0) return '<p style="color:var(--text-muted); text-align:center; font-size:0.8rem; padding:0.5rem;">Sin titulares confirmados.</p>';
 
-            if (titulares.length === 0) return '<p style="color:var(--text-muted); text-align:center; font-size:0.85rem; padding:1rem;">Sin titulares confirmados.</p>';
-
-            const W = 300, H = 400;
-
-            // Usar el sistema centralizado con dimensiones de la mini pizarra
+            const W = 280, H = 380;
             const coordsMap = _calcularPosicionesTacticas(titulares, W, H);
 
             let tokens = '';
@@ -1223,306 +1212,241 @@ const App = (() => {
                 const num = j.jersey ?? '';
                 tokens += `
                     <g transform="translate(${c.x},${c.y})">
-                        <circle cx="0" cy="0" r="14" fill="${colorCamiseta}" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
-                        <text x="0" y="1" text-anchor="middle" dominant-baseline="middle" font-size="8" font-weight="800" fill="${colorNum}" font-family="system-ui">${num}</text>
-                        <rect x="-18" y="17" width="36" height="11" rx="3" fill="rgba(0,0,0,0.6)"/>
-                        <text x="0" y="23.5" text-anchor="middle" dominant-baseline="middle" font-size="6" font-weight="600" fill="#fff" font-family="system-ui">${nombre}</text>
+                        <circle cx="0" cy="0" r="13" fill="${colorCamiseta}" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                        <text x="0" y="1" text-anchor="middle" dominant-baseline="middle" font-size="7.5" font-weight="800" fill="${colorNum}" font-family="system-ui">${num}</text>
+                        <rect x="-17" y="16" width="34" height="10" rx="3" fill="rgba(0,0,0,0.6)"/>
+                        <text x="0" y="22" text-anchor="middle" dominant-baseline="middle" font-size="5.5" font-weight="600" fill="#fff" font-family="system-ui">${nombre}</text>
                     </g>`;
             });
 
             return `
                 <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%; display:block; border-radius:8px;">
                     <defs>
-                        <pattern id="mini-stripes-${teamId}" patternUnits="userSpaceOnUse" width="${W}" height="36">
-                            <rect width="${W}" height="18" y="0" fill="#27792a"/>
-                            <rect width="${W}" height="18" y="18" fill="#1e6622"/>
+                        <pattern id="stripes-${teamId}" patternUnits="userSpaceOnUse" width="${W}" height="34">
+                            <rect width="${W}" height="17" y="0" fill="#27792a"/>
+                            <rect width="${W}" height="17" y="17" fill="#1e6622"/>
                         </pattern>
                     </defs>
-                    <rect width="${W}" height="${H}" fill="url(#mini-stripes-${teamId})" rx="8"/>
-                    <rect x="12" y="10" width="${W-24}" height="${H-20}" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
-                    <line x1="12" y1="${H/2}" x2="${W-12}" y2="${H/2}" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
-                    <circle cx="${W/2}" cy="${H/2}" r="${W*0.14}" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
-                    <rect x="${W*0.25}" y="10" width="${W*0.5}" height="${H*0.13}" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
-                    <rect x="${W*0.25}" y="${H-10-H*0.13}" width="${W*0.5}" height="${H*0.13}" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+                    <rect width="${W}" height="${H}" fill="url(#stripes-${teamId})" rx="8"/>
+                    <rect x="10" y="8" width="${W-20}" height="${H-16}" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+                    <line x1="10" y1="${H/2}" x2="${W-10}" y2="${H/2}" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+                    <circle cx="${W/2}" cy="${H/2}" r="${W*0.13}" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+                    <rect x="${W*0.27}" y="8" width="${W*0.46}" height="${H*0.14}" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+                    <rect x="${W*0.27}" y="${H-8-H*0.14}" width="${W*0.46}" height="${H*0.14}" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
                     <g>${tokens}</g>
                 </svg>`;
         };
 
-        // ── Análisis H2H ──────────────────────────────────────────────────────
-        const analizarH2H = async () => {
-            const idA = document.getElementById('h2h-team-a').value;
-            const idB = document.getElementById('h2h-team-b').value;
-            if (idA === idB) {
-                document.getElementById('h2h-resultado').innerHTML = `<p style="color:#ff4757; text-align:center; padding:1rem;">Seleccioná dos equipos distintos.</p>`;
-                return;
-            }
-            const equipoA = EQUIPOS_MUNDIAL.find(e => e.id === idA);
-            const equipoB = EQUIPOS_MUNDIAL.find(e => e.id === idB);
+        // ── Cargar y renderizar partidos de un día ────────────────────────────
+        window._seleccionarDia = async (fecha) => {
+            // Actualizar botones
+            DIAS_MUNDIAL.forEach(d => {
+                const btn = document.getElementById(`btn-dia-${d.fecha}`);
+                if (!btn) return;
+                const activo = d.fecha === fecha;
+                btn.style.border     = activo ? '2px solid var(--accent-neon)' : '2px solid var(--border-glass)';
+                btn.style.background = activo ? 'rgba(57,255,20,0.12)' : 'rgba(255,255,255,0.04)';
+                btn.style.color      = activo ? 'var(--accent-neon)' : 'var(--text-muted)';
+            });
 
-            const res = document.getElementById('h2h-resultado');
-            res.innerHTML = `
+            const container = document.getElementById('h2h-partidos-dia');
+            container.innerHTML = `
                 <div style="text-align:center; padding:3rem;">
-                    <div style="width:40px; height:40px; border:3px solid var(--accent-neon); border-right-color:transparent; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto;"></div>
-                    <p style="color:var(--accent-neon); margin-top:1rem; font-family:var(--font-heading); text-transform:uppercase; letter-spacing:1px;">Analizando enfrentamiento...</p>
+                    <div style="width:36px; height:36px; border:3px solid var(--accent-neon); border-right-color:transparent; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto;"></div>
+                    <p style="color:var(--accent-neon); margin-top:1rem; font-family:var(--font-heading); font-size:0.85rem; text-transform:uppercase; letter-spacing:1px;">Cargando partidos...</p>
                 </div>`;
 
             try {
-                const fechas = [];
-                for (let d = 11; d <= 27; d++) fechas.push(`202606${String(d).padStart(2,'0')}`);
+                const res = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${fecha}`)}`);
+                const data = res.ok ? await res.json() : {};
+                const eventos = data.events ?? [];
 
-                const scoreboards = await Promise.all(
-                    fechas.map(f => fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${f}`)}`).then(r => r.ok ? r.json().catch(()=>({})) : {}))
-                );
-
-                const todosEventos = scoreboards.flatMap(sb => sb.events ?? []);
-                const vistos = new Set();
-                const eventosUnicos = todosEventos.filter(ev => { if (vistos.has(ev.id)) return false; vistos.add(ev.id); return true; });
-
-                let partidoDirecto = null;
-                for (const ev of eventosUnicos) {
-                    const comp = ev.competitions?.[0];
-                    const ids = comp?.competitors?.map(c => c.team?.id) ?? [];
-                    if (ids.includes(idA) && ids.includes(idB)) { partidoDirecto = ev; break; }
+                if (eventos.length === 0) {
+                    container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;"><p style="color:var(--text-muted);">Sin partidos para este día.</p></div>`;
+                    return;
                 }
 
-                const partidosA = eventosUnicos.filter(ev => (ev.competitions?.[0]?.competitors?.map(c => c.team?.id) ?? []).includes(idA));
-                const partidosB = eventosUnicos.filter(ev => (ev.competitions?.[0]?.competitors?.map(c => c.team?.id) ?? []).includes(idB));
+                // Renderizar cada partido como card
+                container.innerHTML = eventos.map((ev, idx) => {
+                    const comp   = ev.competitions?.[0];
+                    const home   = comp?.competitors?.find(c => c.homeAway === 'home');
+                    const away   = comp?.competitors?.find(c => c.homeAway === 'away');
+                    const estado = comp?.status?.type?.state ?? 'pre';
+                    const esLive = estado === 'in';
+                    const esPost = estado === 'post';
 
-                let summaryData = null, teamAStats = null, teamBStats = null;
-                let probabilidades = null, rosterA = null, rosterB = null;
-                let goleadoresA = [], goleadoresB = [];
-
-                if (partidoDirecto) {
-                    const eventId = partidoDirecto.id;
-                    const [sumRes, probRes] = await Promise.all([
-                        fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary?event=${eventId}`)}`),
-                        fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://sports.core.api.espn.com/v2/sports/soccer/leagues/fifa.world/events/${eventId}/competitions/${eventId}/probabilities?limit=1`)}`)
-                    ]);
-                    summaryData = sumRes.ok ? await sumRes.json().catch(()=>null) : null;
-                    const probJSON = probRes.ok ? await probRes.json().catch(()=>null) : null;
-
-                    if (summaryData) {
-                        const comp = partidoDirecto.competitions?.[0];
-                        const compA = comp?.competitors?.find(c => c.team?.id === idA);
-                        const compB = comp?.competitors?.find(c => c.team?.id === idB);
-                        const getStat = (competitor, name) => parseFloat(competitor?.statistics?.find(s => s.name === name)?.displayValue ?? '0') || 0;
-
-                        teamAStats = {
-                            posesion: getStat(compA, 'possessionPct'), tiros: getStat(compA, 'totalShots'),
-                            tirosPuerta: getStat(compA, 'shotsOnTarget'), faltas: getStat(compA, 'foulsCommitted'),
-                            corners: getStat(compA, 'wonCorners'), score: compA?.score ?? '-',
-                        };
-                        teamBStats = {
-                            posesion: getStat(compB, 'possessionPct'), tiros: getStat(compB, 'totalShots'),
-                            tirosPuerta: getStat(compB, 'shotsOnTarget'), faltas: getStat(compB, 'foulsCommitted'),
-                            corners: getStat(compB, 'wonCorners'), score: compB?.score ?? '-',
-                        };
-
-                        if (probJSON?.items?.length > 0) {
-                            const last = probJSON.items[probJSON.items.length - 1];
-                            probabilidades = {
-                                homeWin: Math.round((last.homeWinPercentage ?? 0.5) * 100),
-                                awayWin: Math.round((last.awayWinPercentage ?? 0.3) * 100),
-                                draw:    Math.round((last.tiePercentage ?? 0.2) * 100),
-                            };
-                        }
-
-                        (summaryData.keyEvents ?? []).forEach(ev => {
-                            if (!ev.scoringPlay) return;
-                            const nombre = ev.participants?.[0]?.athlete?.displayName ?? '';
-                            const minuto = ev.clock?.displayValue ?? '';
-                            if (ev.team?.id === idA) goleadoresA.push({nombre, minuto});
-                            else if (ev.team?.id === idB) goleadoresB.push({nombre, minuto});
-                        });
-
-                        rosterA = (summaryData.rosters ?? []).find(r => r.team?.id === idA);
-                        rosterB = (summaryData.rosters ?? []).find(r => r.team?.id === idB);
-                    }
-                }
-
-                const calcForma = (partidos, teamId) => partidos
-                    .filter(ev => ev.competitions?.[0]?.status?.type?.state === 'post')
-                    .slice(0, 5)
-                    .map(ev => {
-                        const comp  = ev.competitions?.[0];
-                        const yo    = comp?.competitors?.find(c => c.team?.id === teamId);
-                        const rival = comp?.competitors?.find(c => c.team?.id !== teamId);
-                        const misGoles  = parseInt(yo?.score ?? '0');
-                        const susGoles  = parseInt(rival?.score ?? '0');
-                        if (misGoles > susGoles) return {r:'W', color:'#39ff14'};
-                        if (misGoles < susGoles) return {r:'D', color:'#ff4757'};
-                        return {r:'E', color:'#ffd700'};
+                    // Hora en Argentina (UTC-3)
+                    const fechaEvento = new Date(ev.date);
+                    const horaAR = fechaEvento.toLocaleTimeString('es-AR', {
+                        timeZone: 'America/Argentina/Buenos_Aires',
+                        hour: '2-digit', minute: '2-digit'
                     });
 
-                const formaA = calcForma(partidosA, idA);
-                const formaB = calcForma(partidosB, idB);
-                const formaHTML = (forma) => forma.length === 0
-                    ? '<span style="color:var(--text-muted); font-size:0.8rem;">Sin partidos</span>'
-                    : forma.map(f => `<span style="display:inline-block; width:24px; height:24px; border-radius:50%; background:${f.color}; color:#000; font-size:0.7rem; font-weight:800; line-height:24px; text-align:center; margin:0 2px;">${f.r}</span>`).join('');
+                    const homeNombre = home?.team?.displayName ?? '?';
+                    const awayNombre = away?.team?.displayName ?? '?';
+                    const homeLogo   = home?.team?.logo ?? '';
+                    const awayLogo   = away?.team?.logo ?? '';
+                    const homeScore  = home?.score ?? '-';
+                    const awayScore  = away?.score ?? '-';
+                    const minuto     = comp?.status?.displayClock ?? '';
+                    const shortDetail = comp?.status?.type?.shortDetail ?? '';
 
-                const logoA = `https://a.espncdn.com/i/teamlogos/countries/500/${equipoA.n.toLowerCase().replace(/ /g,'_').replace(/[^a-z_]/g,'')}.png`;
-                const logoB = `https://a.espncdn.com/i/teamlogos/countries/500/${equipoB.n.toLowerCase().replace(/ /g,'_').replace(/[^a-z_]/g,'')}.png`;
+                    const logoHtml = (logo, nombre) => logo
+                        ? `<img src="${logo}" width="28" height="28" style="object-fit:contain;" onerror="this.style.display='none'">`
+                        : `<span style="font-size:1.2rem;">${nombre.charAt(0)}</span>`;
 
-                const estado = partidoDirecto?.competitions?.[0]?.status?.type;
-                const esLive = estado?.state === 'in';
-                const esPost = estado?.state === 'post';
-                const estadoBadge = esLive
-                    ? `<span style="background:#ff4757; color:#fff; padding:4px 12px; border-radius:20px; font-size:0.75rem; font-weight:800; animation:pulse 1s infinite;">● EN VIVO</span>`
-                    : esPost
-                        ? `<span style="background:rgba(255,255,255,0.1); color:var(--text-muted); padding:4px 12px; border-radius:20px; font-size:0.75rem;">FINALIZADO</span>`
-                        : `<span style="background:rgba(57,255,20,0.15); color:var(--accent-neon); padding:4px 12px; border-radius:20px; font-size:0.75rem; font-weight:700;">${partidoDirecto ? (estado?.detail ?? 'PRÓXIMO') : 'SIN PARTIDO DIRECTO'}</span>`;
-
-                res.innerHTML = `
-                    <!-- CABECERA DEL PARTIDO -->
-                    <div class="glass-panel" style="padding:1.5rem; text-align:center; margin-bottom:1.5rem;">
-                        <div style="margin-bottom:0.8rem;">${estadoBadge}</div>
-                        <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:1rem;">
-                            <div>
-                                <img src="${logoA}" onerror="this.style.display='none'" width="60" height="60" style="object-fit:contain; margin-bottom:8px;">
-                                <div style="font-family:var(--font-heading); font-weight:800; font-size:1.1rem;">${equipoA.fl} ${equipoA.n.toUpperCase()}</div>
-                                <div style="margin-top:6px;">${formaHTML(formaA)}</div>
-                            </div>
-                            <div style="font-family:var(--font-heading); font-size:${(esPost||esLive)?'2.5rem':'1.5rem'}; font-weight:900; color:${(esPost||esLive)?'var(--text-main)':'var(--text-muted)'};">
-                                ${(esPost||esLive) ? `${teamAStats?.score ?? '-'} : ${teamBStats?.score ?? '-'}` : 'vs'}
-                            </div>
-                            <div>
-                                <img src="${logoB}" onerror="this.style.display='none'" width="60" height="60" style="object-fit:contain; margin-bottom:8px;">
-                                <div style="font-family:var(--font-heading); font-weight:800; font-size:1.1rem;">${equipoB.fl} ${equipoB.n.toUpperCase()}</div>
-                                <div style="margin-top:6px;">${formaHTML(formaB)}</div>
-                            </div>
-                        </div>
-                        ${(goleadoresA.length > 0 || goleadoresB.length > 0) ? `
-                        <div style="margin-top:1rem; display:grid; grid-template-columns:1fr 1fr; gap:1rem; font-size:0.85rem; color:var(--text-muted);">
-                            <div style="text-align:left;">${goleadoresA.map(g=>`⚽ ${g.nombre} <span style="color:var(--text-muted)">${g.minuto}</span>`).join('<br>')}</div>
-                            <div style="text-align:right;">${goleadoresB.map(g=>`${g.minuto} ${g.nombre} ⚽`).join('<br>')}</div>
-                        </div>` : ''}
-                    </div>
-
-                    ${probabilidades ? `
-                    <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
-                        <h3 class="panel-title" style="text-align:center; color:var(--accent-neon); font-size:0.8rem; letter-spacing:2px;">PROBABILIDAD DE VICTORIA</h3>
-                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; text-align:center; margin-bottom:1rem; gap:0.5rem;">
-                            <div style="background:rgba(255,255,255,0.05); border-radius:8px; padding:12px;">
-                                <div style="font-size:1.6rem; font-weight:900; color:var(--text-main);">${probabilidades.homeWin}%</div>
-                                <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">VICTORIA ${equipoA.fl}</div>
-                            </div>
-                            <div style="background:rgba(255,255,255,0.05); border-radius:8px; padding:12px;">
-                                <div style="font-size:1.6rem; font-weight:900; color:#ffd700;">${probabilidades.draw}%</div>
-                                <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">EMPATE</div>
-                            </div>
-                            <div style="background:rgba(255,255,255,0.05); border-radius:8px; padding:12px;">
-                                <div style="font-size:1.6rem; font-weight:900; color:var(--accent-neon);">${probabilidades.awayWin}%</div>
-                                <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">VICTORIA ${equipoB.fl}</div>
-                            </div>
-                        </div>
-                    </div>` : ''}
-
-                    ${(teamAStats && teamBStats) ? `
-                    <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
-                        <h3 class="panel-title" style="text-align:center; color:var(--accent-neon); font-size:0.8rem; letter-spacing:2px;">ESTADÍSTICAS DEL PARTIDO</h3>
-                        ${statBar(equipoA.n, teamAStats.posesion, equipoB.n, teamBStats.posesion, 'POSESIÓN %')}
-                        ${statBar(equipoA.n, teamAStats.tiros, equipoB.n, teamBStats.tiros, 'TIROS TOTALES')}
-                        ${statBar(equipoA.n, teamAStats.tirosPuerta, equipoB.n, teamBStats.tirosPuerta, 'TIROS A PUERTA')}
-                        ${statBar(equipoA.n, teamAStats.corners, equipoB.n, teamBStats.corners, 'CORNERS')}
-                        ${statBar(equipoA.n, teamAStats.faltas, equipoB.n, teamBStats.faltas, 'FALTAS')}
-                    </div>` : ''}
-
-                    <!-- PARTIDOS EN EL MUNDIAL -->
-                    <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
-                        <h3 class="panel-title" style="text-align:center; color:var(--accent-neon); font-size:0.8rem; letter-spacing:2px;">PARTIDOS EN EL MUNDIAL 2026</h3>
-                        ${[...partidosA, ...partidosB]
-                            .filter((v,i,a) => a.findIndex(e=>e.id===v.id)===i)
-                            .filter(ev => ['post','in'].includes(ev.competitions?.[0]?.status?.type?.state))
-                            .sort((a,b) => new Date(a.date) - new Date(b.date))
-                            .map(ev => {
-                                const comp  = ev.competitions?.[0];
-                                const home  = comp?.competitors?.find(c => c.homeAway === 'home');
-                                const away  = comp?.competitors?.find(c => c.homeAway === 'away');
-                                const esEste = [home?.team?.id, away?.team?.id].includes(idA) && [home?.team?.id, away?.team?.id].includes(idB);
-                                const live  = comp?.status?.type?.state === 'in';
-                                return `
-                                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border-glass); ${esEste ? 'background:rgba(57,255,20,0.05); margin:0 -0.5rem; padding:10px 0.5rem; border-radius:6px;' : ''}">
-                                    <div style="display:flex; flex-direction:column; gap:3px; flex:1;">
-                                        <span style="font-size:0.9rem; font-weight:${esEste?'700':'400'};">${home?.team?.displayName ?? '?'}</span>
-                                        <span style="font-size:0.9rem; color:var(--text-muted); font-weight:${esEste?'700':'400'};">${away?.team?.displayName ?? '?'}</span>
+                    if (esLive || esPost) {
+                        // Card con resultado — expandible para cargar stats
+                        return `
+                            <div class="glass-panel" style="padding:1.2rem; margin-bottom:1rem;">
+                                <!-- Cabecera del partido -->
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+                                    <span style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">${shortDetail}</span>
+                                    ${esLive
+                                        ? `<span style="background:#ff4757; color:#fff; padding:3px 10px; border-radius:12px; font-size:0.7rem; font-weight:800; animation:pulse 1s infinite;">● EN VIVO ${minuto}</span>`
+                                        : `<span style="background:rgba(255,255,255,0.08); color:var(--text-muted); padding:3px 10px; border-radius:12px; font-size:0.7rem;">FINALIZADO</span>`}
+                                </div>
+                                <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:0.8rem;">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        ${logoHtml(homeLogo, homeNombre)}
+                                        <span style="font-weight:700; font-size:0.95rem;">${homeNombre}</span>
                                     </div>
-                                    <div style="text-align:right;">
-                                        <div style="font-family:var(--font-heading); font-weight:800; font-size:1.1rem; color:${esEste?'var(--accent-neon)':'var(--text-main)'};">
-                                            ${home?.score ?? '-'} - ${away?.score ?? '-'}
-                                        </div>
-                                        ${live ? '<span style="color:#ff4757; font-size:0.7rem; font-weight:800;">● VIVO</span>' : `<span style="color:var(--text-muted); font-size:0.7rem;">${comp?.status?.type?.shortDetail ?? 'FT'}</span>`}
+                                    <div style="font-family:var(--font-heading); font-size:1.8rem; font-weight:900; color:var(--text-main); text-align:center; min-width:70px;">
+                                        ${homeScore} - ${awayScore}
                                     </div>
-                                </div>`;
-                            }).join('') || '<p style="color:var(--text-muted); text-align:center; font-size:0.85rem; padding:0.5rem;">Sin partidos jugados aún.</p>'
-                        }
-                    </div>
-
-                    ${(rosterA || rosterB) ? `
-                    <!-- ALINEACIONES -->
-                    <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
-                        <h3 class="panel-title" style="text-align:center; color:var(--accent-neon); font-size:0.8rem; letter-spacing:2px; margin-bottom:1rem;">ALINEACIONES</h3>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-                            <div>
-                                <p style="text-align:center; font-weight:700; margin-bottom:8px; font-size:0.9rem;">${equipoA.fl} ${equipoA.n} <span style="color:var(--text-muted); font-size:0.75rem;">${rosterA?.formation ?? ''}</span></p>
-                                ${miniPizarra(rosterA, idA, '#e8e8f0', '#1a1a2e')}
-                            </div>
-                            <div>
-                                <p style="text-align:center; font-weight:700; margin-bottom:8px; font-size:0.9rem;">${equipoB.fl} ${equipoB.n} <span style="color:var(--text-muted); font-size:0.75rem;">${rosterB?.formation ?? ''}</span></p>
-                                ${miniPizarra(rosterB, idB, '#cc2222', '#ffffff')}
-                            </div>
-                        </div>
-                    </div>` : ''}
-
-                    <!-- GOLEADORES DEL TORNEO -->
-                    <div class="glass-panel" style="padding:1.5rem; margin-bottom:4rem;">
-                        <h3 class="panel-title" style="text-align:center; color:var(--accent-neon); font-size:0.8rem; letter-spacing:2px; margin-bottom:1rem;">GOLEADORES EN EL MUNDIAL</h3>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-                            <div>
-                                ${(() => {
-                                    const goleadores = {};
-                                    partidosA.filter(ev => ev.competitions?.[0]?.status?.type?.state === 'post').forEach(ev => {
-                                        (ev.competitions?.[0]?.details ?? []).forEach(d => {
-                                            if (!d.scoringPlay || d.ownGoal) return;
-                                            if (d.team?.id !== idA) return;
-                                            const nombre = d.athletesInvolved?.[0]?.displayName;
-                                            if (nombre) goleadores[nombre] = (goleadores[nombre] ?? 0) + 1;
-                                        });
-                                    });
-                                    const top = Object.entries(goleadores).sort((a,b)=>b[1]-a[1]).slice(0,5);
-                                    return top.length > 0
-                                        ? top.map(([n,g]) => `<div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border-glass); font-size:0.88rem;"><span>⚽ ${n}</span><span style="font-weight:800; color:var(--accent-neon);">${g}</span></div>`).join('')
-                                        : '<p style="color:var(--text-muted); font-size:0.8rem; text-align:center;">Sin goles aún</p>';
-                                })()}
-                            </div>
-                            <div>
-                                ${(() => {
-                                    const goleadores = {};
-                                    partidosB.filter(ev => ev.competitions?.[0]?.status?.type?.state === 'post').forEach(ev => {
-                                        (ev.competitions?.[0]?.details ?? []).forEach(d => {
-                                            if (!d.scoringPlay || d.ownGoal) return;
-                                            if (d.team?.id !== idB) return;
-                                            const nombre = d.athletesInvolved?.[0]?.displayName;
-                                            if (nombre) goleadores[nombre] = (goleadores[nombre] ?? 0) + 1;
-                                        });
-                                    });
-                                    const top = Object.entries(goleadores).sort((a,b)=>b[1]-a[1]).slice(0,5);
-                                    return top.length > 0
-                                        ? top.map(([n,g]) => `<div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border-glass); font-size:0.88rem;"><span>⚽ ${n}</span><span style="font-weight:800; color:var(--accent-neon);">${g}</span></div>`).join('')
-                                        : '<p style="color:var(--text-muted); font-size:0.8rem; text-align:center;">Sin goles aún</p>';
-                                })()}
-                            </div>
-                        </div>
-                    </div>
-                `;
+                                    <div style="display:flex; align-items:center; gap:8px; justify-content:flex-end;">
+                                        <span style="font-weight:700; font-size:0.95rem;">${awayNombre}</span>
+                                        ${logoHtml(awayLogo, awayNombre)}
+                                    </div>
+                                </div>
+                                <!-- Botón expandir stats -->
+                                <button onclick="window._expandirPartido('${ev.id}', '${home?.team?.id}', '${away?.team?.id}', this)"
+                                    style="width:100%; margin-top:1rem; padding:8px; background:rgba(255,255,255,0.05); border:1px solid var(--border-glass); border-radius:8px; color:var(--text-muted); cursor:pointer; font-size:0.8rem; font-family:var(--font-heading); letter-spacing:1px; transition:all 0.2s;">
+                                    VER ESTADÍSTICAS ↓
+                                </button>
+                                <div id="stats-${ev.id}" style="display:none; margin-top:1rem;"></div>
+                            </div>`;
+                    } else {
+                        // Card tipo calendario — próximo
+                        return `
+                            <div class="glass-panel" style="padding:1.2rem; margin-bottom:1rem; border-left:3px solid var(--border-glass);">
+                                <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:0.8rem;">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        ${logoHtml(homeLogo, homeNombre)}
+                                        <span style="font-weight:600; font-size:0.95rem;">${homeNombre}</span>
+                                    </div>
+                                    <div style="text-align:center; min-width:70px;">
+                                        <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:900; color:var(--accent-neon);">${horaAR}</div>
+                                        <div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px; text-transform:uppercase; letter-spacing:1px;">ARG</div>
+                                    </div>
+                                    <div style="display:flex; align-items:center; gap:8px; justify-content:flex-end;">
+                                        <span style="font-weight:600; font-size:0.95rem;">${awayNombre}</span>
+                                        ${logoHtml(awayLogo, awayNombre)}
+                                    </div>
+                                </div>
+                            </div>`;
+                    }
+                }).join('');
 
             } catch(err) {
-                console.error('[H2H]', err);
-                document.getElementById('h2h-resultado').innerHTML = `<p style="color:#ff4757; text-align:center; padding:2rem;">Error cargando datos. Intentá de nuevo.</p>`;
+                console.error('[H2H día]', err);
+                container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;"><p style="color:#ff4757;">Error cargando partidos.</p></div>`;
             }
         };
 
-        document.getElementById('h2h-buscar').addEventListener('click', analizarH2H);
-        analizarH2H();
+        // ── Expandir stats de un partido jugado/en vivo ───────────────────────
+        window._expandirPartido = async (eventId, homeId, awayId, btn) => {
+            const statsDiv = document.getElementById(`stats-${eventId}`);
+            if (!statsDiv) return;
+
+            // Toggle
+            if (statsDiv.style.display === 'block') {
+                statsDiv.style.display = 'none';
+                btn.textContent = 'VER ESTADÍSTICAS ↓';
+                return;
+            }
+
+            btn.textContent = 'Cargando...';
+            btn.disabled = true;
+
+            try {
+                const [sumRes] = await Promise.all([
+                    fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary?event=${eventId}`)}`)
+                ]);
+                const summaryData = sumRes.ok ? await sumRes.json() : {};
+
+                const rosterHome = (summaryData.rosters ?? []).find(r => r.team?.id === homeId);
+                const rosterAway = (summaryData.rosters ?? []).find(r => r.team?.id === awayId);
+
+                // Stats del partido
+                const getStatFromSummary = (rosterId, statName) => {
+                    const r = (summaryData.rosters ?? []).find(r => r.team?.id === rosterId);
+                    return 0; // las stats vienen en competitions, no en rosters
+                };
+
+                // Buscar stats en el scoreboard original
+                const compStats = summaryData.header?.competitions?.[0];
+                const compHome  = compStats?.competitors?.find(c => c.team?.id === homeId);
+                const compAway  = compStats?.competitors?.find(c => c.team?.id === awayId);
+                const getStat   = (comp, name) => parseFloat(comp?.statistics?.find(s => s.name === name)?.displayValue ?? '0') || 0;
+
+                // Goleadores
+                const goleadoresHome = [], goleadoresAway = [];
+                (summaryData.keyEvents ?? []).forEach(ev => {
+                    if (!ev.scoringPlay) return;
+                    const nombre  = ev.participants?.[0]?.athlete?.displayName ?? '';
+                    const minuto  = ev.clock?.displayValue ?? '';
+                    if (ev.team?.id === homeId) goleadoresHome.push({ nombre, minuto });
+                    else if (ev.team?.id === awayId) goleadoresAway.push({ nombre, minuto });
+                });
+
+                statsDiv.style.display = 'block';
+                statsDiv.innerHTML = `
+                    ${(goleadoresHome.length > 0 || goleadoresAway.length > 0) ? `
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:1rem; font-size:0.82rem; color:var(--text-muted);">
+                        <div>${goleadoresHome.map(g => `⚽ ${g.nombre} <span style="font-size:0.7rem;">${g.minuto}</span>`).join('<br>')}</div>
+                        <div style="text-align:right;">${goleadoresAway.map(g => `<span style="font-size:0.7rem;">${g.minuto}</span> ${g.nombre} ⚽`).join('<br>')}</div>
+                    </div>` : ''}
+
+                    ${(compHome || compAway) ? `
+                    <div style="border-top:1px solid var(--border-glass); padding-top:1rem; margin-bottom:1rem;">
+                        ${statBar(getStat(compHome,'possessionPct'), getStat(compAway,'possessionPct'), 'POSESIÓN %')}
+                        ${statBar(getStat(compHome,'totalShots'), getStat(compAway,'totalShots'), 'TIROS TOTALES')}
+                        ${statBar(getStat(compHome,'shotsOnTarget'), getStat(compAway,'shotsOnTarget'), 'TIROS A PUERTA')}
+                        ${statBar(getStat(compHome,'wonCorners'), getStat(compAway,'wonCorners'), 'CORNERS')}
+                        ${statBar(getStat(compHome,'foulsCommitted'), getStat(compAway,'foulsCommitted'), 'FALTAS')}
+                    </div>` : ''}
+
+                    ${(rosterHome || rosterAway) ? `
+                    <div style="border-top:1px solid var(--border-glass); padding-top:1rem;">
+                        <p style="font-size:0.7rem; color:var(--accent-neon); text-transform:uppercase; letter-spacing:2px; text-align:center; margin-bottom:0.8rem;">ALINEACIONES</p>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem;">
+                            <div>
+                                <p style="text-align:center; font-size:0.75rem; font-weight:700; margin-bottom:6px; color:var(--text-muted);">${rosterHome?.team?.displayName ?? ''} <span style="color:var(--text-muted); opacity:0.6;">${rosterHome?.formation ?? ''}</span></p>
+                                ${miniPizarra(rosterHome, homeId, '#e8e8f0', '#1a1a2e')}
+                            </div>
+                            <div>
+                                <p style="text-align:center; font-size:0.75rem; font-weight:700; margin-bottom:6px; color:var(--text-muted);">${rosterAway?.team?.displayName ?? ''} <span style="color:var(--text-muted); opacity:0.6;">${rosterAway?.formation ?? ''}</span></p>
+                                ${miniPizarra(rosterAway, awayId, '#cc2222', '#ffffff')}
+                            </div>
+                        </div>
+                    </div>` : ''}
+                `;
+
+                btn.textContent = 'OCULTAR ↑';
+                btn.disabled = false;
+
+            } catch(err) {
+                console.error('[expandir partido]', err);
+                statsDiv.innerHTML = `<p style="color:#ff4757; font-size:0.85rem; text-align:center;">Error cargando estadísticas.</p>`;
+                statsDiv.style.display = 'block';
+                btn.textContent = 'VER ESTADÍSTICAS ↓';
+                btn.disabled = false;
+            }
+        };
+
+        // Cargar día default
+        window._seleccionarDia(diaDefault.fecha);
     };
 
     // ── INFO ──────────────────────────────────────────────────────────────────
