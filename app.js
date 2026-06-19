@@ -1312,7 +1312,11 @@ const App = (() => {
                                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
                                     <span style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">${shortDetail}</span>
                                     ${esLive
-                                        ? `<span style="background:#ff4757; color:#fff; padding:3px 10px; border-radius:12px; font-size:0.7rem; font-weight:800; animation:pulse 1s infinite;">● EN VIVO ${minuto}</span>`
+                                        ? (() => {
+                                            const esHT = shortDetail.toLowerCase().includes('half') || shortDetail.toLowerCase().includes('ht');
+                                            const etiqueta = esHT ? 'EN VIVO · HALF TIME' : `EN VIVO ${minuto}`;
+                                            return `<span style="background:#ff4757; color:#fff; padding:3px 10px; border-radius:12px; font-size:0.7rem; font-weight:800; animation:pulse 1s infinite;">● ${etiqueta}</span>`;
+                                          })()
                                         : `<span style="background:rgba(255,255,255,0.08); color:var(--text-muted); padding:3px 10px; border-radius:12px; font-size:0.7rem;">FINALIZADO</span>`}
                                 </div>
                                 <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:0.8rem;">
