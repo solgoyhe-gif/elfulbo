@@ -44,17 +44,17 @@ const App = (() => {
         //   En un 4-3-3 con un solo CM, la distribución equitativa lo ubica
         //   en el centro automáticamente sin importar el "orden" absoluto.
         'LM':   { fila: 2, orden: 0 },
+        'AM-L': { fila: 2, orden: 1 },
         'CM-L': { fila: 2, orden: 1 },
         'CDM':  { fila: 2, orden: 2 },
         'DM':   { fila: 2, orden: 2 },
+        'M':    { fila: 2, orden: 2 },
         'CM':   { fila: 2, orden: 3 },
-        'AM':   { fila: 2, orden: 3 },
-        'CAM':  { fila: 2, orden: 3 },
-        'M':    { fila: 2, orden: 3 },
-        'AM-L': { fila: 2, orden: 1 },
-        'AM-R': { fila: 2, orden: 4 },
-        'CM-R': { fila: 2, orden: 4 },
-        'RM':   { fila: 2, orden: 5 },
+        'CAM':  { fila: 2, orden: 4 },
+        'AM':   { fila: 2, orden: 4 },
+        'AM-R': { fila: 2, orden: 5 },
+        'CM-R': { fila: 2, orden: 5 },
+        'RM':   { fila: 2, orden: 6 },
 
         // ── Fila 3: Ataque (izquierda → derecha) ──────────────────────────────
         'LF':   { fila: 3, orden: 0 },
@@ -81,8 +81,8 @@ const App = (() => {
         if (a.startsWith('LB') || a.startsWith('LWB')) return { fila: 1, orden: 0 };
         if (a.startsWith('RB') || a.startsWith('RWB')) return { fila: 1, orden: 3 };
         if (a.startsWith('CB') || a.startsWith('CD')) return { fila: 1, orden: 1 };
-        if (a.startsWith('LM') || a.startsWith('LW')) return { fila: 2, orden: 0 };
-        if (a.startsWith('RM') || a.startsWith('RW')) return { fila: 2, orden: 5 };
+        if (a.startsWith('LM') || (a.startsWith('LW') && !a.startsWith('LWB'))) return { fila: 2, orden: 0 };
+        if (a.startsWith('RM') || (a.startsWith('RW') && !a.startsWith('RWB'))) return { fila: 2, orden: 5 };
         if (a.startsWith('CM') || a.startsWith('DM') || a.startsWith('AM') || a.startsWith('CAM')) return { fila: 2, orden: 3 };
         if (a.startsWith('LF') || a.startsWith('CF-L') || a.startsWith('ST-L')) return { fila: 3, orden: 0 };
         if (a.startsWith('RF') || a.startsWith('CF-R') || a.startsWith('ST-R')) return { fila: 3, orden: 2 };
