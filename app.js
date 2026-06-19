@@ -1482,51 +1482,130 @@ const App = (() => {
     };
 
     // ── INFO ──────────────────────────────────────────────────────────────────
-    const renderInfo = () => {
+    const renderInfo = async () => {
+        const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
+
+        // Skeleton mientras carga
         appContainer.innerHTML = `
             ${renderNavbar('#/info')}
-            <main class="page-container fade-in">
-                <h2 class="section-title">📰 Info & Noticias</h2>
-                <div class="news-grid">
-                    <article class="news-card">
-                        <div class="news-image-placeholder">🤝</div>
-                        <div class="news-content">
-                            <div class="news-header">
-                                <span class="news-tag tag-mercado">Mercado</span>
-                                <span class="news-date">Hace 2 horas</span>
+            <main class="page-container fade-in" style="max-width: 700px; margin: 0 auto;">
+                <h2 class="section-title">📰 Noticias del Mundial</h2>
+                <div id="info-container">
+                    ${[1,2,3,4,5].map(() => `
+                        <div class="glass-panel" style="padding:1.2rem; margin-bottom:1rem; display:flex; gap:1rem;">
+                            <div class="skel-cell" style="width:90px; height:60px; border-radius:6px; flex-shrink:0;"></div>
+                            <div style="flex:1;">
+                                <div class="skel-cell" style="width:80px; height:14px; margin-bottom:8px;"></div>
+                                <div class="skel-cell" style="width:100%; height:16px; margin-bottom:6px;"></div>
+                                <div class="skel-cell" style="width:75%; height:13px;"></div>
                             </div>
-                            <h3 class="news-title">Acuerdo total: El fichaje más caro de la historia</h3>
-                            <p class="news-excerpt">Fuentes cercanas al club confirman que las negociaciones han llegado a buen puerto.</p>
-                            <a href="javascript:void(0)" class="news-read-more">Leer completo →</a>
-                        </div>
-                    </article>
-                    <article class="news-card">
-                        <div class="news-image-placeholder">🎙️</div>
-                        <div class="news-content">
-                            <div class="news-header">
-                                <span class="news-tag tag-declaracion">Declaraciones</span>
-                                <span class="news-date">Hace 5 horas</span>
-                            </div>
-                            <h3 class="news-title">"El arbitraje de hoy fue una verdadera vergüenza"</h3>
-                            <p class="news-excerpt">El presidente del club explotó en conferencia de prensa tras el polémico empate.</p>
-                            <a href="javascript:void(0)" class="news-read-more">Ver video →</a>
-                        </div>
-                    </article>
-                    <article class="news-card">
-                        <div class="news-image-placeholder">🚑</div>
-                        <div class="news-content">
-                            <div class="news-header">
-                                <span class="news-tag tag-lesion">Reporte Médico</span>
-                                <span class="news-date">Ayer</span>
-                            </div>
-                            <h3 class="news-title">Rotura de ligamentos: Se despide de la temporada</h3>
-                            <p class="news-excerpt">El cuerpo médico confirmó los peores temores. El capitán será operado este viernes.</p>
-                            <a href="javascript:void(0)" class="news-read-more">Ver parte médico →</a>
-                        </div>
-                    </article>
+                        </div>`).join('')}
                 </div>
             </main>
         `;
+
+        try {
+            const res  = await fetch(`${CF_WORKER}/?url=${encodeURIComponent('https://now.core.api.espn.com/v1/sports/news?sport=soccer&limit=30')}`);
+            const data = res.ok ? await res.json() : {};
+            const articulos = (data.headlines ?? []).filter(a => a.headline && a.description);
+
+            if (articulos.length === 0) throw new Error('Sin artículos');
+
+            // ── Categorizar cada artículo por tipo/keywords ───────────────────
+            const categorizar = (art) => {
+                const texto = (art.headline + ' ' + (art.description ?? '')).toLowerCase();
+                const tipo  = art.type ?? '';
+
+                if (tipo === 'Transfer' || texto.includes('transfer') || texto.includes('sign') || texto.includes('fichaj') || texto.includes('vende') || texto.includes('compra') || texto.includes('contrat'))
+                    return { label: 'Mercado', color: '#f0a500', emoji: '🔄' };
+                if (texto.includes('injur') || texto.includes('lesion') || texto.includes('lesión') || texto.includes('baja médica') || texto.includes('fractur') || texto.includes('ligament'))
+                    return { label: 'Lesión', color: '#ff4757', emoji: '🚑' };
+                if (texto.includes('coach') || texto.includes('manager') || texto.includes('dt ') || texto.includes('técnico') || texto.includes('entrenador') || texto.includes('sack') || texto.includes('fired') || texto.includes('appoint'))
+                    return { label: 'Cuerpo Técnico', color: '#7d5fff', emoji: '🧠' };
+                if (texto.includes('said') || texto.includes('says') || texto.includes('declared') || texto.includes('declaró') || texto.includes('afirmó') || texto.includes('press') || texto.includes('interview'))
+                    return { label: 'Declaraciones', color: '#2ed573', emoji: '🎙️' };
+                if (texto.includes('world cup') || texto.includes('mundial') || texto.includes('fifa') || texto.includes('group') || texto.includes('grupo'))
+                    return { label: 'Mundial 2026', color: '#ffd700', emoji: '🏆' };
+                return { label: 'Noticias', color: 'var(--accent-neon)', emoji: '📰' };
+            };
+
+            // ── Tiempo relativo ───────────────────────────────────────────────
+            const tiempoRelativo = (fechaStr) => {
+                const diff = Math.floor((Date.now() - new Date(fechaStr)) / 1000);
+                if (diff < 60)   return 'Hace un momento';
+                if (diff < 3600) return `Hace ${Math.floor(diff/60)} min`;
+                if (diff < 86400) return `Hace ${Math.floor(diff/3600)} h`;
+                return `Hace ${Math.floor(diff/86400)} días`;
+            };
+
+            // ── Agrupar por categoría ─────────────────────────────────────────
+            const grupos = {};
+            articulos.forEach(art => {
+                const cat = categorizar(art);
+                if (!grupos[cat.label]) grupos[cat.label] = { ...cat, items: [] };
+                grupos[cat.label].items.push(art);
+            });
+
+            // Orden de categorías
+            const ordenCats = ['Mundial 2026', 'Declaraciones', 'Mercado', 'Cuerpo Técnico', 'Lesión', 'Noticias'];
+            const gruposOrdenados = ordenCats
+                .filter(c => grupos[c])
+                .map(c => grupos[c]);
+
+            const container = document.getElementById('info-container');
+            if (!container) return;
+
+            container.innerHTML = gruposOrdenados.map(grupo => `
+                <div style="margin-bottom:2rem;">
+                    <h3 style="font-family:var(--font-heading); font-size:0.75rem; font-weight:800; text-transform:uppercase;
+                        letter-spacing:2px; color:${grupo.color}; margin-bottom:1rem; padding-bottom:6px;
+                        border-bottom:1px solid var(--border-glass);">
+                        ${grupo.emoji} ${grupo.label}
+                    </h3>
+                    ${grupo.items.map(art => {
+                        const img    = art.images?.find(i => i.type === 'header')?.url ?? '';
+                        const tiempo = tiempoRelativo(art.published ?? art.lastModified ?? '');
+                        const link   = art.links?.web?.href ?? 'javascript:void(0)';
+                        return `
+                            <a href="${link}" target="_blank" rel="noopener" style="text-decoration:none; color:inherit; display:block; margin-bottom:0.8rem;">
+                                <div class="glass-panel" style="padding:1rem; display:flex; gap:1rem; align-items:flex-start; transition:background 0.2s;"
+                                    onmouseover="this.style.background='rgba(255,255,255,0.06)'"
+                                    onmouseout="this.style.background=''">
+                                    ${img ? `
+                                        <img src="${img}" alt="" width="90" height="60"
+                                            style="object-fit:cover; border-radius:6px; flex-shrink:0;"
+                                            onerror="this.style.display='none'">
+                                    ` : `
+                                        <div style="width:90px; height:60px; border-radius:6px; background:rgba(255,255,255,0.06);
+                                            display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1.5rem;">
+                                            ${grupo.emoji}
+                                        </div>
+                                    `}
+                                    <div style="flex:1; min-width:0;">
+                                        <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:5px;">${tiempo}</div>
+                                        <p style="font-weight:700; font-size:0.9rem; line-height:1.3; margin:0 0 5px 0;
+                                            white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                            ${art.headline}
+                                        </p>
+                                        <p style="font-size:0.78rem; color:var(--text-muted); margin:0; line-height:1.4;
+                                            display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                                            ${art.description}
+                                        </p>
+                                    </div>
+                                </div>
+                            </a>`;
+                    }).join('')}
+                </div>
+            `).join('');
+
+        } catch(err) {
+            console.error('[Info]', err);
+            const container = document.getElementById('info-container');
+            if (container) container.innerHTML = `
+                <div class="glass-panel" style="padding:2rem; text-align:center;">
+                    <p style="color:var(--text-muted);">No se pudieron cargar las noticias.</p>
+                </div>`;
+        }
     };
 
     // ── LOGIN ─────────────────────────────────────────────────────────────────
