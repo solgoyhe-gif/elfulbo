@@ -115,8 +115,10 @@ const App = (() => {
         const yFWD = svgH * 0.21;  // ≈ 118 en 560
 
         // Margen horizontal
-        const xMin = svgW * 0.125; // ≈  50 en 400
-        const xMax = svgW * 0.875; // ≈ 350 en 400
+        // xMin/xMax se ajustan según cantidad de jugadores en la fila
+        // con 5+ jugadores se usa todo el ancho disponible
+        const xMinBase = svgW * 0.125; // ≈  50 en 400
+        const xMaxBase = svgW * 0.875; // ≈ 350 en 400
 
         const coordsMap = new Map();
 
@@ -128,7 +130,11 @@ const App = (() => {
             const t = filasOcupadas.length === 1 ? 0 : idx / (filasOcupadas.length - 1);
             const y = Math.round(yGK - t * (yGK - yFWD));
 
-            grupo.forEach((j, i) => {
+            // Ajustar márgenes según cantidad de jugadores
+                const xMin = n >= 5 ? svgW * 0.05  : xMinBase; // más ancho con 5+
+                const xMax = n >= 5 ? svgW * 0.95  : xMaxBase;
+
+                grupo.forEach((j, i) => {
                 let x;
                 if (n === 1) {
                     x = svgW / 2;
