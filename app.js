@@ -130,9 +130,8 @@ const App = (() => {
             const t = filasOcupadas.length === 1 ? 0 : idx / (filasOcupadas.length - 1);
             const y = Math.round(yGK - t * (yGK - yFWD));
 
-            // Ajustar márgenes según cantidad de jugadores
-                const xMin = n >= 5 ? svgW * 0.05  : xMinBase; // más ancho con 5+
-                const xMax = n >= 5 ? svgW * 0.95  : xMaxBase;
+            const xMin = xMinBase;
+                const xMax = xMaxBase;
 
                 grupo.forEach((j, i) => {
                 let x;
@@ -146,7 +145,7 @@ const App = (() => {
                 } else {
                     x = Math.round(xMin + (i / (n - 1)) * (xMax - xMin));
                 }
-                coordsMap.set(j.formationPlace, { x, y });
+                coordsMap.set(j.formationPlace, { x, y, n });
             });
         });
 
@@ -942,9 +941,9 @@ const App = (() => {
         `;
 
         // ── Dibujar un jugador en la pizarra ─────────────────────────────────
-        const _dibujarJugadorSVG = (svg, jugador, x, y) => {
+        const _dibujarJugadorSVG = (svg, jugador, x, y, radio = 20) => {
             const ns     = 'http://www.w3.org/2000/svg';
-            const R      = 20;
+            const R      = radio;
             const numero = jugador.jersey ?? '';
             const jId    = jugador.athlete?.id ?? jugador.jersey ?? Math.random().toString(36).slice(2);
             const nombre = (() => {
@@ -1025,7 +1024,8 @@ const App = (() => {
             titulares.forEach(j => {
                 const coords = coordsMap.get(j.formationPlace);
                 if (!coords) return;
-                tokensLayer.appendChild(_dibujarJugadorSVG(pizarraSvg, j, coords.x, coords.y));
+                const radio = coords.n >= 5 ? 15 : 20;
+                tokensLayer.appendChild(_dibujarJugadorSVG(pizarraSvg, j, coords.x, coords.y, radio));
             });
         };
 
