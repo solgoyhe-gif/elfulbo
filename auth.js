@@ -1,21 +1,24 @@
-// auth.js — Wrapper de autenticación Firebase para la SPA
-import { 
-    login, logout, registrar, recuperarPassword,
-    onAuth, usuarioActual, getPerfil, updatePerfil, PLANES
-} from './firebase.js';
+// auth.js — FirebaseAuth global, sin módulos ES
+// Firebase SDK se carga como módulo en index.html y expone window._firebaseAuth
 
 window.FirebaseAuth = {
-    // Estado
     _usuario: null,
     _perfil:  null,
     _listeners: [],
+    PLANES: window.PLANES,
 
-    // Inicializar observer
-    init() {
-        onAuth(async (user) => {
+    init(auth, db) {
+        this._auth = auth;
+        this._db   = db;
+        auth.onAuthStateChanged(async (user) => {
             this._usuario = user;
             if (user) {
-                this._perfil = await getPerfil(user.uid);
+                try {
+                    const snap = await db.collection('usuarios').doc(user.uid).get();
+                    this._perfil = snap.exists ? snap.data() : { plan: 'free', nombre: user.displayName ?? '' };
+                } catch(e) {
+                    this._perfil = { plan: 'free', nombre: user.displayName ?? '' };
+                }
             } else {
                 this._perfil = null;
             }
@@ -23,47 +26,47 @@ window.FirebaseAuth = {
         });
     },
 
-    // Suscribirse a cambios de auth
-    onChange(fn) {
-        this._listeners.push(fn);
-    },
+    onChange(fn)          { this._listeners.push(fn); },
+    isAuthenticated()     { return !!this._usuario; },
+    getUser()             { return this._usuario; },
+    getPerfil()           { return this._perfil; },
+    getNombre()           { return this._perfil?.nombre ?? this._usuario?.displayName ?? 'Usuario'; },
+    getPlan()             { return this._perfil?.plan ?? 'free'; },
+    isPremium()           { return ['pro','promax'].includes(this._perfil?.plan); },
+    getEquipoFavorito()   { return this._perfil?.equipoFavorito ?? null; },
 
-    // Getters
-    isAuthenticated() { return !!this._usuario; },
-    getUser()         { return this._usuario; },
-    getPerfil()       { return this._perfil; },
-    getNombre()       { return this._perfil?.nombre ?? this._usuario?.displayName ?? 'Usuario'; },
-    getPlan()         { return this._perfil?.plan ?? 'free'; },
-    isPremium()       { return this._perfil?.plan === 'premium'; },
-    getEquipoFavorito() { return this._perfil?.equipoFavorito ?? null; },
-
-    // Acciones
     async login(email, password) {
-        const user = await login(email, password);
-        return user;
+        const cred = await this._auth.signInWithEmailAndPassword(email, password);
+        return cred.user;
     },
 
     async registrar(email, password, nombre) {
-        const user = await registrar(email, password, nombre);
-        return user;
+        const cred = await this._auth.createUserWithEmailAndPassword(email, password);
+        await cred.user.updateProfile({ displayName: nombre });
+        try {
+            await this._db.collection('usuarios').doc(cred.user.uid).set({
+                nombre, email, plan: 'free', equipoFavorito: null,
+                creadoEn: new Date().toISOString()
+            });
+        } catch(e) { console.warn('Firestore no disponible, perfil solo en memoria'); }
+        this._perfil = { nombre, email, plan: 'free', equipoFavorito: null };
+        return cred.user;
     },
 
     async logout() {
-        await logout();
+        await this._auth.signOut();
+        window.location.hash = '#/';
     },
 
     async recuperarPassword(email) {
-        await recuperarPassword(email);
+        await this._auth.sendPasswordResetEmail(email);
     },
 
     async actualizarPerfil(datos) {
         if (!this._usuario) return;
-        await updatePerfil(this._usuario.uid, datos);
+        try {
+            await this._db.collection('usuarios').doc(this._usuario.uid).update(datos);
+        } catch(e) { console.warn('Firestore no disponible'); }
         this._perfil = { ...this._perfil, ...datos };
-    },
-
-    PLANES
+    }
 };
-
-// Inicializar inmediatamente
-window.FirebaseAuth.init();
