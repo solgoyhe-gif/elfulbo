@@ -45,7 +45,12 @@ window.FirebaseAuth = {
         await cred.user.updateProfile({ displayName: nombre });
         try {
             await this._db.collection('usuarios').doc(cred.user.uid).set({
-                nombre, email, plan: 'free', equipoFavorito: null,
+                nombre, email, plan: 'free',
+                equipoFavorito: null,
+                ligaNacional: null,
+                ligaInternacional: null,
+                pais: null,
+                perfilCompleto: false,
                 creadoEn: new Date().toISOString()
             });
         } catch(e) { console.warn('Firestore no disponible, perfil solo en memoria'); }
