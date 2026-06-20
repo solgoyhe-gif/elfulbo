@@ -168,6 +168,7 @@ const App = (() => {
                     <a href="#/ligas" class="nav-link ${isLigasActive ? 'active' : ''}">Ligas</a>
                     <a href="#/h2h" class="nav-link ${activeHash === '#/h2h' ? 'active' : ''}">H2H</a>
                     <a href="#/info" class="nav-link ${activeHash === '#/info' ? 'active' : ''}">Info</a>
+                    <a href="#/other-sports" class="nav-link ${activeHash.includes('#/other-sports') ? 'active' : ''}">Other Sports</a>
                 </div>
                 ${window.FirebaseAuth?.isAuthenticated() ? `<button onclick="window.FirebaseAuth?.logout()" class="btn-logout">Salir</button>` : ''}
             </nav>
@@ -2041,6 +2042,9 @@ const App = (() => {
                 <a href="#/info" class="mobile-nav-item ${activeHash === '#/info' ? 'active' : ''}">
                     <span class="mobile-icon">📰</span><span>Info</span>
                 </a>
+                <a href="#/other-sports" class="mobile-nav-item ${activeHash.includes('#/other-sports') ? 'active' : ''}">
+                    <span class="mobile-icon">🏅</span><span>Sports</span>
+                </a>
                 <a href="#/perfil" class="mobile-nav-item ${activeHash === '#/perfil' ? 'active' : ''}">
                     <span class="mobile-icon">👤</span><span>Perfil</span>
                 </a>
@@ -2318,6 +2322,272 @@ const App = (() => {
         _render();
     };
 
+    // ── OTHER SPORTS ─────────────────────────────────────────────────────────
+    const OTHER_SPORTS = [
+        {
+            id: 'basketball', nombre: 'Básquet', emoji: '🏀',
+            ligas: [
+                {id:'nba',  nombre:'NBA',  slug:'basketball/nba'},
+                {id:'wnba', nombre:'WNBA', slug:'basketball/wnba'},
+                {id:'mens-college-basketball', nombre:'NCAA', slug:'basketball/mens-college-basketball'},
+            ]
+        },
+        {
+            id: 'tennis', nombre: 'Tenis', emoji: '🎾',
+            ligas: [
+                {id:'atp', nombre:'ATP', slug:'tennis/atp'},
+                {id:'wta', nombre:'WTA', slug:'tennis/wta'},
+            ]
+        },
+        {
+            id: 'racing', nombre: 'Fórmula 1', emoji: '🏎️',
+            ligas: [
+                {id:'f1', nombre:'Formula 1', slug:'racing/f1'},
+            ]
+        },
+        {
+            id: 'football', nombre: 'Fútbol Americano', emoji: '🏈',
+            ligas: [
+                {id:'nfl', nombre:'NFL', slug:'football/nfl'},
+                {id:'college-football', nombre:'NCAA', slug:'football/college-football'},
+            ]
+        },
+        {
+            id: 'baseball', nombre: 'Baseball', emoji: '⚾',
+            ligas: [
+                {id:'mlb', nombre:'MLB', slug:'baseball/mlb'},
+            ]
+        },
+        {
+            id: 'hockey', nombre: 'Hockey sobre Hielo', emoji: '🏒',
+            ligas: [
+                {id:'nhl', nombre:'NHL', slug:'hockey/nhl'},
+            ]
+        },
+        {
+            id: 'golf', nombre: 'Golf', emoji: '⛳',
+            ligas: [
+                {id:'pga', nombre:'PGA Tour', slug:'golf/pga'},
+            ]
+        },
+        {
+            id: 'mma', nombre: 'MMA', emoji: '🥊',
+            ligas: [
+                {id:'ufc', nombre:'UFC', slug:'mma/ufc'},
+            ]
+        },
+        {
+            id: 'rugby', nombre: 'Rugby', emoji: '🏉',
+            ligas: [
+                {id:'rugby-union', nombre:'Rugby Union', slug:'rugby-union/international'},
+            ]
+        },
+        // Próximamente
+        {id:'formula-e',   nombre:'Fórmula E',        emoji:'⚡', proximamente:true},
+        {id:'formula-2',   nombre:'Fórmula 2',        emoji:'🏎️', proximamente:true},
+        {id:'formula-3',   nombre:'Fórmula 3',        emoji:'🏎️', proximamente:true},
+        {id:'formula-4',   nombre:'Fórmula 4',        emoji:'🏎️', proximamente:true},
+        {id:'indycar',     nombre:'IndyCar',           emoji:'🚗', proximamente:true},
+        {id:'padel',       nombre:'Pádel',             emoji:'🏸', proximamente:true},
+        {id:'volleyball',  nombre:'Vóley',             emoji:'🏐', proximamente:true},
+        {id:'handball',    nombre:'Handball',          emoji:'🤾', proximamente:true},
+        {id:'table-tennis',nombre:'Ping Pong',         emoji:'🏓', proximamente:true},
+        {id:'boxing',      nombre:'Boxeo',             emoji:'🥊', proximamente:true},
+        {id:'figure-skating',nombre:'Patín sobre Hielo',emoji:'⛸️', proximamente:true},
+        {id:'olympics',    nombre:'Juegos Olímpicos',  emoji:'🏅', proximamente:true},
+    ];
+
+    const renderOtherSports = async (deporteId = null, ligaId = null) => {
+        const isPro = ['pro','promax'].includes(window.FirebaseAuth?.getPlan());
+        const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
+
+        // Si no es ProMax, mostrar paywall
+        if (!isPro) {
+            appContainer.innerHTML = `
+                ${renderNavbar('#/other-sports')}
+                <main class="page-container fade-in" style="max-width:700px; margin:0 auto;">
+                    <h2 class="section-title">🏅 Other Sports</h2>
+                    <div class="glass-panel" style="padding:3rem; text-align:center; margin-bottom:2rem;">
+                        <div style="font-size:3rem; margin-bottom:1rem;">👑</div>
+                        <h3 style="font-family:var(--font-heading); font-size:1.3rem; font-weight:900; color:#ffd700; margin-bottom:0.8rem;">
+                            Requiere Pro Max
+                        </h3>
+                        <p style="color:var(--text-muted); font-size:0.9rem; line-height:1.6; max-width:400px; margin:0 auto 1.5rem;">
+                            Accedé a todos los deportes — básquet, tenis, F1, NFL, MLB, NHL, golf, MMA y más — con el plan Pro Max.
+                        </p>
+                        <button onclick="window.location.hash='#/planes'"
+                            style="padding:12px 28px; background:#ffd700; color:#000; font-weight:900;
+                            font-family:var(--font-heading); border:none; border-radius:8px; cursor:pointer;
+                            font-size:0.95rem; letter-spacing:1px;">
+                            VER PLANES ⭐
+                        </button>
+                    </div>
+
+                    <!-- Preview bloqueado -->
+                    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:1rem; opacity:0.4; pointer-events:none;">
+                        ${OTHER_SPORTS.filter(d => !d.proximamente).map(d => `
+                            <div class="glass-panel" style="padding:1.5rem; text-align:center;">
+                                <div style="font-size:2rem; margin-bottom:0.5rem;">${d.emoji}</div>
+                                <div style="font-weight:700; font-size:0.85rem;">🔒 ${d.nombre}</div>
+                            </div>`).join('')}
+                    </div>
+                </main>
+            `;
+            return;
+        }
+
+        // Deporte seleccionado
+        const deporteActual = deporteId
+            ? OTHER_SPORTS.find(d => d.id === deporteId)
+            : OTHER_SPORTS.find(d => !d.proximamente);
+
+        const ligaActual = ligaId
+            ? deporteActual?.ligas?.find(l => l.id === ligaId)
+            : deporteActual?.ligas?.[0];
+
+        appContainer.innerHTML = `
+            ${renderNavbar('#/other-sports')}
+            <main class="page-container fade-in">
+                <h2 class="section-title">🏅 Other Sports</h2>
+
+                <!-- Tabs de deportes -->
+                <div style="overflow-x:auto; padding-bottom:8px; margin-bottom:1.5rem; scrollbar-width:thin;">
+                    <div style="display:flex; gap:8px; width:max-content;">
+                        ${OTHER_SPORTS.map(d => `
+                            <button
+                                onclick="${d.proximamente ? '' : `window.location.hash='#/other-sports?deporte=${d.id}'`}"
+                                style="flex-shrink:0; padding:8px 16px; border-radius:20px;
+                                border:2px solid ${d.id === deporteActual?.id ? 'var(--accent-neon)' : 'var(--border-glass)'};
+                                background:${d.id === deporteActual?.id ? 'rgba(57,255,20,0.12)' : 'rgba(255,255,255,0.04)'};
+                                color:${d.proximamente ? 'var(--text-muted)' : d.id === deporteActual?.id ? 'var(--accent-neon)' : 'var(--text-main)'};
+                                cursor:${d.proximamente ? 'default' : 'pointer'};
+                                font-family:var(--font-heading); font-weight:700; font-size:0.8rem;
+                                white-space:nowrap; opacity:${d.proximamente ? '0.4' : '1'};">
+                                ${d.emoji} ${d.nombre}
+                                ${d.proximamente ? '<span style="font-size:0.65rem; margin-left:4px;">PRONTO</span>' : ''}
+                            </button>`).join('')}
+                    </div>
+                </div>
+
+                <!-- Sub-tabs de ligas del deporte -->
+                ${deporteActual?.ligas?.length > 1 ? `
+                <div style="display:flex; gap:8px; margin-bottom:1.5rem; flex-wrap:wrap;">
+                    ${deporteActual.ligas.map(l => `
+                        <button onclick="window.location.hash='#/other-sports?deporte=${deporteActual.id}&liga=${l.id}'"
+                            style="padding:6px 14px; border-radius:16px;
+                            border:1px solid ${l.id === ligaActual?.id ? 'var(--accent-neon)' : 'var(--border-glass)'};
+                            background:${l.id === ligaActual?.id ? 'rgba(57,255,20,0.1)' : 'transparent'};
+                            color:${l.id === ligaActual?.id ? 'var(--accent-neon)' : 'var(--text-muted)'};
+                            cursor:pointer; font-size:0.8rem; font-weight:600;">
+                            ${l.nombre}
+                        </button>`).join('')}
+                </div>` : ''}
+
+                <!-- Contenido -->
+                <div id="other-sports-content">
+                    <div style="text-align:center; padding:3rem;">
+                        <div style="width:36px; height:36px; border:3px solid var(--accent-neon); border-right-color:transparent; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto;"></div>
+                        <p style="color:var(--accent-neon); margin-top:1rem; font-size:0.85rem;">Cargando ${deporteActual?.nombre ?? ''}...</p>
+                    </div>
+                </div>
+            </main>
+        `;
+
+        if (!deporteActual || !ligaActual) return;
+
+        // Cargar scoreboard del deporte/liga
+        try {
+            const hoyAR = new Date(new Date().toLocaleString('en-US', {timeZone:'America/Argentina/Buenos_Aires'}));
+            const fecha = `${hoyAR.getFullYear()}${String(hoyAR.getMonth()+1).padStart(2,'0')}${String(hoyAR.getDate()).padStart(2,'0')}`;
+
+            const url = `https://site.api.espn.com/apis/site/v2/sports/${ligaActual.slug}/scoreboard?dates=${fecha}`;
+            const res = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(url)}`);
+            const data = res.ok ? await res.json() : {};
+            const eventos = data.events ?? [];
+
+            const container = document.getElementById('other-sports-content');
+            if (!container) return;
+
+            if (eventos.length === 0) {
+                container.innerHTML = `
+                    <div class="glass-panel" style="padding:2rem; text-align:center;">
+                        <p style="font-size:2rem; margin-bottom:0.5rem;">${deporteActual.emoji}</p>
+                        <p style="color:var(--text-muted);">Sin eventos hoy para ${ligaActual.nombre}.</p>
+                    </div>`;
+                return;
+            }
+
+            // Ordenar: en vivo → finalizado → próximo
+            eventos.sort((a,b) => {
+                const est = ev => ev.competitions?.[0]?.status?.type?.state;
+                const p   = s => s==='in' ? 0 : s==='post' ? 1 : 2;
+                return p(est(a)) - p(est(b));
+            });
+
+            container.innerHTML = eventos.map(ev => {
+                const comp   = ev.competitions?.[0];
+                const home   = comp?.competitors?.find(c => c.homeAway === 'home');
+                const away   = comp?.competitors?.find(c => c.homeAway === 'away');
+                const estado = comp?.status?.type?.state ?? 'pre';
+                const esLive = estado === 'in';
+                const esPost = estado === 'post';
+                const desc   = comp?.status?.type?.shortDetail ?? '';
+                const clock  = comp?.status?.displayClock ?? '';
+
+                const fechaEv = new Date(ev.date);
+                const horaAR  = fechaEv.toLocaleTimeString('es-AR', {
+                    timeZone:'America/Argentina/Buenos_Aires',
+                    hour:'2-digit', minute:'2-digit'
+                });
+
+                const homeLogo = home?.team?.logo ?? '';
+                const awayLogo = away?.team?.logo ?? '';
+                const homeNombre = home?.team?.displayName ?? home?.athlete?.displayName ?? '?';
+                const awayNombre = away?.team?.displayName ?? away?.athlete?.displayName ?? '?';
+                const homeScore  = home?.score ?? '-';
+                const awayScore  = away?.score ?? '-';
+
+                const logoHtml = (logo, nombre) => logo
+                    ? `<img src="${logo}" width="28" height="28" style="object-fit:contain;" onerror="this.style.display='none'">`
+                    : `<span style="font-size:1.1rem; font-weight:800;">${nombre.charAt(0)}</span>`;
+
+                return `
+                    <div class="glass-panel" style="padding:1.2rem; margin-bottom:1rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+                            <span style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">${ligaActual.nombre} · ${desc}</span>
+                            ${esLive
+                                ? `<span style="background:#ff4757; color:#fff; padding:3px 10px; border-radius:12px; font-size:0.7rem; font-weight:800; animation:pulse 1s infinite;">● EN VIVO ${clock}</span>`
+                                : esPost
+                                    ? `<span style="background:rgba(255,255,255,0.08); color:var(--text-muted); padding:3px 10px; border-radius:12px; font-size:0.7rem;">FINALIZADO</span>`
+                                    : `<span style="color:var(--accent-neon); font-family:var(--font-heading); font-weight:700; font-size:0.85rem;">${horaAR} ARG</span>`}
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:0.8rem;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                ${logoHtml(homeLogo, homeNombre)}
+                                <span style="font-weight:600; font-size:0.9rem;">${homeNombre}</span>
+                            </div>
+                            <div style="font-family:var(--font-heading); font-size:${(esPost||esLive)?'1.8rem':'1.1rem'}; font-weight:900;
+                                color:${(esPost||esLive)?'var(--text-main)':'var(--text-muted)'}; text-align:center; min-width:60px;">
+                                ${(esPost||esLive) ? `${homeScore} - ${awayScore}` : 'vs'}
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px; justify-content:flex-end;">
+                                <span style="font-weight:600; font-size:0.9rem;">${awayNombre}</span>
+                                ${logoHtml(awayLogo, awayNombre)}
+                            </div>
+                        </div>
+                    </div>`;
+            }).join('');
+
+        } catch(err) {
+            console.error('[OtherSports]', err);
+            const container = document.getElementById('other-sports-content');
+            if (container) container.innerHTML = `
+                <div class="glass-panel" style="padding:2rem; text-align:center;">
+                    <p style="color:#ff4757;">Error cargando datos.</p>
+                </div>`;
+        }
+    };
+
     // ── STRIPE CHECKOUT ──────────────────────────────────────────────────────
     const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
 
@@ -2553,6 +2823,14 @@ const App = (() => {
             case '#/setup':
                 renderSetup();
                 break;
+            case '#/other-sports': {
+                const urlParams3 = new URL('http://x.com' + hash.replace('#',''));
+                await renderOtherSports(
+                    urlParams3.searchParams.get('deporte'),
+                    urlParams3.searchParams.get('liga')
+                );
+                break;
+            }
             case '#/admin':
                 await renderAdmin();
                 break;
