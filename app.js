@@ -2455,11 +2455,11 @@ const App = (() => {
     ];
 
     const renderOtherSports = async (deporteId = null, ligaId = null) => {
-        const isPro = ['pro','promax'].includes(window.FirebaseAuth?.getPlan());
+        const isProMax = window.FirebaseAuth?.getPlan() === 'promax';
         const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
 
-        // Si no es ProMax, mostrar paywall
-        if (!isPro) {
+        // Solo ProMax puede ver Other Sports
+        if (!isProMax) {
             appContainer.innerHTML = `
                 ${renderNavbar('#/other-sports')}
                 <main class="page-container fade-in" style="max-width:700px; margin:0 auto;">
