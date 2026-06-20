@@ -414,6 +414,28 @@
             if (regVisible)   submitRegistro();
             if (recVisible)   submitRecuperar();
         });
+    <script>
+        // Toggle mensual/anual
+        let _periodoAnual = false;
+        window._togglePeriodo = () => {
+            _periodoAnual = !_periodoAnual;
+            const dot   = document.getElementById('toggle-dot');
+            const lbMes = document.getElementById('toggle-label-mes');
+            const lbAno = document.getElementById('toggle-label-anual');
+            const pPro    = document.getElementById('precio-pro');
+            const pPromax = document.getElementById('precio-promax');
+
+            if (dot)   dot.style.left   = _periodoAnual ? '23px' : '3px';
+            if (lbMes) lbMes.style.color = _periodoAnual ? 'var(--text-muted)' : 'var(--accent-neon)';
+            if (lbAno) lbAno.style.color = _periodoAnual ? 'var(--accent-neon)' : 'var(--text-muted)';
+
+            if (pPro)    pPro.innerHTML    = _periodoAnual
+                ? '$39.99<span style="font-size:0.85rem; color:var(--text-muted);">/año</span>'
+                : '$4.99<span style="font-size:0.85rem; color:var(--text-muted);">/mes</span>';
+            if (pPromax) pPromax.innerHTML = _periodoAnual
+                ? '$119.99<span style="font-size:0.85rem; color:var(--text-muted);">/año</span>'
+                : '$14.99<span style="font-size:0.85rem; color:var(--text-muted);">/mes</span>';
+        };
     </script>
 </body>
 </html>
