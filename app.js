@@ -1828,7 +1828,7 @@ const App = (() => {
                                     margin-bottom:7px; color:${f.ok ? 'var(--text-main)' : 'var(--text-muted)'};">
                                     <span>${f.ok ? '✅' : '🔒'}</span><span>${f.t}</span>
                                 </div>`).join('')}
-                            <button onclick="abrirAuth('registro')"
+                            <button id="btn-pro_mensual" onclick="window._suscribirse('pro_mensual')"
                                 style="width:100%; margin-top:1.5rem; padding:11px; background:var(--accent-neon);
                                 color:#000; font-weight:900; font-family:var(--font-heading);
                                 border:none; border-radius:8px; cursor:pointer;
@@ -1862,7 +1862,7 @@ const App = (() => {
                                     margin-bottom:7px; color:var(--text-main);">
                                     <span>✅</span><span>${f.t}</span>
                                 </div>`).join('')}
-                            <button onclick="abrirAuth('registro')"
+                            <button id="btn-promax_mensual" onclick="window._suscribirse('promax_mensual')"
                                 style="width:100%; margin-top:1.5rem; padding:11px; background:#ffd700;
                                 color:#000; font-weight:900; font-family:var(--font-heading);
                                 border:none; border-radius:8px; cursor:pointer;
@@ -1996,7 +1996,7 @@ const App = (() => {
                             </div>`).join('') ?? ''}
                         ${plan !== 'premium' ? `
                         <button class="btn-primary" style="width:100%; margin-top:1.2rem; background:#ffd700;"
-                            onclick="alert('Próximamente disponible el pago online.')">
+                            onclick="window._suscribirse('pro_mensual')">
                             SUSCRIBIRME
                         </button>` : ''}
                     </div>
@@ -2046,6 +2046,178 @@ const App = (() => {
                 </a>
             </nav>
         `;
+    };
+
+    // ── STRIPE CHECKOUT ──────────────────────────────────────────────────────
+    const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
+
+    window._suscribirse = async (priceKey) => {
+        const user = window.FirebaseAuth?.getUser();
+        if (!user) { abrirAuth('registro'); return; }
+
+        const btn = document.getElementById('btn-' + priceKey);
+        if (btn) { btn.textContent = 'Redirigiendo...'; btn.disabled = true; }
+
+        try {
+            const res = await fetch(`${CF_WORKER}/stripe/checkout`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    priceKey,
+                    uid:        user.uid,
+                    email:      user.email,
+                    successUrl: 'https://solgoyhe-gif.github.io/elfulbo/#/perfil?pago=ok',
+                    cancelUrl:  'https://solgoyhe-gif.github.io/elfulbo/#/planes'
+                })
+            });
+            const data = await res.json();
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                alert('Error al iniciar el pago. Intentá de nuevo.');
+                if (btn) { btn.textContent = 'SUSCRIBIRME'; btn.disabled = false; }
+            }
+        } catch(err) {
+            console.error('[Stripe]', err);
+            alert('Error de conexión. Intentá de nuevo.');
+            if (btn) { btn.textContent = 'SUSCRIBIRME'; btn.disabled = false; }
+        }
+    };
+
+    // ── PANEL ADMIN ───────────────────────────────────────────────────────────
+    const renderAdmin = async () => {
+        const user = window.FirebaseAuth?.getUser();
+        if (!user) { window.location.hash = '#/'; return; }
+
+        appContainer.innerHTML = `
+            ${renderNavbar('#/admin')}
+            <main class="page-container fade-in" style="max-width:800px; margin:0 auto;">
+                <h2 class="section-title">🛠️ Panel de Administración</h2>
+                <div id="admin-container">
+                    <div style="text-align:center; padding:3rem;">
+                        <div style="width:36px; height:36px; border:3px solid var(--accent-neon); border-right-color:transparent; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto;"></div>
+                        <p style="color:var(--accent-neon); margin-top:1rem;">Cargando stats...</p>
+                    </div>
+                </div>
+            </main>
+        `;
+
+        try {
+            const adminKey = prompt('Clave de administrador:');
+            if (!adminKey) { window.location.hash = '#/home'; return; }
+
+            const res  = await fetch(`${CF_WORKER}/admin/stats?adminKey=${encodeURIComponent(adminKey)}`);
+            const data = await res.json();
+
+            if (!res.ok) {
+                document.getElementById('admin-container').innerHTML = `
+                    <div class="glass-panel" style="padding:2rem; text-align:center;">
+                        <p style="color:#ff4757; font-size:1.1rem;">⛔ Acceso denegado</p>
+                    </div>`;
+                return;
+            }
+
+            // Buscar usuarios en Firestore
+            const fsRes  = await fetch(`https://firestore.googleapis.com/v1/projects/fulbo-3b2ba/databases/(default)/documents/usuarios?pageSize=100`);
+            const fsData = fsRes.ok ? await fsRes.json() : {};
+            const docs   = fsData.documents ?? [];
+
+            const usuarios = docs.map(doc => {
+                const f = doc.fields ?? {};
+                return {
+                    nombre: f.nombre?.stringValue ?? '—',
+                    email:  f.email?.stringValue  ?? '—',
+                    plan:   f.plan?.stringValue   ?? 'free',
+                    uid:    doc.name?.split('/').pop() ?? '—',
+                };
+            });
+
+            const planColor = { free: 'var(--text-muted)', pro: 'var(--accent-neon)', promax: '#ffd700' };
+            const planEmoji = { free: '⚽', pro: '🔥', promax: '👑' };
+
+            document.getElementById('admin-container').innerHTML = `
+                <!-- Stats -->
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1.2rem; margin-bottom:2rem;">
+                    ${[
+                        { label:'Total usuarios', valor: data.total, color:'var(--text-main)', emoji:'👥' },
+                        { label:'Free',           valor: data.free,  color:'var(--text-muted)', emoji:'⚽' },
+                        { label:'Pro',            valor: data.pro,   color:'var(--accent-neon)', emoji:'🔥' },
+                        { label:'Pro Max',        valor: data.promax,color:'#ffd700', emoji:'👑' },
+                    ].map(s => `
+                        <div class="glass-panel" style="padding:1.5rem; text-align:center;">
+                            <div style="font-size:1.8rem; margin-bottom:0.3rem;">${s.emoji}</div>
+                            <div style="font-family:var(--font-heading); font-size:2rem; font-weight:900; color:${s.color};">${s.valor}</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">${s.label}</div>
+                        </div>`).join('')}
+                </div>
+
+                <!-- Tabla de usuarios -->
+                <div class="glass-panel" style="padding:1.5rem;">
+                    <h3 class="panel-title" style="margin-bottom:1rem;">👥 Usuarios registrados</h3>
+                    ${usuarios.length === 0
+                        ? '<p style="color:var(--text-muted); text-align:center;">Sin usuarios aún.</p>'
+                        : `<div style="overflow-x:auto;">
+                            <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                                <thead>
+                                    <tr style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; border-bottom:1px solid var(--border-glass);">
+                                        <th style="padding:10px; text-align:left;">Nombre</th>
+                                        <th style="padding:10px; text-align:left;">Email</th>
+                                        <th style="padding:10px; text-align:center;">Plan</th>
+                                        <th style="padding:10px; text-align:center;">Cambiar plan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${usuarios.map(u => `
+                                        <tr style="border-bottom:1px solid var(--border-glass);">
+                                            <td style="padding:10px;">${u.nombre}</td>
+                                            <td style="padding:10px; color:var(--text-muted);">${u.email}</td>
+                                            <td style="padding:10px; text-align:center;">
+                                                <span style="color:${planColor[u.plan] ?? 'var(--text-muted)'}; font-weight:700;">
+                                                    ${planEmoji[u.plan] ?? '⚽'} ${u.plan.toUpperCase()}
+                                                </span>
+                                            </td>
+                                            <td style="padding:10px; text-align:center;">
+                                                <select onchange="window._cambiarPlan('${u.uid}', this.value, '${adminKey}')"
+                                                    style="background:var(--surface-color); color:var(--text-main);
+                                                    border:1px solid var(--border-glass); border-radius:6px; padding:4px 8px; font-size:0.8rem; cursor:pointer;">
+                                                    <option value="free"   ${u.plan==='free'   ?'selected':''}>Free</option>
+                                                    <option value="pro"    ${u.plan==='pro'    ?'selected':''}>Pro</option>
+                                                    <option value="promax" ${u.plan==='promax' ?'selected':''}>Pro Max</option>
+                                                </select>
+                                            </td>
+                                        </tr>`).join('')}
+                                </tbody>
+                            </table>
+                        </div>`
+                    }
+                </div>
+            `;
+
+            // Función para cambiar plan manualmente
+            window._cambiarPlan = async (uid, nuevoPlan, adminKey) => {
+                try {
+                    const res = await fetch(`${CF_WORKER}/admin/stats?adminKey=${encodeURIComponent(adminKey)}`);
+                    if (!res.ok) { alert('No autorizado'); return; }
+
+                    const fsUrl = `https://firestore.googleapis.com/v1/projects/fulbo-3b2ba/databases/(default)/documents/usuarios/${uid}?updateMask.fieldPaths=plan`;
+                    await fetch(fsUrl, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ fields: { plan: { stringValue: nuevoPlan } } })
+                    });
+                    alert('Plan actualizado a ' + nuevoPlan);
+                } catch(e) {
+                    alert('Error actualizando plan');
+                }
+            };
+
+        } catch(err) {
+            console.error('[Admin]', err);
+            document.getElementById('admin-container').innerHTML = `
+                <div class="glass-panel" style="padding:2rem; text-align:center;">
+                    <p style="color:#ff4757;">Error cargando datos.</p>
+                </div>`;
+        }
     };
 
     // ── ROUTER ────────────────────────────────────────────────────────────────
@@ -2100,6 +2272,9 @@ const App = (() => {
                 break;
             case '#/planes':
                 renderPlanes();
+                break;
+            case '#/admin':
+                await renderAdmin();
                 break;
             default:
                 appContainer.innerHTML = `
