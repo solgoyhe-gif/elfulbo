@@ -1732,17 +1732,38 @@ const App = (() => {
                 <!-- Planes -->
                 <div class="planes-section">
                     <div class="planes-title">⚡ Elegí tu plan</div>
-                    <div class="planes-grid">
+
+                    <!-- Toggle mensual/anual -->
+                    <div style="display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:2rem;">
+                        <span id="toggle-label-mes" style="font-size:0.85rem; font-weight:700; color:var(--accent-neon);">Mensual</span>
+                        <div onclick="window._togglePeriodo()" style="width:44px; height:24px; background:rgba(255,255,255,0.1);
+                            border:1px solid var(--border-glass); border-radius:12px; cursor:pointer; position:relative; transition:background 0.2s;">
+                            <div id="toggle-dot" style="width:18px; height:18px; background:var(--accent-neon); border-radius:50%;
+                                position:absolute; top:2px; left:3px; transition:left 0.2s;"></div>
+                        </div>
+                        <span id="toggle-label-anual" style="font-size:0.85rem; color:var(--text-muted);">
+                            Anual <span style="background:rgba(57,255,20,0.15); color:var(--accent-neon); padding:1px 6px; border-radius:10px; font-size:0.7rem; font-weight:800;">-33%</span>
+                        </span>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.2rem;">
+                        <!-- FREE -->
                         <div class="plan-card">
+                            <div style="font-size:1.5rem; margin-bottom:0.5rem;">⚽</div>
                             <div class="plan-nombre">Free</div>
                             <div class="plan-precio">Gratis</div>
+                            <p style="font-size:0.75rem; color:var(--text-muted); line-height:1.4; margin-bottom:1rem;">
+                                Para el que quiere seguir el Mundial sin complicarse.
+                            </p>
                             ${[
                                 {texto:'Tabla de grupos Mundial 2026', ok:true},
                                 {texto:'Partidos del día', ok:true},
                                 {texto:'Noticias básicas', ok:true},
-                                {texto:'Estadísticas del partido', ok:false},
-                                {texto:'Alineaciones tácticas', ok:false},
-                                {texto:'Goleadores del torneo', ok:false},
+                                {texto:'1 liga a elección', ok:true},
+                                {texto:'Todas las ligas', ok:false},
+                                {texto:'Estadísticas y alineaciones', ok:false},
+                                {texto:'Noticias traducidas', ok:false},
+                                {texto:'Todos los deportes', ok:false},
                             ].map(f => `
                                 <div class="plan-feature ${f.ok ? 'ok' : ''}">
                                     <span class="check">${f.ok ? '✅' : '🔒'}</span>
@@ -1750,23 +1771,54 @@ const App = (() => {
                                 </div>`).join('')}
                             <button class="btn-secondary" style="width:100%; margin-top:1.2rem;" onclick="abrirAuth('registro')">EMPEZAR</button>
                         </div>
-                        <div class="plan-card destacado">
-                            <div class="plan-badge">MÁS POPULAR</div>
-                            <div class="plan-nombre" style="color:#ffd700;">Premium</div>
-                            <div class="plan-precio">$4.99<span style="font-size:0.9rem; color:var(--text-muted);">/mes</span></div>
+
+                        <!-- PRO -->
+                        <div class="plan-card" style="border-color:var(--accent-neon); background:rgba(57,255,20,0.04);">
+                            <div class="plan-badge" style="background:var(--accent-neon);">MÁS POPULAR</div>
+                            <div style="font-size:1.5rem; margin-bottom:0.5rem;">🔥</div>
+                            <div class="plan-nombre" style="color:var(--accent-neon);">Pro</div>
+                            <div class="plan-precio" id="precio-pro" style="color:var(--accent-neon);">$4.99<span style="font-size:0.85rem; color:var(--text-muted);">/mes</span></div>
+                            <p style="font-size:0.75rem; color:var(--text-muted); line-height:1.4; margin-bottom:1rem;">
+                                Para el futbolero de verdad. Todas las ligas y stats completas.
+                            </p>
                             ${[
-                                {texto:'Tabla de grupos Mundial 2026'},
-                                {texto:'Partidos del día'},
-                                {texto:'Noticias completas + traducidas'},
-                                {texto:'Estadísticas del partido'},
-                                {texto:'Alineaciones tácticas'},
-                                {texto:'Goleadores del torneo'},
+                                {texto:'Todo lo de Free', ok:true},
+                                {texto:'Todas las ligas de fútbol', ok:true},
+                                {texto:'Estadísticas del partido', ok:true},
+                                {texto:'Alineaciones tácticas', ok:true},
+                                {texto:'Noticias traducidas', ok:true},
+                                {texto:'Equipo favorito', ok:true},
+                                {texto:'Todos los deportes', ok:false},
+                                {texto:'Notificaciones en vivo', ok:false},
+                            ].map(f => `
+                                <div class="plan-feature ${f.ok ? 'ok' : ''}">
+                                    <span class="check">${f.ok ? '✅' : '🔒'}</span>
+                                    <span>${f.texto}</span>
+                                </div>`).join('')}
+                            <button class="btn-primary" style="width:100%; margin-top:1.2rem;" onclick="abrirAuth('registro')">SUSCRIBIRME</button>
+                        </div>
+
+                        <!-- PRO MAX -->
+                        <div class="plan-card destacado">
+                            <div style="font-size:1.5rem; margin-bottom:0.5rem;">👑</div>
+                            <div class="plan-nombre" style="color:#ffd700;">Pro Max</div>
+                            <div class="plan-precio" id="precio-promax" style="color:#ffd700;">$14.99<span style="font-size:0.85rem; color:var(--text-muted);">/mes</span></div>
+                            <p style="font-size:0.75rem; color:var(--text-muted); line-height:1.4; margin-bottom:1rem;">
+                                Para el fanático total. Todo lo de Pro más todos los deportes y notificaciones en vivo.
+                            </p>
+                            ${[
+                                {texto:'Todo lo de Pro', ok:true},
+                                {texto:'Todos los deportes', ok:true},
+                                {texto:'Notificaciones en vivo', ok:true},
+                                {texto:'Historial extendido', ok:true},
+                                {texto:'Acceso anticipado a features', ok:true},
+                                {texto:'Sin publicidad', ok:true},
                             ].map(f => `
                                 <div class="plan-feature ok">
                                     <span class="check">✅</span>
                                     <span>${f.texto}</span>
                                 </div>`).join('')}
-                            <button class="btn-primary" style="width:100%; margin-top:1.2rem; background:#ffd700;" onclick="abrirAuth('registro')">SUSCRIBIRME</button>
+                            <button class="btn-primary" style="width:100%; margin-top:1.2rem; background:#ffd700; color:#000;" onclick="abrirAuth('registro')">SUSCRIBIRME</button>
                         </div>
                     </div>
                 </div>
