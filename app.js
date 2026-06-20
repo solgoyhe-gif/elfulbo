@@ -1694,135 +1694,186 @@ const App = (() => {
     // ── LANDING ───────────────────────────────────────────────────────────────
     const renderLanding = () => {
         appContainer.innerHTML = `
-            <div class="landing-page fade-in">
+            <main style="min-height:100vh; background:var(--bg-color); overflow-y:auto;">
+
                 <!-- Hero -->
-                <div class="landing-hero">
-                    <div class="landing-logo">EL <span>FULBO</span></div>
-                    <p class="landing-tagline">Todo el Mundial 2026 en tiempo real. Estadísticas, alineaciones y noticias en tu idioma.</p>
-                    <div class="landing-btns">
-                        <button class="btn-primary" onclick="abrirAuth('registro')">EMPEZAR GRATIS</button>
-                        <button class="btn-secondary" onclick="abrirAuth('login')">Ya tengo cuenta</button>
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center;
+                    padding: 5rem 1.5rem 3rem; text-align:center;">
+                    <div style="font-family:var(--font-heading); font-size:clamp(3rem,10vw,5.5rem);
+                        font-weight:900; letter-spacing:4px; text-shadow:0 0 40px rgba(57,255,20,0.3); margin-bottom:0.5rem;">
+                        EL <span style="color:var(--accent-neon);">FULBO</span>
+                    </div>
+                    <p style="font-size:clamp(0.95rem,2.5vw,1.2rem); color:var(--text-muted); margin-bottom:2.5rem; max-width:480px; line-height:1.6;">
+                        Todo el Mundial 2026 en tiempo real. Estadísticas, alineaciones y noticias en tu idioma.
+                    </p>
+                    <div style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; margin-bottom:4rem;">
+                        <button onclick="abrirAuth('registro')"
+                            style="padding:14px 32px; background:var(--accent-neon); color:#000; font-weight:900;
+                            font-family:var(--font-heading); border:none; border-radius:8px; cursor:pointer;
+                            font-size:1rem; letter-spacing:1px; transition:opacity 0.2s;"
+                            onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                            EMPEZAR GRATIS
+                        </button>
+                        <button onclick="abrirAuth('login')"
+                            style="padding:14px 32px; background:transparent; color:var(--text-main); font-weight:700;
+                            font-family:var(--font-heading); border:2px solid var(--border-glass); border-radius:8px;
+                            cursor:pointer; font-size:1rem; letter-spacing:1px; transition:border-color 0.2s;"
+                            onmouseover="this.style.borderColor='var(--accent-neon)'" onmouseout="this.style.borderColor='var(--border-glass)'">
+                            Ya tengo cuenta
+                        </button>
                     </div>
 
                     <!-- Features -->
-                    <div class="landing-features">
-                        <div class="feature-card">
-                            <div class="feature-icon">📊</div>
-                            <div class="feature-title">Stats en vivo</div>
-                            <div class="feature-desc">Posesión, tiros, corners y más de cada partido.</div>
-                        </div>
-                        <div class="feature-card">
-                            <div class="feature-icon">🗺️</div>
-                            <div class="feature-title">Pizarra táctica</div>
-                            <div class="feature-desc">Alineaciones con formación real de ESPN.</div>
-                        </div>
-                        <div class="feature-card">
-                            <div class="feature-icon">📰</div>
-                            <div class="feature-title">Noticias traducidas</div>
-                            <div class="feature-desc">Las últimas del Mundial en español rioplatense.</div>
-                        </div>
-                        <div class="feature-card">
-                            <div class="feature-icon">⚔️</div>
-                            <div class="feature-title">Partidos del día</div>
-                            <div class="feature-desc">Calendario completo con resultados y horarios ARG.</div>
-                        </div>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+                        gap:1.2rem; max-width:860px; width:100%; margin-bottom:5rem;">
+                        ${[
+                            {icon:'📊', titulo:'Stats en vivo', desc:'Posesión, tiros, corners y más de cada partido.'},
+                            {icon:'🗺️', titulo:'Pizarra táctica', desc:'Alineaciones con formación real de ESPN.'},
+                            {icon:'📰', titulo:'Noticias traducidas', desc:'Las últimas del Mundial en español rioplatense.'},
+                            {icon:'⚔️', titulo:'Partidos del día', desc:'Calendario completo con horarios ARG.'},
+                        ].map(f => `
+                            <div class="glass-panel" style="padding:1.5rem; text-align:center;">
+                                <div style="font-size:2rem; margin-bottom:0.8rem;">${f.icon}</div>
+                                <div style="font-weight:700; font-size:0.95rem; margin-bottom:0.4rem;">${f.titulo}</div>
+                                <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.5;">${f.desc}</div>
+                            </div>`).join('')}
                     </div>
-                </div>
-
-                <!-- Planes -->
-                <div class="planes-section">
-                    <div class="planes-title">⚡ Elegí tu plan</div>
 
                     <!-- Toggle mensual/anual -->
+                    <p style="font-family:var(--font-heading); font-size:0.75rem; font-weight:800;
+                        text-transform:uppercase; letter-spacing:3px; color:var(--accent-neon); margin-bottom:1.5rem;">
+                        ⚡ Elegí tu plan
+                    </p>
                     <div style="display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:2rem;">
                         <span id="toggle-label-mes" style="font-size:0.85rem; font-weight:700; color:var(--accent-neon);">Mensual</span>
-                        <div onclick="window._togglePeriodo()" style="width:44px; height:24px; background:rgba(255,255,255,0.1);
-                            border:1px solid var(--border-glass); border-radius:12px; cursor:pointer; position:relative; transition:background 0.2s;">
-                            <div id="toggle-dot" style="width:18px; height:18px; background:var(--accent-neon); border-radius:50%;
-                                position:absolute; top:2px; left:3px; transition:left 0.2s;"></div>
+                        <div onclick="window._togglePeriodo()"
+                            style="width:44px; height:24px; background:rgba(255,255,255,0.1);
+                            border:1px solid var(--border-glass); border-radius:12px; cursor:pointer; position:relative;">
+                            <div id="toggle-dot" style="width:18px; height:18px; background:var(--accent-neon);
+                                border-radius:50%; position:absolute; top:3px; left:3px; transition:left 0.2s;"></div>
                         </div>
                         <span id="toggle-label-anual" style="font-size:0.85rem; color:var(--text-muted);">
-                            Anual <span style="background:rgba(57,255,20,0.15); color:var(--accent-neon); padding:1px 6px; border-radius:10px; font-size:0.7rem; font-weight:800;">-33%</span>
+                            Anual
+                            <span style="background:rgba(57,255,20,0.15); color:var(--accent-neon);
+                                padding:1px 7px; border-radius:10px; font-size:0.68rem; font-weight:800; margin-left:4px;">
+                                -33%
+                            </span>
                         </span>
                     </div>
 
-                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.2rem;">
+                    <!-- Planes -->
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+                        gap:1.5rem; max-width:860px; width:100%; padding-bottom:5rem;">
+
                         <!-- FREE -->
-                        <div class="plan-card">
-                            <div style="font-size:1.5rem; margin-bottom:0.5rem;">⚽</div>
-                            <div class="plan-nombre">Free</div>
-                            <div class="plan-precio">Gratis</div>
-                            <p style="font-size:0.75rem; color:var(--text-muted); line-height:1.4; margin-bottom:1rem;">
+                        <div class="glass-panel" style="padding:1.8rem; text-align:left;">
+                            <div style="font-size:1.8rem; margin-bottom:0.5rem;">⚽</div>
+                            <div style="font-family:var(--font-heading); font-size:1.3rem; font-weight:900; margin-bottom:0.3rem;">Free</div>
+                            <div style="font-family:var(--font-heading); font-size:1.8rem; font-weight:900; color:var(--text-muted); margin-bottom:0.8rem;">Gratis</div>
+                            <p style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; margin-bottom:1.2rem;">
                                 Para el que quiere seguir el Mundial sin complicarse.
                             </p>
                             ${[
-                                {texto:'Tabla de grupos Mundial 2026', ok:true},
-                                {texto:'Partidos del día', ok:true},
-                                {texto:'Noticias básicas', ok:true},
-                                {texto:'1 liga a elección', ok:true},
-                                {texto:'Todas las ligas', ok:false},
-                                {texto:'Estadísticas y alineaciones', ok:false},
-                                {texto:'Noticias traducidas', ok:false},
-                                {texto:'Todos los deportes', ok:false},
+                                {t:'Tabla de grupos Mundial 2026', ok:true},
+                                {t:'Partidos del día', ok:true},
+                                {t:'Noticias básicas', ok:true},
+                                {t:'1 liga a elección', ok:true},
+                                {t:'Todas las ligas', ok:false},
+                                {t:'Estadísticas y alineaciones', ok:false},
+                                {t:'Noticias traducidas', ok:false},
+                                {t:'Todos los deportes', ok:false},
                             ].map(f => `
-                                <div class="plan-feature ${f.ok ? 'ok' : ''}">
-                                    <span class="check">${f.ok ? '✅' : '🔒'}</span>
-                                    <span>${f.texto}</span>
+                                <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem;
+                                    margin-bottom:7px; color:${f.ok ? 'var(--text-main)' : 'var(--text-muted)'};">
+                                    <span>${f.ok ? '✅' : '🔒'}</span><span>${f.t}</span>
                                 </div>`).join('')}
-                            <button class="btn-secondary" style="width:100%; margin-top:1.2rem;" onclick="abrirAuth('registro')">EMPEZAR</button>
+                            <button onclick="abrirAuth('registro')"
+                                style="width:100%; margin-top:1.5rem; padding:11px; background:transparent;
+                                color:var(--text-main); font-weight:700; font-family:var(--font-heading);
+                                border:2px solid var(--border-glass); border-radius:8px; cursor:pointer;
+                                font-size:0.9rem; letter-spacing:1px;">
+                                EMPEZAR
+                            </button>
                         </div>
 
                         <!-- PRO -->
-                        <div class="plan-card" style="border-color:var(--accent-neon); background:rgba(57,255,20,0.04);">
-                            <div class="plan-badge" style="background:var(--accent-neon);">MÁS POPULAR</div>
-                            <div style="font-size:1.5rem; margin-bottom:0.5rem;">🔥</div>
-                            <div class="plan-nombre" style="color:var(--accent-neon);">Pro</div>
-                            <div class="plan-precio" id="precio-pro" style="color:var(--accent-neon);">$4.99<span style="font-size:0.85rem; color:var(--text-muted);">/mes</span></div>
-                            <p style="font-size:0.75rem; color:var(--text-muted); line-height:1.4; margin-bottom:1rem;">
+                        <div class="glass-panel" style="padding:1.8rem; text-align:left;
+                            border-color:var(--accent-neon); background:rgba(57,255,20,0.04); position:relative;">
+                            <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%);
+                                background:var(--accent-neon); color:#000; font-size:0.65rem; font-weight:800;
+                                padding:3px 14px; border-radius:20px; font-family:var(--font-heading); letter-spacing:1px; white-space:nowrap;">
+                                MÁS POPULAR
+                            </div>
+                            <div style="font-size:1.8rem; margin-bottom:0.5rem;">🔥</div>
+                            <div style="font-family:var(--font-heading); font-size:1.3rem; font-weight:900;
+                                color:var(--accent-neon); margin-bottom:0.3rem;">Pro</div>
+                            <div id="precio-pro" style="font-family:var(--font-heading); font-size:1.8rem;
+                                font-weight:900; color:var(--accent-neon); margin-bottom:0.8rem;">
+                                $4.99<span style="font-size:0.85rem; color:var(--text-muted);">/mes</span>
+                            </div>
+                            <p style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; margin-bottom:1.2rem;">
                                 Para el futbolero de verdad. Todas las ligas y stats completas.
                             </p>
                             ${[
-                                {texto:'Todo lo de Free', ok:true},
-                                {texto:'Todas las ligas de fútbol', ok:true},
-                                {texto:'Estadísticas del partido', ok:true},
-                                {texto:'Alineaciones tácticas', ok:true},
-                                {texto:'Noticias traducidas', ok:true},
-                                {texto:'Equipo favorito', ok:true},
-                                {texto:'Todos los deportes', ok:false},
-                                {texto:'Notificaciones en vivo', ok:false},
+                                {t:'Todo lo de Free', ok:true},
+                                {t:'Todas las ligas de fútbol', ok:true},
+                                {t:'Estadísticas del partido', ok:true},
+                                {t:'Alineaciones tácticas', ok:true},
+                                {t:'Noticias traducidas', ok:true},
+                                {t:'Equipo favorito', ok:true},
+                                {t:'Todos los deportes', ok:false},
+                                {t:'Notificaciones en vivo', ok:false},
                             ].map(f => `
-                                <div class="plan-feature ${f.ok ? 'ok' : ''}">
-                                    <span class="check">${f.ok ? '✅' : '🔒'}</span>
-                                    <span>${f.texto}</span>
+                                <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem;
+                                    margin-bottom:7px; color:${f.ok ? 'var(--text-main)' : 'var(--text-muted)'};">
+                                    <span>${f.ok ? '✅' : '🔒'}</span><span>${f.t}</span>
                                 </div>`).join('')}
-                            <button class="btn-primary" style="width:100%; margin-top:1.2rem;" onclick="abrirAuth('registro')">SUSCRIBIRME</button>
+                            <button onclick="abrirAuth('registro')"
+                                style="width:100%; margin-top:1.5rem; padding:11px; background:var(--accent-neon);
+                                color:#000; font-weight:900; font-family:var(--font-heading);
+                                border:none; border-radius:8px; cursor:pointer;
+                                font-size:0.9rem; letter-spacing:1px;">
+                                SUSCRIBIRME
+                            </button>
                         </div>
 
                         <!-- PRO MAX -->
-                        <div class="plan-card destacado">
-                            <div style="font-size:1.5rem; margin-bottom:0.5rem;">👑</div>
-                            <div class="plan-nombre" style="color:#ffd700;">Pro Max</div>
-                            <div class="plan-precio" id="precio-promax" style="color:#ffd700;">$14.99<span style="font-size:0.85rem; color:var(--text-muted);">/mes</span></div>
-                            <p style="font-size:0.75rem; color:var(--text-muted); line-height:1.4; margin-bottom:1rem;">
+                        <div class="glass-panel" style="padding:1.8rem; text-align:left;
+                            border-color:#ffd700; background:rgba(255,215,0,0.04); position:relative;">
+                            <div style="font-size:1.8rem; margin-bottom:0.5rem;">👑</div>
+                            <div style="font-family:var(--font-heading); font-size:1.3rem; font-weight:900;
+                                color:#ffd700; margin-bottom:0.3rem;">Pro Max</div>
+                            <div id="precio-promax" style="font-family:var(--font-heading); font-size:1.8rem;
+                                font-weight:900; color:#ffd700; margin-bottom:0.8rem;">
+                                $14.99<span style="font-size:0.85rem; color:var(--text-muted);">/mes</span>
+                            </div>
+                            <p style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; margin-bottom:1.2rem;">
                                 Para el fanático total. Todo lo de Pro más todos los deportes y notificaciones en vivo.
                             </p>
                             ${[
-                                {texto:'Todo lo de Pro', ok:true},
-                                {texto:'Todos los deportes', ok:true},
-                                {texto:'Notificaciones en vivo', ok:true},
-                                {texto:'Historial extendido', ok:true},
-                                {texto:'Acceso anticipado a features', ok:true},
-                                {texto:'Sin publicidad', ok:true},
+                                {t:'Todo lo de Pro', ok:true},
+                                {t:'Todos los deportes', ok:true},
+                                {t:'Notificaciones en vivo', ok:true},
+                                {t:'Historial extendido', ok:true},
+                                {t:'Acceso anticipado a features', ok:true},
+                                {t:'Sin publicidad', ok:true},
                             ].map(f => `
-                                <div class="plan-feature ok">
-                                    <span class="check">✅</span>
-                                    <span>${f.texto}</span>
+                                <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem;
+                                    margin-bottom:7px; color:var(--text-main);">
+                                    <span>✅</span><span>${f.t}</span>
                                 </div>`).join('')}
-                            <button class="btn-primary" style="width:100%; margin-top:1.2rem; background:#ffd700; color:#000;" onclick="abrirAuth('registro')">SUSCRIBIRME</button>
+                            <button onclick="abrirAuth('registro')"
+                                style="width:100%; margin-top:1.5rem; padding:11px; background:#ffd700;
+                                color:#000; font-weight:900; font-family:var(--font-heading);
+                                border:none; border-radius:8px; cursor:pointer;
+                                font-size:0.9rem; letter-spacing:1px;">
+                                SUSCRIBIRME
+                            </button>
                         </div>
+
                     </div>
                 </div>
-            </div>
+            </main>
         `;
     };
 
