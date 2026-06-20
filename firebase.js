@@ -1,419 +1,68 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EL FULBO</title>
-    <link rel="stylesheet" href="estilos.css">
-    <link rel="stylesheet" href="estilos añadidos.css">
-    <style>
-        /* ── LANDING ─────────────────────────────────────────────────────── */
-        .landing-page {
-            min-height: 100vh;
-            background: var(--bg-color);
-            display: flex;
-            flex-direction: column;
-        }
+// firebase.js — Sin módulos ES, compatible con scripts normales
+const _firebaseConfig = {
+    apiKey: "AIzaSyAsk59PCfgGBSkev0wZzlstFdMpcgImoyE",
+    authDomain: "fulbo-3b2ba.firebaseapp.com",
+    projectId: "fulbo-3b2ba",
+    storageBucket: "fulbo-3b2ba.firebasestorage.app",
+    messagingSenderId: "6505043622",
+    appId: "1:6505043622:web:654759f7457e97424d0667"
+};
 
-        .landing-hero {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 4rem 1.5rem 2rem;
-            text-align: center;
-        }
+// Firebase se carga via CDN en index.html como módulos
+// Este archivo solo define la config y los PLANES globales
+window.FIREBASE_CONFIG = _firebaseConfig;
 
-        .landing-logo {
-            font-family: var(--font-heading);
-            font-size: clamp(3rem, 10vw, 6rem);
-            font-weight: 900;
-            letter-spacing: 4px;
-            color: var(--text-main);
-            text-shadow: 0 0 40px rgba(57,255,20,0.3);
-            margin-bottom: 0.5rem;
-        }
-
-        .landing-logo span { color: var(--accent-neon); }
-
-        .landing-tagline {
-            font-size: clamp(1rem, 3vw, 1.3rem);
-            color: var(--text-muted);
-            margin-bottom: 3rem;
-            max-width: 500px;
-        }
-
-        .landing-btns {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-bottom: 4rem;
-        }
-
-        .btn-primary {
-            padding: 14px 32px;
-            background: var(--accent-neon);
-            color: #000;
-            font-weight: 900;
-            font-family: var(--font-heading);
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            letter-spacing: 1px;
-            transition: opacity 0.2s, transform 0.2s;
-        }
-
-        .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
-
-        .btn-secondary {
-            padding: 14px 32px;
-            background: transparent;
-            color: var(--text-main);
-            font-weight: 700;
-            font-family: var(--font-heading);
-            border: 2px solid var(--border-glass);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            letter-spacing: 1px;
-            transition: border-color 0.2s, transform 0.2s;
-        }
-
-        .btn-secondary:hover { border-color: var(--accent-neon); transform: translateY(-1px); }
-
-        /* Features */
-        .landing-features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            max-width: 900px;
-            margin: 0 auto 4rem;
-            padding: 0 1.5rem;
-        }
-
-        .feature-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border-glass);
-            border-radius: 12px;
-            padding: 1.5rem;
-            text-align: center;
-        }
-
-        .feature-icon { font-size: 2rem; margin-bottom: 0.8rem; }
-        .feature-title { font-weight: 700; margin-bottom: 0.4rem; font-size: 0.95rem; }
-        .feature-desc { font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; }
-
-        /* Planes */
-        .planes-section {
-            max-width: 700px;
-            margin: 0 auto 5rem;
-            padding: 0 1.5rem;
-        }
-
-        .planes-title {
-            font-family: var(--font-heading);
-            font-size: 0.75rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: var(--accent-neon);
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .planes-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-        }
-
-        @media (max-width: 480px) { .planes-grid { grid-template-columns: 1fr; } }
-
-        .plan-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border-glass);
-            border-radius: 12px;
-            padding: 1.8rem 1.5rem;
-            position: relative;
-        }
-
-        .plan-card.destacado {
-            border-color: #ffd700;
-            background: rgba(255,215,0,0.05);
-        }
-
-        .plan-badge {
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #ffd700;
-            color: #000;
-            font-size: 0.65rem;
-            font-weight: 800;
-            padding: 3px 12px;
-            border-radius: 20px;
-            letter-spacing: 1px;
-            font-family: var(--font-heading);
-        }
-
-        .plan-nombre {
-            font-family: var(--font-heading);
-            font-size: 1.3rem;
-            font-weight: 900;
-            margin-bottom: 0.3rem;
-        }
-
-        .plan-precio {
-            font-size: 1.8rem;
-            font-weight: 900;
-            font-family: var(--font-heading);
-            color: var(--accent-neon);
-            margin-bottom: 1.2rem;
-        }
-
-        .plan-feature {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.83rem;
-            margin-bottom: 8px;
-            color: var(--text-muted);
-        }
-
-        .plan-feature.ok { color: var(--text-main); }
-        .plan-feature .check { font-size: 0.9rem; }
-
-        /* Auth forms */
-        .auth-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            background: rgba(0,0,0,0.9);
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-        }
-
-        .auth-overlay.visible { display: flex; }
-
-        .auth-card {
-            background: var(--surface-color);
-            border: 1px solid var(--border-glass);
-            border-radius: 16px;
-            padding: 2rem;
-            width: 100%;
-            max-width: 420px;
-        }
-
-        .auth-title {
-            font-family: var(--font-heading);
-            font-size: 1.5rem;
-            font-weight: 900;
-            margin-bottom: 0.3rem;
-        }
-
-        .auth-subtitle {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .auth-input {
-            width: 100%;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border-glass);
-            color: var(--text-main);
-            padding: 12px 14px;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            margin-bottom: 1rem;
-            box-sizing: border-box;
-            transition: border-color 0.2s;
-        }
-
-        .auth-input:focus { outline: none; border-color: var(--accent-neon); }
-        .auth-error { color: #ff4757; font-size: 0.82rem; margin-bottom: 1rem; min-height: 18px; }
-
-        .auth-switch {
-            text-align: center;
-            font-size: 0.83rem;
-            color: var(--text-muted);
-            margin-top: 1rem;
-        }
-
-        .auth-switch a {
-            color: var(--accent-neon);
-            cursor: pointer;
-            font-weight: 700;
-            text-decoration: none;
-        }
-
-        .auth-close {
-            float: right;
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 1.3rem;
-            line-height: 1;
-            padding: 0;
-        }
-    </style>
-</head>
-<body>
-    <div id="app"></div>
-
-    <!-- ── OVERLAY LOGIN ───────────────────────────────────────────────── -->
-    <div id="auth-overlay" class="auth-overlay">
-        <div class="auth-card">
-            <button class="auth-close" onclick="cerrarAuth()">✕</button>
-
-            <!-- LOGIN -->
-            <div id="form-login">
-                <div class="auth-title">Bienvenido</div>
-                <div class="auth-subtitle">Ingresá a tu cuenta de EL FULBO</div>
-                <input id="login-email"    type="email"    class="auth-input" placeholder="Email">
-                <input id="login-password" type="password" class="auth-input" placeholder="Contraseña">
-                <div id="login-error" class="auth-error"></div>
-                <button class="btn-primary" style="width:100%;" onclick="submitLogin()">INGRESAR</button>
-                <div class="auth-switch">
-                    ¿No tenés cuenta? <a onclick="mostrarRegistro()">Registrate gratis</a>
-                    &nbsp;·&nbsp;
-                    <a onclick="mostrarRecuperar()">Olvidé mi contraseña</a>
-                </div>
-            </div>
-
-            <!-- REGISTRO -->
-            <div id="form-registro" style="display:none;">
-                <div class="auth-title">Crear cuenta</div>
-                <div class="auth-subtitle">Es gratis, siempre</div>
-                <input id="reg-nombre"   type="text"     class="auth-input" placeholder="Tu nombre">
-                <input id="reg-email"    type="email"    class="auth-input" placeholder="Email">
-                <input id="reg-password" type="password" class="auth-input" placeholder="Contraseña (mín. 6 caracteres)">
-                <div id="reg-error" class="auth-error"></div>
-                <button class="btn-primary" style="width:100%;" onclick="submitRegistro()">CREAR CUENTA</button>
-                <div class="auth-switch">¿Ya tenés cuenta? <a onclick="mostrarLogin()">Ingresá</a></div>
-            </div>
-
-            <!-- RECUPERAR -->
-            <div id="form-recuperar" style="display:none;">
-                <div class="auth-title">Recuperar contraseña</div>
-                <div class="auth-subtitle">Te mandamos un link por email</div>
-                <input id="rec-email" type="email" class="auth-input" placeholder="Tu email">
-                <div id="rec-error" class="auth-error"></div>
-                <button class="btn-primary" style="width:100%;" onclick="submitRecuperar()">ENVIAR LINK</button>
-                <div class="auth-switch"><a onclick="mostrarLogin()">← Volver al login</a></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ── SCRIPTS ─────────────────────────────────────────────────────── -->
-    <script type="module" src="auth.js"></script>
-    <script src="data.js"></script>
-    <script src="espn.js"></script>
-    <script src="app.js"></script>
-
-    <script>
-        // ── Helpers de overlay auth ───────────────────────────────────────
-        function abrirAuth(modo = 'login') {
-            document.getElementById('auth-overlay').classList.add('visible');
-            if (modo === 'login')    mostrarLogin();
-            if (modo === 'registro') mostrarRegistro();
-        }
-
-        function cerrarAuth() {
-            document.getElementById('auth-overlay').classList.remove('visible');
-            ['login-error','reg-error','rec-error'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.textContent = '';
-            });
-        }
-
-        function mostrarLogin()    { _mostrarForm('form-login'); }
-        function mostrarRegistro() { _mostrarForm('form-registro'); }
-        function mostrarRecuperar(){ _mostrarForm('form-recuperar'); }
-
-        function _mostrarForm(id) {
-            ['form-login','form-registro','form-recuperar'].forEach(f => {
-                document.getElementById(f).style.display = f === id ? 'block' : 'none';
-            });
-        }
-
-        async function submitLogin() {
-            const email    = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value;
-            const errorEl  = document.getElementById('login-error');
-            errorEl.textContent = '';
-            try {
-                await window.FirebaseAuth.login(email, password);
-                cerrarAuth();
-                window.location.hash = '#/home';
-            } catch(e) {
-                errorEl.textContent = _traducirError(e.code);
-            }
-        }
-
-        async function submitRegistro() {
-            const nombre   = document.getElementById('reg-nombre').value.trim();
-            const email    = document.getElementById('reg-email').value.trim();
-            const password = document.getElementById('reg-password').value;
-            const errorEl  = document.getElementById('reg-error');
-            errorEl.textContent = '';
-            if (!nombre) { errorEl.textContent = 'Ingresá tu nombre.'; return; }
-            try {
-                await window.FirebaseAuth.registrar(email, password, nombre);
-                cerrarAuth();
-                window.location.hash = '#/home';
-            } catch(e) {
-                errorEl.textContent = _traducirError(e.code);
-            }
-        }
-
-        async function submitRecuperar() {
-            const email   = document.getElementById('rec-email').value.trim();
-            const errorEl = document.getElementById('rec-error');
-            errorEl.textContent = '';
-            try {
-                await window.FirebaseAuth.recuperarPassword(email);
-                errorEl.style.color = 'var(--accent-neon)';
-                errorEl.textContent = '¡Listo! Revisá tu casilla de email.';
-            } catch(e) {
-                errorEl.style.color = '#ff4757';
-                errorEl.textContent = _traducirError(e.code);
-            }
-        }
-
-        function _traducirError(code) {
-            const errores = {
-                'auth/invalid-email':            'El email no es válido.',
-                'auth/user-not-found':           'No existe una cuenta con ese email.',
-                'auth/wrong-password':           'Contraseña incorrecta.',
-                'auth/email-already-in-use':     'Ya existe una cuenta con ese email.',
-                'auth/weak-password':            'La contraseña debe tener al menos 6 caracteres.',
-                'auth/too-many-requests':        'Demasiados intentos. Intentá más tarde.',
-                'auth/invalid-credential':       'Email o contraseña incorrectos.',
-                'auth/network-request-failed':   'Error de conexión. Revisá tu internet.',
-            };
-            return errores[code] ?? 'Ocurrió un error. Intentá de nuevo.';
-        }
-
-        // Enter en inputs
-        document.addEventListener('keypress', (e) => {
-            if (e.key !== 'Enter') return;
-            const overlay = document.getElementById('auth-overlay');
-            if (!overlay.classList.contains('visible')) return;
-            const loginVisible = document.getElementById('form-login').style.display !== 'none';
-            const regVisible   = document.getElementById('form-registro').style.display !== 'none';
-            const recVisible   = document.getElementById('form-recuperar').style.display !== 'none';
-            if (loginVisible) submitLogin();
-            if (regVisible)   submitRegistro();
-            if (recVisible)   submitRecuperar();
-        });
-    </script>
-</body>
-</html>
+window.PLANES = {
+    free: {
+        nombre: 'Free',
+        precio: 'Gratis',
+        precioAnual: null,
+        color: '#888',
+        emoji: '⚽',
+        descripcion: 'Para el que quiere seguir el Mundial sin complicarse.',
+        features: [
+            { texto: 'Tabla de grupos Mundial 2026',       ok: true  },
+            { texto: 'Partidos del día',                   ok: true  },
+            { texto: 'Noticias básicas',                   ok: true  },
+            { texto: '1 liga a elección',                  ok: true  },
+            { texto: 'Todas las ligas de fútbol',          ok: false },
+            { texto: 'Estadísticas y alineaciones',        ok: false },
+            { texto: 'Noticias traducidas',                ok: false },
+            { texto: 'Todos los deportes',                 ok: false },
+        ]
+    },
+    pro: {
+        nombre: 'Pro',
+        precio: '$4.99',
+        precioAnual: '$39.99',
+        color: '#39ff14',
+        emoji: '🔥',
+        descripcion: 'Para el futbolero de verdad. Todas las ligas y stats completas.',
+        features: [
+            { texto: 'Todo lo de Free',                    ok: true  },
+            { texto: 'Todas las ligas de fútbol',          ok: true  },
+            { texto: 'Estadísticas del partido',           ok: true  },
+            { texto: 'Alineaciones tácticas',              ok: true  },
+            { texto: 'Noticias traducidas',                ok: true  },
+            { texto: 'Equipo favorito',                    ok: true  },
+            { texto: 'Todos los deportes',                 ok: false },
+            { texto: 'Notificaciones en vivo',             ok: false },
+        ]
+    },
+    promax: {
+        nombre: 'Pro Max',
+        precio: '$14.99',
+        precioAnual: '$119.99',
+        color: '#ffd700',
+        emoji: '👑',
+        descripcion: 'Para el fanático total. Todo lo de Pro más todos los deportes y notificaciones en vivo.',
+        features: [
+            { texto: 'Todo lo de Pro',                     ok: true  },
+            { texto: 'Todos los deportes',                 ok: true  },
+            { texto: 'Notificaciones en vivo',             ok: true  },
+            { texto: 'Historial extendido',                ok: true  },
+            { texto: 'Acceso anticipado a features',       ok: true  },
+            { texto: 'Sin publicidad',                     ok: true  },
+        ]
+    }
+};
