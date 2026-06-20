@@ -2048,6 +2048,276 @@ const App = (() => {
         `;
     };
 
+    // ── SETUP / PRE-PERFIL ───────────────────────────────────────────────────
+    const renderSetup = () => {
+        const nombre = window.FirebaseAuth?.getNombre()?.split(' ')[0] ?? 'crack';
+
+        const PAISES = [
+            {id:'AR', nombre:'Argentina', flag:'🇦🇷'},
+            {id:'ES', nombre:'España',    flag:'🇪🇸'},
+            {id:'MX', nombre:'México',    flag:'🇲🇽'},
+            {id:'CO', nombre:'Colombia',  flag:'🇨🇴'},
+            {id:'CL', nombre:'Chile',     flag:'🇨🇱'},
+            {id:'UY', nombre:'Uruguay',   flag:'🇺🇾'},
+            {id:'PE', nombre:'Perú',      flag:'🇵🇪'},
+            {id:'VE', nombre:'Venezuela', flag:'🇻🇪'},
+            {id:'BR', nombre:'Brasil',    flag:'🇧🇷'},
+            {id:'PY', nombre:'Paraguay',  flag:'🇵🇾'},
+            {id:'BO', nombre:'Bolivia',   flag:'🇧🇴'},
+            {id:'EC', nombre:'Ecuador',   flag:'🇪🇨'},
+            {id:'GB', nombre:'Inglaterra',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'},
+            {id:'DE', nombre:'Alemania',  flag:'🇩🇪'},
+            {id:'IT', nombre:'Italia',    flag:'🇮🇹'},
+            {id:'FR', nombre:'Francia',   flag:'🇫🇷'},
+            {id:'PT', nombre:'Portugal',  flag:'🇵🇹'},
+            {id:'NL', nombre:'Países Bajos', flag:'🇳🇱'},
+        ];
+
+        const LIGAS_NACIONALES = {
+            'AR': [{id:'arg.1', nombre:'Liga Profesional', flag:'🇦🇷'}],
+            'ES': [{id:'esp.1', nombre:'La Liga', flag:'🇪🇸'}],
+            'MX': [{id:'mex.1', nombre:'Liga MX', flag:'🇲🇽'}],
+            'CO': [{id:'col.1', nombre:'Liga BetPlay', flag:'🇨🇴'}],
+            'CL': [{id:'chi.1', nombre:'Primera División', flag:'🇨🇱'}],
+            'UY': [{id:'uru.1', nombre:'Primera División', flag:'🇺🇾'}],
+            'PE': [{id:'per.1', nombre:'Liga 1', flag:'🇵🇪'}],
+            'BR': [{id:'bra.1', nombre:'Brasileirão', flag:'🇧🇷'}],
+            'PY': [{id:'par.1', nombre:'División Profesional', flag:'🇵🇾'}],
+            'EC': [{id:'ecu.1', nombre:'Serie A', flag:'🇪🇨'}],
+            'GB': [{id:'eng.1', nombre:'Premier League', flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'}],
+            'DE': [{id:'ger.1', nombre:'Bundesliga', flag:'🇩🇪'}],
+            'IT': [{id:'ita.1', nombre:'Serie A', flag:'🇮🇹'}],
+            'FR': [{id:'fra.1', nombre:'Ligue 1', flag:'🇫🇷'}],
+            'PT': [{id:'por.1', nombre:'Primeira Liga', flag:'🇵🇹'}],
+            'NL': [{id:'ned.1', nombre:'Eredivisie', flag:'🇳🇱'}],
+        };
+
+        const LIGAS_INTERNACIONALES = [
+            {id:'uefa.cl',     nombre:'Champions League',    flag:'⭐'},
+            {id:'uefa.el',     nombre:'Europa League',       flag:'🟠'},
+            {id:'conmebol.libertadores', nombre:'Copa Libertadores', flag:'🏆'},
+            {id:'conmebol.sudamericana', nombre:'Copa Sudamericana',  flag:'🥈'},
+            {id:'fifa.world',  nombre:'Mundial 2026',        flag:'🌍'},
+            {id:'uefa.euro',   nombre:'Eurocopa',            flag:'🇪🇺'},
+        ];
+
+        const EQUIPOS_FAVORITOS = [
+            // Argentina
+            {id:'6', nombre:'Boca Juniors', flag:'🇦🇷'},
+            {id:'5', nombre:'River Plate', flag:'🇦🇷'},
+            {id:'7', nombre:'Racing Club', flag:'🇦🇷'},
+            {id:'8', nombre:'Independiente', flag:'🇦🇷'},
+            {id:'9', nombre:'San Lorenzo', flag:'🇦🇷'},
+            {id:'10', nombre:'Huracán', flag:'🇦🇷'},
+            // España
+            {id:'86', nombre:'Real Madrid', flag:'🇪🇸'},
+            {id:'83', nombre:'Barcelona', flag:'🇪🇸'},
+            {id:'1068', nombre:'Atlético de Madrid', flag:'🇪🇸'},
+            // Inglaterra
+            {id:'360', nombre:'Manchester City', flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'},
+            {id:'364', nombre:'Manchester United', flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'},
+            {id:'359', nombre:'Liverpool', flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'},
+            {id:'338', nombre:'Arsenal', flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'},
+            {id:'363', nombre:'Chelsea', flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'},
+            // Italia
+            {id:'111', nombre:'Juventus', flag:'🇮🇹'},
+            {id:'108', nombre:'Inter', flag:'🇮🇹'},
+            {id:'109', nombre:'AC Milan', flag:'🇮🇹'},
+            // Alemania
+            {id:'132', nombre:'Bayern Munich', flag:'🇩🇪'},
+            {id:'124', nombre:'Borussia Dortmund', flag:'🇩🇪'},
+            // Brasil
+            {id:'131', nombre:'Flamengo', flag:'🇧🇷'},
+            {id:'119', nombre:'Corinthians', flag:'🇧🇷'},
+            // Selecciones
+            {id:'202', nombre:'Argentina 🌍', flag:'🇦🇷'},
+            {id:'205', nombre:'Brasil 🌍', flag:'🇧🇷'},
+            {id:'164', nombre:'España 🌍', flag:'🇪🇸'},
+            {id:'478', nombre:'Francia 🌍', flag:'🇫🇷'},
+            {id:'482', nombre:'Portugal 🌍', flag:'🇵🇹'},
+        ];
+
+        // Estado del setup
+        let _paso = 1;
+        let _datos = { equipoFavorito: null, pais: null, ligaNacional: null, ligaInternacional: null };
+
+        const _render = () => {
+            appContainer.innerHTML = `
+                <main style="min-height:100vh; background:var(--bg-color); display:flex; flex-direction:column;
+                    align-items:center; justify-content:center; padding:2rem 1.5rem;">
+
+                    <!-- Header -->
+                    <div style="text-align:center; margin-bottom:2rem;">
+                        <div style="font-family:var(--font-heading); font-size:2rem; font-weight:900; color:var(--accent-neon); margin-bottom:0.5rem;">
+                            FULBO
+                        </div>
+                        <h2 style="font-size:1.3rem; font-weight:700; margin-bottom:0.3rem;">
+                            Hola ${nombre}, configurá tu experiencia
+                        </h2>
+                        <p style="color:var(--text-muted); font-size:0.85rem;">Paso ${_paso} de 3</p>
+
+                        <!-- Barra de progreso -->
+                        <div style="width:200px; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; margin:1rem auto 0;">
+                            <div style="width:${(_paso/3)*100}%; height:100%; background:var(--accent-neon); border-radius:2px; transition:width 0.3s;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Contenido del paso -->
+                    <div class="glass-panel" style="padding:2rem; width:100%; max-width:520px;">
+                        ${_paso === 1 ? _renderPaso1() : _paso === 2 ? _renderPaso2() : _renderPaso3()}
+                    </div>
+
+                    <!-- Botones -->
+                    <div style="display:flex; gap:1rem; margin-top:1.5rem; width:100%; max-width:520px;">
+                        ${_paso > 1 ? `
+                            <button onclick="window._setupAtras()"
+                                style="flex:1; padding:12px; background:transparent; color:var(--text-muted);
+                                border:1px solid var(--border-glass); border-radius:8px; cursor:pointer;
+                                font-family:var(--font-heading); font-weight:700; font-size:0.9rem;">
+                                ← ATRÁS
+                            </button>` : ''}
+                        <button onclick="window._setupSiguiente()"
+                            style="flex:2; padding:12px; background:var(--accent-neon); color:#000;
+                            border:none; border-radius:8px; cursor:pointer;
+                            font-family:var(--font-heading); font-weight:900; font-size:0.95rem; letter-spacing:1px;">
+                            ${_paso === 3 ? '¡LISTO! →' : 'SIGUIENTE →'}
+                        </button>
+                    </div>
+                </main>
+            `;
+        };
+
+        const _renderPaso1 = () => `
+            <h3 style="font-family:var(--font-heading); font-size:1.1rem; font-weight:800; margin-bottom:1.2rem;">
+                ⭐ ¿Cuál es tu equipo favorito?
+            </h3>
+            <input type="text" id="setup-buscar-equipo" placeholder="Buscá tu equipo..."
+                oninput="window._setupFiltrarEquipos(this.value)"
+                style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--border-glass);
+                color:var(--text-main); padding:10px 14px; border-radius:8px; font-size:0.9rem;
+                margin-bottom:1rem; box-sizing:border-box;">
+            <div id="setup-equipos-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:0.6rem; max-height:320px; overflow-y:auto;">
+                ${EQUIPOS_FAVORITOS.map(e => `
+                    <div onclick="window._setupElegirEquipo('${e.id}', '${e.nombre}')"
+                        id="eq-${e.id}"
+                        style="padding:10px; border-radius:8px; border:2px solid ${_datos.equipoFavorito?.id === e.id ? 'var(--accent-neon)' : 'var(--border-glass)'};
+                        background:${_datos.equipoFavorito?.id === e.id ? 'rgba(57,255,20,0.1)' : 'rgba(255,255,255,0.03)'};
+                        cursor:pointer; text-align:center; transition:all 0.2s;">
+                        <div style="font-size:1.2rem; margin-bottom:4px;">${e.flag}</div>
+                        <div style="font-size:0.78rem; font-weight:600; line-height:1.3;">${e.nombre}</div>
+                    </div>`).join('')}
+            </div>
+        `;
+
+        const _renderPaso2 = () => `
+            <h3 style="font-family:var(--font-heading); font-size:1.1rem; font-weight:800; margin-bottom:1.2rem;">
+                🌎 ¿De dónde sos?
+            </h3>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:0.6rem; margin-bottom:1.5rem;">
+                ${PAISES.map(p => `
+                    <div onclick="window._setupElegirPais('${p.id}', '${p.nombre}')"
+                        style="padding:10px; border-radius:8px; border:2px solid ${_datos.pais?.id === p.id ? 'var(--accent-neon)' : 'var(--border-glass)'};
+                        background:${_datos.pais?.id === p.id ? 'rgba(57,255,20,0.1)' : 'rgba(255,255,255,0.03)'};
+                        cursor:pointer; text-align:center; transition:all 0.2s;">
+                        <div style="font-size:1.3rem; margin-bottom:4px;">${p.flag}</div>
+                        <div style="font-size:0.78rem; font-weight:600;">${p.nombre}</div>
+                    </div>`).join('')}
+            </div>
+
+            ${_datos.pais ? `
+                <h3 style="font-family:var(--font-heading); font-size:1rem; font-weight:800; margin-bottom:0.8rem;">
+                    🏆 Tu liga nacional <span style="color:var(--accent-neon); font-size:0.75rem;">(incluida en Free)</span>
+                </h3>
+                <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                    ${(LIGAS_NACIONALES[_datos.pais.id] ?? [{id:'eng.1', nombre:'Premier League', flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'}]).map(l => `
+                        <div onclick="window._setupElegirLigaNacional('${l.id}', '${l.nombre}')"
+                            style="padding:12px 16px; border-radius:8px; border:2px solid ${_datos.ligaNacional?.id === l.id ? 'var(--accent-neon)' : 'var(--border-glass)'};
+                            background:${_datos.ligaNacional?.id === l.id ? 'rgba(57,255,20,0.1)' : 'rgba(255,255,255,0.03)'};
+                            cursor:pointer; display:flex; align-items:center; gap:10px; transition:all 0.2s;">
+                            <span style="font-size:1.3rem;">${l.flag}</span>
+                            <span style="font-weight:600;">${l.nombre}</span>
+                            ${_datos.ligaNacional?.id === l.id ? '<span style="margin-left:auto; color:var(--accent-neon);">✓</span>' : ''}
+                        </div>`).join('')}
+                </div>` : '<p style="color:var(--text-muted); font-size:0.85rem; text-align:center;">Elegí tu país para ver las ligas disponibles.</p>'}
+        `;
+
+        const _renderPaso3 = () => `
+            <h3 style="font-family:var(--font-heading); font-size:1.1rem; font-weight:800; margin-bottom:1.2rem;">
+                🌍 Liga o copa internacional favorita
+            </h3>
+            <p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:1.2rem;">
+                Las copas internacionales están disponibles para todos los planes.
+            </p>
+            <div style="display:flex; flex-direction:column; gap:0.6rem;">
+                ${LIGAS_INTERNACIONALES.map(l => `
+                    <div onclick="window._setupElegirLigaInt('${l.id}', '${l.nombre}')"
+                        style="padding:14px 16px; border-radius:8px; border:2px solid ${_datos.ligaInternacional?.id === l.id ? 'var(--accent-neon)' : 'var(--border-glass)'};
+                        background:${_datos.ligaInternacional?.id === l.id ? 'rgba(57,255,20,0.1)' : 'rgba(255,255,255,0.03)'};
+                        cursor:pointer; display:flex; align-items:center; gap:12px; transition:all 0.2s;">
+                        <span style="font-size:1.5rem;">${l.flag}</span>
+                        <span style="font-weight:600; font-size:0.95rem;">${l.nombre}</span>
+                        ${_datos.ligaInternacional?.id === l.id ? '<span style="margin-left:auto; color:var(--accent-neon); font-size:1.1rem;">✓</span>' : ''}
+                    </div>`).join('')}
+            </div>
+        `;
+
+        // Handlers
+        window._setupElegirEquipo = (id, nombre) => {
+            _datos.equipoFavorito = { id, nombre };
+            _render();
+        };
+        window._setupFiltrarEquipos = (q) => {
+            const grid = document.getElementById('setup-equipos-grid');
+            if (!grid) return;
+            grid.querySelectorAll('[id^="eq-"]').forEach(el => {
+                const nombre = el.querySelector('div:last-child')?.textContent?.toLowerCase() ?? '';
+                el.style.display = nombre.includes(q.toLowerCase()) ? '' : 'none';
+            });
+        };
+        window._setupElegirPais = (id, nombre) => {
+            _datos.pais = { id, nombre };
+            _datos.ligaNacional = null;
+            _render();
+        };
+        window._setupElegirLigaNacional = (id, nombre) => {
+            _datos.ligaNacional = { id, nombre };
+            _render();
+        };
+        window._setupElegirLigaInt = (id, nombre) => {
+            _datos.ligaInternacional = { id, nombre };
+            _render();
+        };
+        window._setupSiguiente = async () => {
+            if (_paso === 1 && !_datos.equipoFavorito) {
+                alert('Elegí tu equipo favorito para continuar.');
+                return;
+            }
+            if (_paso === 2 && !_datos.pais) {
+                alert('Elegí tu país para continuar.');
+                return;
+            }
+            if (_paso === 3) {
+                // Guardar y terminar
+                await window.FirebaseAuth?.actualizarPerfil({
+                    equipoFavorito:   _datos.equipoFavorito?.id   ?? null,
+                    pais:             _datos.pais?.id             ?? null,
+                    ligaNacional:     _datos.ligaNacional?.id     ?? null,
+                    ligaInternacional:_datos.ligaInternacional?.id ?? null,
+                    perfilCompleto:   true
+                });
+                window.location.hash = '#/home';
+                return;
+            }
+            _paso++;
+            _render();
+        };
+        window._setupAtras = () => {
+            if (_paso > 1) { _paso--; _render(); }
+        };
+
+        _render();
+    };
+
     // ── STRIPE CHECKOUT ──────────────────────────────────────────────────────
     const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
 
@@ -2241,6 +2511,13 @@ const App = (() => {
             return;
         }
 
+        // Redirigir al setup si es la primera vez
+        const perfil = window.FirebaseAuth?.getPerfil();
+        if (perfil && perfil.perfilCompleto === false && path !== '#/setup') {
+            window.location.hash = '#/setup';
+            return;
+        }
+
         switch (path) {
             case '#/home':
                 renderHome();
@@ -2272,6 +2549,9 @@ const App = (() => {
                 break;
             case '#/planes':
                 renderPlanes();
+                break;
+            case '#/setup':
+                renderSetup();
                 break;
             case '#/admin':
                 await renderAdmin();
