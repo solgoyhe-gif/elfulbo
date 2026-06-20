@@ -2455,6 +2455,13 @@ const App = (() => {
     ];
 
     const renderOtherSports = async (deporteId = null, ligaId = null) => {
+        // Esperar a que el perfil esté cargado
+        let intentos = 0;
+        while (!window.FirebaseAuth?.getPerfil() && intentos < 20) {
+            await new Promise(r => setTimeout(r, 100));
+            intentos++;
+        }
+
         const isProMax = window.FirebaseAuth?.getPlan() === 'promax';
         const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
 
@@ -2836,6 +2843,13 @@ const App = (() => {
         if (!autenticado) {
             renderLanding();
             return;
+        }
+
+        // Esperar a que el perfil esté cargado (máx 2s)
+        let _intentos = 0;
+        while (!window.FirebaseAuth?.getPerfil() && _intentos < 20) {
+            await new Promise(r => setTimeout(r, 100));
+            _intentos++;
         }
 
         // Redirigir al setup si es la primera vez
