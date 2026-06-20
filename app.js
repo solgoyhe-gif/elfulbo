@@ -169,10 +169,10 @@ const App = (() => {
                     <a href="#/h2h" class="nav-link ${activeHash === '#/h2h' ? 'active' : ''}">H2H</a>
                     <a href="#/info" class="nav-link ${activeHash === '#/info' ? 'active' : ''}">Info</a>
                 </div>
-                ${Auth.isAuthenticated() ? `<button onclick="Auth.logout()" class="btn-logout">Salir</button>` : ''}
+                ${window.FirebaseAuth?.isAuthenticated() ? `<button onclick="window.FirebaseAuth?.logout()" class="btn-logout">Salir</button>` : ''}
             </nav>
 
-            ${Auth.isAuthenticated() ? `
+            ${window.FirebaseAuth?.isAuthenticated() ? `
             <nav class="mobile-nav">
                 <a href="#/home" class="mobile-nav-item ${activeHash === '#/home' ? 'active' : ''}">
                     <span class="mobile-icon">🏠</span>
@@ -190,7 +190,7 @@ const App = (() => {
                     <span class="mobile-icon">📰</span>
                     <span>Info</span>
                 </a>
-                <button onclick="Auth.logout()" class="mobile-nav-item" style="background:none; border:none; padding:0; cursor:pointer;">
+                <button onclick="window.FirebaseAuth?.logout()" class="mobile-nav-item" style="background:none; border:none; padding:0; cursor:pointer;">
                     <span class="mobile-icon" style="filter:none;">🚪</span>
                     <span style="color:#ff4757;">Salir</span>
                 </button>
@@ -1691,63 +1691,268 @@ const App = (() => {
     };
 
     // ── LOGIN ─────────────────────────────────────────────────────────────────
-    const renderLogin = () => {
+    // ── LANDING ───────────────────────────────────────────────────────────────
+    const renderLanding = () => {
         appContainer.innerHTML = `
-            <main class="login-view fade-in">
-                <div class="login-card">
-                    <div class="login-logo">EL <span>FULBO</span></div>
-                    <div id="form-contenedor">
-                        <div class="input-container">
-                            <label>Dirección de Email</label>
-                            <input type="email" id="auth-email" class="glass-input" placeholder="manager@elfulbo.com" autocomplete="off">
+            <div class="landing-page fade-in">
+                <!-- Hero -->
+                <div class="landing-hero">
+                    <div class="landing-logo">EL <span>FULBO</span></div>
+                    <p class="landing-tagline">Todo el Mundial 2026 en tiempo real. Estadísticas, alineaciones y noticias en tu idioma.</p>
+                    <div class="landing-btns">
+                        <button class="btn-primary" onclick="abrirAuth('registro')">EMPEZAR GRATIS</button>
+                        <button class="btn-secondary" onclick="abrirAuth('login')">Ya tengo cuenta</button>
+                    </div>
+
+                    <!-- Features -->
+                    <div class="landing-features">
+                        <div class="feature-card">
+                            <div class="feature-icon">📊</div>
+                            <div class="feature-title">Stats en vivo</div>
+                            <div class="feature-desc">Posesión, tiros, corners y más de cada partido.</div>
                         </div>
-                        <div class="input-container">
-                            <label>Contraseña</label>
-                            <input type="password" id="auth-password" class="glass-input" placeholder="••••••••">
+                        <div class="feature-card">
+                            <div class="feature-icon">🗺️</div>
+                            <div class="feature-title">Pizarra táctica</div>
+                            <div class="feature-desc">Alineaciones con formación real de ESPN.</div>
                         </div>
-                        <div id="auth-error-log" style="color: #ff4757; font-size: 0.85rem; margin-bottom: 1rem; min-height: 20px;"></div>
-                        <button id="auth-submit-trigger" class="btn-submit">Ingresar al Sistema</button>
+                        <div class="feature-card">
+                            <div class="feature-icon">📰</div>
+                            <div class="feature-title">Noticias traducidas</div>
+                            <div class="feature-desc">Las últimas del Mundial en español rioplatense.</div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">⚔️</div>
+                            <div class="feature-title">Partidos del día</div>
+                            <div class="feature-desc">Calendario completo con resultados y horarios ARG.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Planes -->
+                <div class="planes-section">
+                    <div class="planes-title">⚡ Elegí tu plan</div>
+                    <div class="planes-grid">
+                        <div class="plan-card">
+                            <div class="plan-nombre">Free</div>
+                            <div class="plan-precio">Gratis</div>
+                            ${window.FirebaseAuth?.PLANES?.free?.features?.map(f => `
+                                <div class="plan-feature ${f.ok ? 'ok' : ''}">
+                                    <span class="check">${f.ok ? '✅' : '🔒'}</span>
+                                    <span>${f.texto}</span>
+                                </div>`).join('') ?? ''}
+                            <button class="btn-secondary" style="width:100%; margin-top:1.2rem;" onclick="abrirAuth('registro')">EMPEZAR</button>
+                        </div>
+                        <div class="plan-card destacado">
+                            <div class="plan-badge">MÁS POPULAR</div>
+                            <div class="plan-nombre" style="color:#ffd700;">Premium</div>
+                            <div class="plan-precio">$4.99<span style="font-size:0.9rem; color:var(--text-muted);">/mes</span></div>
+                            ${window.FirebaseAuth?.PLANES?.premium?.features?.map(f => `
+                                <div class="plan-feature ok">
+                                    <span class="check">✅</span>
+                                    <span>${f.texto}</span>
+                                </div>`).join('') ?? ''}
+                            <button class="btn-primary" style="width:100%; margin-top:1.2rem; background:#ffd700;" onclick="abrirAuth('registro')">SUSCRIBIRME</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    };
+
+    // ── PERFIL ────────────────────────────────────────────────────────────────
+    const renderPerfil = async () => {
+        const user   = window.FirebaseAuth?.getUser();
+        const perfil = window.FirebaseAuth?.getPerfil();
+        const plan   = window.FirebaseAuth?.getPlan() ?? 'free';
+
+        appContainer.innerHTML = `
+            ${renderNavbar('#/perfil')}
+            <main class="page-container fade-in" style="max-width:600px; margin:0 auto;">
+                <h2 class="section-title">👤 Mi Perfil</h2>
+
+                <!-- Info del usuario -->
+                <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
+                    <div style="display:flex; align-items:center; gap:1.2rem; margin-bottom:1.2rem;">
+                        <div style="width:60px; height:60px; border-radius:50%; background:rgba(57,255,20,0.15);
+                            border:2px solid var(--accent-neon); display:flex; align-items:center;
+                            justify-content:center; font-size:1.5rem; font-weight:800; font-family:var(--font-heading);">
+                            ${(perfil?.nombre ?? 'U').charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <div style="font-weight:800; font-size:1.1rem;">${perfil?.nombre ?? 'Usuario'}</div>
+                            <div style="color:var(--text-muted); font-size:0.85rem;">${user?.email ?? ''}</div>
+                            <div style="margin-top:4px;">
+                                <span style="background:${plan === 'premium' ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.08)'};
+                                    color:${plan === 'premium' ? '#ffd700' : 'var(--text-muted)'};
+                                    padding:2px 10px; border-radius:20px; font-size:0.7rem; font-weight:800;
+                                    font-family:var(--font-heading); letter-spacing:1px;">
+                                    ${plan.toUpperCase()}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Equipo favorito -->
+                <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
+                    <h3 class="panel-title" style="margin-bottom:1rem;">⭐ Equipo Favorito</h3>
+                    <select id="equipo-fav-select" style="width:100%; background:var(--surface-color);
+                        color:var(--text-main); border:1px solid var(--border-glass); border-radius:8px;
+                        padding:10px; font-size:0.9rem; cursor:pointer; margin-bottom:1rem;">
+                        <option value="">— Sin seleccionar —</option>
+                        ${[
+                            {id:'202',n:'🇦🇷 Argentina'},{id:'478',n:'🇫🇷 Francia'},{id:'205',n:'🇧🇷 Brasil'},
+                            {id:'164',n:'🇪🇸 España'},{id:'481',n:'🇩🇪 Alemania'},{id:'482',n:'🇵🇹 Portugal'},
+                            {id:'448',n:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 Inglaterra'},{id:'449',n:'🇳🇱 Países Bajos'},{id:'660',n:'🇺🇸 Estados Unidos'},
+                            {id:'203',n:'🇲🇽 México'},{id:'212',n:'🇺🇾 Uruguay'},{id:'208',n:'🇨🇴 Colombia'},
+                            {id:'206',n:'🇨🇦 Canadá'},{id:'475',n:'🇨🇭 Suiza'},{id:'477',n:'🇭🇷 Croacia'},
+                        ].map(e => `<option value="${e.id}" ${perfil?.equipoFavorito === e.id ? 'selected' : ''}>${e.n}</option>`).join('')}
+                    </select>
+                    <button class="btn-primary" onclick="window._guardarEquipoFav()">GUARDAR</button>
+                    <span id="fav-ok" style="display:none; color:var(--accent-neon); font-size:0.85rem; margin-left:10px; font-weight:700;">✓ Guardado</span>
+                </div>
+
+                <!-- Plan actual -->
+                <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
+                    <h3 class="panel-title" style="margin-bottom:1rem;">💳 Plan Actual</h3>
+                    ${plan === 'premium' ? `
+                        <div style="text-align:center; padding:1rem;">
+                            <div style="font-size:2rem; margin-bottom:0.5rem;">⭐</div>
+                            <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:800; color:#ffd700;">Premium activo</div>
+                            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.5rem;">Tenés acceso a todas las funciones.</p>
+                        </div>
+                    ` : `
+                        <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1rem;">
+                            Estás en el plan <strong>Free</strong>. Pasate a Premium para acceder a estadísticas, alineaciones y más.
+                        </p>
+                        <button class="btn-primary" style="background:#ffd700;" onclick="window.location.hash='#/planes'">
+                            VER PLANES ⭐
+                        </button>
+                    `}
+                </div>
+
+                <!-- Cerrar sesión -->
+                <button onclick="window.FirebaseAuth?.logout()"
+                    style="width:100%; padding:12px; background:rgba(255,71,87,0.1); border:1px solid #ff4757;
+                    color:#ff4757; border-radius:8px; cursor:pointer; font-family:var(--font-heading);
+                    font-weight:700; letter-spacing:1px; margin-bottom:4rem;">
+                    CERRAR SESIÓN
+                </button>
+            </main>
+        `;
+
+        window._guardarEquipoFav = async () => {
+            const sel = document.getElementById('equipo-fav-select').value;
+            await window.FirebaseAuth?.actualizarPerfil({ equipoFavorito: sel });
+            const ok = document.getElementById('fav-ok');
+            if (ok) { ok.style.display = 'inline'; setTimeout(() => ok.style.display = 'none', 2000); }
+        };
+    };
+
+    // ── PLANES ────────────────────────────────────────────────────────────────
+    const renderPlanes = () => {
+        const plan = window.FirebaseAuth?.getPlan() ?? 'free';
+        appContainer.innerHTML = `
+            ${renderNavbar('#/planes')}
+            <main class="page-container fade-in" style="max-width:600px; margin:0 auto;">
+                <h2 class="section-title">💳 Planes</h2>
+                <div class="planes-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:4rem;">
+                    <div class="plan-card ${plan === 'free' ? 'destacado' : ''}">
+                        ${plan === 'free' ? '<div class="plan-badge">PLAN ACTUAL</div>' : ''}
+                        <div class="plan-nombre">Free</div>
+                        <div class="plan-precio">Gratis</div>
+                        ${window.FirebaseAuth?.PLANES?.free?.features?.map(f => `
+                            <div class="plan-feature ${f.ok ? 'ok' : ''}">
+                                <span class="check">${f.ok ? '✅' : '🔒'}</span>
+                                <span>${f.texto}</span>
+                            </div>`).join('') ?? ''}
+                    </div>
+                    <div class="plan-card ${plan === 'premium' ? 'destacado' : ''}">
+                        ${plan === 'premium' ? '<div class="plan-badge" style="background:var(--accent-neon);">PLAN ACTUAL</div>' : '<div class="plan-badge">MÁS POPULAR</div>'}
+                        <div class="plan-nombre" style="color:#ffd700;">Premium</div>
+                        <div class="plan-precio">$4.99<span style="font-size:0.9rem; color:var(--text-muted);">/mes</span></div>
+                        ${window.FirebaseAuth?.PLANES?.premium?.features?.map(f => `
+                            <div class="plan-feature ok">
+                                <span class="check">✅</span>
+                                <span>${f.texto}</span>
+                            </div>`).join('') ?? ''}
+                        ${plan !== 'premium' ? `
+                        <button class="btn-primary" style="width:100%; margin-top:1.2rem; background:#ffd700;"
+                            onclick="alert('Próximamente disponible el pago online.')">
+                            SUSCRIBIRME
+                        </button>` : ''}
                     </div>
                 </div>
             </main>
         `;
+    };
 
-        const btnSubmit     = document.getElementById('auth-submit-trigger');
-        const emailInput    = document.getElementById('auth-email');
-        const passwordInput = document.getElementById('auth-password');
-        const errorFeedback = document.getElementById('auth-error-log');
+    // ── NAVBAR actualizada con perfil ────────────────────────────────────────
+    const _renderNavbarConPerfil = (activeHash) => {
+        const isLigasActive = activeHash === '#/ligas' || activeHash.includes('#/liga?id=') || activeHash.includes('#/equipo?id=') || activeHash.includes('#/grupo?id=');
+        const nombre = window.FirebaseAuth?.getNombre() ?? '';
+        const plan   = window.FirebaseAuth?.getPlan() ?? 'free';
+        return `
+            <nav class="navbar desktop-nav">
+                <div class="nav-links-group">
+                    <a href="#/home" class="nav-link ${activeHash === '#/home' ? 'active' : ''}">Inicio</a>
+                    <a href="#/ligas" class="nav-link ${isLigasActive ? 'active' : ''}">Ligas</a>
+                    <a href="#/h2h" class="nav-link ${activeHash === '#/h2h' ? 'active' : ''}">H2H</a>
+                    <a href="#/info" class="nav-link ${activeHash === '#/info' ? 'active' : ''}">Info</a>
+                </div>
+                <a href="#/perfil" style="display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--text-main);">
+                    <div style="width:30px; height:30px; border-radius:50%; background:rgba(57,255,20,0.15);
+                        border:1px solid var(--accent-neon); display:flex; align-items:center; justify-content:center;
+                        font-weight:800; font-size:0.85rem;">
+                        ${nombre.charAt(0).toUpperCase()}
+                    </div>
+                    ${plan === 'premium' ? '<span style="font-size:0.7rem; color:#ffd700; font-weight:800;">⭐ PRO</span>' : ''}
+                </a>
+            </nav>
 
-        const executeAuthentication = () => {
-            errorFeedback.textContent       = '';
-            emailInput.style.borderColor    = '';
-            passwordInput.style.borderColor = '';
-
-            if (!Auth.login(emailInput.value, passwordInput.value)) {
-                errorFeedback.textContent       = 'Acceso denegado. Verifique los campos.';
-                emailInput.style.borderColor    = '#ff4757';
-                passwordInput.style.borderColor = '#ff4757';
-            }
-        };
-
-        btnSubmit.addEventListener('click', executeAuthentication);
-        passwordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') executeAuthentication(); });
+            <nav class="mobile-nav">
+                <a href="#/home" class="mobile-nav-item ${activeHash === '#/home' ? 'active' : ''}">
+                    <span class="mobile-icon">🏠</span><span>Inicio</span>
+                </a>
+                <a href="#/ligas" class="mobile-nav-item ${isLigasActive ? 'active' : ''}">
+                    <span class="mobile-icon">🏆</span><span>Ligas</span>
+                </a>
+                <a href="#/h2h" class="mobile-nav-item ${activeHash === '#/h2h' ? 'active' : ''}">
+                    <span class="mobile-icon">⚔️</span><span>H2H</span>
+                </a>
+                <a href="#/info" class="mobile-nav-item ${activeHash === '#/info' ? 'active' : ''}">
+                    <span class="mobile-icon">📰</span><span>Info</span>
+                </a>
+                <a href="#/perfil" class="mobile-nav-item ${activeHash === '#/perfil' ? 'active' : ''}">
+                    <span class="mobile-icon">👤</span><span>Perfil</span>
+                </a>
+            </nav>
+        `;
     };
 
     // ── ROUTER ────────────────────────────────────────────────────────────────
     const router = async () => {
-        const hash = window.location.hash || '#/home';
-        const url  = new URL(`http://dummy.com${hash.replace('#', '')}`);
+        const hash = window.location.hash || '#/';
+        const url  = new URL('http://dummy.com' + hash.replace('#', ''));
         const path = '#' + url.pathname;
 
-        if (!Auth.isAuthenticated() && path !== '#/login') {
-            window.location.hash = '#/login';
+        const autenticado = window.FirebaseAuth?.isAuthenticated();
+
+        // Rutas públicas
+        if (path === '#/' || path === '#/landing') {
+            if (autenticado) { window.location.hash = '#/home'; return; }
+            renderLanding();
+            return;
+        }
+
+        // Rutas protegidas
+        if (!autenticado) {
+            renderLanding();
             return;
         }
 
         switch (path) {
-            case '#/login':
-                Auth.isAuthenticated() ? window.location.hash = '#/home' : renderLogin();
-                break;
             case '#/home':
                 renderHome();
                 break;
@@ -1771,7 +1976,13 @@ const App = (() => {
                 await renderH2H();
                 break;
             case '#/info':
-                renderInfo();
+                await renderInfo();
+                break;
+            case '#/perfil':
+                await renderPerfil();
+                break;
+            case '#/planes':
+                renderPlanes();
                 break;
             default:
                 appContainer.innerHTML = `
@@ -1780,13 +1991,15 @@ const App = (() => {
                         <h2 class="section-title" style="border: none; color: var(--accent-neon);">Módulo en desarrollo</h2>
                     </main>
                 `;
-                break;
         }
     };
 
     const init = () => {
+        // Esperar a que Firebase resuelva el estado de auth antes de rutear
+        window.FirebaseAuth?.onChange(() => router());
         window.addEventListener('hashchange', router);
-        window.addEventListener('load', router);
+        // Primer load — esperar un tick para que FirebaseAuth se inicialice
+        setTimeout(() => router(), 300);
     };
 
     return { init };
