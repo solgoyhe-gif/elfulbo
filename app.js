@@ -318,14 +318,31 @@ const App = (() => {
     };
 
     const renderLigas = () => {
+        const esPro       = _esPro();
+        const ligaNacional = window.FirebaseAuth?.getPerfil()?.ligaNacional ?? null;
+
         let html = `
             ${renderNavbar('#/ligas')}
             <main class="page-container fade-in">
                 <h2 class="section-title">🏆 Competiciones Disponibles</h2>
+                ${!esPro ? `
+                <div style="background:rgba(57,255,20,0.06); border:1px solid rgba(57,255,20,0.2); border-radius:10px;
+                    padding:12px 16px; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; gap:1rem;">
+                    <div>
+                        <span style="font-size:0.82rem; color:var(--text-main); font-weight:600;">Plan Free — 1 liga nacional + todas las copas</span>
+                        <span style="display:block; font-size:0.75rem; color:var(--text-muted);">Pasate a Pro para ver todas las ligas.</span>
+                    </div>
+                    <a href="#/planes" style="padding:6px 14px; background:var(--accent-neon); color:#000; font-weight:800;
+                        font-family:var(--font-heading); border-radius:6px; text-decoration:none; font-size:0.78rem; white-space:nowrap;">
+                        VER PRO
+                    </a>
+                </div>` : ''}
         `;
 
         for (const key in LIGAS) {
             const categoria = LIGAS[key];
+            const esCopa    = key === 'copas' || key === 'mundial' || categoria.esCopa === true;
+
             html += `
                 <div class="categoria-wrapper">
                     <h3 class="category-title">${categoria.nombre}</h3>
@@ -333,16 +350,21 @@ const App = (() => {
             `;
 
             categoria.competiciones.forEach(liga => {
+                const esLigaNacional   = liga.id === ligaNacional;
+                const bloqueada        = !esPro && !esCopa && !esLigaNacional;
+
                 html += `
-                    <div class="glass-card league-card" onclick="window.location.hash='#/liga?id=${liga.id}'">
+                    <div class="glass-card league-card"
+                        onclick="${bloqueada ? `window.location.hash='#/planes'` : `window.location.hash='#/liga?id=${liga.id}'`}"
+                        style="${bloqueada ? 'opacity:0.6;' : ''}">
                         <div class="league-info">
                             <span class="league-flag">${liga.flag}</span>
                             <div>
-                                <div class="league-name">${liga.nombre}</div>
+                                <div class="league-name">${bloqueada ? '🔒 ' : ''}${liga.nombre}</div>
                                 <div class="league-country">${liga.pais}</div>
                             </div>
                         </div>
-                        <span class="badge-liga" style="background-color: ${liga.badge_color};">${liga.id.substring(0, 5)}</span>
+                        <span class="badge-liga" style="background-color: ${bloqueada ? '#444' : liga.badge_color};">${bloqueada ? 'PRO' : liga.id.substring(0, 5)}</span>
                     </div>
                 `;
             });
@@ -896,7 +918,12 @@ const App = (() => {
                 <div class="equipo-grid" style="margin-top: 2rem;">
                     <div class="glass-panel" style="padding: 1.5rem; max-height: 500px; overflow-y: auto;">
                         <h3 class="panel-title">Lista de Convocados</h3>
-                        ${rosterHtml}
+                        ${_esPro() ? rosterHtml : `
+                            <div style="text-align:center; padding:2rem;">
+                                <p style="font-size:1.5rem; margin-bottom:0.5rem;">🔒</p>
+                                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Lista de convocados disponible en Plan Pro</p>
+                                <a href="#/planes" style="color:var(--accent-neon); font-weight:700; font-size:0.85rem;">Ver planes →</a>
+                            </div>`}
                     </div>
                     <div class="glass-panel" style="padding: 1rem; overflow: hidden;">
                         <h3 class="panel-title" id="pizarra-titulo" style="margin-bottom:0.5rem;">Disposición Táctica</h3>
@@ -1346,11 +1373,19 @@ const App = (() => {
                                     </div>
                                 </div>
                                 <!-- Botón expandir stats -->
-                                <button onclick="window._expandirPartido('${ev.id}', '${home?.team?.id}', '${away?.team?.id}', this)"
-                                    style="width:100%; margin-top:1rem; padding:8px; background:rgba(255,255,255,0.05); border:1px solid var(--border-glass); border-radius:8px; color:var(--text-muted); cursor:pointer; font-size:0.8rem; font-family:var(--font-heading); letter-spacing:1px; transition:all 0.2s;">
-                                    VER ESTADÍSTICAS ↓
-                                </button>
-                                <div id="stats-${ev.id}" style="display:none; margin-top:1rem;"></div>
+                                ${(esPost || esLive) ? `
+                                    ${_esPro() ? `
+                                    <button onclick="window._expandirPartido('${ev.id}', '${home?.team?.id}', '${away?.team?.id}', this)"
+                                        style="width:100%; margin-top:1rem; padding:8px; background:rgba(255,255,255,0.05); border:1px solid var(--border-glass); border-radius:8px; color:var(--text-muted); cursor:pointer; font-size:0.8rem; font-family:var(--font-heading); letter-spacing:1px; transition:all 0.2s;">
+                                        VER ESTADÍSTICAS ↓
+                                    </button>
+                                    <div id="stats-${ev.id}" style="display:none; margin-top:1rem;"></div>
+                                    ` : `
+                                    <div style="margin-top:1rem; padding:0.8rem; text-align:center; border:1px dashed var(--border-glass); border-radius:8px;">
+                                        <span style="font-size:0.8rem; color:var(--text-muted);">🔒 Stats y alineaciones — </span>
+                                        <a href="#/planes" style="font-size:0.8rem; color:var(--accent-neon); font-weight:700; text-decoration:none;">Requiere Pro</a>
+                                    </div>`}
+                                ` : ''}
                             </div>`;
                     } else {
                         // Card tipo calendario — próximo
@@ -1551,8 +1586,8 @@ const App = (() => {
                 return `Hace ${Math.floor(diff/86400)} días`;
             };
 
-            // ── Traducir todos los artículos en una sola llamada a Claude ──────
-            try {
+            // ── Traducir solo para Pro+ ───────────────────────────────────────────
+            if (_esPro()) try {
                 const payload = articulos.map((a, i) => i + '|' + a.headline + '|' + (a.description || '')).join('\n');
                 const prompt  = 'Traduc\u00ed al espa\u00f1ol rioplatense cada l\u00ednea. Formato exacto: INDEX|TITULAR|DESCRIPCION. Una l\u00ednea por noticia. Solo devolv\u00e9 las l\u00edneas, sin explicaciones ni markdown.\n\n' + payload;
                 const tradRes = await fetch('https://api.anthropic.com/v1/messages', {
@@ -2321,6 +2356,28 @@ const App = (() => {
 
         _render();
     };
+
+
+    // ── HELPER DE PLAN ────────────────────────────────────────────────────────
+    const _plan = () => window.FirebaseAuth?.getPlan() ?? 'free';
+    const _esPro    = () => ['pro','promax'].includes(_plan());
+    const _esProMax = () => _plan() === 'promax';
+    const _esProMaxOPro = () => _esPro();
+
+    // Paywall inline
+    const _paywallInline = (requiere = 'pro', mensaje = '') => `
+        <div style="padding:2rem; text-align:center; border:1px dashed var(--border-glass); border-radius:12px; margin:1rem 0;">
+            <div style="font-size:2rem; margin-bottom:0.5rem;">${requiere === 'promax' ? '👑' : '🔥'}</div>
+            <p style="font-weight:700; color:${requiere === 'promax' ? '#ffd700' : 'var(--accent-neon)'}; font-family:var(--font-heading); margin-bottom:0.5rem;">
+                Requiere ${requiere === 'promax' ? 'Pro Max' : 'Pro'}
+            </p>
+            <p style="color:var(--text-muted); font-size:0.82rem; margin-bottom:1rem;">${mensaje}</p>
+            <button onclick="window.location.hash='#/planes'"
+                style="padding:8px 20px; background:${requiere === 'promax' ? '#ffd700' : 'var(--accent-neon)'}; color:#000;
+                font-weight:800; font-family:var(--font-heading); border:none; border-radius:8px; cursor:pointer; font-size:0.85rem;">
+                VER PLANES
+            </button>
+        </div>`;
 
     // ── OTHER SPORTS ─────────────────────────────────────────────────────────
     const OTHER_SPORTS = [
