@@ -1736,22 +1736,36 @@ const App = (() => {
                         <div class="plan-card">
                             <div class="plan-nombre">Free</div>
                             <div class="plan-precio">Gratis</div>
-                            ${window.FirebaseAuth?.PLANES?.free?.features?.map(f => `
+                            ${[
+                                {texto:'Tabla de grupos Mundial 2026', ok:true},
+                                {texto:'Partidos del día', ok:true},
+                                {texto:'Noticias básicas', ok:true},
+                                {texto:'Estadísticas del partido', ok:false},
+                                {texto:'Alineaciones tácticas', ok:false},
+                                {texto:'Goleadores del torneo', ok:false},
+                            ].map(f => `
                                 <div class="plan-feature ${f.ok ? 'ok' : ''}">
                                     <span class="check">${f.ok ? '✅' : '🔒'}</span>
                                     <span>${f.texto}</span>
-                                </div>`).join('') ?? ''}
+                                </div>`).join('')}
                             <button class="btn-secondary" style="width:100%; margin-top:1.2rem;" onclick="abrirAuth('registro')">EMPEZAR</button>
                         </div>
                         <div class="plan-card destacado">
                             <div class="plan-badge">MÁS POPULAR</div>
                             <div class="plan-nombre" style="color:#ffd700;">Premium</div>
                             <div class="plan-precio">$4.99<span style="font-size:0.9rem; color:var(--text-muted);">/mes</span></div>
-                            ${window.FirebaseAuth?.PLANES?.premium?.features?.map(f => `
+                            ${[
+                                {texto:'Tabla de grupos Mundial 2026'},
+                                {texto:'Partidos del día'},
+                                {texto:'Noticias completas + traducidas'},
+                                {texto:'Estadísticas del partido'},
+                                {texto:'Alineaciones tácticas'},
+                                {texto:'Goleadores del torneo'},
+                            ].map(f => `
                                 <div class="plan-feature ok">
                                     <span class="check">✅</span>
                                     <span>${f.texto}</span>
-                                </div>`).join('') ?? ''}
+                                </div>`).join('')}
                             <button class="btn-primary" style="width:100%; margin-top:1.2rem; background:#ffd700;" onclick="abrirAuth('registro')">SUSCRIBIRME</button>
                         </div>
                     </div>
@@ -1995,11 +2009,20 @@ const App = (() => {
     };
 
     const init = () => {
-        // Esperar a que Firebase resuelva el estado de auth antes de rutear
-        window.FirebaseAuth?.onChange(() => router());
         window.addEventListener('hashchange', router);
-        // Primer load — esperar un tick para que FirebaseAuth se inicialice
-        setTimeout(() => router(), 300);
+
+        // Esperar a que Firebase resuelva el estado de auth
+        // onChange se llama una vez al inicio con el usuario actual (o null)
+        const unsub = window.FirebaseAuth?.onChange((user) => {
+            router();
+        });
+
+        // Fallback por si FirebaseAuth tarda más de 2s
+        setTimeout(() => {
+            if (!document.getElementById('app').innerHTML || document.getElementById('app').innerHTML.trim() === '') {
+                router();
+            }
+        }, 2000);
     };
 
     return { init };
