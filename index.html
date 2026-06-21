@@ -291,7 +291,7 @@
             <!-- REGISTRO -->
             <div id="form-registro" style="display:none;">
                 <div class="auth-title">Crear cuenta</div>
-                <div class="auth-subtitle">Es gratis, siempre</div>
+                <div class="auth-subtitle" id="reg-subtitulo">Es gratis, siempre</div>
                 <input id="reg-nombre"   type="text"     class="auth-input" placeholder="Tu nombre">
                 <input id="reg-email"    type="email"    class="auth-input" placeholder="Email">
                 <input id="reg-password" type="password" class="auth-input" placeholder="Contraseña (mín. 6 caracteres)">
@@ -330,8 +330,12 @@
         const _fbApp  = firebase.initializeApp(window.FIREBASE_CONFIG);
         const _fbAuth = firebase.auth();
         const _fbDb   = firebase.firestore();
-        window.FirebaseAuth.PLANES = window.PLANES;
-        window.FirebaseAuth.init(_fbAuth, _fbDb);
+
+        // Persistir sesión en el navegador
+        _fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {
+            window.FirebaseAuth.PLANES = window.PLANES;
+            window.FirebaseAuth.init(_fbAuth, _fbDb);
+        });
     </script>
 
     <script>
@@ -351,7 +355,14 @@
         }
 
         window.mostrarLogin    = function() { _mostrarForm('form-login'); };
-        window.mostrarRegistro = function() { _mostrarForm('form-registro'); };
+        window.mostrarRegistro = function(plan = 'free') {
+            _mostrarForm('form-registro');
+            const subtitulo = document.getElementById('reg-subtitulo');
+            if (!subtitulo) return;
+            if (plan === 'pro')    subtitulo.textContent = 'Creá tu cuenta para suscribirte al plan Pro';
+            else if (plan === 'promax') subtitulo.textContent = 'Creá tu cuenta para suscribirte al plan Pro Max';
+            else subtitulo.textContent = 'Es gratis, siempre';
+        };
         window.mostrarRecuperar= function() { _mostrarForm('form-recuperar'); };
 
         window._mostrarForm = function(id) {
