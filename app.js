@@ -339,9 +339,12 @@ const App = (() => {
                 </div>` : ''}
         `;
 
+        // Keys que son copas — siempre visibles para todos los planes
+        const KEYS_COPAS = ['copas_inglesas', 'internacionales', 'mundiales', 'sudamerica'];
+
         for (const key in LIGAS) {
             const categoria = LIGAS[key];
-            const esCopa    = key === 'copas' || key === 'mundial' || categoria.esCopa === true;
+            const esCopa    = KEYS_COPAS.includes(key);
 
             html += `
                 <div class="categoria-wrapper">
