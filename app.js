@@ -671,7 +671,7 @@ const App = (() => {
         };
     };
 
-    // ── BRACKET MUNDIAL 2026 ──────────────────────────────────────────────────
+    // ── BRACKET MUNDIAL 2026 (SVG tipo llave clásica) ───────────────────────
     const renderBracketMundial = async (container) => {
         const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
 
@@ -681,100 +681,257 @@ const App = (() => {
                 <p style="color:var(--accent-neon); margin-top:1rem; font-size:0.85rem;">Cargando bracket...</p>
             </div>`;
 
-        const FASES = [
-            { nombre: 'Octavos de Final', fechas: ['20260628','20260629','20260630','20260701','20260702','20260703','20260704'], color: '#6CABDD' },
-            { nombre: 'Cuartos de Final', fechas: ['20260707','20260708','20260709','20260710'], color: '#39ff14' },
-            { nombre: 'Semifinales',      fechas: ['20260714','20260715'], color: '#ffd700' },
-            { nombre: 'Tercer Puesto',    fechas: ['20260718'], color: '#cd7f32' },
-            { nombre: 'Final',            fechas: ['20260719'], color: '#ffd700' },
-        ];
+        const FASES_FECHAS = {
+            octavos:   ['20260628','20260629','20260630','20260701','20260702','20260703','20260704'],
+            cuartos:   ['20260707','20260708','20260709','20260710'],
+            semis:     ['20260714','20260715'],
+            tercero:   ['20260718'],
+            final:     ['20260719'],
+        };
 
         try {
-            const todasFechas = [...new Set(FASES.flatMap(f => f.fechas))];
+            const todasFechas = [...new Set(Object.values(FASES_FECHAS).flat())];
             const scoreboards = await Promise.all(
-                todasFechas.map(fecha =>
-                    fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${fecha}`)}`)
+                todasFechas.map(f =>
+                    fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${f}`)}`)
                         .then(r => r.ok ? r.json().catch(()=>({})) : {})
                 )
             );
 
             const eventosPorFecha = {};
-            todasFechas.forEach((fecha, i) => { eventosPorFecha[fecha] = scoreboards[i]?.events ?? []; });
+            todasFechas.forEach((f, i) => { eventosPorFecha[f] = scoreboards[i]?.events ?? []; });
 
-            const partidosPorFase = FASES.map(fase => {
-                const eventos = fase.fechas.flatMap(f => eventosPorFecha[f] ?? []);
+            const _getPartidos = (fase) => {
+                const fechas  = FASES_FECHAS[fase];
+                const eventos = fechas.flatMap(f => eventosPorFecha[f] ?? []);
                 const vistos  = new Set();
-                return {
-                    ...fase,
-                    partidos: eventos.filter(ev => { if (vistos.has(ev.id)) return false; vistos.add(ev.id); return true; })
-                };
-            });
-
-            const _renderPartido = (ev) => {
-                const comp      = ev?.competitions?.[0];
-                const home      = comp?.competitors?.find(c => c.homeAway === 'home');
-                const away      = comp?.competitors?.find(c => c.homeAway === 'away');
-                const estado    = comp?.status?.type?.state ?? 'pre';
-                const esLive    = estado === 'in';
-                const esPost    = estado === 'post';
-                const homeName  = home?.team?.abbreviation ?? home?.team?.displayName ?? '?';
-                const awayName  = away?.team?.abbreviation ?? away?.team?.displayName ?? '?';
-                const homeLogo  = home?.team?.logo ?? '';
-                const awayLogo  = away?.team?.logo ?? '';
-                const homeScore = home?.score ?? '';
-                const awayScore = away?.score ?? '';
-                const homeWin   = esPost && parseInt(homeScore) > parseInt(awayScore);
-                const awayWin   = esPost && parseInt(awayScore) > parseInt(homeScore);
-                const fechaEv   = new Date(ev.date ?? '');
-                const horaAR    = isNaN(fechaEv) ? '' : fechaEv.toLocaleTimeString('es-AR', { timeZone:'America/Argentina/Buenos_Aires', hour:'2-digit', minute:'2-digit' });
-                const fechaStr  = isNaN(fechaEv) ? '' : fechaEv.toLocaleDateString('es-AR', { timeZone:'America/Argentina/Buenos_Aires', day:'numeric', month:'short' });
-                const logoHtml  = (logo, name) => logo ? `<img src="${logo}" width="18" height="18" style="object-fit:contain; flex-shrink:0;" onerror="this.style.display='none'">` : `<span style="font-size:0.7rem; font-weight:800;">${name.charAt(0)}</span>`;
-
-                return `
-                    <div onclick="window.location.hash='#/partido?id=${ev.id}&liga=world_cup'"
-                        style="background:rgba(255,255,255,0.04); border:1px solid var(--border-glass); border-radius:8px;
-                        overflow:hidden; cursor:pointer; transition:background 0.2s; min-width:155px;"
-                        onmouseover="this.style.background='rgba(255,255,255,0.08)'"
-                        onmouseout="this.style.background='rgba(255,255,255,0.04)'">
-                        ${esLive ? '<div style="background:#ff4757; text-align:center; font-size:0.6rem; font-weight:800; padding:2px; letter-spacing:1px; color:#fff;">● EN VIVO</div>' : ''}
-                        <div style="display:flex; align-items:center; gap:6px; padding:7px 10px; border-bottom:1px solid var(--border-glass); background:${homeWin ? 'rgba(57,255,20,0.08)' : 'transparent'};">
-                            ${logoHtml(homeLogo, homeName)}
-                            <span style="font-size:0.8rem; font-weight:${homeWin?'800':'500'}; flex:1; color:${homeWin ? 'var(--accent-neon)' : 'var(--text-main)'};">${homeName}</span>
-                            <span style="font-family:var(--font-heading); font-weight:900; font-size:0.9rem; color:${homeWin ? 'var(--accent-neon)' : 'var(--text-main)'};">${(esPost||esLive) ? homeScore : ''}</span>
-                        </div>
-                        <div style="display:flex; align-items:center; gap:6px; padding:7px 10px; background:${awayWin ? 'rgba(57,255,20,0.08)' : 'transparent'};">
-                            ${logoHtml(awayLogo, awayName)}
-                            <span style="font-size:0.8rem; font-weight:${awayWin?'800':'500'}; flex:1; color:${awayWin ? 'var(--accent-neon)' : 'var(--text-main)'};">${awayName}</span>
-                            <span style="font-family:var(--font-heading); font-weight:900; font-size:0.9rem; color:${awayWin ? 'var(--accent-neon)' : 'var(--text-main)'};">${(esPost||esLive) ? awayScore : ''}</span>
-                        </div>
-                        ${!esPost && !esLive ? `<div style="text-align:center; padding:3px; font-size:0.65rem; color:var(--text-muted); border-top:1px solid var(--border-glass);">${fechaStr} ${horaAR} ARG</div>` : ''}
-                    </div>`;
+                return eventos.filter(ev => { if (vistos.has(ev.id)) return false; vistos.add(ev.id); return true; });
             };
 
-            const _renderVacio = (cant) => Array(cant).fill(0).map(() => `
-                <div style="background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1);
-                    border-radius:8px; min-width:155px; min-height:68px; display:flex;
-                    align-items:center; justify-content:center;">
-                    <span style="color:var(--text-muted); font-size:0.72rem;">Por definir</span>
-                </div>`).join('');
+            const octavos = _getPartidos('octavos');
+            const cuartos = _getPartidos('cuartos');
+            const semis   = _getPartidos('semis');
+            const tercero = _getPartidos('tercero');
+            const final_  = _getPartidos('final');
 
-            const CANT_ESPERADA = [16, 8, 4, 1, 1];
+            // ── SVG dimensions ────────────────────────────────────────────────
+            const W      = 1200;
+            const H      = 900;
+            const BW     = 130; // box width
+            const BH     = 38;  // box height
+            const GAP    = 4;   // gap between home/away
+            const MATCHH = BH * 2 + GAP; // total match height
+
+            // ── Helper: info de partido ────────────────────────────────────────
+            const _info = (ev) => {
+                if (!ev) return { home: '?', away: '?', hs: '', as_: '', live: false, post: false, id: '' };
+                const comp  = ev.competitions?.[0];
+                const home  = comp?.competitors?.find(c => c.homeAway === 'home');
+                const away  = comp?.competitors?.find(c => c.homeAway === 'away');
+                const state = comp?.status?.type?.state ?? 'pre';
+                return {
+                    id:   ev.id,
+                    home: home?.team?.abbreviation ?? home?.team?.shortDisplayName ?? '?',
+                    away: away?.team?.abbreviation ?? away?.team?.shortDisplayName ?? '?',
+                    hs:   home?.score ?? '',
+                    as_:  away?.score ?? '',
+                    hl:   home?.team?.logo ?? '',
+                    al:   away?.team?.logo ?? '',
+                    live: state === 'in',
+                    post: state === 'post',
+                    hw:   state === 'post' && parseInt(home?.score??'0') > parseInt(away?.score??'0'),
+                    aw:   state === 'post' && parseInt(away?.score??'0') > parseInt(home?.score??'0'),
+                };
+            };
+
+            // ── Helper: dibujar caja de partido ───────────────────────────────
+            const _match = (x, y, ev, label = '') => {
+                const d = _info(ev);
+                const id = d.id;
+                const cursor = id ? 'cursor:pointer;' : '';
+                const onclick = id ? `onclick="window.location.hash='#/partido?id=${id}&liga=world_cup'"` : '';
+
+                const _row = (name, score, logo, win, isHome) => {
+                    const ry = isHome ? y : y + BH + GAP;
+                    const fill    = win ? '#39ff14' : '#ffffff';
+                    const bgFill  = win ? 'rgba(57,255,20,0.15)' : 'rgba(30,30,50,0.95)';
+                    const weight  = win ? '700' : '400';
+                    return `
+                        <rect x="${x}" y="${ry}" width="${BW}" height="${BH}" rx="4"
+                            fill="${bgFill}" stroke="${win ? '#39ff14' : 'rgba(255,255,255,0.15)'}" stroke-width="${win?1.5:1}"/>
+                        ${logo ? `<image href="${logo}" x="${x+5}" y="${ry+9}" width="18" height="18" style="object-fit:contain;"/>` : ''}
+                        <text x="${x + (logo?26:8)}" y="${ry + BH/2 + 1}" dominant-baseline="middle"
+                            font-family="system-ui" font-size="10" font-weight="${weight}" fill="${fill}">
+                            ${name.substring(0,10)}
+                        </text>
+                        ${score !== '' ? `<text x="${x+BW-6}" y="${ry + BH/2 + 1}" dominant-baseline="middle" text-anchor="end"
+                            font-family="system-ui" font-size="11" font-weight="800" fill="${win?'#39ff14':'#ffffff'}">${score}</text>` : ''}
+                    `;
+                };
+
+                const liveBadge = d.live ? `
+                    <rect x="${x}" y="${y-12}" width="${BW}" height="11" rx="3" fill="#ff4757"/>
+                    <text x="${x + BW/2}" y="${y-5}" text-anchor="middle" dominant-baseline="middle"
+                        font-family="system-ui" font-size="7" font-weight="800" fill="#fff">● EN VIVO</text>` : '';
+
+                const labelEl = label ? `
+                    <text x="${x + BW/2}" y="${y - (d.live?16:4)}" text-anchor="middle"
+                        font-family="system-ui" font-size="8" fill="rgba(255,255,255,0.4)">${label}</text>` : '';
+
+                return `
+                    <g ${onclick} style="${cursor}" class="bracket-match">
+                        ${labelEl}
+                        ${liveBadge}
+                        ${_row(d.home, d.hs, d.hl, d.hw, true)}
+                        ${_row(d.away, d.as_, d.al, d.aw, false)}
+                    </g>`;
+            };
+
+            // ── Líneas de conexión ─────────────────────────────────────────────
+            const _line = (x1, y1, x2, y2) =>
+                `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>`;
+
+            const _connect = (fromX, fromY, toX, toY) => {
+                const midX = (fromX + toX) / 2;
+                return `<path d="M${fromX} ${fromY} H${midX} V${toY} H${toX}"
+                    fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>`;
+            };
+
+            // ── Layout ─────────────────────────────────────────────────────────
+            // Izquierda: 8 partidos de octavos (R1-R8)
+            // Derecha:   8 partidos de octavos (R9-R16)
+            // Centro: cuartos → semis → final
+
+            const COL_L1 = 10;           // octavos izq
+            const COL_L2 = COL_L1 + BW + 40; // cuartos izq
+            const COL_L3 = COL_L2 + BW + 40; // semis izq
+            const COL_MID = W/2 - BW/2;       // final / centro
+            const COL_R3  = W - COL_L3 - BW;  // semis der
+            const COL_R2  = W - COL_L2 - BW;  // cuartos der
+            const COL_R1  = W - COL_L1 - BW;  // octavos der
+
+            // Y positions para octavos izquierda (8 partidos)
+            const spacingL1 = (H - 60) / 8;
+            const ysL1 = Array.from({length:8}, (_,i) => 30 + i * spacingL1);
+
+            // Y positions cuartos izq (4)
+            const ysL2 = [0,1,2,3].map(i => (ysL1[i*2] + ysL1[i*2+1]) / 2 + MATCHH/4);
+
+            // Y semis izq (2)
+            const ysL3 = [0,1].map(i => (ysL2[i*2] + ysL2[i*2+1]) / 2);
+
+            // Y final (1)
+            const yFinal = H/2 - MATCHH/2;
+
+            // Y tercer puesto
+            const yTercero = yFinal + MATCHH + 40;
+
+            // Partidos SVG
+            let matchesSVG = '';
+            let linesSVG   = '';
+
+            // ── Octavos izquierda (slots 0-7) ─────────────────────────────────
+            const oct_l = octavos.slice(0, 8);
+            for (let i = 0; i < 8; i++) {
+                matchesSVG += _match(COL_L1, ysL1[i], oct_l[i] ?? null, `P${i+1}`);
+                // línea al cuarto
+                const fromY = ysL1[i] + MATCHH / 2;
+                const toY   = ysL2[Math.floor(i/2)] + MATCHH / 2;
+                linesSVG += _connect(COL_L1 + BW, fromY, COL_L2, toY);
+            }
+
+            // ── Cuartos izquierda ──────────────────────────────────────────────
+            const cua_l = cuartos.slice(0, 4);
+            for (let i = 0; i < 4; i++) {
+                matchesSVG += _match(COL_L2, ysL2[i], cua_l[i] ?? null);
+                const fromY = ysL2[i] + MATCHH / 2;
+                const toY   = ysL3[Math.floor(i/2)] + MATCHH / 2;
+                linesSVG += _connect(COL_L2 + BW, fromY, COL_L3, toY);
+            }
+
+            // ── Semis izquierda ────────────────────────────────────────────────
+            const sem_l = semis.slice(0, 2);
+            for (let i = 0; i < 2; i++) {
+                matchesSVG += _match(COL_L3, ysL3[i], sem_l[i] ?? null);
+                const fromY = ysL3[i] + MATCHH / 2;
+                linesSVG += _connect(COL_L3 + BW, fromY, COL_MID, yFinal + MATCHH/2);
+            }
+
+            // ── Final ──────────────────────────────────────────────────────────
+            matchesSVG += _match(COL_MID, yFinal, final_[0] ?? null, 'FINAL');
+
+            // ── Tercer puesto ──────────────────────────────────────────────────
+            matchesSVG += _match(COL_MID, yTercero, tercero[0] ?? null, '3er PUESTO');
+
+            // ── Octavos derecha (slots 8-15) ───────────────────────────────────
+            const oct_r = octavos.slice(8, 16);
+            const ysR1  = [...ysL1];
+            for (let i = 0; i < 8; i++) {
+                matchesSVG += _match(COL_R1, ysR1[i], oct_r[i] ?? null, `P${i+9}`);
+                const fromY = ysR1[i] + MATCHH / 2;
+                const toY   = ysL2[Math.floor(i/2)] + MATCHH / 2;
+                linesSVG += _connect(COL_R2 + BW, toY, COL_R1, fromY);
+            }
+
+            // ── Cuartos derecha ────────────────────────────────────────────────
+            const cua_r = cuartos.slice(4, 8);
+            for (let i = 0; i < 4; i++) {
+                matchesSVG += _match(COL_R2, ysL2[i], cua_r[i] ?? null);
+                const fromY = ysL2[i] + MATCHH / 2;
+                const toY   = ysL3[Math.floor(i/2)] + MATCHH / 2;
+                linesSVG += _connect(COL_R3 + BW, toY, COL_R2, fromY);
+            }
+
+            // ── Semis derecha ──────────────────────────────────────────────────
+            const sem_r = semis.slice(2, 4);
+            for (let i = 0; i < 2; i++) {
+                matchesSVG += _match(COL_R3, ysL3[i], sem_r[i] ?? null);
+                const fromY = ysL3[i] + MATCHH / 2;
+                linesSVG += _connect(COL_MID + BW, yFinal + MATCHH/2, COL_R3, fromY);
+            }
+
+            // ── Copa en el centro ──────────────────────────────────────────────
+            const trofeX = W/2;
+            const trofeY = yFinal - 55;
+            const trofeSVG = `
+                <text x="${trofeX}" y="${trofeY}" text-anchor="middle" font-size="36">🏆</text>
+                <text x="${trofeX}" y="${trofeY + 22}" text-anchor="middle" font-family="system-ui"
+                    font-size="9" font-weight="800" letter-spacing="2" fill="rgba(200,168,75,0.8)">
+                    FIFA WORLD CUP 2026
+                </text>`;
 
             container.innerHTML = `
-                <div style="overflow-x:auto; padding-bottom:1rem;">
-                    <div style="display:flex; gap:1.2rem; align-items:flex-start; min-width:max-content; padding:0.5rem 0 1.5rem;">
-                        ${partidosPorFase.map((fase, fi) => `
-                            <div style="display:flex; flex-direction:column; gap:0.6rem; min-width:160px;">
-                                <div style="font-family:var(--font-heading); font-size:0.68rem; font-weight:800;
-                                    text-transform:uppercase; letter-spacing:1px; color:${fase.color};
-                                    text-align:center; padding-bottom:6px; border-bottom:1px solid ${fase.color}40; white-space:nowrap;">
-                                    ${fase.nombre}
-                                </div>
-                                <div style="display:flex; flex-direction:column; gap:${fi===0?'0.4rem':fi===1?'1.2rem':fi===2?'3.5rem':'0.8rem'};">
-                                    ${fase.partidos.length > 0 ? fase.partidos.map(ev => _renderPartido(ev)).join('') : _renderVacio(CANT_ESPERADA[fi])}
-                                </div>
-                            </div>`).join('')}
-                    </div>
+                <div style="overflow-x:auto; overflow-y:auto; padding:0.5rem;">
+                    <svg viewBox="0 0 ${W} ${H+60}" xmlns="http://www.w3.org/2000/svg"
+                        style="width:100%; min-width:900px; display:block; background:rgba(0,0,0,0.2); border-radius:12px;">
+                        <defs>
+                            <style>
+                                .bracket-match { cursor: pointer; }
+                                .bracket-match:hover rect { filter: brightness(1.3); }
+                            </style>
+                        </defs>
+
+                        <!-- Fondo -->
+                        <rect width="${W}" height="${H+60}" fill="rgba(10,10,20,0.8)" rx="12"/>
+
+                        <!-- Líneas -->
+                        ${linesSVG}
+
+                        <!-- Copa -->
+                        ${trofeSVG}
+
+                        <!-- Partidos -->
+                        ${matchesSVG}
+
+                        <!-- Labels de fases -->
+                        <text x="${COL_L1 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#6CABDD" letter-spacing="1">OCTAVOS</text>
+                        <text x="${COL_L2 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#39ff14" letter-spacing="1">CUARTOS</text>
+                        <text x="${COL_L3 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#ffd700" letter-spacing="1">SEMIS</text>
+                        <text x="${COL_MID + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#ffd700" letter-spacing="1">FINAL</text>
+                        <text x="${COL_R3 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#ffd700" letter-spacing="1">SEMIS</text>
+                        <text x="${COL_R2 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#39ff14" letter-spacing="1">CUARTOS</text>
+                        <text x="${COL_R1 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#6CABDD" letter-spacing="1">OCTAVOS</text>
+                    </svg>
                 </div>`;
 
         } catch(err) {
