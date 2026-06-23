@@ -254,67 +254,182 @@ const App = (() => {
     };
 
     // ── VISTAS PRINCIPALES ────────────────────────────────────────────────────
-    const renderHome = () => {
-        let miniLigasHtml = '';
-        if (typeof LIGAS !== 'undefined') {
-            const ligasDestacadas = [
-                ...LIGAS.europa_top5.competiciones,
-                ...LIGAS.sudamerica.competiciones
-            ];
-            ligasDestacadas.forEach(liga => {
-                miniLigasHtml += `
-                    <div class="mini-league" onclick="window.location.hash='#/liga?id=${liga.id}'">
-                        <span style="font-size: 1.2rem;">${liga.flag}</span>
-                        <span class="mini-league-name">${liga.nombre}</span>
-                    </div>
-                `;
-            });
-        }
+    const renderHome = async () => {
+        const CF_WORKER  = 'https://elfulbo.solgoyhe.workers.dev';
+        const perfil     = window.FirebaseAuth?.getPerfil() ?? {};
+        const nombre     = window.FirebaseAuth?.getNombre()?.split(' ')[0] ?? '';
+        const deportes   = perfil.deportes ?? [];
+        const esProMax   = _esProMax();
 
+        const DEPORTE_INFO = {
+            basketball: {nombre:'Básquet',          emoji:'🏀', slug:'basketball/nba',          liga:'NBA'},
+            tennis:     {nombre:'Tenis',             emoji:'🎾', slug:'tennis/atp',              liga:'ATP'},
+            racing:     {nombre:'Fórmula 1',         emoji:'🏎️', slug:'racing/f1',               liga:'F1'},
+            football:   {nombre:'Fútbol Americano',  emoji:'🏈', slug:'football/nfl',            liga:'NFL'},
+            baseball:   {nombre:'Baseball',          emoji:'⚾', slug:'baseball/mlb',            liga:'MLB'},
+            hockey:     {nombre:'Hockey sobre Hielo',emoji:'🏒', slug:'hockey/nhl',              liga:'NHL'},
+            golf:       {nombre:'Golf',              emoji:'⛳', slug:'golf/pga',                liga:'PGA'},
+            mma:        {nombre:'MMA',               emoji:'🥊', slug:'mma/ufc',                 liga:'UFC'},
+            rugby:      {nombre:'Rugby',             emoji:'🏉', slug:'rugby-union/international',liga:'Rugby'},
+        };
+
+        // Render inicial con skeleton
         appContainer.innerHTML = `
             ${renderNavbar('#/home')}
-            <main class="dashboard-container fade-in">
-                <section class="glass-panel panel-left">
-                    <h3 class="panel-title">📊 Stats en Vivo</h3>
-                    <div class="stat-box">
-                        <div class="stat-header"><span>Posesión</span></div>
-                        <div class="stat-bar"><div class="stat-fill-local" style="width: 58%;"></div><div class="stat-fill-visita" style="width: 42%;"></div></div>
-                        <div class="stat-values"><span>58%</span><span style="color: var(--accent-neon);">42%</span></div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-header"><span>Tiros al Arco</span></div>
-                        <div class="stat-bar"><div class="stat-fill-local" style="width: 70%;"></div><div class="stat-fill-visita" style="width: 30%;"></div></div>
-                        <div class="stat-values"><span>14</span><span style="color: var(--accent-neon);">6</span></div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-header"><span>Faltas</span></div>
-                        <div class="stat-bar"><div class="stat-fill-local" style="width: 40%;"></div><div class="stat-fill-visita" style="width: 60%;"></div></div>
-                        <div class="stat-values"><span>8</span><span style="color: var(--accent-neon);">12</span></div>
-                    </div>
-                </section>
+            <main class="page-container fade-in" style="max-width:800px; margin:0 auto;">
 
-                <section class="panel-center">
-                    <div style="position: absolute; top: 0; font-family: var(--font-heading); font-size: 2rem; font-weight: 800; letter-spacing: 2px; z-index: 10; text-shadow: 0 5px 15px #000;">WHISTLE</div>
-                    <div class="pitch-perspective">
-                        <div class="pitch-horizontal"><div class="area-left"></div><div class="area-right"></div></div>
-                    </div>
-                </section>
+                <!-- Saludo -->
+                <div style="margin-bottom:1.5rem;">
+                    <h2 style="font-family:var(--font-heading); font-size:1.6rem; font-weight:900; margin-bottom:0.2rem;">
+                        Hola${nombre ? ', ' + nombre : ''} 👋
+                    </h2>
+                    <p style="color:var(--text-muted); font-size:0.85rem;">The sound of sport.</p>
+                </div>
 
-                <section class="glass-panel panel-right">
-                    <h3 class="panel-title">🏆 Top Ligas</h3>
-                    ${miniLigasHtml}
-                </section>
-
-                <section class="glass-panel panel-bottom">
-                    <h3 class="panel-title" style="margin-bottom: 0; border: none;">🚨 URGENTE</h3>
-                    <div class="news-ticker">
-                        <span class="news-item"><span>MERCADO:</span> Fichaje bomba confirmado en la liga inglesa.</span>
-                        <span class="news-item"><span>LESIÓN:</span> Estrella de la selección queda fuera por 3 semanas.</span>
-                        <span class="news-item"><span>MUNDIAL:</span> Listos los preparativos de infraestructura para el 2026.</span>
+                <!-- Sección fútbol -->
+                <div style="margin-bottom:0.5rem; display:flex; align-items:center; justify-content:space-between;">
+                    <h3 style="font-family:var(--font-heading); font-size:0.8rem; font-weight:800; text-transform:uppercase; letter-spacing:2px; color:var(--accent-neon);">
+                        ⚽ FÚTBOL
+                    </h3>
+                    <a href="#/h2h" style="font-size:0.75rem; color:var(--text-muted); text-decoration:none;">Ver todos →</a>
+                </div>
+                <div id="home-futbol" class="glass-panel" style="padding:1rem; margin-bottom:1.5rem;">
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <div style="width:20px; height:20px; border:2px solid var(--accent-neon); border-right-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></div>
+                        <span style="color:var(--text-muted); font-size:0.82rem;">Cargando partidos...</span>
                     </div>
-                </section>
+                </div>
+
+                <!-- Deportes elegidos -->
+                <div id="home-otros-deportes">
+                    ${deportes.length > 0 && esProMax ? deportes.map(d => {
+                        const info = DEPORTE_INFO[d];
+                        if (!info) return '';
+                        return `
+                            <div style="margin-bottom:0.5rem; display:flex; align-items:center; justify-content:space-between;">
+                                <h3 style="font-family:var(--font-heading); font-size:0.8rem; font-weight:800; text-transform:uppercase; letter-spacing:2px; color:var(--text-muted);">
+                                    ${info.emoji} ${info.nombre.toUpperCase()}
+                                </h3>
+                                <a href="#/other-sports?deporte=${d}" style="font-size:0.75rem; color:var(--text-muted); text-decoration:none;">Ver todos →</a>
+                            </div>
+                            <div id="home-deporte-${d}" class="glass-panel" style="padding:1rem; margin-bottom:1.5rem;">
+                                <div style="display:flex; gap:8px; align-items:center;">
+                                    <div style="width:20px; height:20px; border:2px solid var(--text-muted); border-right-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></div>
+                                    <span style="color:var(--text-muted); font-size:0.82rem;">Cargando...</span>
+                                </div>
+                            </div>`;
+                    }).join('') : ''}
+                </div>
+
+                <!-- Upgrade CTA si no tiene deportes elegidos -->
+                ${deportes.length === 0 && !esProMax ? `
+                <div class="glass-panel" style="padding:1.5rem; text-align:center; border-color:rgba(57,255,20,0.2);">
+                    <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1rem;">
+                        ¿Querés seguir más deportes en tu home?
+                    </p>
+                    <a href="#/planes" style="padding:8px 20px; background:var(--accent-neon); color:#000; font-weight:800; font-family:var(--font-heading); border-radius:8px; text-decoration:none; font-size:0.85rem;">
+                        VER PLANES
+                    </a>
+                </div>` : ''}
+
             </main>
         `;
+
+        // Helper: renderizar un partido en el home
+        const _renderPartidoHome = (ev, ligaId) => {
+            if (!ev) return '<p style="color:var(--text-muted); font-size:0.82rem; padding:4px 0;">Sin partidos hoy.</p>';
+            const comp      = ev.competitions?.[0];
+            const home      = comp?.competitors?.find(c => c.homeAway === 'home');
+            const away      = comp?.competitors?.find(c => c.homeAway === 'away');
+            const estado    = comp?.status?.type?.state ?? 'pre';
+            const esLive    = estado === 'in';
+            const esPost    = estado === 'post';
+            const homeName  = home?.team?.displayName ?? home?.athlete?.displayName ?? '?';
+            const awayName  = away?.team?.displayName ?? away?.athlete?.displayName ?? '?';
+            const homeLogo  = home?.team?.logo ?? '';
+            const awayLogo  = away?.team?.logo ?? '';
+            const homeScore = home?.score ?? '';
+            const awayScore = away?.score ?? '';
+            const clock     = comp?.status?.displayClock ?? '';
+            const fechaEv   = new Date(ev.date ?? '');
+            const horaAR    = isNaN(fechaEv) ? '' : fechaEv.toLocaleTimeString('es-AR', {timeZone:'America/Argentina/Buenos_Aires', hour:'2-digit', minute:'2-digit'});
+
+            const logoHtml = (logo, name) => {
+                if (logo) return `<img src="${logo}" width="24" height="24" style="object-fit:contain;" onerror="this.style.display='none'">`;
+                return `<span style="font-size:0.9rem; font-weight:800;">${name.charAt(0)}</span>`;
+            };
+
+            const ir = `window.location.hash='#/partido?id=${ev.id}&liga=${ligaId}'`;
+            const marcador = (esPost||esLive) ? homeScore + ' - ' + awayScore : horaAR;
+            const sz = (esPost||esLive) ? '1.3rem' : '0.9rem';
+            const col = (esPost||esLive) ? 'var(--text-main)' : 'var(--accent-neon)';
+            const liveBadge = esLive ? `<span style="background:#ff4757; color:#fff; padding:2px 8px; border-radius:10px; font-size:0.65rem; font-weight:800; display:inline-block; margin-bottom:6px; animation:pulse 1s infinite;">● EN VIVO ${clock}'</span>` : '';
+
+            return `<div onclick="${ir}" style="cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                ${liveBadge}
+                <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:0.5rem;">
+                    <div style="display:flex; align-items:center; gap:6px;">${logoHtml(homeLogo,homeName)}<span style="font-size:0.88rem; font-weight:600;">${homeName}</span></div>
+                    <div style="font-family:var(--font-heading); font-weight:900; font-size:${sz}; color:${col}; text-align:center; min-width:50px;">${marcador}</div>
+                    <div style="display:flex; align-items:center; gap:6px; justify-content:flex-end;"><span style="font-size:0.88rem; font-weight:600;">${awayName}</span>${logoHtml(awayLogo,awayName)}</div>
+                </div>
+            </div>`;
+        };
+
+        // Cargar partido de fútbol
+        const _cargarFutbol = async () => {
+            const futbolEl = document.getElementById('home-futbol');
+            if (!futbolEl) return;
+            try {
+                const hoy = new Date().toLocaleDateString('en-CA', {timeZone:'America/Argentina/Buenos_Aires'}).replace(/-/g,'');
+                const res = await fetch(CF_WORKER + '/?url=' + encodeURIComponent('https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=' + hoy));
+                const data = res.ok ? await res.json() : {};
+                const eventos = data.events ?? [];
+
+                // Priorizar: en vivo → finalizado → próximo
+                eventos.sort((a,b) => {
+                    const p = s => s==='in'?0:s==='post'?1:2;
+                    return p(a.competitions?.[0]?.status?.type?.state) - p(b.competitions?.[0]?.status?.type?.state);
+                });
+
+                const top3 = eventos.slice(0,3);
+                if (top3.length === 0) {
+                    futbolEl.innerHTML = '<p style="color:var(--text-muted); font-size:0.82rem;">Sin partidos hoy.</p>';
+                    return;
+                }
+                futbolEl.innerHTML = top3.map(ev => _renderPartidoHome(ev, 'fifa.world')).join('<hr style="border:none; border-top:1px solid var(--border-glass); margin:8px 0;">');
+            } catch(e) {
+                if (futbolEl) futbolEl.innerHTML = '<p style="color:var(--text-muted); font-size:0.82rem;">Error cargando partidos.</p>';
+            }
+        };
+
+        // Cargar partido de otro deporte
+        const _cargarDeporte = async (deporteId) => {
+            const el   = document.getElementById('home-deporte-' + deporteId);
+            if (!el) return;
+            const info = DEPORTE_INFO[deporteId];
+            if (!info) return;
+            try {
+                const hoy = new Date().toLocaleDateString('en-CA', {timeZone:'America/Argentina/Buenos_Aires'}).replace(/-/g,'');
+                const res = await fetch(CF_WORKER + '/?url=' + encodeURIComponent('https://site.api.espn.com/apis/site/v2/sports/' + info.slug + '/scoreboard?dates=' + hoy));
+                const data = res.ok ? await res.json() : {};
+                const eventos = data.events ?? [];
+                eventos.sort((a,b) => {
+                    const p = s => s==='in'?0:s==='post'?1:2;
+                    return p(a.competitions?.[0]?.status?.type?.state) - p(b.competitions?.[0]?.status?.type?.state);
+                });
+                const top = eventos.slice(0,2);
+                el.innerHTML = top.length > 0
+                    ? top.map(ev => _renderPartidoHome(ev, deporteId)).join('<hr style="border:none; border-top:1px solid var(--border-glass); margin:8px 0;">')
+                    : '<p style="color:var(--text-muted); font-size:0.82rem;">Sin eventos hoy.</p>';
+            } catch(e) {
+                if (el) el.innerHTML = '<p style="color:var(--text-muted); font-size:0.82rem;">Error cargando.</p>';
+            }
+        };
+
+        // Cargar todo en paralelo
+        const promesas = [_cargarFutbol()];
+        if (esProMax) deportes.forEach(d => promesas.push(_cargarDeporte(d)));
+        await Promise.all(promesas);
     };
 
     const renderLigas = () => {
@@ -2585,7 +2700,7 @@ const App = (() => {
 
         // Estado del setup
         let _paso = 1;
-        let _datos = { equipoFavorito: null, pais: null, ligaNacional: null, ligaInternacional: null };
+        let _datos = { equipoFavorito: null, pais: null, ligaNacional: null, ligaInternacional: null, deportes: [] };
 
         const _render = () => {
             appContainer.innerHTML = `
@@ -2600,17 +2715,17 @@ const App = (() => {
                         <h2 style="font-size:1.3rem; font-weight:700; margin-bottom:0.3rem;">
                             Hola ${nombre}, configurá tu experiencia
                         </h2>
-                        <p style="color:var(--text-muted); font-size:0.85rem;">Paso ${_paso} de 3</p>
+                        <p style="color:var(--text-muted); font-size:0.85rem;">Paso ${_paso} de 4</p>
 
                         <!-- Barra de progreso -->
                         <div style="width:200px; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; margin:1rem auto 0;">
-                            <div style="width:${(_paso/3)*100}%; height:100%; background:var(--accent-neon); border-radius:2px; transition:width 0.3s;"></div>
+                            <div style="width:${(_paso/4)*100}%; height:100%; background:var(--accent-neon); border-radius:2px; transition:width 0.3s;"></div>
                         </div>
                     </div>
 
                     <!-- Contenido del paso -->
                     <div class="glass-panel" style="padding:2rem; width:100%; max-width:520px;">
-                        ${_paso === 1 ? _renderPaso1() : _paso === 2 ? _renderPaso2() : _renderPaso3()}
+                        ${_paso === 1 ? _renderPaso1() : _paso === 2 ? _renderPaso2() : _paso === 3 ? _renderPaso3() : _renderPaso4()}
                     </div>
 
                     <!-- Botones -->
@@ -2626,7 +2741,7 @@ const App = (() => {
                             style="flex:2; padding:12px; background:var(--accent-neon); color:#000;
                             border:none; border-radius:8px; cursor:pointer;
                             font-family:var(--font-heading); font-weight:900; font-size:0.95rem; letter-spacing:1px;">
-                            ${_paso === 3 ? '¡LISTO! →' : 'SIGUIENTE →'}
+                            ${_paso === 4 ? '¡LISTO! →' : 'SIGUIENTE →'}
                         </button>
                     </div>
                 </main>
@@ -2708,6 +2823,61 @@ const App = (() => {
         `;
 
         // Handlers
+        const _renderPaso4 = () => {
+            const plan   = window.FirebaseAuth?.getPlan() ?? 'free';
+            const maxDep = plan === 'promax' ? 99 : plan === 'pro' ? 1 : 0;
+            const DEPORTES_DISP = [
+                {id:'basketball', nombre:'Básquet',           emoji:'🏀'},
+                {id:'tennis',     nombre:'Tenis',             emoji:'🎾'},
+                {id:'racing',     nombre:'Fórmula 1',         emoji:'🏎️'},
+                {id:'football',   nombre:'Fútbol Americano',  emoji:'🏈'},
+                {id:'baseball',   nombre:'Baseball',          emoji:'⚾'},
+                {id:'hockey',     nombre:'Hockey sobre Hielo',emoji:'🏒'},
+                {id:'golf',       nombre:'Golf',              emoji:'⛳'},
+                {id:'mma',        nombre:'MMA',               emoji:'🥊'},
+                {id:'rugby',      nombre:'Rugby',             emoji:'🏉'},
+            ];
+
+            if (maxDep === 0) {
+                return '<h3 style="font-family:var(--font-heading); font-size:1.1rem; font-weight:800; margin-bottom:1rem;">🏅 Otros deportes</h3>' +
+                    '<div style="text-align:center; padding:1.5rem; border:1px dashed var(--border-glass); border-radius:12px;">' +
+                    '<div style="font-size:2rem; margin-bottom:0.5rem;">🔒</div>' +
+                    '<p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Los otros deportes están disponibles desde el plan Pro.</p>' +
+                    '<p style="color:var(--text-muted); font-size:0.75rem;">Podés actualizar tu plan después desde el perfil.</p>' +
+                    '</div>';
+            }
+
+            const planLabel = plan === 'pro'
+                ? 'Plan Pro — podés elegir 1 deporte adicional.'
+                : 'Plan Pro Max — elegí todos los que quieras.';
+
+            const cards = DEPORTES_DISP.map(d => {
+                const sel      = _datos.deportes.includes(d.id);
+                const bloq     = !sel && _datos.deportes.length >= maxDep;
+                const border   = sel ? 'var(--accent-neon)' : 'var(--border-glass)';
+                const bg       = sel ? 'rgba(57,255,20,0.1)' : 'rgba(255,255,255,0.03)';
+                const cursor   = bloq ? 'default' : 'pointer';
+                const opacity  = bloq ? '0.4' : '1';
+                const onclick  = bloq ? '' : ('onclick="window._setupToggleDeporte(\'' + d.id + '\')"');
+                const check    = sel ? '<div style="font-size:0.65rem; color:var(--accent-neon); margin-top:3px;">✓ Elegido</div>' : '';
+                return '<div ' + onclick + ' style="padding:12px; border-radius:8px; text-align:center; transition:all 0.2s; border:2px solid ' + border + '; background:' + bg + '; cursor:' + cursor + '; opacity:' + opacity + ';">' +
+                    '<div style="font-size:1.5rem; margin-bottom:4px;">' + d.emoji + '</div>' +
+                    '<div style="font-size:0.78rem; font-weight:600;">' + d.nombre + '</div>' +
+                    check + '</div>';
+            }).join('');
+
+            return '<h3 style="font-family:var(--font-heading); font-size:1.1rem; font-weight:800; margin-bottom:0.5rem;">🏅 ¿Qué otros deportes querés seguir?</h3>' +
+                '<p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:1.2rem;">' + planLabel + ' El fútbol siempre está incluido.</p>' +
+                '<div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:0.6rem;">' + cards + '</div>';
+        };
+
+        window._setupToggleDeporte = (id) => {
+            const idx = _datos.deportes.indexOf(id);
+            if (idx >= 0) _datos.deportes.splice(idx, 1);
+            else _datos.deportes.push(id);
+            _render();
+        };
+
         window._setupElegirEquipo = (id, nombre) => {
             _datos.equipoFavorito = { id, nombre };
             _render();
@@ -2742,13 +2912,22 @@ const App = (() => {
                 alert('Elegí tu país para continuar.');
                 return;
             }
-            if (_paso === 3) {
+            if (_paso === 4) {
+                // Plan del usuario — limitar deportes según plan
+                const plan = window.FirebaseAuth?.getPlan() ?? 'free';
+                let deportesGuardar = [];
+                if (plan === 'promax') {
+                    deportesGuardar = _datos.deportes;
+                } else if (plan === 'pro') {
+                    deportesGuardar = _datos.deportes.slice(0, 1);
+                }
                 // Guardar y terminar
                 await window.FirebaseAuth?.actualizarPerfil({
-                    equipoFavorito:   _datos.equipoFavorito?.id   ?? null,
-                    pais:             _datos.pais?.id             ?? null,
-                    ligaNacional:     _datos.ligaNacional?.id     ?? null,
-                    ligaInternacional:_datos.ligaInternacional?.id ?? null,
+                    equipoFavorito:   _datos.equipoFavorito?.id    ?? null,
+                    pais:             _datos.pais?.id              ?? null,
+                    ligaNacional:     _datos.ligaNacional?.id      ?? null,
+                    ligaInternacional:_datos.ligaInternacional?.id  ?? null,
+                    deportes:         deportesGuardar,
                     perfilCompleto:   true
                 });
                 window.location.hash = '#/home';
