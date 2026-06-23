@@ -294,7 +294,7 @@ const App = (() => {
                 </section>
 
                 <section class="panel-center">
-                    <div style="position: absolute; top: 0; font-family: var(--font-heading); font-size: 2rem; font-weight: 800; letter-spacing: 2px; z-index: 10; text-shadow: 0 5px 15px #000;">FULBO</div>
+                    <div style="position: absolute; top: 0; font-family: var(--font-heading); font-size: 2rem; font-weight: 800; letter-spacing: 2px; z-index: 10; text-shadow: 0 5px 15px #000;">WHISTLE</div>
                     <div class="pitch-perspective">
                         <div class="pitch-horizontal"><div class="area-left"></div><div class="area-right"></div></div>
                     </div>
@@ -1272,7 +1272,7 @@ const App = (() => {
                 return 0;
             });
 
-        } catch (err) { console.warn('[EL FULBO] Error cargando equipo:', err); }
+        } catch (err) { console.warn('[WHISTLE] Error cargando equipo:', err); }
 
         // ── HTML de convocados ────────────────────────────────────────────────
         const rosterHtml = convocados.length > 0
@@ -2144,10 +2144,10 @@ const App = (() => {
                     padding: 5rem 1.5rem 3rem; text-align:center;">
                     <div style="font-family:var(--font-heading); font-size:clamp(3rem,10vw,5.5rem);
                         font-weight:900; letter-spacing:4px; text-shadow:0 0 40px rgba(57,255,20,0.3); margin-bottom:0.5rem;">
-                        EL <span style="color:var(--accent-neon);">FULBO</span>
+                        <span style="color:var(--accent-neon);">WHISTLE</span>
                     </div>
-                    <p style="font-size:clamp(0.95rem,2.5vw,1.2rem); color:var(--text-muted); margin-bottom:2.5rem; max-width:480px; line-height:1.6;">
-                        Todo el Mundial 2026 en tiempo real. Estadísticas, alineaciones y noticias en tu idioma.
+                    <p style="font-size:clamp(0.95rem,2.5vw,1.1rem); color:var(--text-muted); margin-bottom:2.5rem; max-width:480px; line-height:1.6; text-align:center;">
+                        The sound of sport.
                     </p>
                     <div style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; margin-bottom:4rem;">
                         <button onclick="abrirAuth('registro')"
@@ -2595,7 +2595,7 @@ const App = (() => {
                     <!-- Header -->
                     <div style="text-align:center; margin-bottom:2rem;">
                         <div style="font-family:var(--font-heading); font-size:2rem; font-weight:900; color:var(--accent-neon); margin-bottom:0.5rem;">
-                            FULBO
+                            WHISTLE
                         </div>
                         <h2 style="font-size:1.3rem; font-weight:700; margin-bottom:0.3rem;">
                             Hola ${nombre}, configurá tu experiencia
