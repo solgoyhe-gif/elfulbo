@@ -3486,13 +3486,6 @@ const App = (() => {
             return;
         }
 
-        // Esperar a que el perfil esté cargado (máx 2s)
-        let _intentos = 0;
-        while (!window.FirebaseAuth?.getPerfil() && _intentos < 20) {
-            await new Promise(r => setTimeout(r, 100));
-            _intentos++;
-        }
-
         // Redirigir al setup si es la primera vez
         const perfil = window.FirebaseAuth?.getPerfil();
         if (perfil && perfil.perfilCompleto === false && path !== '#/setup') {
@@ -3561,21 +3554,20 @@ const App = (() => {
         }
     };
 
-    const init = () => {
+    const init = async () => {
         window.addEventListener('hashchange', router);
 
-        // Esperar a que Firebase resuelva el estado de auth
-        // onChange se llama una vez al inicio con el usuario actual (o null)
-        const unsub = window.FirebaseAuth?.onChange((user) => {
-            router();
-        });
+        // Esperar a que Firebase resuelva el estado de auth antes del primer render
+        await Promise.race([
+            window.FirebaseAuth?.esperarListo() ?? Promise.resolve(),
+            new Promise(r => setTimeout(r, 3000)) // timeout 3s por las dudas
+        ]);
 
-        // Fallback por si FirebaseAuth tarda más de 2s
-        setTimeout(() => {
-            if (!document.getElementById('app').innerHTML || document.getElementById('app').innerHTML.trim() === '') {
-                router();
-            }
-        }, 2000);
+        // Primer render
+        await router();
+
+        // Re-rutear cuando cambie el estado de auth
+        window.FirebaseAuth?.onChange(() => router());
     };
 
     return { init };
