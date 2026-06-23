@@ -3066,6 +3066,240 @@ const App = (() => {
         }
     };
 
+    // ── VISTA DE PARTIDO ─────────────────────────────────────────────────────
+    const renderPartido = async (eventId, ligaId) => {
+        const CF_WORKER  = 'https://elfulbo.solgoyhe.workers.dev';
+        const espnLeague = ESPN.getSlug(ligaId) ?? ligaId ?? 'fifa.world';
+        const esPro      = _esPro();
+
+        appContainer.innerHTML = `
+            ${renderNavbar('#/h2h')}
+            <main class="page-container fade-in" style="max-width:700px; margin:0 auto;">
+                <a href="javascript:history.back()" style="color:var(--text-muted); text-decoration:none; display:inline-block; margin-bottom:1.5rem; font-weight:600;">← Volver</a>
+                <div style="text-align:center; padding:3rem;">
+                    <div style="width:40px; height:40px; border:3px solid var(--accent-neon); border-right-color:transparent; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto;"></div>
+                    <p style="color:var(--accent-neon); margin-top:1rem; font-size:0.85rem; font-family:var(--font-heading); text-transform:uppercase; letter-spacing:1px;">Cargando partido...</p>
+                </div>
+            </main>`;
+
+        try {
+            const [sumRes, scRes] = await Promise.all([
+                fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/summary?event=${eventId}`)}`),
+                fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/scoreboard`)}`)
+            ]);
+
+            const summary = sumRes.ok ? await sumRes.json() : {};
+            const comp    = summary.header?.competitions?.[0] ?? summary.gameInfo ?? {};
+            const compets = comp.competitors ?? [];
+            const home    = compets.find(c => c.homeAway === 'home') ?? compets[0] ?? {};
+            const away    = compets.find(c => c.homeAway === 'away') ?? compets[1] ?? {};
+
+            const estado   = comp.status?.type?.state ?? 'pre';
+            const esLive   = estado === 'in';
+            const esPost   = estado === 'post';
+            const clock    = comp.status?.displayClock ?? '';
+            const periodo  = comp.status?.period ?? '';
+            const shortDet = comp.status?.type?.shortDetail ?? '';
+
+            const homeName  = home.team?.displayName ?? '?';
+            const awayName  = away.team?.displayName ?? '?';
+            const homeLogo  = home.team?.logo ?? '';
+            const awayLogo  = away.team?.logo ?? '';
+            const homeScore = home.score ?? '-';
+            const awayScore = away.score ?? '-';
+            const homeWin   = esPost && parseInt(homeScore) > parseInt(awayScore);
+            const awayWin   = esPost && parseInt(awayScore) > parseInt(homeScore);
+
+            // Stats del partido desde boxscore
+            const boxTeamHome = (summary.boxscore?.teams ?? []).find(t => t.team?.id === home.team?.id);
+            const boxTeamAway = (summary.boxscore?.teams ?? []).find(t => t.team?.id === away.team?.id);
+            const getStat = (box, name) => parseFloat(box?.statistics?.find(s => s.name === name)?.displayValue ?? '0') || 0;
+
+            // Goleadores y eventos clave
+            const keyEvents = summary.keyEvents ?? [];
+            const goleadoresHome = [], goleadoresAway = [];
+            keyEvents.filter(e => e.scoringPlay).forEach(e => {
+                const nombre  = e.participants?.[0]?.athlete?.displayName ?? '';
+                const minuto  = e.clock?.displayValue ?? '';
+                const ownGoal = e.ownGoal ?? false;
+                const esHome  = e.team?.id === home.team?.id;
+                const item    = { nombre, minuto, ownGoal };
+                if (esHome) goleadoresHome.push(item);
+                else goleadoresAway.push(item);
+            });
+
+            // Minuto a minuto (plays)
+            const plays = (summary.plays ?? []).slice(-20).reverse();
+
+            // Rosters para pizarras
+            const rosterHome = (summary.rosters ?? []).find(r => r.team?.id === home.team?.id);
+            const rosterAway = (summary.rosters ?? []).find(r => r.team?.id === away.team?.id);
+
+            // Helper stat bar
+            const _statBar = (valA, valB, label) => {
+                const total = (valA + valB) || 1;
+                const pctA  = Math.round((valA/total)*100);
+                return `
+                    <div style="margin-bottom:1rem;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                            <span style="font-weight:700;">${valA}</span>
+                            <span style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">${label}</span>
+                            <span style="font-weight:700; color:var(--accent-neon);">${valB}</span>
+                        </div>
+                        <div style="display:flex; height:5px; border-radius:3px; overflow:hidden; background:rgba(255,255,255,0.08);">
+                            <div style="width:${pctA}%; background:var(--text-main);"></div>
+                            <div style="width:${100-pctA}%; background:var(--accent-neon);"></div>
+                        </div>
+                    </div>`;
+            };
+
+            // Helper mini pizarra
+            const _miniPizarra = (roster, teamId, colorCamiseta, colorNum) => {
+                if (!roster) return '<p style="color:var(--text-muted); text-align:center; font-size:0.8rem; padding:1rem;">Sin datos.</p>';
+                const titulares = (roster.roster ?? [])
+                    .filter(j => j.starter && j.formationPlace >= 1 && j.formationPlace <= 11)
+                    .sort((a,b) => a.formationPlace - b.formationPlace);
+                if (titulares.length === 0) return '<p style="color:var(--text-muted); text-align:center; font-size:0.8rem;">Sin titulares.</p>';
+                const W = 280, H = 380;
+                const coordsMap = _calcularPosicionesTacticas(titulares, W, H);
+                let tokens = '';
+                titulares.forEach(j => {
+                    const c = coordsMap.get(j.formationPlace);
+                    if (!c) return;
+                    const nombre = (j.athlete?.displayName ?? '').split(' ').pop().substring(0,9);
+                    const num    = j.jersey ?? '';
+                    tokens += `
+                        <g transform="translate(${c.x},${c.y})">
+                            <circle cx="0" cy="0" r="${c.n >= 5 ? 11 : 13}" fill="${colorCamiseta}" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                            <text x="0" y="1" text-anchor="middle" dominant-baseline="middle" font-size="7" font-weight="800" fill="${colorNum}" font-family="system-ui">${num}</text>
+                            <rect x="-16" y="15" width="32" height="10" rx="3" fill="rgba(0,0,0,0.6)"/>
+                            <text x="0" y="21" text-anchor="middle" dominant-baseline="middle" font-size="5.5" font-weight="600" fill="#fff" font-family="system-ui">${nombre}</text>
+                        </g>`;
+                });
+                return `
+                    <svg viewBox="0 0 ${W} ${H}" style="width:100%; display:block; border-radius:8px;">
+                        <defs><pattern id="sp-${teamId}" patternUnits="userSpaceOnUse" width="${W}" height="34">
+                            <rect width="${W}" height="17" fill="#27792a"/>
+                            <rect width="${W}" height="17" y="17" fill="#1e6622"/>
+                        </pattern></defs>
+                        <rect width="${W}" height="${H}" fill="url(#sp-${teamId})" rx="8"/>
+                        <rect x="10" y="8" width="${W-20}" height="${H-16}" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1"/>
+                        <line x1="10" y1="${H/2}" x2="${W-10}" y2="${H/2}" stroke="rgba(255,255,255,0.35)" stroke-width="1"/>
+                        <circle cx="${W/2}" cy="${H/2}" r="${W*0.13}" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1"/>
+                        <rect x="${W*0.27}" y="8" width="${W*0.46}" height="${H*0.14}" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1"/>
+                        <rect x="${W*0.27}" y="${H-8-H*0.14}" width="${W*0.46}" height="${H*0.14}" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1"/>
+                        <g>${tokens}</g>
+                    </svg>`;
+            };
+
+            // Render principal
+            appContainer.innerHTML = `
+                ${renderNavbar('#/h2h')}
+                <main class="page-container fade-in" style="max-width:700px; margin:0 auto;">
+                    <a href="javascript:history.back()" style="color:var(--text-muted); text-decoration:none; display:inline-block; margin-bottom:1.5rem; font-weight:600;">← Volver</a>
+
+                    <!-- CABECERA -->
+                    <div class="glass-panel" style="padding:1.5rem; text-align:center; margin-bottom:1.5rem;">
+                        ${esLive ? `<div style="background:#ff4757; display:inline-block; padding:3px 14px; border-radius:20px; font-size:0.7rem; font-weight:800; color:#fff; margin-bottom:0.8rem; animation:pulse 1s infinite;">● EN VIVO · ${clock}'</div>` :
+                          esPost ? `<div style="background:rgba(255,255,255,0.08); display:inline-block; padding:3px 14px; border-radius:20px; font-size:0.7rem; color:var(--text-muted); margin-bottom:0.8rem;">FINALIZADO</div>` :
+                          `<div style="background:rgba(57,255,20,0.12); display:inline-block; padding:3px 14px; border-radius:20px; font-size:0.7rem; font-weight:700; color:var(--accent-neon); margin-bottom:0.8rem;">${shortDet || 'PRÓXIMO'}</div>`}
+
+                        <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:1rem;">
+                            <div>
+                                ${homeLogo ? `<img src="${homeLogo}" width="56" height="56" style="object-fit:contain; margin-bottom:8px; display:block; margin-left:auto; margin-right:auto;" onerror="this.style.display='none'">` : ''}
+                                <div style="font-family:var(--font-heading); font-weight:800; font-size:1rem; ${homeWin ? 'color:var(--accent-neon);' : ''}">${homeName}</div>
+                            </div>
+                            <div style="font-family:var(--font-heading); font-size:${(esPost||esLive)?'3rem':'1.5rem'}; font-weight:900; color:var(--text-main); min-width:100px; text-align:center;">
+                                ${(esPost||esLive) ? `${homeScore} - ${awayScore}` : 'vs'}
+                            </div>
+                            <div>
+                                ${awayLogo ? `<img src="${awayLogo}" width="56" height="56" style="object-fit:contain; margin-bottom:8px; display:block; margin-left:auto; margin-right:auto;" onerror="this.style.display='none'">` : ''}
+                                <div style="font-family:var(--font-heading); font-weight:800; font-size:1rem; ${awayWin ? 'color:var(--accent-neon);' : ''}">${awayName}</div>
+                            </div>
+                        </div>
+
+                        ${(goleadoresHome.length > 0 || goleadoresAway.length > 0) ? `
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:1rem; font-size:0.82rem; color:var(--text-muted);">
+                            <div style="text-align:left;">${goleadoresHome.map(g=>`⚽${g.ownGoal?'(PP)':''} ${g.nombre} <span style="font-size:0.7rem;">${g.minuto}'</span>`).join('<br>')}</div>
+                            <div style="text-align:right;">${goleadoresAway.map(g=>`<span style="font-size:0.7rem;">${g.minuto}'</span> ${g.nombre} ${g.ownGoal?'(PP)':''}⚽`).join('<br>')}</div>
+                        </div>` : ''}
+                    </div>
+
+                    ${(boxTeamHome || boxTeamAway) ? `
+                    <!-- STATS -->
+                    <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
+                        <h3 class="panel-title" style="text-align:center; color:var(--accent-neon); font-size:0.75rem; letter-spacing:2px;">ESTADÍSTICAS</h3>
+                        ${esPro ? `
+                            ${_statBar(getStat(boxTeamHome,'possessionPct'), getStat(boxTeamAway,'possessionPct'), 'POSESIÓN %')}
+                            ${_statBar(getStat(boxTeamHome,'totalShots'), getStat(boxTeamAway,'totalShots'), 'TIROS TOTALES')}
+                            ${_statBar(getStat(boxTeamHome,'shotsOnTarget'), getStat(boxTeamAway,'shotsOnTarget'), 'TIROS A PUERTA')}
+                            ${_statBar(getStat(boxTeamHome,'wonCorners'), getStat(boxTeamAway,'wonCorners'), 'CORNERS')}
+                            ${_statBar(getStat(boxTeamHome,'foulsCommitted'), getStat(boxTeamAway,'foulsCommitted'), 'FALTAS')}
+                            ${_statBar(getStat(boxTeamHome,'yellowCards'), getStat(boxTeamAway,'yellowCards'), 'AMARILLAS')}
+                        ` : _paywallInline('pro', 'Las estadísticas completas están disponibles en el plan Pro.')}
+                    </div>` : ''}
+
+                    ${(rosterHome || rosterAway) ? `
+                    <!-- ALINEACIONES -->
+                    <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
+                        <h3 class="panel-title" style="text-align:center; color:var(--accent-neon); font-size:0.75rem; letter-spacing:2px; margin-bottom:1rem;">ALINEACIONES</h3>
+                        ${esPro ? `
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                            <div>
+                                <p style="text-align:center; font-size:0.75rem; font-weight:700; color:var(--text-muted); margin-bottom:6px;">
+                                    ${homeName} <span style="opacity:0.6;">${rosterHome?.formation ?? ''}</span>
+                                </p>
+                                ${_miniPizarra(rosterHome, home.team?.id, '#e8e8f0', '#1a1a2e')}
+                            </div>
+                            <div>
+                                <p style="text-align:center; font-size:0.75rem; font-weight:700; color:var(--text-muted); margin-bottom:6px;">
+                                    ${awayName} <span style="opacity:0.6;">${rosterAway?.formation ?? ''}</span>
+                                </p>
+                                ${_miniPizarra(rosterAway, away.team?.id, '#cc2222', '#ffffff')}
+                            </div>
+                        </div>` : _paywallInline('pro', 'Las alineaciones tácticas están disponibles en el plan Pro.')}
+                    </div>` : ''}
+
+                    ${plays.length > 0 ? `
+                    <!-- MINUTO A MINUTO -->
+                    <div class="glass-panel" style="padding:1.5rem; margin-bottom:4rem;">
+                        <h3 class="panel-title" style="text-align:center; color:var(--accent-neon); font-size:0.75rem; letter-spacing:2px; margin-bottom:1rem;">MINUTO A MINUTO</h3>
+                        ${plays.map(play => {
+                            const minuto  = play.clock?.displayValue ?? '';
+                            const texto   = play.text ?? play.type?.text ?? '';
+                            const isGoal  = play.scoringPlay ?? false;
+                            const isCard  = texto.toLowerCase().includes('yellow') || texto.toLowerCase().includes('red') || texto.toLowerCase().includes('tarjet');
+                            return `
+                                <div style="display:flex; gap:10px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.04); align-items:flex-start;">
+                                    <span style="font-family:var(--font-heading); font-size:0.75rem; font-weight:800; color:var(--text-muted); min-width:30px; flex-shrink:0;">${minuto}'</span>
+                                    <span style="font-size:0.75rem; margin-right:4px; flex-shrink:0;">${isGoal ? '⚽' : isCard ? '🟨' : '•'}</span>
+                                    <span style="font-size:0.82rem; color:${isGoal ? 'var(--text-main)' : 'var(--text-muted)'}; font-weight:${isGoal ? '600' : '400'}; line-height:1.4;">${texto}</span>
+                                </div>`;
+                        }).join('')}
+                    </div>` : ''}
+                </main>
+            `;
+
+            // Auto-refresh si está en vivo
+            if (esLive) {
+                if (window._partidoRefreshInterval) clearInterval(window._partidoRefreshInterval);
+                window._partidoRefreshInterval = setInterval(async () => {
+                    if (!document.querySelector('.page-container')) { clearInterval(window._partidoRefreshInterval); return; }
+                    await renderPartido(eventId, ligaId);
+                }, 30000);
+            }
+
+        } catch(err) {
+            console.error('[Partido]', err);
+            appContainer.innerHTML = `
+                ${renderNavbar('#/h2h')}
+                <main class="page-container fade-in" style="text-align:center; padding-top:4rem;">
+                    <p style="color:#ff4757;">Error cargando el partido.</p>
+                    <a href="javascript:history.back()" style="color:var(--accent-neon); margin-top:1rem; display:inline-block;">← Volver</a>
+                </main>`;
+        }
+    };
+
     // ── STRIPE CHECKOUT ──────────────────────────────────────────────────────
     const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
 
@@ -3308,6 +3542,11 @@ const App = (() => {
             case '#/setup':
                 renderSetup();
                 break;
+            case '#/partido': {
+                const urlP = new URL('http://x.com' + hash.replace('#',''));
+                await renderPartido(urlP.searchParams.get('id'), urlP.searchParams.get('liga'));
+                break;
+            }
             case '#/other-sports': {
                 const urlParams3 = new URL('http://x.com' + hash.replace('#',''));
                 await renderOtherSports(
