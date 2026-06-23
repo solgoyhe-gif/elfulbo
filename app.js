@@ -522,8 +522,13 @@ const App = (() => {
                             nombre: e.team.name,
                             logo:   e.team.logos?.[0]?.href || '🌐',
                             pj:     findStat('gamesPlayed'),
-                            pts:    findStat('points'),
-                            dif:    findStat('pointDifferential')
+                            pg:     findStat('wins'),
+                            pe:     findStat('ties'),
+                            pp:     findStat('losses'),
+                            gf:     findStat('pointsFor'),
+                            gc:     findStat('pointsAgainst'),
+                            dif:    findStat('pointDifferential'),
+                            pts:    findStat('points')
                         };
                     }) || [];
 
@@ -558,6 +563,75 @@ const App = (() => {
             }
             gruposData.sort((a, b) => a.nombre.localeCompare(b.nombre));
         }
+
+        // Calcular mejores terceros (el 3ro de cada grupo)
+        const tercerosPorGrupo = gruposData
+            .map(grupo => {
+                const tercero = grupo.equipos[2]; // índice 2 = 3er clasificado
+                if (!tercero) return null;
+                return { ...tercero, grupo: grupo.nombre };
+            })
+            .filter(Boolean);
+
+        // Ordenar por pts → dif → gf
+        tercerosPorGrupo.sort((a, b) =>
+            b.pts - a.pts || b.dif - a.dif || (b.gf ?? 0) - (a.gf ?? 0)
+        );
+
+        const mejoresTerceros = tercerosPorGrupo.slice(0, 8);
+
+        // Tabla de mejores terceros
+        const _buildTerceroRow = (eq, idx) => {
+            const logoHtml = (eq.logo || '').includes('http')
+                ? `<img src="${eq.logo}" width="20" height="20" style="object-fit:contain; margin-right:8px;">`
+                : `<span style="font-size:1rem; margin-right:8px;">${eq.logo || ''}</span>`;
+            const color  = idx < 8 ? '#cd7f32' : 'var(--text-muted)';
+            const bgBase = idx < 8 ? 'rgba(205,127,50,0.04)' : 'transparent';
+            const dif    = eq.dif ?? 0;
+            return `
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.04); cursor:pointer;
+                    background:${bgBase}; transition:background 0.2s;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.06)'"
+                    onmouseout="this.style.background='${bgBase}'"
+                    onclick="window.location.hash='#/equipo?id=${eq.id}&liga=world_cup&name=${encodeURIComponent(eq.nombre)}'">
+                    <td style="padding:8px 4px; font-weight:800; color:${color};">${idx+1}</td>
+                    <td style="padding:8px 4px; display:flex; align-items:center;">${logoHtml}<span style="font-weight:500;">${eq.nombre}</span></td>
+                    <td style="padding:8px 4px; text-align:center; color:var(--text-muted); font-size:0.75rem;">${(eq.grupo || '').replace('GRUPO ','')}</td>
+                    <td style="padding:8px 4px; text-align:center;">${eq.pj ?? 0}</td>
+                    <td style="padding:8px 4px; text-align:center; font-weight:800; color:${color};">${eq.pts ?? 0}</td>
+                    <td style="padding:8px 4px; text-align:center; font-weight:600;">${dif > 0 ? '+'+dif : dif}</td>
+                </tr>`;
+        };
+
+        const tablaTercerosHtml = `
+            <div class="glass-panel" style="padding:1.5rem; margin-top:2rem;">
+                <h3 style="font-family:var(--font-heading); font-size:0.85rem; font-weight:800;
+                    text-transform:uppercase; letter-spacing:2px; color:#cd7f32; margin-bottom:1rem;
+                    padding-bottom:8px; border-bottom:1px solid rgba(205,127,50,0.3);">
+                    🥉 MEJORES TERCEROS — Top 8 clasificados a Octavos
+                </h3>
+                <div class="table-responsive">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                        <thead>
+                            <tr style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; border-bottom:1px solid var(--border-glass);">
+                                <th style="padding:8px 4px; text-align:left; width:30px;">#</th>
+                                <th style="padding:8px 4px; text-align:left;">Selección</th>
+                                <th style="padding:8px 4px; text-align:center; width:45px;">Grupo</th>
+                                <th style="padding:8px 4px; text-align:center; width:40px;">PJ</th>
+                                <th style="padding:8px 4px; text-align:center; width:40px;">PTS</th>
+                                <th style="padding:8px 4px; text-align:center; width:40px;">DIF</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${mejoresTerceros.map((eq, idx) => _buildTerceroRow(eq, idx)).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <p style="font-size:0.72rem; color:var(--text-muted); margin-top:0.8rem; text-align:center;">
+                    Los 8 mejores terceros clasifican a Octavos de Final junto a los 24 primeros y segundos de grupo.
+                </p>
+            </div>
+        `;
 
         let grillaGruposHtml = gruposData.map(grupo => {
             let filasTabla = grupo.equipos.map((eq, index) => {
@@ -636,6 +710,7 @@ const App = (() => {
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
                         ${grillaGruposHtml}
                     </div>
+                    ${tablaTercerosHtml}
                 </div>
             </main>
         `;
@@ -664,7 +739,8 @@ const App = (() => {
                     <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Seleccioná el título de un grupo para ver estadísticas detalladas o un equipo para ver sus jugadores.</p>
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
                         ${grillaGruposHtml}
-                    </div>`;
+                    </div>
+                    ${tablaTercerosHtml}`;
             } else {
                 await renderBracketMundial(tabContent);
             }
