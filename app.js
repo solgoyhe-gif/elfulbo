@@ -3541,20 +3541,9 @@ const App = (() => {
                 return;
             }
 
-            // Buscar usuarios en Firestore
-            const fsRes  = await fetch(`https://firestore.googleapis.com/v1/projects/fulbo-3b2ba/databases/(default)/documents/usuarios?pageSize=100`);
-            const fsData = fsRes.ok ? await fsRes.json() : {};
-            const docs   = fsData.documents ?? [];
-
-            const usuarios = docs.map(doc => {
-                const f = doc.fields ?? {};
-                return {
-                    nombre: f.nombre?.stringValue ?? '—',
-                    email:  f.email?.stringValue  ?? '—',
-                    plan:   f.plan?.stringValue   ?? 'free',
-                    uid:    doc.name?.split('/').pop() ?? '—',
-                };
-            });
+            // Buscar usuarios via Worker (con Firebase Admin)
+            const usRes  = await fetch(`${CF_WORKER}/admin/usuarios?adminKey=${encodeURIComponent(adminKey)}`);
+            const usuarios = usRes.ok ? await usRes.json() : [];
 
             const planColor = { free: 'var(--text-muted)', pro: 'var(--accent-neon)', promax: '#ffd700' };
             const planEmoji = { free: '⚽', pro: '🔥', promax: '👑' };
@@ -3620,15 +3609,12 @@ const App = (() => {
             // Función para cambiar plan manualmente
             window._cambiarPlan = async (uid, nuevoPlan, adminKey) => {
                 try {
-                    const res = await fetch(`${CF_WORKER}/admin/stats?adminKey=${encodeURIComponent(adminKey)}`);
-                    if (!res.ok) { alert('No autorizado'); return; }
-
-                    const fsUrl = `https://firestore.googleapis.com/v1/projects/fulbo-3b2ba/databases/(default)/documents/usuarios/${uid}?updateMask.fieldPaths=plan`;
-                    await fetch(fsUrl, {
-                        method: 'PATCH',
+                    const res = await fetch(`${CF_WORKER}/admin/cambiar-plan`, {
+                        method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ fields: { plan: { stringValue: nuevoPlan } } })
+                        body: JSON.stringify({ adminKey, uid, plan: nuevoPlan })
                     });
+                    if (!res.ok) { alert('No autorizado'); return; }
                     alert('Plan actualizado a ' + nuevoPlan);
                 } catch(e) {
                     alert('Error actualizando plan');
