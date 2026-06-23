@@ -609,16 +609,178 @@ const App = (() => {
                 <div class="liga-header" style="border-left: 6px solid ${ligaData.badge_color}; background: radial-gradient(circle at left, rgba(200, 168, 75, 0.12) 0%, transparent 60%);">
                     <span class="liga-flag-large" style="font-size: 3.8rem; filter: drop-shadow(0 0 10px rgba(200,168,75,0.3));">${ligaData.flag}</span>
                     <div>
-                        <h1 class="liga-title-main">Fase de Grupos</h1>
-                        <span style="color: var(--accent-neon); font-weight: 800; letter-spacing: 1px; font-size: 0.85rem;">🏆 TABLAS Y ESTADÍSTICAS OFICIALES</span>
+                        <h1 class="liga-title-main">FIFA World Cup 2026</h1>
+                        <span style="color: var(--accent-neon); font-weight: 800; letter-spacing: 1px; font-size: 0.85rem;">🏆 DATOS EN VIVO</span>
                     </div>
                 </div>
-                <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-top: 1rem;">Seleccioná el título de un grupo para ver estadísticas detalladas (GF, GC, DIF) o seleccioná un equipo para ver a sus jugadores.</p>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
-                    ${grillaGruposHtml}
+
+                <!-- Tabs -->
+                <div style="display:flex; gap:8px; margin:1.5rem 0 1rem;">
+                    <button id="tab-grupos" onclick="window._mundialTab('grupos')"
+                        style="padding:10px 24px; border-radius:20px; border:2px solid var(--accent-neon);
+                        background:rgba(57,255,20,0.12); color:var(--accent-neon);
+                        cursor:pointer; font-family:var(--font-heading); font-weight:700; font-size:0.9rem;">
+                        🏟️ GRUPOS
+                    </button>
+                    <button id="tab-bracket" onclick="window._mundialTab('bracket')"
+                        style="padding:10px 24px; border-radius:20px; border:2px solid var(--border-glass);
+                        background:rgba(255,255,255,0.04); color:var(--text-muted);
+                        cursor:pointer; font-family:var(--font-heading); font-weight:700; font-size:0.9rem;">
+                        🏆 BRACKET
+                    </button>
+                </div>
+
+                <!-- Contenido de tabs -->
+                <div id="mundial-tab-content">
+                    <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Seleccioná el título de un grupo para ver estadísticas detalladas o un equipo para ver sus jugadores.</p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+                        ${grillaGruposHtml}
+                    </div>
                 </div>
             </main>
         `;
+
+        window._mundialTab = async (tab) => {
+            const btnGrupos  = document.getElementById('tab-grupos');
+            const btnBracket = document.getElementById('tab-bracket');
+            const tabContent = document.getElementById('mundial-tab-content');
+            if (!tabContent) return;
+
+            [btnGrupos, btnBracket].forEach(b => {
+                if (!b) return;
+                b.style.border      = '2px solid var(--border-glass)';
+                b.style.background  = 'rgba(255,255,255,0.04)';
+                b.style.color       = 'var(--text-muted)';
+            });
+            const btnActivo = tab === 'grupos' ? btnGrupos : btnBracket;
+            if (btnActivo) {
+                btnActivo.style.border     = '2px solid var(--accent-neon)';
+                btnActivo.style.background = 'rgba(57,255,20,0.12)';
+                btnActivo.style.color      = 'var(--accent-neon)';
+            }
+
+            if (tab === 'grupos') {
+                tabContent.innerHTML = `
+                    <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Seleccioná el título de un grupo para ver estadísticas detalladas o un equipo para ver sus jugadores.</p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+                        ${grillaGruposHtml}
+                    </div>`;
+            } else {
+                await renderBracketMundial(tabContent);
+            }
+        };
+    };
+
+    // ── BRACKET MUNDIAL 2026 ──────────────────────────────────────────────────
+    const renderBracketMundial = async (container) => {
+        const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
+
+        container.innerHTML = `
+            <div style="text-align:center; padding:2rem;">
+                <div style="width:36px; height:36px; border:3px solid var(--accent-neon); border-right-color:transparent; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto;"></div>
+                <p style="color:var(--accent-neon); margin-top:1rem; font-size:0.85rem;">Cargando bracket...</p>
+            </div>`;
+
+        const FASES = [
+            { nombre: 'Octavos de Final', fechas: ['20260628','20260629','20260630','20260701','20260702','20260703','20260704'], color: '#6CABDD' },
+            { nombre: 'Cuartos de Final', fechas: ['20260707','20260708','20260709','20260710'], color: '#39ff14' },
+            { nombre: 'Semifinales',      fechas: ['20260714','20260715'], color: '#ffd700' },
+            { nombre: 'Tercer Puesto',    fechas: ['20260718'], color: '#cd7f32' },
+            { nombre: 'Final',            fechas: ['20260719'], color: '#ffd700' },
+        ];
+
+        try {
+            const todasFechas = [...new Set(FASES.flatMap(f => f.fechas))];
+            const scoreboards = await Promise.all(
+                todasFechas.map(fecha =>
+                    fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${fecha}`)}`)
+                        .then(r => r.ok ? r.json().catch(()=>({})) : {})
+                )
+            );
+
+            const eventosPorFecha = {};
+            todasFechas.forEach((fecha, i) => { eventosPorFecha[fecha] = scoreboards[i]?.events ?? []; });
+
+            const partidosPorFase = FASES.map(fase => {
+                const eventos = fase.fechas.flatMap(f => eventosPorFecha[f] ?? []);
+                const vistos  = new Set();
+                return {
+                    ...fase,
+                    partidos: eventos.filter(ev => { if (vistos.has(ev.id)) return false; vistos.add(ev.id); return true; })
+                };
+            });
+
+            const _renderPartido = (ev) => {
+                const comp      = ev?.competitions?.[0];
+                const home      = comp?.competitors?.find(c => c.homeAway === 'home');
+                const away      = comp?.competitors?.find(c => c.homeAway === 'away');
+                const estado    = comp?.status?.type?.state ?? 'pre';
+                const esLive    = estado === 'in';
+                const esPost    = estado === 'post';
+                const homeName  = home?.team?.abbreviation ?? home?.team?.displayName ?? '?';
+                const awayName  = away?.team?.abbreviation ?? away?.team?.displayName ?? '?';
+                const homeLogo  = home?.team?.logo ?? '';
+                const awayLogo  = away?.team?.logo ?? '';
+                const homeScore = home?.score ?? '';
+                const awayScore = away?.score ?? '';
+                const homeWin   = esPost && parseInt(homeScore) > parseInt(awayScore);
+                const awayWin   = esPost && parseInt(awayScore) > parseInt(homeScore);
+                const fechaEv   = new Date(ev.date ?? '');
+                const horaAR    = isNaN(fechaEv) ? '' : fechaEv.toLocaleTimeString('es-AR', { timeZone:'America/Argentina/Buenos_Aires', hour:'2-digit', minute:'2-digit' });
+                const fechaStr  = isNaN(fechaEv) ? '' : fechaEv.toLocaleDateString('es-AR', { timeZone:'America/Argentina/Buenos_Aires', day:'numeric', month:'short' });
+                const logoHtml  = (logo, name) => logo ? `<img src="${logo}" width="18" height="18" style="object-fit:contain; flex-shrink:0;" onerror="this.style.display='none'">` : `<span style="font-size:0.7rem; font-weight:800;">${name.charAt(0)}</span>`;
+
+                return `
+                    <div onclick="window.location.hash='#/partido?id=${ev.id}&liga=world_cup'"
+                        style="background:rgba(255,255,255,0.04); border:1px solid var(--border-glass); border-radius:8px;
+                        overflow:hidden; cursor:pointer; transition:background 0.2s; min-width:155px;"
+                        onmouseover="this.style.background='rgba(255,255,255,0.08)'"
+                        onmouseout="this.style.background='rgba(255,255,255,0.04)'">
+                        ${esLive ? '<div style="background:#ff4757; text-align:center; font-size:0.6rem; font-weight:800; padding:2px; letter-spacing:1px; color:#fff;">● EN VIVO</div>' : ''}
+                        <div style="display:flex; align-items:center; gap:6px; padding:7px 10px; border-bottom:1px solid var(--border-glass); background:${homeWin ? 'rgba(57,255,20,0.08)' : 'transparent'};">
+                            ${logoHtml(homeLogo, homeName)}
+                            <span style="font-size:0.8rem; font-weight:${homeWin?'800':'500'}; flex:1; color:${homeWin ? 'var(--accent-neon)' : 'var(--text-main)'};">${homeName}</span>
+                            <span style="font-family:var(--font-heading); font-weight:900; font-size:0.9rem; color:${homeWin ? 'var(--accent-neon)' : 'var(--text-main)'};">${(esPost||esLive) ? homeScore : ''}</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px; padding:7px 10px; background:${awayWin ? 'rgba(57,255,20,0.08)' : 'transparent'};">
+                            ${logoHtml(awayLogo, awayName)}
+                            <span style="font-size:0.8rem; font-weight:${awayWin?'800':'500'}; flex:1; color:${awayWin ? 'var(--accent-neon)' : 'var(--text-main)'};">${awayName}</span>
+                            <span style="font-family:var(--font-heading); font-weight:900; font-size:0.9rem; color:${awayWin ? 'var(--accent-neon)' : 'var(--text-main)'};">${(esPost||esLive) ? awayScore : ''}</span>
+                        </div>
+                        ${!esPost && !esLive ? `<div style="text-align:center; padding:3px; font-size:0.65rem; color:var(--text-muted); border-top:1px solid var(--border-glass);">${fechaStr} ${horaAR} ARG</div>` : ''}
+                    </div>`;
+            };
+
+            const _renderVacio = (cant) => Array(cant).fill(0).map(() => `
+                <div style="background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1);
+                    border-radius:8px; min-width:155px; min-height:68px; display:flex;
+                    align-items:center; justify-content:center;">
+                    <span style="color:var(--text-muted); font-size:0.72rem;">Por definir</span>
+                </div>`).join('');
+
+            const CANT_ESPERADA = [16, 8, 4, 1, 1];
+
+            container.innerHTML = `
+                <div style="overflow-x:auto; padding-bottom:1rem;">
+                    <div style="display:flex; gap:1.2rem; align-items:flex-start; min-width:max-content; padding:0.5rem 0 1.5rem;">
+                        ${partidosPorFase.map((fase, fi) => `
+                            <div style="display:flex; flex-direction:column; gap:0.6rem; min-width:160px;">
+                                <div style="font-family:var(--font-heading); font-size:0.68rem; font-weight:800;
+                                    text-transform:uppercase; letter-spacing:1px; color:${fase.color};
+                                    text-align:center; padding-bottom:6px; border-bottom:1px solid ${fase.color}40; white-space:nowrap;">
+                                    ${fase.nombre}
+                                </div>
+                                <div style="display:flex; flex-direction:column; gap:${fi===0?'0.4rem':fi===1?'1.2rem':fi===2?'3.5rem':'0.8rem'};">
+                                    ${fase.partidos.length > 0 ? fase.partidos.map(ev => _renderPartido(ev)).join('') : _renderVacio(CANT_ESPERADA[fi])}
+                                </div>
+                            </div>`).join('')}
+                    </div>
+                </div>`;
+
+        } catch(err) {
+            console.error('[Bracket]', err);
+            container.innerHTML = '<div class="glass-panel" style="padding:2rem; text-align:center;"><p style="color:#ff4757;">Error cargando el bracket.</p></div>';
+        }
     };
 
     // ── VISTA MUNDIAL: DETALLE DE GRUPO ──────────────────────────────────────
