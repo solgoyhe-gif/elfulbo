@@ -5,6 +5,8 @@ window.FirebaseAuth = {
     _usuario: null,
     _perfil:  null,
     _listeners: [],
+    _listo: false,       // true después del primer disparo del observer
+    _resolvers: [],      // callbacks esperando que el observer se dispare
     PLANES: window.PLANES,
 
     init(auth, db) {
@@ -22,8 +24,20 @@ window.FirebaseAuth = {
             } else {
                 this._perfil = null;
             }
+            // Marcar como listo y resolver los que estaban esperando
+            if (!this._listo) {
+                this._listo = true;
+                this._resolvers.forEach(fn => fn());
+                this._resolvers = [];
+            }
             this._listeners.forEach(fn => fn(user));
         });
+    },
+
+    // Esperar a que el observer se dispare al menos una vez
+    esperarListo() {
+        if (this._listo) return Promise.resolve();
+        return new Promise(resolve => this._resolvers.push(resolve));
     },
 
     onChange(fn)          { this._listeners.push(fn); },
