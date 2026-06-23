@@ -1759,9 +1759,12 @@ const App = (() => {
                         : `<span style="font-size:1.2rem;">${nombre.charAt(0)}</span>`;
 
                     if (esLive || esPost) {
-                        // Card con resultado — expandible para cargar stats
+                        // Card con resultado — click va a vista de partido
                         return `
-                            <div class="glass-panel" style="padding:1.2rem; margin-bottom:1rem;">
+                            <div class="glass-panel" style="padding:1.2rem; margin-bottom:1rem; cursor:pointer; transition:background 0.2s;"
+                                onclick="window.location.hash='#/partido?id=${ev.id}&liga=fifa.world'"
+                                onmouseover="this.style.background='rgba(255,255,255,0.06)'"
+                                onmouseout="this.style.background=''">
                                 <!-- Cabecera del partido -->
                                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
                                     <span style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">${shortDetail}</span>
@@ -1786,20 +1789,10 @@ const App = (() => {
                                         ${logoHtml(awayLogo, awayNombre)}
                                     </div>
                                 </div>
-                                <!-- Botón expandir stats -->
-                                ${(esPost || esLive) ? `
-                                    ${_esPro() ? `
-                                    <button onclick="window._expandirPartido('${ev.id}', '${home?.team?.id}', '${away?.team?.id}', this)"
-                                        style="width:100%; margin-top:1rem; padding:8px; background:rgba(255,255,255,0.05); border:1px solid var(--border-glass); border-radius:8px; color:var(--text-muted); cursor:pointer; font-size:0.8rem; font-family:var(--font-heading); letter-spacing:1px; transition:all 0.2s;">
-                                        VER ESTADÍSTICAS ↓
-                                    </button>
-                                    <div id="stats-${ev.id}" style="display:none; margin-top:1rem;"></div>
-                                    ` : `
-                                    <div style="margin-top:1rem; padding:0.8rem; text-align:center; border:1px dashed var(--border-glass); border-radius:8px;">
-                                        <span style="font-size:0.8rem; color:var(--text-muted);">🔒 Stats y alineaciones — </span>
-                                        <a href="#/planes" style="font-size:0.8rem; color:var(--accent-neon); font-weight:700; text-decoration:none;">Requiere Pro</a>
-                                    </div>`}
-                                ` : ''}
+                                <!-- Botón ver partido completo -->
+                                <div style="margin-top:0.8rem; text-align:right;">
+                                    <span style="font-size:0.75rem; color:var(--accent-neon); font-weight:700;">Ver partido completo →</span>
+                                </div>
                             </div>`;
                     } else {
                         // Card tipo calendario — próximo
