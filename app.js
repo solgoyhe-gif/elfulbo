@@ -1014,6 +1014,22 @@ const App = (() => {
             console.error('[Bracket]', err);
             container.innerHTML = '<div class="glass-panel" style="padding:2rem; text-align:center;"><p style="color:#ff4757;">Error cargando el bracket.</p></div>';
         }
+
+        // Auto-refresh cada 30s si hay partidos en vivo
+        if (window._bracketRefreshInterval) clearInterval(window._bracketRefreshInterval);
+        window._bracketRefreshInterval = setInterval(async () => {
+            if (!document.getElementById('mundial-tab-content')) {
+                clearInterval(window._bracketRefreshInterval);
+                return;
+            }
+            try {
+                const hoy = new Date().toLocaleDateString('en-CA', {timeZone:'America/Argentina/Buenos_Aires'}).replace(/-/g,'');
+                const res  = await fetch(CF_WORKER + '/?url=' + encodeURIComponent('https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=' + hoy));
+                const data = res.ok ? await res.json() : {};
+                const hayEnVivo = (data.events ?? []).some(ev => ev.competitions?.[0]?.status?.type?.state === 'in');
+                if (hayEnVivo) await renderBracketMundial(container);
+            } catch(e) {}
+        }, 30000);
     };
 
     // ── VISTA MUNDIAL: DETALLE DE GRUPO ──────────────────────────────────────
