@@ -2441,6 +2441,91 @@ const App = (() => {
         const perfil = window.FirebaseAuth?.getPerfil();
         const plan   = window.FirebaseAuth?.getPlan() ?? 'free';
 
+        // ── Colores y labels por plan ────────────────────────────────────────
+        const planMeta = {
+            free:   { color: '#888',    emoji: '⚽', label: 'FREE',    bg: 'rgba(136,136,136,0.15)' },
+            pro:    { color: '#39ff14', emoji: '🔥', label: 'PRO',     bg: 'rgba(57,255,20,0.15)'   },
+            promax: { color: '#ffd700', emoji: '👑', label: 'PRO MAX', bg: 'rgba(255,215,0,0.15)'   },
+        };
+        const meta = planMeta[plan] ?? planMeta.free;
+
+        // ── Lista de deportes disponibles (misma que el setup) ───────────────
+        const DEPORTES_DISP = [
+            {id:'basketball', nombre:'Básquet',            emoji:'🏀'},
+            {id:'tennis',     nombre:'Tenis',              emoji:'🎾'},
+            {id:'racing',     nombre:'Fórmula 1',          emoji:'🏎️'},
+            {id:'football',   nombre:'Fútbol Americano',   emoji:'🏈'},
+            {id:'baseball',   nombre:'Baseball',           emoji:'⚾'},
+            {id:'hockey',     nombre:'Hockey sobre Hielo', emoji:'🏒'},
+            {id:'golf',       nombre:'Golf',               emoji:'⛳'},
+            {id:'mma',        nombre:'MMA',                emoji:'🥊'},
+            {id:'rugby',      nombre:'Rugby',              emoji:'🏉'},
+        ];
+
+        const maxDep = plan === 'promax' ? 99 : plan === 'pro' ? 1 : 0;
+
+        // ── Render de la grilla de deportes ──────────────────────────────────
+        const _renderDeportes = (deportesActuales) => {
+            if (maxDep === 0) {
+                return `
+                    <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
+                        <h3 class="panel-title" style="margin-bottom:1rem;">🏅 Otros deportes</h3>
+                        <div style="text-align:center; padding:1.5rem; border:1px dashed var(--border-glass); border-radius:12px;">
+                            <div style="font-size:2rem; margin-bottom:0.5rem;">🔒</div>
+                            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">
+                                Los otros deportes están disponibles desde el plan Pro.
+                            </p>
+                            <button class="btn-primary" style="background:#39ff14; color:#000;"
+                                onclick="window.location.hash='#/planes'">
+                                VER PLANES →
+                            </button>
+                        </div>
+                    </div>`;
+            }
+
+            const planLabel = plan === 'pro'
+                ? '🔥 Plan Pro — podés elegir 1 deporte adicional.'
+                : '👑 Plan Pro Max — elegí todos los que quieras.';
+
+            const cards = DEPORTES_DISP.map(d => {
+                const sel     = deportesActuales.includes(d.id);
+                const bloq    = !sel && deportesActuales.length >= maxDep;
+                const border  = sel  ? 'var(--accent-neon)' : 'var(--border-glass)';
+                const bg      = sel  ? 'rgba(57,255,20,0.1)' : 'rgba(255,255,255,0.03)';
+                const cursor  = bloq ? 'default' : 'pointer';
+                const opacity = bloq ? '0.4' : '1';
+                const onclick = bloq ? '' : `onclick="window._perfilToggleDeporte('${d.id}')"`;
+                const check   = sel  ? `<div style="font-size:0.65rem; color:var(--accent-neon); margin-top:3px;">✓ Elegido</div>` : '';
+                return `<div ${onclick}
+                    style="padding:12px; border-radius:8px; text-align:center; transition:all 0.2s;
+                    border:2px solid ${border}; background:${bg};
+                    cursor:${cursor}; opacity:${opacity};">
+                    <div style="font-size:1.5rem; margin-bottom:4px;">${d.emoji}</div>
+                    <div style="font-size:0.78rem; font-weight:600;">${d.nombre}</div>
+                    ${check}
+                </div>`;
+            }).join('');
+
+            return `
+                <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
+                    <h3 class="panel-title" style="margin-bottom:0.5rem;">🏅 Mis deportes</h3>
+                    <p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:1.2rem;">${planLabel} El fútbol siempre está incluido.</p>
+                    <div id="deportes-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:0.6rem; margin-bottom:1.2rem;">
+                        ${cards}
+                    </div>
+                    <button class="btn-primary" onclick="window._perfilGuardarDeportes()" style="width:100%;">
+                        GUARDAR DEPORTES
+                    </button>
+                    <div id="deportes-ok" style="display:none; color:var(--accent-neon);
+                        font-size:0.85rem; font-weight:700; margin-top:8px; text-align:center;">
+                        ✓ Deportes guardados
+                    </div>
+                </div>`;
+        };
+
+        // Estado local editable hasta que se guarda
+        window._deportesPerfil = [...(perfil?.deportes ?? [])];
+
         appContainer.innerHTML = `
             ${renderNavbar('#/perfil')}
             <main class="page-container fade-in" style="max-width:600px; margin:0 auto;">
@@ -2448,21 +2533,21 @@ const App = (() => {
 
                 <!-- Info del usuario -->
                 <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
-                    <div style="display:flex; align-items:center; gap:1.2rem; margin-bottom:1.2rem;">
-                        <div style="width:60px; height:60px; border-radius:50%; background:rgba(57,255,20,0.15);
-                            border:2px solid var(--accent-neon); display:flex; align-items:center;
-                            justify-content:center; font-size:1.5rem; font-weight:800; font-family:var(--font-heading);">
+                    <div style="display:flex; align-items:center; gap:1.2rem;">
+                        <div style="width:60px; height:60px; border-radius:50%;
+                            background:${meta.bg}; border:2px solid ${meta.color};
+                            display:flex; align-items:center; justify-content:center;
+                            font-size:1.5rem; font-weight:800; font-family:var(--font-heading);">
                             ${(perfil?.nombre ?? 'U').charAt(0).toUpperCase()}
                         </div>
                         <div>
                             <div style="font-weight:800; font-size:1.1rem;">${perfil?.nombre ?? 'Usuario'}</div>
                             <div style="color:var(--text-muted); font-size:0.85rem;">${user?.email ?? ''}</div>
                             <div style="margin-top:4px;">
-                                <span style="background:${plan === 'premium' ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.08)'};
-                                    color:${plan === 'premium' ? '#ffd700' : 'var(--text-muted)'};
+                                <span style="background:${meta.bg}; color:${meta.color};
                                     padding:2px 10px; border-radius:20px; font-size:0.7rem; font-weight:800;
                                     font-family:var(--font-heading); letter-spacing:1px;">
-                                    ${plan.toUpperCase()}
+                                    ${meta.emoji} ${meta.label}
                                 </span>
                             </div>
                         </div>
@@ -2489,21 +2574,39 @@ const App = (() => {
                     <span id="fav-ok" style="display:none; color:var(--accent-neon); font-size:0.85rem; margin-left:10px; font-weight:700;">✓ Guardado</span>
                 </div>
 
+                <!-- Deportes (dinámico según plan) -->
+                <div id="deportes-section">
+                    ${_renderDeportes(window._deportesPerfil)}
+                </div>
+
                 <!-- Plan actual -->
                 <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
                     <h3 class="panel-title" style="margin-bottom:1rem;">💳 Plan Actual</h3>
-                    ${plan === 'premium' ? `
+                    ${plan === 'promax' ? `
                         <div style="text-align:center; padding:1rem;">
-                            <div style="font-size:2rem; margin-bottom:0.5rem;">⭐</div>
-                            <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:800; color:#ffd700;">Premium activo</div>
+                            <div style="font-size:2rem; margin-bottom:0.5rem;">👑</div>
+                            <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:800; color:#ffd700;">Pro Max activo</div>
                             <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.5rem;">Tenés acceso a todas las funciones.</p>
+                        </div>
+                    ` : plan === 'pro' ? `
+                        <div style="text-align:center; padding:1rem;">
+                            <div style="font-size:2rem; margin-bottom:0.5rem;">🔥</div>
+                            <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:800; color:#39ff14;">Pro activo</div>
+                            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.5rem;">
+                                Accedé a todas las ligas de fútbol, stats y alineaciones.
+                            </p>
+                            <button class="btn-primary" style="margin-top:1rem; background:#ffd700; color:#000;"
+                                onclick="window.location.hash='#/planes'">
+                                PASARTE A PRO MAX 👑
+                            </button>
                         </div>
                     ` : `
                         <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1rem;">
-                            Estás en el plan <strong>Free</strong>. Pasate a Premium para acceder a estadísticas, alineaciones y más.
+                            Estás en el plan <strong>Free</strong>. Pasate a Pro para acceder a estadísticas, alineaciones, todas las ligas y más.
                         </p>
-                        <button class="btn-primary" style="background:#ffd700;" onclick="window.location.hash='#/planes'">
-                            VER PLANES ⭐
+                        <button class="btn-primary" style="background:#39ff14; color:#000;"
+                            onclick="window.location.hash='#/planes'">
+                            VER PLANES 🔥
                         </button>
                     `}
                 </div>
@@ -2518,11 +2621,36 @@ const App = (() => {
             </main>
         `;
 
+        // ── Handlers ─────────────────────────────────────────────────────────
+
         window._guardarEquipoFav = async () => {
             const sel = document.getElementById('equipo-fav-select').value;
             await window.FirebaseAuth?.actualizarPerfil({ equipoFavorito: sel });
             const ok = document.getElementById('fav-ok');
             if (ok) { ok.style.display = 'inline'; setTimeout(() => ok.style.display = 'none', 2000); }
+        };
+
+        window._perfilToggleDeporte = (id) => {
+            const idx = window._deportesPerfil.indexOf(id);
+            if (idx >= 0) {
+                window._deportesPerfil.splice(idx, 1);
+            } else {
+                if (window._deportesPerfil.length < maxDep) {
+                    window._deportesPerfil.push(id);
+                }
+            }
+            // Re-render solo la grilla, no toda la página
+            const sec = document.getElementById('deportes-section');
+            if (sec) sec.innerHTML = _renderDeportes(window._deportesPerfil);
+        };
+
+        window._perfilGuardarDeportes = async () => {
+            const deportesGuardar = plan === 'promax'
+                ? window._deportesPerfil
+                : window._deportesPerfil.slice(0, 1);
+            await window.FirebaseAuth?.actualizarPerfil({ deportes: deportesGuardar });
+            const ok = document.getElementById('deportes-ok');
+            if (ok) { ok.style.display = 'block'; setTimeout(() => { ok.style.display = 'none'; }, 2000); }
         };
     };
 
