@@ -2474,7 +2474,8 @@ const App = (() => {
                     <h3 class="panel-title" style="margin-bottom:1rem;">⭐ Equipo Favorito</h3>
                     <select id="equipo-fav-select" style="width:100%; background:var(--surface-color);
                         color:var(--text-main); border:1px solid var(--border-glass); border-radius:8px;
-                        padding:10px; font-size:0.9rem; cursor:pointer; margin-bottom:1rem;">
+                        padding:10px; font-size:0.9rem; cursor:pointer; margin-bottom:1rem;
+                        color-scheme:dark;">
                         <option value="">— Sin seleccionar —</option>
                         ${[
                             {id:'202',n:'🇦🇷 Argentina'},{id:'478',n:'🇫🇷 Francia'},{id:'205',n:'🇧🇷 Brasil'},
@@ -3592,7 +3593,7 @@ const App = (() => {
                                             <td style="padding:10px; text-align:center;">
                                                 <select onchange="window._cambiarPlan('${u.uid}', this.value, '${adminKey}')"
                                                     style="background:var(--surface-color); color:var(--text-main);
-                                                    border:1px solid var(--border-glass); border-radius:6px; padding:4px 8px; font-size:0.8rem; cursor:pointer;">
+                                                    border:1px solid var(--border-glass); border-radius:6px; padding:4px 8px; font-size:0.8rem; cursor:pointer; color-scheme:dark;">
                                                     <option value="free"   ${u.plan==='free'   ?'selected':''}>Free</option>
                                                     <option value="pro"    ${u.plan==='pro'    ?'selected':''}>Pro</option>
                                                     <option value="promax" ${u.plan==='promax' ?'selected':''}>Pro Max</option>
