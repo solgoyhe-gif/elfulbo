@@ -158,47 +158,94 @@ const App = (() => {
         return coordsMap;
     };
 
-    // ── NAVEGACIÓN (COMPLETA) ────────────────────────────────────────────────
-    const renderNavbar = (activeHash) => {
-        const isLigasActive = activeHash === '#/ligas' || activeHash.includes('#/liga?id=') || activeHash.includes('#/equipo?id=') || activeHash.includes('#/grupo?id=');
-        return `
-            <nav class="navbar desktop-nav">
-                <div class="nav-links-group">
-                    <a href="#/home" class="nav-link ${activeHash === '#/home' ? 'active' : ''}">Inicio</a>
-                    <a href="#/ligas" class="nav-link ${isLigasActive ? 'active' : ''}">Ligas</a>
-                    <a href="#/h2h" class="nav-link ${activeHash === '#/h2h' ? 'active' : ''}">H2H</a>
-                    <a href="#/info" class="nav-link ${activeHash === '#/info' ? 'active' : ''}">Info</a>
-                    <a href="#/other-sports" class="nav-link ${activeHash.includes('#/other-sports') ? 'active' : ''}">Other Sports</a>
-                </div>
-                ${window.FirebaseAuth?.isAuthenticated() ? `<button onclick="window.FirebaseAuth?.logout()" class="btn-logout">Salir</button>` : ''}
-            </nav>
+    // ── SIDEBAR ───────────────────────────────────────────────────────────────
+    // Estado de apertura persistido en localStorage
+    const _sidebarAbierta = () => localStorage.getItem('sidebar_open') !== 'false';
+    const _sidebarToggle  = () => {
+        const abierta = _sidebarAbierta();
+        localStorage.setItem('sidebar_open', String(!abierta));
+        const sb  = document.getElementById('app-sidebar');
+        const wp  = document.getElementById('sidebar-wrapper');
+        if (!sb || !wp) return;
+        sb.classList.toggle('closed', abierta);
+        wp.classList.toggle('sidebar-closed', abierta);
+        // Rotar ícono del toggle
+        const btn = document.getElementById('sidebar-toggle-btn');
+        if (btn) btn.textContent = abierta ? '›' : '‹';
+    };
 
-            ${window.FirebaseAuth?.isAuthenticated() ? `
-            <nav class="mobile-nav">
-                <a href="#/home" class="mobile-nav-item ${activeHash === '#/home' ? 'active' : ''}">
-                    <span class="mobile-icon">🏠</span>
-                    <span>Inicio</span>
-                </a>
-                <a href="#/ligas" class="mobile-nav-item ${isLigasActive ? 'active' : ''}">
-                    <span class="mobile-icon">🏆</span>
-                    <span>Ligas</span>
-                </a>
-                <a href="#/h2h" class="mobile-nav-item ${activeHash === '#/h2h' ? 'active' : ''}">
-                    <span class="mobile-icon">⚔️</span>
-                    <span>H2H</span>
-                </a>
-                <a href="#/info" class="mobile-nav-item ${activeHash === '#/info' ? 'active' : ''}">
-                    <span class="mobile-icon">📰</span>
-                    <span>Info</span>
-                </a>
-                <button onclick="window.FirebaseAuth?.logout()" class="mobile-nav-item" style="background:none; border:none; padding:0; cursor:pointer;">
-                    <span class="mobile-icon" style="filter:none;">🚪</span>
-                    <span style="color:#ff4757;">Salir</span>
-                </button>
-            </nav>
-            ` : ''}
+    const renderNavbar = (activeHash) => {
+        if (!window.FirebaseAuth?.isAuthenticated()) return '';
+
+        const isLigasActive = activeHash === '#/ligas'
+            || activeHash.includes('#/liga?id=')
+            || activeHash.includes('#/equipo?id=')
+            || activeHash.includes('#/grupo?id=');
+
+        const plan   = window.FirebaseAuth?.getPlan() ?? 'free';
+        const nombre = window.FirebaseAuth?.getNombre()?.split(' ')[0] ?? '';
+        const abierta = _sidebarAbierta();
+
+        const planMeta = {
+            free:   { color: '#888',    bg: 'rgba(136,136,136,0.2)', emoji: '⚽', label: 'FREE'    },
+            pro:    { color: '#39ff14', bg: 'rgba(57,255,20,0.2)',   emoji: '🔥', label: 'PRO'     },
+            promax: { color: '#ffd700', bg: 'rgba(255,215,0,0.2)',   emoji: '👑', label: 'PRO MAX' },
+        };
+        const pm = planMeta[plan] ?? planMeta.free;
+
+        const links = [
+            { href: '#/home',         icon: '🏠', label: 'Inicio',       active: activeHash === '#/home' },
+            { href: '#/ligas',        icon: '🏆', label: 'Ligas',        active: isLigasActive },
+            { href: '#/h2h',          icon: '⚔️', label: 'H2H',          active: activeHash === '#/h2h' },
+            { href: '#/info',         icon: '📰', label: 'Info',         active: activeHash === '#/info' },
+            { href: '#/other-sports', icon: '🎽', label: 'Other Sports', active: activeHash.includes('#/other-sports') },
+            { href: '#/perfil',       icon: '👤', label: 'Perfil',       active: activeHash === '#/perfil' },
+        ];
+
+        return `
+            <aside id="app-sidebar" class="sidebar ${abierta ? '' : 'closed'}">
+                <div class="sidebar-header">
+                    <span class="sidebar-logo">WHISTLE</span>
+                    <button id="sidebar-toggle-btn" class="sidebar-toggle"
+                        onclick="window._sidebarToggle()" title="Expandir / retraer">
+                        ${abierta ? '‹' : '›'}
+                    </button>
+                </div>
+
+                <nav class="sidebar-nav">
+                    ${links.map(l => `
+                        <a href="${l.href}" class="sidebar-link ${l.active ? 'active' : ''}">
+                            <span class="sidebar-icon">${l.icon}</span>
+                            <span class="sidebar-label">${l.label}</span>
+                        </a>`).join('')}
+
+                    <div class="sidebar-divider"></div>
+                </nav>
+
+                <div class="sidebar-footer">
+                    <div class="sidebar-plan">
+                        <span class="sidebar-plan-badge"
+                            style="background:${pm.bg}; color:${pm.color};">
+                            ${pm.emoji} ${pm.label}
+                        </span>
+                        <span class="sidebar-plan-name">${nombre}</span>
+                    </div>
+                    <button class="sidebar-link" onclick="window.FirebaseAuth?.logout()"
+                        style="color:#ff4757;">
+                        <span class="sidebar-icon">🚪</span>
+                        <span class="sidebar-label">Salir</span>
+                    </button>
+                </div>
+            </aside>
+            <div id="sidebar-wrapper" class="sidebar-page-wrapper ${abierta ? '' : 'sidebar-closed'}">
         `;
     };
+
+    // Cierre del wrapper — se agrega al final de cada vista
+    const _closeSidebarWrapper = () => window.FirebaseAuth?.isAuthenticated() ? '</div>' : '';
+
+    // Exponer toggle globalmente
+    window._sidebarToggle = _sidebarToggle;
 
     // ── EFECTOS DE CARGA (SKELETONS) ──────────────────────────────────────────
     const _skeletonTabla = () => {
@@ -333,6 +380,7 @@ const App = (() => {
                 </div>` : ''}
 
             </main>
+        ${_closeSidebarWrapper()}
         `;
 
         // Helper: renderizar un partido en el home
@@ -490,7 +538,7 @@ const App = (() => {
             html += `</div></div>`;
         }
 
-        html += `</main>`;
+        html += `</main>${_closeSidebarWrapper()}`;
         appContainer.innerHTML = html;
     };
 
@@ -530,6 +578,7 @@ const App = (() => {
                     </div>
                 </div>
             </main>
+        ${_closeSidebarWrapper()}
         `;
 
         try {
@@ -614,6 +663,7 @@ const App = (() => {
                 <p style="margin-top: 1.5rem; color: var(--accent-neon); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Sincronizando grupos en vivo...</p>
                 <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
             </main>
+        ${_closeSidebarWrapper()}
         `;
 
         let gruposData = [];
@@ -828,6 +878,7 @@ const App = (() => {
                     ${tablaTercerosHtml}
                 </div>
             </main>
+        ${_closeSidebarWrapper()}
         `;
 
         window._mundialTab = async (tab) => {
@@ -1160,6 +1211,7 @@ const App = (() => {
                     <p style="margin-top: 1.5rem; color: var(--accent-neon); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 1px;">Analizando estadísticas de ${grupoNombre}...</p>
                 </div>
             </main>
+        ${_closeSidebarWrapper()}
         `;
 
         let equipos = [];
@@ -1256,6 +1308,7 @@ const App = (() => {
                     </div>
                 </div>
             </main>
+        ${_closeSidebarWrapper()}
         `;
     };
 
@@ -1274,6 +1327,7 @@ const App = (() => {
                     <p style="margin-top: 1.5rem; color: var(--accent-neon); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 1px;">Extrayendo datos de ESPN...</p>
                 </div>
             </main>
+        ${_closeSidebarWrapper()}
         `;
 
         // ── Helpers ───────────────────────────────────────────────────────────
@@ -1501,6 +1555,7 @@ const App = (() => {
                     </div>
                 </div>
             </main>
+        ${_closeSidebarWrapper()}
         `;
 
         // ── Dibujar un jugador en la pizarra ─────────────────────────────────
@@ -1741,6 +1796,7 @@ const App = (() => {
                     </div>
                 </div>
             </main>
+        ${_closeSidebarWrapper()}
         `;
 
         // ── Helper: stat bar ──────────────────────────────────────────────────
@@ -2072,6 +2128,7 @@ const App = (() => {
                         </div>`).join('')}
                 </div>
             </main>
+        ${_closeSidebarWrapper()}
         `;
 
         try {
@@ -2619,6 +2676,7 @@ const App = (() => {
                     CERRAR SESIÓN
                 </button>
             </main>
+        ${_closeSidebarWrapper()}
         `;
 
         // ── Handlers ─────────────────────────────────────────────────────────
@@ -2689,54 +2747,12 @@ const App = (() => {
                     </div>
                 </div>
             </main>
+        ${_closeSidebarWrapper()}
         `;
     };
 
-    // ── NAVBAR actualizada con perfil ────────────────────────────────────────
-    const _renderNavbarConPerfil = (activeHash) => {
-        const isLigasActive = activeHash === '#/ligas' || activeHash.includes('#/liga?id=') || activeHash.includes('#/equipo?id=') || activeHash.includes('#/grupo?id=');
-        const nombre = window.FirebaseAuth?.getNombre() ?? '';
-        const plan   = window.FirebaseAuth?.getPlan() ?? 'free';
-        return `
-            <nav class="navbar desktop-nav">
-                <div class="nav-links-group">
-                    <a href="#/home" class="nav-link ${activeHash === '#/home' ? 'active' : ''}">Inicio</a>
-                    <a href="#/ligas" class="nav-link ${isLigasActive ? 'active' : ''}">Ligas</a>
-                    <a href="#/h2h" class="nav-link ${activeHash === '#/h2h' ? 'active' : ''}">H2H</a>
-                    <a href="#/info" class="nav-link ${activeHash === '#/info' ? 'active' : ''}">Info</a>
-                </div>
-                <a href="#/perfil" style="display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--text-main);">
-                    <div style="width:30px; height:30px; border-radius:50%; background:rgba(57,255,20,0.15);
-                        border:1px solid var(--accent-neon); display:flex; align-items:center; justify-content:center;
-                        font-weight:800; font-size:0.85rem;">
-                        ${nombre.charAt(0).toUpperCase()}
-                    </div>
-                    ${plan === 'premium' ? '<span style="font-size:0.7rem; color:#ffd700; font-weight:800;">⭐ PRO</span>' : ''}
-                </a>
-            </nav>
-
-            <nav class="mobile-nav">
-                <a href="#/home" class="mobile-nav-item ${activeHash === '#/home' ? 'active' : ''}">
-                    <span class="mobile-icon">🏠</span><span>Inicio</span>
-                </a>
-                <a href="#/ligas" class="mobile-nav-item ${isLigasActive ? 'active' : ''}">
-                    <span class="mobile-icon">🏆</span><span>Ligas</span>
-                </a>
-                <a href="#/h2h" class="mobile-nav-item ${activeHash === '#/h2h' ? 'active' : ''}">
-                    <span class="mobile-icon">⚔️</span><span>H2H</span>
-                </a>
-                <a href="#/info" class="mobile-nav-item ${activeHash === '#/info' ? 'active' : ''}">
-                    <span class="mobile-icon">📰</span><span>Info</span>
-                </a>
-                <a href="#/other-sports" class="mobile-nav-item ${activeHash.includes('#/other-sports') ? 'active' : ''}">
-                    <span class="mobile-icon">🏅</span><span>Sports</span>
-                </a>
-                <a href="#/perfil" class="mobile-nav-item ${activeHash === '#/perfil' ? 'active' : ''}">
-                    <span class="mobile-icon">👤</span><span>Perfil</span>
-                </a>
-            </nav>
-        `;
-    };
+    // _renderNavbarConPerfil ahora es alias de renderNavbar (la sidebar ya incluye perfil)
+    const _renderNavbarConPerfil = (activeHash) => renderNavbar(activeHash);
 
     // ── SETUP / PRE-PERFIL ───────────────────────────────────────────────────
     const renderSetup = () => {
@@ -3211,6 +3227,7 @@ const App = (() => {
                             </div>`).join('')}
                     </div>
                 </main>
+            ${_closeSidebarWrapper()}
             `;
             return;
         }
@@ -3270,6 +3287,7 @@ const App = (() => {
                     </div>
                 </div>
             </main>
+        ${_closeSidebarWrapper()}
         `;
 
         if (!deporteActual || !ligaActual) return;
@@ -3579,6 +3597,7 @@ const App = (() => {
                         }).join('')}
                     </div>` : ''}
                 </main>
+            ${_closeSidebarWrapper()}
             `;
 
             // Auto-refresh si está en vivo
@@ -3653,6 +3672,7 @@ const App = (() => {
                     </div>
                 </div>
             </main>
+        ${_closeSidebarWrapper()}
         `;
 
         try {
@@ -3844,6 +3864,7 @@ const App = (() => {
                     <main class="page-container fade-in" style="text-align: center; padding-top: 15%;">
                         <h2 class="section-title" style="border: none; color: var(--accent-neon);">Módulo en desarrollo</h2>
                     </main>
+                ${_closeSidebarWrapper()}
                 `;
         }
     };
