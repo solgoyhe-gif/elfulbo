@@ -2636,6 +2636,50 @@ const App = (() => {
                     ${_renderDeportes(window._deportesPerfil)}
                 </div>
 
+                <!-- Notificaciones en vivo (Pro Max) -->
+                ${await (async () => {
+                    if (plan !== 'promax') return `
+                        <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
+                            <h3 class="panel-title" style="margin-bottom:1rem;">🔔 Notificaciones en vivo</h3>
+                            <div style="text-align:center; padding:1rem; border:1px dashed var(--border-glass); border-radius:12px;">
+                                <div style="font-size:2rem; margin-bottom:0.5rem;">🔒</div>
+                                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">
+                                    Las notificaciones de goles en vivo son exclusivas de Pro Max.
+                                </p>
+                                <button class="btn-primary" style="background:#ffd700; color:#000;"
+                                    onclick="window.location.hash='#/planes'">
+                                    VER PRO MAX 👑
+                                </button>
+                            </div>
+                        </div>`;
+
+                    const activo = await pushEstaActivo();
+                    return `
+                        <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
+                            <h3 class="panel-title" style="margin-bottom:0.5rem;">🔔 Notificaciones en vivo</h3>
+                            <p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:1.2rem;">
+                                Recibí una notificación cuando tu equipo favorito o tus ligas metan un gol.
+                            </p>
+                            <div id="push-estado">
+                                ${activo ? `
+                                    <span style="color:var(--accent-neon); font-weight:700;">🔔 Notificaciones activas</span>
+                                    <button onclick="window._desactivarPush(this)"
+                                        style="margin-left:12px; background:none; border:1px solid #ff4757;
+                                        color:#ff4757; border-radius:6px; padding:4px 10px; cursor:pointer;
+                                        font-size:0.75rem; font-family:var(--font-heading);">
+                                        DESACTIVAR
+                                    </button>
+                                ` : `
+                                    <button id="push-btn-activar" class="btn-primary"
+                                        onclick="window._activarPush(this)"
+                                        style="width:100%;">
+                                        🔔 ACTIVAR NOTIFICACIONES
+                                    </button>
+                                `}
+                            </div>
+                        </div>`;
+                })()}
+
                 <!-- Plan actual -->
                 <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
                     <h3 class="panel-title" style="margin-bottom:1rem;">💳 Plan Actual</h3>
@@ -3869,19 +3913,127 @@ const App = (() => {
         }
     };
 
+    // ── PUSH NOTIFICATIONS ───────────────────────────────────────────────────
+    const CF_WORKER_PUSH = 'https://elfulbo.solgoyhe.workers.dev';
+
+    const _urlBase64ToUint8Array = (base64String) => {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const raw     = atob(base64);
+        return new Uint8Array([...raw].map(c => c.charCodeAt(0)));
+    };
+
+    const pushEstaActivo = async () => {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+        const reg = await navigator.serviceWorker.getRegistration('/elfulbo/sw.js').catch(() => null);
+        if (!reg) return false;
+        const sub = await reg.pushManager.getSubscription().catch(() => null);
+        return !!sub;
+    };
+
+    window._activarPush = async (btnEl) => {
+        const plan = window.FirebaseAuth?.getPlan() ?? 'free';
+        if (plan !== 'promax') return;
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            alert('Tu navegador no soporta notificaciones push. Probá con Chrome o Edge.');
+            return;
+        }
+        try {
+            btnEl.textContent = 'Activando...';
+            btnEl.disabled = true;
+
+            const reg = await navigator.serviceWorker.register('/elfulbo/sw.js', { scope: '/elfulbo/' });
+            await navigator.serviceWorker.ready;
+
+            const permiso = await Notification.requestPermission();
+            if (permiso !== 'granted') {
+                btnEl.textContent = '🔔 ACTIVAR NOTIFICACIONES';
+                btnEl.disabled = false;
+                return;
+            }
+
+            const vapidRes = await fetch(`${CF_WORKER_PUSH}/push/vapid-key`);
+            const { key: vapidKey } = await vapidRes.json();
+
+            const subscription = await reg.pushManager.subscribe({
+                userVisibleOnly:      true,
+                applicationServerKey: _urlBase64ToUint8Array(vapidKey),
+            });
+
+            const perfil  = window.FirebaseAuth?.getPerfil();
+            const uid     = window.FirebaseAuth?.getUser()?.uid;
+            const subJson = subscription.toJSON();
+
+            await fetch(`${CF_WORKER_PUSH}/push/suscribir`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    uid,
+                    subscription:   subJson,
+                    equipoFavorito: perfil?.equipoFavorito ?? '',
+                    ligas:          perfil?.ligaNacional ? [perfil.ligaNacional] : [],
+                }),
+            });
+
+            const estadoEl = document.getElementById('push-estado');
+            if (estadoEl) {
+                estadoEl.innerHTML = `
+                    <span style="color:var(--accent-neon); font-weight:700;">🔔 Notificaciones activas</span>
+                    <button onclick="window._desactivarPush(this)"
+                        style="margin-left:12px; background:none; border:1px solid #ff4757;
+                        color:#ff4757; border-radius:6px; padding:4px 10px; cursor:pointer;
+                        font-size:0.75rem; font-family:var(--font-heading);">
+                        DESACTIVAR
+                    </button>`;
+            }
+        } catch (err) {
+            console.error('[PUSH] Error activando:', err);
+            btnEl.textContent = '⚠️ Error — Intentá de nuevo';
+            btnEl.disabled = false;
+        }
+    };
+
+    window._desactivarPush = async (btnEl) => {
+        try {
+            btnEl.textContent = 'Desactivando...';
+            btnEl.disabled = true;
+            const reg = await navigator.serviceWorker.getRegistration('/elfulbo/sw.js').catch(() => null);
+            if (reg) {
+                const sub = await reg.pushManager.getSubscription().catch(() => null);
+                if (sub) await sub.unsubscribe();
+            }
+            const uid = window.FirebaseAuth?.getUser()?.uid;
+            if (uid) {
+                await fetch(`${CF_WORKER_PUSH}/push/desuscribir`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ uid }),
+                });
+            }
+            await renderPerfil();
+        } catch (err) {
+            console.error('[PUSH] Error desactivando:', err);
+            btnEl.textContent = '⚠️ Error';
+            btnEl.disabled = false;
+        }
+    };
+
+    // ── INIT ─────────────────────────────────────────────────────────────────
     const init = async () => {
         window.addEventListener('hashchange', router);
 
-        // Esperar a que Firebase resuelva el estado de auth antes del primer render
+        // Registrar SW en background sin bloquear
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/elfulbo/sw.js', { scope: '/elfulbo/' })
+                .catch(err => console.warn('[SW] No se pudo registrar:', err.message));
+        }
+
         await Promise.race([
             window.FirebaseAuth?.esperarListo() ?? Promise.resolve(),
-            new Promise(r => setTimeout(r, 3000)) // timeout 3s por las dudas
+            new Promise(r => setTimeout(r, 3000))
         ]);
 
-        // Primer render
         await router();
-
-        // Re-rutear cuando cambie el estado de auth
         window.FirebaseAuth?.onChange(() => router());
     };
 
