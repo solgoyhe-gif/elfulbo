@@ -158,94 +158,47 @@ const App = (() => {
         return coordsMap;
     };
 
-    // ── SIDEBAR ───────────────────────────────────────────────────────────────
-    // Estado de apertura persistido en localStorage
-    const _sidebarAbierta = () => localStorage.getItem('sidebar_open') !== 'false';
-    const _sidebarToggle  = () => {
-        const abierta = _sidebarAbierta();
-        localStorage.setItem('sidebar_open', String(!abierta));
-        const sb  = document.getElementById('app-sidebar');
-        const wp  = document.getElementById('sidebar-wrapper');
-        if (!sb || !wp) return;
-        sb.classList.toggle('closed', abierta);
-        wp.classList.toggle('sidebar-closed', abierta);
-        // Rotar ícono del toggle
-        const btn = document.getElementById('sidebar-toggle-btn');
-        if (btn) btn.textContent = abierta ? '›' : '‹';
-    };
-
+    // ── NAVEGACIÓN (COMPLETA) ────────────────────────────────────────────────
     const renderNavbar = (activeHash) => {
-        if (!window.FirebaseAuth?.isAuthenticated()) return '';
-
-        const isLigasActive = activeHash === '#/ligas'
-            || activeHash.includes('#/liga?id=')
-            || activeHash.includes('#/equipo?id=')
-            || activeHash.includes('#/grupo?id=');
-
-        const plan   = window.FirebaseAuth?.getPlan() ?? 'free';
-        const nombre = window.FirebaseAuth?.getNombre()?.split(' ')[0] ?? '';
-        const abierta = _sidebarAbierta();
-
-        const planMeta = {
-            free:   { color: '#888',    bg: 'rgba(136,136,136,0.2)', emoji: '⚽', label: 'FREE'    },
-            pro:    { color: '#39ff14', bg: 'rgba(57,255,20,0.2)',   emoji: '🎟️', label: 'PLATEA'  },
-            promax: { color: '#ffd700', bg: 'rgba(255,215,0,0.2)',   emoji: '👑', label: 'PALCO' },
-        };
-        const pm = planMeta[plan] ?? planMeta.free;
-
-        const links = [
-            { href: '#/home',         icon: '🏠', label: 'Inicio',       active: activeHash === '#/home' },
-            { href: '#/ligas',        icon: '🏆', label: 'Ligas',        active: isLigasActive },
-            { href: '#/h2h',          icon: '⚔️', label: 'H2H',          active: activeHash === '#/h2h' },
-            { href: '#/info',         icon: '📰', label: 'Info',         active: activeHash === '#/info' },
-            { href: '#/other-sports', icon: '🎽', label: 'Other Sports', active: activeHash.includes('#/other-sports') },
-            { href: '#/perfil',       icon: '👤', label: 'Perfil',       active: activeHash === '#/perfil' },
-        ];
-
+        const isLigasActive = activeHash === '#/ligas' || activeHash.includes('#/liga?id=') || activeHash.includes('#/equipo?id=') || activeHash.includes('#/grupo?id=');
         return `
-            <aside id="app-sidebar" class="sidebar ${abierta ? '' : 'closed'}">
-                <div class="sidebar-header">
-                    <span class="sidebar-logo">WHISTLE</span>
-                    <button id="sidebar-toggle-btn" class="sidebar-toggle"
-                        onclick="window._sidebarToggle()" title="Expandir / retraer">
-                        ${abierta ? '‹' : '›'}
-                    </button>
+            <nav class="navbar desktop-nav">
+                <div class="nav-links-group">
+                    <a href="#/home" class="nav-link ${activeHash === '#/home' ? 'active' : ''}">Inicio</a>
+                    <a href="#/ligas" class="nav-link ${isLigasActive ? 'active' : ''}">Ligas</a>
+                    <a href="#/h2h" class="nav-link ${activeHash === '#/h2h' ? 'active' : ''}">H2H</a>
+                    <a href="#/info" class="nav-link ${activeHash === '#/info' ? 'active' : ''}">Info</a>
+                    <a href="#/other-sports" class="nav-link ${activeHash.includes('#/other-sports') ? 'active' : ''}">Other Sports</a>
                 </div>
+                ${window.FirebaseAuth?.isAuthenticated() ? `<button onclick="window.FirebaseAuth?.logout()" class="btn-logout">Salir</button>` : ''}
+            </nav>
 
-                <nav class="sidebar-nav">
-                    ${links.map(l => `
-                        <a href="${l.href}" class="sidebar-link ${l.active ? 'active' : ''}">
-                            <span class="sidebar-icon">${l.icon}</span>
-                            <span class="sidebar-label">${l.label}</span>
-                        </a>`).join('')}
-
-                    <div class="sidebar-divider"></div>
-                </nav>
-
-                <div class="sidebar-footer">
-                    <div class="sidebar-plan">
-                        <span class="sidebar-plan-badge"
-                            style="background:${pm.bg}; color:${pm.color};">
-                            ${pm.emoji} ${pm.label}
-                        </span>
-                        <span class="sidebar-plan-name">${nombre}</span>
-                    </div>
-                    <button class="sidebar-link" onclick="window.FirebaseAuth?.logout()"
-                        style="color:#ff4757;">
-                        <span class="sidebar-icon">🚪</span>
-                        <span class="sidebar-label">Salir</span>
-                    </button>
-                </div>
-            </aside>
-            <div id="sidebar-wrapper" class="sidebar-page-wrapper ${abierta ? '' : 'sidebar-closed'}">
+            ${window.FirebaseAuth?.isAuthenticated() ? `
+            <nav class="mobile-nav">
+                <a href="#/home" class="mobile-nav-item ${activeHash === '#/home' ? 'active' : ''}">
+                    <span class="mobile-icon">🏠</span>
+                    <span>Inicio</span>
+                </a>
+                <a href="#/ligas" class="mobile-nav-item ${isLigasActive ? 'active' : ''}">
+                    <span class="mobile-icon">🏆</span>
+                    <span>Ligas</span>
+                </a>
+                <a href="#/h2h" class="mobile-nav-item ${activeHash === '#/h2h' ? 'active' : ''}">
+                    <span class="mobile-icon">⚔️</span>
+                    <span>H2H</span>
+                </a>
+                <a href="#/info" class="mobile-nav-item ${activeHash === '#/info' ? 'active' : ''}">
+                    <span class="mobile-icon">📰</span>
+                    <span>Info</span>
+                </a>
+                <button onclick="window.FirebaseAuth?.logout()" class="mobile-nav-item" style="background:none; border:none; padding:0; cursor:pointer;">
+                    <span class="mobile-icon" style="filter:none;">🚪</span>
+                    <span style="color:#ff4757;">Salir</span>
+                </button>
+            </nav>
+            ` : ''}
         `;
     };
-
-    // Cierre del wrapper — se agrega al final de cada vista
-    const _closeSidebarWrapper = () => window.FirebaseAuth?.isAuthenticated() ? '</div>' : '';
-
-    // Exponer toggle globalmente
-    window._sidebarToggle = _sidebarToggle;
 
     // ── EFECTOS DE CARGA (SKELETONS) ──────────────────────────────────────────
     const _skeletonTabla = () => {
@@ -380,7 +333,6 @@ const App = (() => {
                 </div>` : ''}
 
             </main>
-        ${_closeSidebarWrapper()}
         `;
 
         // Helper: renderizar un partido en el home
@@ -538,7 +490,7 @@ const App = (() => {
             html += `</div></div>`;
         }
 
-        html += `</main>${_closeSidebarWrapper()}`;
+        html += `</main>`;
         appContainer.innerHTML = html;
     };
 
@@ -578,7 +530,6 @@ const App = (() => {
                     </div>
                 </div>
             </main>
-        ${_closeSidebarWrapper()}
         `;
 
         try {
@@ -663,7 +614,6 @@ const App = (() => {
                 <p style="margin-top: 1.5rem; color: var(--accent-neon); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Sincronizando grupos en vivo...</p>
                 <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
             </main>
-        ${_closeSidebarWrapper()}
         `;
 
         let gruposData = [];
@@ -878,7 +828,6 @@ const App = (() => {
                     ${tablaTercerosHtml}
                 </div>
             </main>
-        ${_closeSidebarWrapper()}
         `;
 
         window._mundialTab = async (tab) => {
@@ -1211,7 +1160,6 @@ const App = (() => {
                     <p style="margin-top: 1.5rem; color: var(--accent-neon); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 1px;">Analizando estadísticas de ${grupoNombre}...</p>
                 </div>
             </main>
-        ${_closeSidebarWrapper()}
         `;
 
         let equipos = [];
@@ -1308,7 +1256,6 @@ const App = (() => {
                     </div>
                 </div>
             </main>
-        ${_closeSidebarWrapper()}
         `;
     };
 
@@ -1327,7 +1274,6 @@ const App = (() => {
                     <p style="margin-top: 1.5rem; color: var(--accent-neon); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 1px;">Extrayendo datos de ESPN...</p>
                 </div>
             </main>
-        ${_closeSidebarWrapper()}
         `;
 
         // ── Helpers ───────────────────────────────────────────────────────────
@@ -1504,7 +1450,7 @@ const App = (() => {
                         ${_esPro() ? rosterHtml : `
                             <div style="text-align:center; padding:2rem;">
                                 <p style="font-size:1.5rem; margin-bottom:0.5rem;">🔒</p>
-                                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Lista de convocados disponible en Plan Platea</p>
+                                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Lista de convocados disponible en Plan Pro</p>
                                 <a href="#/planes" style="color:var(--accent-neon); font-weight:700; font-size:0.85rem;">Ver planes →</a>
                             </div>`}
                     </div>
@@ -1555,7 +1501,6 @@ const App = (() => {
                     </div>
                 </div>
             </main>
-        ${_closeSidebarWrapper()}
         `;
 
         // ── Dibujar un jugador en la pizarra ─────────────────────────────────
@@ -1796,7 +1741,6 @@ const App = (() => {
                     </div>
                 </div>
             </main>
-        ${_closeSidebarWrapper()}
         `;
 
         // ── Helper: stat bar ──────────────────────────────────────────────────
@@ -2128,7 +2072,6 @@ const App = (() => {
                         </div>`).join('')}
                 </div>
             </main>
-        ${_closeSidebarWrapper()}
         `;
 
         try {
@@ -2380,13 +2323,13 @@ const App = (() => {
                     <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
                         gap:1.5rem; max-width:860px; width:100%; padding-bottom:5rem;">
 
-                        <!-- FREE -->
+                        <!-- POPULAR -->
                         <div class="glass-panel" style="padding:1.8rem; text-align:left;">
                             <div style="font-size:1.8rem; margin-bottom:0.5rem;">⚽</div>
-                            <div style="font-family:var(--font-heading); font-size:1.3rem; font-weight:900; margin-bottom:0.3rem;">Free</div>
+                            <div style="font-family:var(--font-heading); font-size:1.3rem; font-weight:900; margin-bottom:0.3rem;">Popular</div>
                             <div style="font-family:var(--font-heading); font-size:1.8rem; font-weight:900; color:var(--text-muted); margin-bottom:0.8rem;">Gratis</div>
                             <p style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; margin-bottom:1.2rem;">
-                                Para el que quiere seguir el Mundial sin complicarse.
+                                La cancha siempre abierta. Seguí el Mundial, los partidos del día y tu liga favorita sin pagar nada.
                             </p>
                             ${[
                                 {t:'Tabla de grupos Mundial 2026', ok:true},
@@ -2411,7 +2354,7 @@ const App = (() => {
                             </button>
                         </div>
 
-                        <!-- PRO -->
+                        <!-- PLATEA -->
                         <div class="glass-panel" style="padding:1.8rem; text-align:left;
                             border-color:var(--accent-neon); background:rgba(57,255,20,0.04); position:relative;">
                             <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%);
@@ -2419,18 +2362,18 @@ const App = (() => {
                                 padding:3px 14px; border-radius:20px; font-family:var(--font-heading); letter-spacing:1px; white-space:nowrap;">
                                 MÁS POPULAR
                             </div>
-                            <div style="font-size:1.8rem; margin-bottom:0.5rem;">🔥</div>
+                            <div style="font-size:1.8rem; margin-bottom:0.5rem;">🎟️</div>
                             <div style="font-family:var(--font-heading); font-size:1.3rem; font-weight:900;
-                                color:var(--accent-neon); margin-bottom:0.3rem;">Pro</div>
+                                color:var(--accent-neon); margin-bottom:0.3rem;">Platea</div>
                             <div id="precio-pro" style="font-family:var(--font-heading); font-size:1.8rem;
                                 font-weight:900; color:var(--accent-neon); margin-bottom:0.8rem;">
                                 $4.99<span style="font-size:0.85rem; color:var(--text-muted);">/mes</span>
                             </div>
                             <p style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; margin-bottom:1.2rem;">
-                                Para el futbolero de verdad. Todas las ligas y stats completas.
+                                Todas las ligas de fútbol, estadísticas completas, alineaciones tácticas y noticias traducidas. Viví el fútbol desde la Platea.
                             </p>
                             ${[
-                                {t:'Todo lo de Free', ok:true},
+                                {t:'Todo lo de Popular', ok:true},
                                 {t:'Todas las ligas de fútbol', ok:true},
                                 {t:'Estadísticas del partido', ok:true},
                                 {t:'Alineaciones tácticas', ok:true},
@@ -2463,10 +2406,10 @@ const App = (() => {
                                 $14.99<span style="font-size:0.85rem; color:var(--text-muted);">/mes</span>
                             </div>
                             <p style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; margin-bottom:1.2rem;">
-                                Para el fanático total. Todo lo de Pro más todos los deportes y notificaciones en vivo.
+                                Acceso completo a todas las ligas, deportes y estadísticas. Notificaciones en tiempo real e historial extendido. La experiencia definitiva.
                             </p>
                             ${[
-                                {t:'Todo lo de Pro', ok:true},
+                                {t:'Todo lo de Platea', ok:true},
                                 {t:'Todos los deportes', ok:true},
                                 {t:'Notificaciones en vivo', ok:true},
                                 {t:'Historial extendido', ok:true},
@@ -2498,91 +2441,6 @@ const App = (() => {
         const perfil = window.FirebaseAuth?.getPerfil();
         const plan   = window.FirebaseAuth?.getPlan() ?? 'free';
 
-        // ── Colores y labels por plan ────────────────────────────────────────
-        const planMeta = {
-            free:   { color: '#888',    emoji: '⚽', label: 'POPULAR',  bg: 'rgba(136,136,136,0.15)' },
-            pro:    { color: '#39ff14', emoji: '🎟️', label: 'PLATEA',   bg: 'rgba(57,255,20,0.15)'   },
-            promax: { color: '#ffd700', emoji: '👑', label: 'PALCO',    bg: 'rgba(255,215,0,0.15)'   },
-        };
-        const meta = planMeta[plan] ?? planMeta.free;
-
-        // ── Lista de deportes disponibles (misma que el setup) ───────────────
-        const DEPORTES_DISP = [
-            {id:'basketball', nombre:'Básquet',            emoji:'🏀'},
-            {id:'tennis',     nombre:'Tenis',              emoji:'🎾'},
-            {id:'racing',     nombre:'Fórmula 1',          emoji:'🏎️'},
-            {id:'football',   nombre:'Fútbol Americano',   emoji:'🏈'},
-            {id:'baseball',   nombre:'Baseball',           emoji:'⚾'},
-            {id:'hockey',     nombre:'Hockey sobre Hielo', emoji:'🏒'},
-            {id:'golf',       nombre:'Golf',               emoji:'⛳'},
-            {id:'mma',        nombre:'MMA',                emoji:'🥊'},
-            {id:'rugby',      nombre:'Rugby',              emoji:'🏉'},
-        ];
-
-        const maxDep = plan === 'promax' ? 99 : plan === 'pro' ? 1 : 0;
-
-        // ── Render de la grilla de deportes ──────────────────────────────────
-        const _renderDeportes = (deportesActuales) => {
-            if (maxDep === 0) {
-                return `
-                    <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
-                        <h3 class="panel-title" style="margin-bottom:1rem;">🏅 Otros deportes</h3>
-                        <div style="text-align:center; padding:1.5rem; border:1px dashed var(--border-glass); border-radius:12px;">
-                            <div style="font-size:2rem; margin-bottom:0.5rem;">🔒</div>
-                            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">
-                                Los otros deportes están disponibles desde el plan Platea.
-                            </p>
-                            <button class="btn-primary" style="background:#39ff14; color:#000;"
-                                onclick="window.location.hash='#/planes'">
-                                VER PLANES →
-                            </button>
-                        </div>
-                    </div>`;
-            }
-
-            const planLabel = plan === 'pro'
-                ? '🔥 Plan Platea — podés elegir 1 deporte adicional.'
-                : '👑 Plan Palco — elegí todos los que quieras.';
-
-            const cards = DEPORTES_DISP.map(d => {
-                const sel     = deportesActuales.includes(d.id);
-                const bloq    = !sel && deportesActuales.length >= maxDep;
-                const border  = sel  ? 'var(--accent-neon)' : 'var(--border-glass)';
-                const bg      = sel  ? 'rgba(57,255,20,0.1)' : 'rgba(255,255,255,0.03)';
-                const cursor  = bloq ? 'default' : 'pointer';
-                const opacity = bloq ? '0.4' : '1';
-                const onclick = bloq ? '' : `onclick="window._perfilToggleDeporte('${d.id}')"`;
-                const check   = sel  ? `<div style="font-size:0.65rem; color:var(--accent-neon); margin-top:3px;">✓ Elegido</div>` : '';
-                return `<div ${onclick}
-                    style="padding:12px; border-radius:8px; text-align:center; transition:all 0.2s;
-                    border:2px solid ${border}; background:${bg};
-                    cursor:${cursor}; opacity:${opacity};">
-                    <div style="font-size:1.5rem; margin-bottom:4px;">${d.emoji}</div>
-                    <div style="font-size:0.78rem; font-weight:600;">${d.nombre}</div>
-                    ${check}
-                </div>`;
-            }).join('');
-
-            return `
-                <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
-                    <h3 class="panel-title" style="margin-bottom:0.5rem;">🏅 Mis deportes</h3>
-                    <p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:1.2rem;">${planLabel} El fútbol siempre está incluido.</p>
-                    <div id="deportes-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:0.6rem; margin-bottom:1.2rem;">
-                        ${cards}
-                    </div>
-                    <button class="btn-primary" onclick="window._perfilGuardarDeportes()" style="width:100%;">
-                        GUARDAR DEPORTES
-                    </button>
-                    <div id="deportes-ok" style="display:none; color:var(--accent-neon);
-                        font-size:0.85rem; font-weight:700; margin-top:8px; text-align:center;">
-                        ✓ Deportes guardados
-                    </div>
-                </div>`;
-        };
-
-        // Estado local editable hasta que se guarda
-        window._deportesPerfil = [...(perfil?.deportes ?? [])];
-
         appContainer.innerHTML = `
             ${renderNavbar('#/perfil')}
             <main class="page-container fade-in" style="max-width:600px; margin:0 auto;">
@@ -2590,21 +2448,21 @@ const App = (() => {
 
                 <!-- Info del usuario -->
                 <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
-                    <div style="display:flex; align-items:center; gap:1.2rem;">
-                        <div style="width:60px; height:60px; border-radius:50%;
-                            background:${meta.bg}; border:2px solid ${meta.color};
-                            display:flex; align-items:center; justify-content:center;
-                            font-size:1.5rem; font-weight:800; font-family:var(--font-heading);">
+                    <div style="display:flex; align-items:center; gap:1.2rem; margin-bottom:1.2rem;">
+                        <div style="width:60px; height:60px; border-radius:50%; background:rgba(57,255,20,0.15);
+                            border:2px solid var(--accent-neon); display:flex; align-items:center;
+                            justify-content:center; font-size:1.5rem; font-weight:800; font-family:var(--font-heading);">
                             ${(perfil?.nombre ?? 'U').charAt(0).toUpperCase()}
                         </div>
                         <div>
                             <div style="font-weight:800; font-size:1.1rem;">${perfil?.nombre ?? 'Usuario'}</div>
                             <div style="color:var(--text-muted); font-size:0.85rem;">${user?.email ?? ''}</div>
                             <div style="margin-top:4px;">
-                                <span style="background:${meta.bg}; color:${meta.color};
+                                <span style="background:${plan === 'premium' ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.08)'};
+                                    color:${plan === 'premium' ? '#ffd700' : 'var(--text-muted)'};
                                     padding:2px 10px; border-radius:20px; font-size:0.7rem; font-weight:800;
                                     font-family:var(--font-heading); letter-spacing:1px;">
-                                    ${meta.emoji} ${meta.label}
+                                    ${plan.toUpperCase()}
                                 </span>
                             </div>
                         </div>
@@ -2631,83 +2489,21 @@ const App = (() => {
                     <span id="fav-ok" style="display:none; color:var(--accent-neon); font-size:0.85rem; margin-left:10px; font-weight:700;">✓ Guardado</span>
                 </div>
 
-                <!-- Deportes (dinámico según plan) -->
-                <div id="deportes-section">
-                    ${_renderDeportes(window._deportesPerfil)}
-                </div>
-
-                <!-- Notificaciones en vivo (Palco) -->
-                ${await (async () => {
-                    if (plan !== 'promax') return `
-                        <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
-                            <h3 class="panel-title" style="margin-bottom:1rem;">🔔 Notificaciones en vivo</h3>
-                            <div style="text-align:center; padding:1rem; border:1px dashed var(--border-glass); border-radius:12px;">
-                                <div style="font-size:2rem; margin-bottom:0.5rem;">🔒</div>
-                                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">
-                                    Las notificaciones de goles en vivo son exclusivas del Palco.
-                                </p>
-                                <button class="btn-primary" style="background:#ffd700; color:#000;"
-                                    onclick="window.location.hash='#/planes'">
-                                    VER PALCO 👑
-                                </button>
-                            </div>
-                        </div>`;
-
-                    const activo = await pushEstaActivo();
-                    return `
-                        <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
-                            <h3 class="panel-title" style="margin-bottom:0.5rem;">🔔 Notificaciones en vivo</h3>
-                            <p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:1.2rem;">
-                                Recibí una notificación cuando tu equipo favorito o tus ligas metan un gol.
-                            </p>
-                            <div id="push-estado">
-                                ${activo ? `
-                                    <span style="color:var(--accent-neon); font-weight:700;">🔔 Notificaciones activas</span>
-                                    <button onclick="window._desactivarPush(this)"
-                                        style="margin-left:12px; background:none; border:1px solid #ff4757;
-                                        color:#ff4757; border-radius:6px; padding:4px 10px; cursor:pointer;
-                                        font-size:0.75rem; font-family:var(--font-heading);">
-                                        DESACTIVAR
-                                    </button>
-                                ` : `
-                                    <button id="push-btn-activar" class="btn-primary"
-                                        onclick="window._activarPush(this)"
-                                        style="width:100%;">
-                                        🔔 ACTIVAR NOTIFICACIONES
-                                    </button>
-                                `}
-                            </div>
-                        </div>`;
-                })()}
-
                 <!-- Plan actual -->
                 <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
                     <h3 class="panel-title" style="margin-bottom:1rem;">💳 Plan Actual</h3>
-                    ${plan === 'promax' ? `
+                    ${plan === 'premium' ? `
                         <div style="text-align:center; padding:1rem;">
-                            <div style="font-size:2rem; margin-bottom:0.5rem;">👑</div>
-                            <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:800; color:#ffd700;">Palco activo</div>
+                            <div style="font-size:2rem; margin-bottom:0.5rem;">⭐</div>
+                            <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:800; color:#ffd700;">Premium activo</div>
                             <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.5rem;">Tenés acceso a todas las funciones.</p>
-                        </div>
-                    ` : plan === 'pro' ? `
-                        <div style="text-align:center; padding:1rem;">
-                            <div style="font-size:2rem; margin-bottom:0.5rem;">🔥</div>
-                            <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:800; color:#39ff14;">Platea activo</div>
-                            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.5rem;">
-                                Accedé a todas las ligas de fútbol, stats y alineaciones.
-                            </p>
-                            <button class="btn-primary" style="margin-top:1rem; background:#ffd700; color:#000;"
-                                onclick="window.location.hash='#/planes'">
-                                PASARTE A PALCO 👑
-                            </button>
                         </div>
                     ` : `
                         <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1rem;">
-                            Estás en el plan <strong>Free</strong>. Pasate a Pro para acceder a estadísticas, alineaciones, todas las ligas y más.
+                            Estás en el plan <strong>Free</strong>. Pasate a Premium para acceder a estadísticas, alineaciones y más.
                         </p>
-                        <button class="btn-primary" style="background:#39ff14; color:#000;"
-                            onclick="window.location.hash='#/planes'">
-                            VER PLANES 🔥
+                        <button class="btn-primary" style="background:#ffd700;" onclick="window.location.hash='#/planes'">
+                            VER PLANES ⭐
                         </button>
                     `}
                 </div>
@@ -2720,39 +2516,13 @@ const App = (() => {
                     CERRAR SESIÓN
                 </button>
             </main>
-        ${_closeSidebarWrapper()}
         `;
-
-        // ── Handlers ─────────────────────────────────────────────────────────
 
         window._guardarEquipoFav = async () => {
             const sel = document.getElementById('equipo-fav-select').value;
             await window.FirebaseAuth?.actualizarPerfil({ equipoFavorito: sel });
             const ok = document.getElementById('fav-ok');
             if (ok) { ok.style.display = 'inline'; setTimeout(() => ok.style.display = 'none', 2000); }
-        };
-
-        window._perfilToggleDeporte = (id) => {
-            const idx = window._deportesPerfil.indexOf(id);
-            if (idx >= 0) {
-                window._deportesPerfil.splice(idx, 1);
-            } else {
-                if (window._deportesPerfil.length < maxDep) {
-                    window._deportesPerfil.push(id);
-                }
-            }
-            // Re-render solo la grilla, no toda la página
-            const sec = document.getElementById('deportes-section');
-            if (sec) sec.innerHTML = _renderDeportes(window._deportesPerfil);
-        };
-
-        window._perfilGuardarDeportes = async () => {
-            const deportesGuardar = plan === 'promax'
-                ? window._deportesPerfil
-                : window._deportesPerfil.slice(0, 1);
-            await window.FirebaseAuth?.actualizarPerfil({ deportes: deportesGuardar });
-            const ok = document.getElementById('deportes-ok');
-            if (ok) { ok.style.display = 'block'; setTimeout(() => { ok.style.display = 'none'; }, 2000); }
         };
     };
 
@@ -2791,12 +2561,54 @@ const App = (() => {
                     </div>
                 </div>
             </main>
-        ${_closeSidebarWrapper()}
         `;
     };
 
-    // _renderNavbarConPerfil ahora es alias de renderNavbar (la sidebar ya incluye perfil)
-    const _renderNavbarConPerfil = (activeHash) => renderNavbar(activeHash);
+    // ── NAVBAR actualizada con perfil ────────────────────────────────────────
+    const _renderNavbarConPerfil = (activeHash) => {
+        const isLigasActive = activeHash === '#/ligas' || activeHash.includes('#/liga?id=') || activeHash.includes('#/equipo?id=') || activeHash.includes('#/grupo?id=');
+        const nombre = window.FirebaseAuth?.getNombre() ?? '';
+        const plan   = window.FirebaseAuth?.getPlan() ?? 'free';
+        return `
+            <nav class="navbar desktop-nav">
+                <div class="nav-links-group">
+                    <a href="#/home" class="nav-link ${activeHash === '#/home' ? 'active' : ''}">Inicio</a>
+                    <a href="#/ligas" class="nav-link ${isLigasActive ? 'active' : ''}">Ligas</a>
+                    <a href="#/h2h" class="nav-link ${activeHash === '#/h2h' ? 'active' : ''}">H2H</a>
+                    <a href="#/info" class="nav-link ${activeHash === '#/info' ? 'active' : ''}">Info</a>
+                </div>
+                <a href="#/perfil" style="display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--text-main);">
+                    <div style="width:30px; height:30px; border-radius:50%; background:rgba(57,255,20,0.15);
+                        border:1px solid var(--accent-neon); display:flex; align-items:center; justify-content:center;
+                        font-weight:800; font-size:0.85rem;">
+                        ${nombre.charAt(0).toUpperCase()}
+                    </div>
+                    ${plan === 'premium' ? '<span style="font-size:0.7rem; color:#ffd700; font-weight:800;">⭐ PRO</span>' : ''}
+                </a>
+            </nav>
+
+            <nav class="mobile-nav">
+                <a href="#/home" class="mobile-nav-item ${activeHash === '#/home' ? 'active' : ''}">
+                    <span class="mobile-icon">🏠</span><span>Inicio</span>
+                </a>
+                <a href="#/ligas" class="mobile-nav-item ${isLigasActive ? 'active' : ''}">
+                    <span class="mobile-icon">🏆</span><span>Ligas</span>
+                </a>
+                <a href="#/h2h" class="mobile-nav-item ${activeHash === '#/h2h' ? 'active' : ''}">
+                    <span class="mobile-icon">⚔️</span><span>H2H</span>
+                </a>
+                <a href="#/info" class="mobile-nav-item ${activeHash === '#/info' ? 'active' : ''}">
+                    <span class="mobile-icon">📰</span><span>Info</span>
+                </a>
+                <a href="#/other-sports" class="mobile-nav-item ${activeHash.includes('#/other-sports') ? 'active' : ''}">
+                    <span class="mobile-icon">🏅</span><span>Sports</span>
+                </a>
+                <a href="#/perfil" class="mobile-nav-item ${activeHash === '#/perfil' ? 'active' : ''}">
+                    <span class="mobile-icon">👤</span><span>Perfil</span>
+                </a>
+            </nav>
+        `;
+    };
 
     // ── SETUP / PRE-PERFIL ───────────────────────────────────────────────────
     const renderSetup = () => {
@@ -3031,14 +2843,14 @@ const App = (() => {
                 return '<h3 style="font-family:var(--font-heading); font-size:1.1rem; font-weight:800; margin-bottom:1rem;">🏅 Otros deportes</h3>' +
                     '<div style="text-align:center; padding:1.5rem; border:1px dashed var(--border-glass); border-radius:12px;">' +
                     '<div style="font-size:2rem; margin-bottom:0.5rem;">🔒</div>' +
-                    '<p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Los otros deportes están disponibles desde el plan Platea.</p>' +
+                    '<p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Los otros deportes están disponibles desde el plan Pro.</p>' +
                     '<p style="color:var(--text-muted); font-size:0.75rem;">Podés actualizar tu plan después desde el perfil.</p>' +
                     '</div>';
             }
 
             const planLabel = plan === 'pro'
-                ? 'Plan Platea — podés elegir 1 deporte adicional.'
-                : 'Plan Palco — elegí todos los que quieras.';
+                ? 'Plan Pro — podés elegir 1 deporte adicional.'
+                : 'Plan Pro Max — elegí todos los que quieras.';
 
             const cards = DEPORTES_DISP.map(d => {
                 const sel      = _datos.deportes.includes(d.id);
@@ -3144,7 +2956,7 @@ const App = (() => {
         <div style="padding:2rem; text-align:center; border:1px dashed var(--border-glass); border-radius:12px; margin:1rem 0;">
             <div style="font-size:2rem; margin-bottom:0.5rem;">${requiere === 'promax' ? '👑' : '🔥'}</div>
             <p style="font-weight:700; color:${requiere === 'promax' ? '#ffd700' : 'var(--accent-neon)'}; font-family:var(--font-heading); margin-bottom:0.5rem;">
-                Requiere ${requiere === 'promax' ? 'Palco' : 'Pro'}
+                Requiere ${requiere === 'promax' ? 'Pro Max' : 'Pro'}
             </p>
             <p style="color:var(--text-muted); font-size:0.82rem; margin-bottom:1rem;">${mensaje}</p>
             <button onclick="window.location.hash='#/planes'"
@@ -3249,10 +3061,10 @@ const App = (() => {
                     <div class="glass-panel" style="padding:3rem; text-align:center; margin-bottom:2rem;">
                         <div style="font-size:3rem; margin-bottom:1rem;">👑</div>
                         <h3 style="font-family:var(--font-heading); font-size:1.3rem; font-weight:900; color:#ffd700; margin-bottom:0.8rem;">
-                            Requiere Palco
+                            Requiere Pro Max
                         </h3>
                         <p style="color:var(--text-muted); font-size:0.9rem; line-height:1.6; max-width:400px; margin:0 auto 1.5rem;">
-                            Accedé a todos los deportes — básquet, tenis, F1, NFL, MLB, NHL, golf, MMA y más — con el plan Palco.
+                            Accedé a todos los deportes — básquet, tenis, F1, NFL, MLB, NHL, golf, MMA y más — con el plan Pro Max.
                         </p>
                         <button onclick="window.location.hash='#/planes'"
                             style="padding:12px 28px; background:#ffd700; color:#000; font-weight:900;
@@ -3271,7 +3083,6 @@ const App = (() => {
                             </div>`).join('')}
                     </div>
                 </main>
-            ${_closeSidebarWrapper()}
             `;
             return;
         }
@@ -3331,7 +3142,6 @@ const App = (() => {
                     </div>
                 </div>
             </main>
-        ${_closeSidebarWrapper()}
         `;
 
         if (!deporteActual || !ligaActual) return;
@@ -3599,7 +3409,7 @@ const App = (() => {
                             ${_statBar(getStat(boxTeamHome,'wonCorners'), getStat(boxTeamAway,'wonCorners'), 'CORNERS')}
                             ${_statBar(getStat(boxTeamHome,'foulsCommitted'), getStat(boxTeamAway,'foulsCommitted'), 'FALTAS')}
                             ${_statBar(getStat(boxTeamHome,'yellowCards'), getStat(boxTeamAway,'yellowCards'), 'AMARILLAS')}
-                        ` : _paywallInline('pro', 'Las estadísticas completas están disponibles en el plan Platea.')}
+                        ` : _paywallInline('pro', 'Las estadísticas completas están disponibles en el plan Pro.')}
                     </div>` : ''}
 
                     ${(rosterHome || rosterAway) ? `
@@ -3620,7 +3430,7 @@ const App = (() => {
                                 </p>
                                 ${_miniPizarra(rosterAway, away.team?.id, '#cc2222', '#ffffff')}
                             </div>
-                        </div>` : _paywallInline('pro', 'Las alineaciones tácticas están disponibles en el plan Platea.')}
+                        </div>` : _paywallInline('pro', 'Las alineaciones tácticas están disponibles en el plan Pro.')}
                     </div>` : ''}
 
                     ${plays.length > 0 ? `
@@ -3641,7 +3451,6 @@ const App = (() => {
                         }).join('')}
                     </div>` : ''}
                 </main>
-            ${_closeSidebarWrapper()}
             `;
 
             // Auto-refresh si está en vivo
@@ -3667,19 +3476,6 @@ const App = (() => {
     // ── STRIPE CHECKOUT ──────────────────────────────────────────────────────
     const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
 
-    // Mapeo de keys de UI a variant keys de Lemon Squeezy
-    const LS_VARIANT_KEYS = {
-        pro_mensual:    'platea_mensual',
-        pro_anual:      'platea_anual',
-        promax_mensual: 'palco_mensual',
-        promax_anual:   'palco_anual',
-        // también acepta directo
-        platea_mensual: 'platea_mensual',
-        platea_anual:   'platea_anual',
-        palco_mensual:  'palco_mensual',
-        palco_anual:    'palco_anual',
-    };
-
     window._suscribirse = async (priceKey) => {
         const user = window.FirebaseAuth?.getUser();
         if (!user) { abrirAuth('registro'); return; }
@@ -3687,17 +3483,16 @@ const App = (() => {
         const btn = document.getElementById('btn-' + priceKey);
         if (btn) { btn.textContent = 'Redirigiendo...'; btn.disabled = true; }
 
-        const variantKey = LS_VARIANT_KEYS[priceKey] ?? priceKey;
-
         try {
-            const res = await fetch(`${CF_WORKER}/ls/checkout`, {
+            const res = await fetch(`${CF_WORKER}/stripe/checkout`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    variantKey,
+                    priceKey,
                     uid:        user.uid,
                     email:      user.email,
                     successUrl: 'https://solgoyhe-gif.github.io/elfulbo/#/perfil?pago=ok',
+                    cancelUrl:  'https://solgoyhe-gif.github.io/elfulbo/#/planes'
                 })
             });
             const data = await res.json();
@@ -3708,7 +3503,7 @@ const App = (() => {
                 if (btn) { btn.textContent = 'SUSCRIBIRME'; btn.disabled = false; }
             }
         } catch(err) {
-            console.error('[LS]', err);
+            console.error('[Stripe]', err);
             alert('Error de conexión. Intentá de nuevo.');
             if (btn) { btn.textContent = 'SUSCRIBIRME'; btn.disabled = false; }
         }
@@ -3730,7 +3525,6 @@ const App = (() => {
                     </div>
                 </div>
             </main>
-        ${_closeSidebarWrapper()}
         `;
 
         try {
@@ -3762,7 +3556,7 @@ const App = (() => {
                         { label:'Total usuarios', valor: data.total, color:'var(--text-main)', emoji:'👥' },
                         { label:'Free',           valor: data.free,  color:'var(--text-muted)', emoji:'⚽' },
                         { label:'Pro',            valor: data.pro,   color:'var(--accent-neon)', emoji:'🔥' },
-                        { label:'Palco',        valor: data.promax,color:'#ffd700', emoji:'👑' },
+                        { label:'Pro Max',        valor: data.promax,color:'#ffd700', emoji:'👑' },
                     ].map(s => `
                         <div class="glass-panel" style="padding:1.5rem; text-align:center;">
                             <div style="font-size:1.8rem; margin-bottom:0.3rem;">${s.emoji}</div>
@@ -3802,7 +3596,7 @@ const App = (() => {
                                                     border:1px solid var(--border-glass); border-radius:6px; padding:4px 8px; font-size:0.8rem; cursor:pointer; color-scheme:dark;">
                                                     <option value="free"   ${u.plan==='free'   ?'selected':''}>Free</option>
                                                     <option value="pro"    ${u.plan==='pro'    ?'selected':''}>Pro</option>
-                                                    <option value="promax" ${u.plan==='promax' ?'selected':''}>Palco</option>
+                                                    <option value="promax" ${u.plan==='promax' ?'selected':''}>Pro Max</option>
                                                 </select>
                                             </td>
                                         </tr>`).join('')}
@@ -3922,132 +3716,23 @@ const App = (() => {
                     <main class="page-container fade-in" style="text-align: center; padding-top: 15%;">
                         <h2 class="section-title" style="border: none; color: var(--accent-neon);">Módulo en desarrollo</h2>
                     </main>
-                ${_closeSidebarWrapper()}
                 `;
         }
     };
 
-    // ── PUSH NOTIFICATIONS ───────────────────────────────────────────────────
-    const CF_WORKER_PUSH = 'https://elfulbo.solgoyhe.workers.dev';
-
-    const _urlBase64ToUint8Array = (base64String) => {
-        const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-        const raw     = atob(base64);
-        return new Uint8Array([...raw].map(c => c.charCodeAt(0)));
-    };
-
-    const pushEstaActivo = async () => {
-        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
-        const reg = await navigator.serviceWorker.getRegistration('/elfulbo/sw.js').catch(() => null);
-        if (!reg) return false;
-        const sub = await reg.pushManager.getSubscription().catch(() => null);
-        return !!sub;
-    };
-
-    window._activarPush = async (btnEl) => {
-        const plan = window.FirebaseAuth?.getPlan() ?? 'free';
-        if (plan !== 'promax') return;
-        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-            alert('Tu navegador no soporta notificaciones push. Probá con Chrome o Edge.');
-            return;
-        }
-        try {
-            btnEl.textContent = 'Activando...';
-            btnEl.disabled = true;
-
-            const reg = await navigator.serviceWorker.register('/elfulbo/sw.js', { scope: '/elfulbo/' });
-            await navigator.serviceWorker.ready;
-
-            const permiso = await Notification.requestPermission();
-            if (permiso !== 'granted') {
-                btnEl.textContent = '🔔 ACTIVAR NOTIFICACIONES';
-                btnEl.disabled = false;
-                return;
-            }
-
-            const vapidRes = await fetch(`${CF_WORKER_PUSH}/push/vapid-key`);
-            const { key: vapidKey } = await vapidRes.json();
-
-            const subscription = await reg.pushManager.subscribe({
-                userVisibleOnly:      true,
-                applicationServerKey: _urlBase64ToUint8Array(vapidKey),
-            });
-
-            const perfil  = window.FirebaseAuth?.getPerfil();
-            const uid     = window.FirebaseAuth?.getUser()?.uid;
-            const subJson = subscription.toJSON();
-
-            await fetch(`${CF_WORKER_PUSH}/push/suscribir`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    uid,
-                    subscription:   subJson,
-                    equipoFavorito: perfil?.equipoFavorito ?? '',
-                    ligas:          perfil?.ligaNacional ? [perfil.ligaNacional] : [],
-                }),
-            });
-
-            const estadoEl = document.getElementById('push-estado');
-            if (estadoEl) {
-                estadoEl.innerHTML = `
-                    <span style="color:var(--accent-neon); font-weight:700;">🔔 Notificaciones activas</span>
-                    <button onclick="window._desactivarPush(this)"
-                        style="margin-left:12px; background:none; border:1px solid #ff4757;
-                        color:#ff4757; border-radius:6px; padding:4px 10px; cursor:pointer;
-                        font-size:0.75rem; font-family:var(--font-heading);">
-                        DESACTIVAR
-                    </button>`;
-            }
-        } catch (err) {
-            console.error('[PUSH] Error activando:', err);
-            btnEl.textContent = '⚠️ Error — Intentá de nuevo';
-            btnEl.disabled = false;
-        }
-    };
-
-    window._desactivarPush = async (btnEl) => {
-        try {
-            btnEl.textContent = 'Desactivando...';
-            btnEl.disabled = true;
-            const reg = await navigator.serviceWorker.getRegistration('/elfulbo/sw.js').catch(() => null);
-            if (reg) {
-                const sub = await reg.pushManager.getSubscription().catch(() => null);
-                if (sub) await sub.unsubscribe();
-            }
-            const uid = window.FirebaseAuth?.getUser()?.uid;
-            if (uid) {
-                await fetch(`${CF_WORKER_PUSH}/push/desuscribir`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ uid }),
-                });
-            }
-            await renderPerfil();
-        } catch (err) {
-            console.error('[PUSH] Error desactivando:', err);
-            btnEl.textContent = '⚠️ Error';
-            btnEl.disabled = false;
-        }
-    };
-
-    // ── INIT ─────────────────────────────────────────────────────────────────
     const init = async () => {
         window.addEventListener('hashchange', router);
 
-        // Registrar SW en background sin bloquear
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/elfulbo/sw.js', { scope: '/elfulbo/' })
-                .catch(err => console.warn('[SW] No se pudo registrar:', err.message));
-        }
-
+        // Esperar a que Firebase resuelva el estado de auth antes del primer render
         await Promise.race([
             window.FirebaseAuth?.esperarListo() ?? Promise.resolve(),
-            new Promise(r => setTimeout(r, 3000))
+            new Promise(r => setTimeout(r, 3000)) // timeout 3s por las dudas
         ]);
 
+        // Primer render
         await router();
+
+        // Re-rutear cuando cambie el estado de auth
         window.FirebaseAuth?.onChange(() => router());
     };
 
