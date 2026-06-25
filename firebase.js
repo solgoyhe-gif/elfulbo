@@ -14,12 +14,12 @@ window.FIREBASE_CONFIG = _firebaseConfig;
 
 window.PLANES = {
     free: {
-        nombre: 'Free',
+        nombre: 'Popular',
         precio: 'Gratis',
         precioAnual: null,
         color: '#888',
         emoji: '⚽',
-        descripcion: 'Para el que quiere seguir el Mundial sin complicarse.',
+        descripcion: 'La cancha siempre abierta. Seguí el Mundial, los partidos del día y tu liga favorita sin pagar nada.',
         features: [
             { texto: 'Tabla de grupos Mundial 2026',       ok: true  },
             { texto: 'Partidos del día',                   ok: true  },
@@ -32,14 +32,14 @@ window.PLANES = {
         ]
     },
     pro: {
-        nombre: 'Pro',
+        nombre: 'Platea',
         precio: '$4.99',
         precioAnual: '$39.99',
         color: '#39ff14',
-        emoji: '🔥',
-        descripcion: 'Para el futbolero de verdad. Todas las ligas y stats completas.',
+        emoji: '🎟️',
+        descripcion: 'Todas las ligas de fútbol, estadísticas completas, alineaciones tácticas y noticias traducidas. Viví el fútbol desde la Platea.',
         features: [
-            { texto: 'Todo lo de Free',                    ok: true  },
+            { texto: 'Todo lo de Popular',                 ok: true  },
             { texto: 'Todas las ligas de fútbol',          ok: true  },
             { texto: 'Estadísticas del partido',           ok: true  },
             { texto: 'Alineaciones tácticas',              ok: true  },
@@ -50,14 +50,14 @@ window.PLANES = {
         ]
     },
     promax: {
-        nombre: 'Pro Max',
+        nombre: 'Palco',
         precio: '$14.99',
         precioAnual: '$119.99',
         color: '#ffd700',
         emoji: '👑',
-        descripcion: 'Para el fanático total. Todo lo de Pro más todos los deportes y notificaciones en vivo.',
+        descripcion: 'Acceso completo a todas las ligas, deportes y estadísticas. Notificaciones en tiempo real e historial extendido. La experiencia definitiva.',
         features: [
-            { texto: 'Todo lo de Pro',                     ok: true  },
+            { texto: 'Todo lo de Platea',                  ok: true  },
             { texto: 'Todos los deportes',                 ok: true  },
             { texto: 'Notificaciones en vivo',             ok: true  },
             { texto: 'Historial extendido',                ok: true  },
