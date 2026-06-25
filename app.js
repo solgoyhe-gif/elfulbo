@@ -3613,6 +3613,18 @@ const App = (() => {
     // ── STRIPE CHECKOUT ──────────────────────────────────────────────────────
     const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
 
+    // Mapeo de keys de UI a variant keys de Lemon Squeezy
+    const LS_VARIANT_KEYS = {
+        pro_mensual:    'platea_mensual',
+        pro_anual:      'platea_anual',
+        promax_mensual: 'palco_mensual',
+        promax_anual:   'palco_anual',
+        platea_mensual: 'platea_mensual',
+        platea_anual:   'platea_anual',
+        palco_mensual:  'palco_mensual',
+        palco_anual:    'palco_anual',
+    };
+
     window._suscribirse = async (priceKey) => {
         const user = window.FirebaseAuth?.getUser();
         if (!user) { abrirAuth('registro'); return; }
@@ -3620,16 +3632,17 @@ const App = (() => {
         const btn = document.getElementById('btn-' + priceKey);
         if (btn) { btn.textContent = 'Redirigiendo...'; btn.disabled = true; }
 
+        const variantKey = LS_VARIANT_KEYS[priceKey] ?? priceKey;
+
         try {
-            const res = await fetch(`${CF_WORKER}/stripe/checkout`, {
+            const res = await fetch(`${CF_WORKER}/ls/checkout`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    priceKey,
+                    variantKey,
                     uid:        user.uid,
                     email:      user.email,
                     successUrl: 'https://solgoyhe-gif.github.io/elfulbo/#/perfil?pago=ok',
-                    cancelUrl:  'https://solgoyhe-gif.github.io/elfulbo/#/planes'
                 })
             });
             const data = await res.json();
@@ -3640,7 +3653,7 @@ const App = (() => {
                 if (btn) { btn.textContent = 'SUSCRIBIRME'; btn.disabled = false; }
             }
         } catch(err) {
-            console.error('[Stripe]', err);
+            console.error('[LS]', err);
             alert('Error de conexión. Intentá de nuevo.');
             if (btn) { btn.textContent = 'SUSCRIBIRME'; btn.disabled = false; }
         }
