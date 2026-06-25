@@ -484,8 +484,8 @@ const App = (() => {
                 <div style="background:rgba(57,255,20,0.06); border:1px solid rgba(57,255,20,0.2); border-radius:10px;
                     padding:12px 16px; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; gap:1rem;">
                     <div>
-                        <span style="font-size:0.82rem; color:var(--text-main); font-weight:600;">Plan Free — 1 liga nacional + todas las copas</span>
-                        <span style="display:block; font-size:0.75rem; color:var(--text-muted);">Pasate a Pro para ver todas las ligas.</span>
+                        <span style="font-size:0.82rem; color:var(--text-main); font-weight:600;">Plan Popular — 1 liga nacional + todas las copas</span>
+                        <span style="display:block; font-size:0.75rem; color:var(--text-muted);">Pasate a Platea para ver todas las ligas.</span>
                     </div>
                     <a href="#/planes" style="padding:6px 14px; background:var(--accent-neon); color:#000; font-weight:800;
                         font-family:var(--font-heading); border-radius:6px; text-decoration:none; font-size:0.78rem; white-space:nowrap;">
@@ -1533,7 +1533,7 @@ const App = (() => {
                         ${_esPro() ? rosterHtml : `
                             <div style="text-align:center; padding:2rem;">
                                 <p style="font-size:1.5rem; margin-bottom:0.5rem;">🔒</p>
-                                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Lista de convocados disponible en Plan Pro</p>
+                                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Lista de convocados disponible en Plan Platea</p>
                                 <a href="#/planes" style="color:var(--accent-neon); font-weight:700; font-size:0.85rem;">Ver planes →</a>
                             </div>`}
                     </div>
@@ -2496,10 +2496,10 @@ const App = (() => {
                         <!-- FREE -->
                         <div class="glass-panel" style="padding:1.8rem; text-align:left;">
                             <div style="font-size:1.8rem; margin-bottom:0.5rem;">⚽</div>
-                            <div style="font-family:var(--font-heading); font-size:1.3rem; font-weight:900; margin-bottom:0.3rem;">Free</div>
+                            <div style="font-family:var(--font-heading); font-size:1.3rem; font-weight:900; margin-bottom:0.3rem;">Popular</div>
                             <div style="font-family:var(--font-heading); font-size:1.8rem; font-weight:900; color:var(--text-muted); margin-bottom:0.8rem;">Gratis</div>
                             <p style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; margin-bottom:1.2rem;">
-                                Para el que quiere seguir el Mundial sin complicarse.
+                                La cancha siempre abierta. Seguí el Mundial, los partidos del día y tu liga favorita sin pagar nada.
                             </p>
                             ${[
                                 {t:'Tabla de grupos Mundial 2026', ok:true},
@@ -2532,18 +2532,18 @@ const App = (() => {
                                 padding:3px 14px; border-radius:20px; font-family:var(--font-heading); letter-spacing:1px; white-space:nowrap;">
                                 MÁS POPULAR
                             </div>
-                            <div style="font-size:1.8rem; margin-bottom:0.5rem;">🔥</div>
+                            <div style="font-size:1.8rem; margin-bottom:0.5rem;">🎟️</div>
                             <div style="font-family:var(--font-heading); font-size:1.3rem; font-weight:900;
-                                color:var(--accent-neon); margin-bottom:0.3rem;">Pro</div>
+                                color:var(--accent-neon); margin-bottom:0.3rem;">Platea</div>
                             <div id="precio-pro" style="font-family:var(--font-heading); font-size:1.8rem;
                                 font-weight:900; color:var(--accent-neon); margin-bottom:0.8rem;">
                                 $4.99<span style="font-size:0.85rem; color:var(--text-muted);">/mes</span>
                             </div>
                             <p style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; margin-bottom:1.2rem;">
-                                Para el futbolero de verdad. Todas las ligas y stats completas.
+                                Todas las ligas de fútbol, estadísticas completas, alineaciones tácticas y noticias traducidas. Viví el fútbol desde la Platea.
                             </p>
                             ${[
-                                {t:'Todo lo de Free', ok:true},
+                                {t:'Todo lo de Popular', ok:true},
                                 {t:'Todas las ligas de fútbol', ok:true},
                                 {t:'Estadísticas del partido', ok:true},
                                 {t:'Alineaciones tácticas', ok:true},
@@ -2570,16 +2570,16 @@ const App = (() => {
                             border-color:#ffd700; background:rgba(255,215,0,0.04); position:relative;">
                             <div style="font-size:1.8rem; margin-bottom:0.5rem;">👑</div>
                             <div style="font-family:var(--font-heading); font-size:1.3rem; font-weight:900;
-                                color:#ffd700; margin-bottom:0.3rem;">Pro Max</div>
+                                color:#ffd700; margin-bottom:0.3rem;">Palco</div>
                             <div id="precio-promax" style="font-family:var(--font-heading); font-size:1.8rem;
                                 font-weight:900; color:#ffd700; margin-bottom:0.8rem;">
                                 $14.99<span style="font-size:0.85rem; color:var(--text-muted);">/mes</span>
                             </div>
                             <p style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; margin-bottom:1.2rem;">
-                                Para el fanático total. Todo lo de Pro más todos los deportes y notificaciones en vivo.
+                                Acceso completo a todas las ligas, deportes y estadísticas. Notificaciones en tiempo real e historial extendido. La experiencia definitiva.
                             </p>
                             ${[
-                                {t:'Todo lo de Pro', ok:true},
+                                {t:'Todo lo de Platea', ok:true},
                                 {t:'Todos los deportes', ok:true},
                                 {t:'Notificaciones en vivo', ok:true},
                                 {t:'Historial extendido', ok:true},
@@ -2662,18 +2662,27 @@ const App = (() => {
                 <!-- Plan actual -->
                 <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
                     <h3 class="panel-title" style="margin-bottom:1rem;">💳 Plan Actual</h3>
-                    ${plan === 'premium' ? `
+                    ${plan === 'promax' ? `
                         <div style="text-align:center; padding:1rem;">
-                            <div style="font-size:2rem; margin-bottom:0.5rem;">⭐</div>
-                            <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:800; color:#ffd700;">Premium activo</div>
+                            <div style="font-size:2rem; margin-bottom:0.5rem;">👑</div>
+                            <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:800; color:#ffd700;">Palco activo</div>
                             <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.5rem;">Tenés acceso a todas las funciones.</p>
+                        </div>
+                    ` : plan === 'pro' ? `
+                        <div style="text-align:center; padding:1rem;">
+                            <div style="font-size:2rem; margin-bottom:0.5rem;">🎟️</div>
+                            <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:800; color:#39ff14;">Platea activo</div>
+                            <button class="btn-primary" style="margin-top:1rem; background:#ffd700; color:#000;"
+                                onclick="window.location.hash='#/planes'">
+                                PASARTE A PALCO 👑
+                            </button>
                         </div>
                     ` : `
                         <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1rem;">
-                            Estás en el plan <strong>Free</strong>. Pasate a Premium para acceder a estadísticas, alineaciones y más.
+                            Estás en el plan <strong>Popular</strong>. Pasate a Platea para acceder a estadísticas, alineaciones, todas las ligas y más.
                         </p>
-                        <button class="btn-primary" style="background:#ffd700;" onclick="window.location.hash='#/planes'">
-                            VER PLANES ⭐
+                        <button class="btn-primary" style="background:#39ff14; color:#000;" onclick="window.location.hash='#/planes'">
+                            VER PLANES 🔥
                         </button>
                     `}
                 </div>
@@ -2699,88 +2708,41 @@ const App = (() => {
 
     // ── PLANES ────────────────────────────────────────────────────────────────
     const renderPlanes = () => {
-        const plan = window.FirebaseAuth?.getPlan() ?? 'free';
+        const plan  = window.FirebaseAuth?.getPlan() ?? 'free';
+        const PLANES = window.PLANES ?? {};
+        const _card = (planKey, meta) => {
+            const actual = plan === planKey;
+            const p = PLANES[planKey];
+            if (!p) return '';
+            return `
+                <div class="glass-panel" style="padding:1.5rem; position:relative; ${actual ? 'border-color:' + meta.color + ';' : ''}">
+                    ${actual ? '<div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:var(--accent-neon); color:#000; font-size:0.65rem; font-weight:800; padding:3px 14px; border-radius:20px; font-family:var(--font-heading); letter-spacing:1px; white-space:nowrap;">PLAN ACTUAL</div>' : ''}
+                    <div style="font-size:1.5rem; margin-bottom:0.4rem;">${p.emoji ?? ''}</div>
+                    <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:900; color:${meta.color}; margin-bottom:0.2rem;">${p.nombre ?? planKey}</div>
+                    <div style="font-family:var(--font-heading); font-size:1.6rem; font-weight:900; color:${meta.color}; margin-bottom:0.8rem;">
+                        ${p.precio ?? 'Gratis'}${planKey !== 'free' ? '<span style="font-size:0.8rem; color:var(--text-muted);">/mes</span>' : ''}
+                    </div>
+                    ${(p.features ?? []).map(f => `<div style="display:flex; align-items:center; gap:8px; font-size:0.8rem; margin-bottom:6px; color:${f.ok ? 'var(--text-main)' : 'var(--text-muted)'};">
+                        <span>${f.ok ? '✅' : '🔒'}</span><span>${f.texto}</span></div>`).join('')}
+                    ${!actual ? `<button class="btn-primary" style="width:100%; margin-top:1.2rem; background:${meta.color}; color:#000;" onclick="window._suscribirse('${planKey}_mensual')">SUSCRIBIRME</button>` : ''}
+                </div>`;
+        };
         appContainer.innerHTML = `
             ${renderNavbar('#/planes')}
-            <main class="page-container fade-in" style="max-width:600px; margin:0 auto;">
+            <main class="page-container fade-in" style="max-width:900px; margin:0 auto;">
                 <h2 class="section-title">💳 Planes</h2>
-                <div class="planes-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:4rem;">
-                    <div class="plan-card ${plan === 'free' ? 'destacado' : ''}">
-                        ${plan === 'free' ? '<div class="plan-badge">PLAN ACTUAL</div>' : ''}
-                        <div class="plan-nombre">Free</div>
-                        <div class="plan-precio">Gratis</div>
-                        ${window.FirebaseAuth?.PLANES?.free?.features?.map(f => `
-                            <div class="plan-feature ${f.ok ? 'ok' : ''}">
-                                <span class="check">${f.ok ? '✅' : '🔒'}</span>
-                                <span>${f.texto}</span>
-                            </div>`).join('') ?? ''}
-                    </div>
-                    <div class="plan-card ${plan === 'premium' ? 'destacado' : ''}">
-                        ${plan === 'premium' ? '<div class="plan-badge" style="background:var(--accent-neon);">PLAN ACTUAL</div>' : '<div class="plan-badge">MÁS POPULAR</div>'}
-                        <div class="plan-nombre" style="color:#ffd700;">Premium</div>
-                        <div class="plan-precio">$4.99<span style="font-size:0.9rem; color:var(--text-muted);">/mes</span></div>
-                        ${window.FirebaseAuth?.PLANES?.premium?.features?.map(f => `
-                            <div class="plan-feature ok">
-                                <span class="check">✅</span>
-                                <span>${f.texto}</span>
-                            </div>`).join('') ?? ''}
-                        ${plan !== 'premium' ? `
-                        <button class="btn-primary" style="width:100%; margin-top:1.2rem; background:#ffd700;"
-                            onclick="window._suscribirse('pro_mensual')">
-                            SUSCRIBIRME
-                        </button>` : ''}
-                    </div>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1.5rem; margin-bottom:4rem;">
+                    ${_card('free',   { color: '#888'    })}
+                    ${_card('pro',    { color: '#39ff14' })}
+                    ${_card('promax', { color: '#ffd700' })}
                 </div>
             </main>
         ${_closeSidebarWrapper()}
         `;
     };
 
-    // ── NAVBAR actualizada con perfil ────────────────────────────────────────
-    const _renderNavbarConPerfil = (activeHash) => {
-        const isLigasActive = activeHash === '#/ligas' || activeHash.includes('#/liga?id=') || activeHash.includes('#/equipo?id=') || activeHash.includes('#/grupo?id=');
-        const nombre = window.FirebaseAuth?.getNombre() ?? '';
-        const plan   = window.FirebaseAuth?.getPlan() ?? 'free';
-        return `
-            <nav class="navbar desktop-nav">
-                <div class="nav-links-group">
-                    <a href="#/home" class="nav-link ${activeHash === '#/home' ? 'active' : ''}">Inicio</a>
-                    <a href="#/ligas" class="nav-link ${isLigasActive ? 'active' : ''}">Ligas</a>
-                    <a href="#/h2h" class="nav-link ${activeHash === '#/h2h' ? 'active' : ''}">H2H</a>
-                    <a href="#/info" class="nav-link ${activeHash === '#/info' ? 'active' : ''}">Info</a>
-                </div>
-                <a href="#/perfil" style="display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--text-main);">
-                    <div style="width:30px; height:30px; border-radius:50%; background:rgba(57,255,20,0.15);
-                        border:1px solid var(--accent-neon); display:flex; align-items:center; justify-content:center;
-                        font-weight:800; font-size:0.85rem;">
-                        ${nombre.charAt(0).toUpperCase()}
-                    </div>
-                    ${plan === 'premium' ? '<span style="font-size:0.7rem; color:#ffd700; font-weight:800;">⭐ PRO</span>' : ''}
-                </a>
-            </nav>
-
-            <nav class="mobile-nav">
-                <a href="#/home" class="mobile-nav-item ${activeHash === '#/home' ? 'active' : ''}">
-                    <span class="mobile-icon">🏠</span><span>Inicio</span>
-                </a>
-                <a href="#/ligas" class="mobile-nav-item ${isLigasActive ? 'active' : ''}">
-                    <span class="mobile-icon">🏆</span><span>Ligas</span>
-                </a>
-                <a href="#/h2h" class="mobile-nav-item ${activeHash === '#/h2h' ? 'active' : ''}">
-                    <span class="mobile-icon">⚔️</span><span>H2H</span>
-                </a>
-                <a href="#/info" class="mobile-nav-item ${activeHash === '#/info' ? 'active' : ''}">
-                    <span class="mobile-icon">📰</span><span>Info</span>
-                </a>
-                <a href="#/other-sports" class="mobile-nav-item ${activeHash.includes('#/other-sports') ? 'active' : ''}">
-                    <span class="mobile-icon">🏅</span><span>Sports</span>
-                </a>
-                <a href="#/perfil" class="mobile-nav-item ${activeHash === '#/perfil' ? 'active' : ''}">
-                    <span class="mobile-icon">👤</span><span>Perfil</span>
-                </a>
-            </nav>
-        `;
-    };
+    // _renderNavbarConPerfil — alias de renderNavbar (sidebar ya incluye perfil)
+    const _renderNavbarConPerfil = (activeHash) => renderNavbar(activeHash);
 
     // ── SETUP / PRE-PERFIL ───────────────────────────────────────────────────
     const renderSetup = () => {
@@ -3015,14 +2977,14 @@ const App = (() => {
                 return '<h3 style="font-family:var(--font-heading); font-size:1.1rem; font-weight:800; margin-bottom:1rem;">🏅 Otros deportes</h3>' +
                     '<div style="text-align:center; padding:1.5rem; border:1px dashed var(--border-glass); border-radius:12px;">' +
                     '<div style="font-size:2rem; margin-bottom:0.5rem;">🔒</div>' +
-                    '<p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Los otros deportes están disponibles desde el plan Pro.</p>' +
+                    '<p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Los otros deportes están disponibles desde el plan Platea.</p>' +
                     '<p style="color:var(--text-muted); font-size:0.75rem;">Podés actualizar tu plan después desde el perfil.</p>' +
                     '</div>';
             }
 
             const planLabel = plan === 'pro'
-                ? 'Plan Pro — podés elegir 1 deporte adicional.'
-                : 'Plan Pro Max — elegí todos los que quieras.';
+                ? 'Plan Platea — podés elegir 1 deporte adicional.'
+                : 'Plan Palco — elegí todos los que quieras.';
 
             const cards = DEPORTES_DISP.map(d => {
                 const sel      = _datos.deportes.includes(d.id);
@@ -3128,7 +3090,7 @@ const App = (() => {
         <div style="padding:2rem; text-align:center; border:1px dashed var(--border-glass); border-radius:12px; margin:1rem 0;">
             <div style="font-size:2rem; margin-bottom:0.5rem;">${requiere === 'promax' ? '👑' : '🔥'}</div>
             <p style="font-weight:700; color:${requiere === 'promax' ? '#ffd700' : 'var(--accent-neon)'}; font-family:var(--font-heading); margin-bottom:0.5rem;">
-                Requiere ${requiere === 'promax' ? 'Pro Max' : 'Pro'}
+                Requiere ${requiere === 'promax' ? 'Palco' : 'Platea'}
             </p>
             <p style="color:var(--text-muted); font-size:0.82rem; margin-bottom:1rem;">${mensaje}</p>
             <button onclick="window.location.hash='#/planes'"
@@ -3233,10 +3195,10 @@ const App = (() => {
                     <div class="glass-panel" style="padding:3rem; text-align:center; margin-bottom:2rem;">
                         <div style="font-size:3rem; margin-bottom:1rem;">👑</div>
                         <h3 style="font-family:var(--font-heading); font-size:1.3rem; font-weight:900; color:#ffd700; margin-bottom:0.8rem;">
-                            Requiere Pro Max
+                            Requiere Palco
                         </h3>
                         <p style="color:var(--text-muted); font-size:0.9rem; line-height:1.6; max-width:400px; margin:0 auto 1.5rem;">
-                            Accedé a todos los deportes — básquet, tenis, F1, NFL, MLB, NHL, golf, MMA y más — con el plan Pro Max.
+                            Accedé a todos los deportes — básquet, tenis, F1, NFL, MLB, NHL, golf, MMA y más — con el plan Palco.
                         </p>
                         <button onclick="window.location.hash='#/planes'"
                             style="padding:12px 28px; background:#ffd700; color:#000; font-weight:900;
@@ -3583,7 +3545,7 @@ const App = (() => {
                             ${_statBar(getStat(boxTeamHome,'wonCorners'), getStat(boxTeamAway,'wonCorners'), 'CORNERS')}
                             ${_statBar(getStat(boxTeamHome,'foulsCommitted'), getStat(boxTeamAway,'foulsCommitted'), 'FALTAS')}
                             ${_statBar(getStat(boxTeamHome,'yellowCards'), getStat(boxTeamAway,'yellowCards'), 'AMARILLAS')}
-                        ` : _paywallInline('pro', 'Las estadísticas completas están disponibles en el plan Pro.')}
+                        ` : _paywallInline('pro', 'Las estadísticas completas están disponibles en el plan Platea.')}
                     </div>` : ''}
 
                     ${(rosterHome || rosterAway) ? `
@@ -3604,7 +3566,7 @@ const App = (() => {
                                 </p>
                                 ${_miniPizarra(rosterAway, away.team?.id, '#cc2222', '#ffffff')}
                             </div>
-                        </div>` : _paywallInline('pro', 'Las alineaciones tácticas están disponibles en el plan Pro.')}
+                        </div>` : _paywallInline('pro', 'Las alineaciones tácticas están disponibles en el plan Platea.')}
                     </div>` : ''}
 
                     ${plays.length > 0 ? `
