@@ -188,8 +188,8 @@ const App = (() => {
 
         const planMeta = {
             free:   { color: '#888',    bg: 'rgba(136,136,136,0.2)', emoji: '⚽', label: 'FREE'    },
-            pro:    { color: '#39ff14', bg: 'rgba(57,255,20,0.2)',   emoji: '🔥', label: 'PRO'     },
-            promax: { color: '#ffd700', bg: 'rgba(255,215,0,0.2)',   emoji: '👑', label: 'PRO MAX' },
+            pro:    { color: '#39ff14', bg: 'rgba(57,255,20,0.2)',   emoji: '🎟️', label: 'PLATEA'  },
+            promax: { color: '#ffd700', bg: 'rgba(255,215,0,0.2)',   emoji: '👑', label: 'PALCO' },
         };
         const pm = planMeta[plan] ?? planMeta.free;
 
@@ -1504,7 +1504,7 @@ const App = (() => {
                         ${_esPro() ? rosterHtml : `
                             <div style="text-align:center; padding:2rem;">
                                 <p style="font-size:1.5rem; margin-bottom:0.5rem;">🔒</p>
-                                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Lista de convocados disponible en Plan Pro</p>
+                                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Lista de convocados disponible en Plan Platea</p>
                                 <a href="#/planes" style="color:var(--accent-neon); font-weight:700; font-size:0.85rem;">Ver planes →</a>
                             </div>`}
                     </div>
@@ -2452,12 +2452,12 @@ const App = (() => {
                             </button>
                         </div>
 
-                        <!-- PRO MAX -->
+                        <!-- PALCO -->
                         <div class="glass-panel" style="padding:1.8rem; text-align:left;
                             border-color:#ffd700; background:rgba(255,215,0,0.04); position:relative;">
                             <div style="font-size:1.8rem; margin-bottom:0.5rem;">👑</div>
                             <div style="font-family:var(--font-heading); font-size:1.3rem; font-weight:900;
-                                color:#ffd700; margin-bottom:0.3rem;">Pro Max</div>
+                                color:#ffd700; margin-bottom:0.3rem;">Palco</div>
                             <div id="precio-promax" style="font-family:var(--font-heading); font-size:1.8rem;
                                 font-weight:900; color:#ffd700; margin-bottom:0.8rem;">
                                 $14.99<span style="font-size:0.85rem; color:var(--text-muted);">/mes</span>
@@ -2500,9 +2500,9 @@ const App = (() => {
 
         // ── Colores y labels por plan ────────────────────────────────────────
         const planMeta = {
-            free:   { color: '#888',    emoji: '⚽', label: 'FREE',    bg: 'rgba(136,136,136,0.15)' },
-            pro:    { color: '#39ff14', emoji: '🔥', label: 'PRO',     bg: 'rgba(57,255,20,0.15)'   },
-            promax: { color: '#ffd700', emoji: '👑', label: 'PRO MAX', bg: 'rgba(255,215,0,0.15)'   },
+            free:   { color: '#888',    emoji: '⚽', label: 'POPULAR',  bg: 'rgba(136,136,136,0.15)' },
+            pro:    { color: '#39ff14', emoji: '🎟️', label: 'PLATEA',   bg: 'rgba(57,255,20,0.15)'   },
+            promax: { color: '#ffd700', emoji: '👑', label: 'PALCO',    bg: 'rgba(255,215,0,0.15)'   },
         };
         const meta = planMeta[plan] ?? planMeta.free;
 
@@ -2530,7 +2530,7 @@ const App = (() => {
                         <div style="text-align:center; padding:1.5rem; border:1px dashed var(--border-glass); border-radius:12px;">
                             <div style="font-size:2rem; margin-bottom:0.5rem;">🔒</div>
                             <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">
-                                Los otros deportes están disponibles desde el plan Pro.
+                                Los otros deportes están disponibles desde el plan Platea.
                             </p>
                             <button class="btn-primary" style="background:#39ff14; color:#000;"
                                 onclick="window.location.hash='#/planes'">
@@ -2541,8 +2541,8 @@ const App = (() => {
             }
 
             const planLabel = plan === 'pro'
-                ? '🔥 Plan Pro — podés elegir 1 deporte adicional.'
-                : '👑 Plan Pro Max — elegí todos los que quieras.';
+                ? '🔥 Plan Platea — podés elegir 1 deporte adicional.'
+                : '👑 Plan Palco — elegí todos los que quieras.';
 
             const cards = DEPORTES_DISP.map(d => {
                 const sel     = deportesActuales.includes(d.id);
@@ -2636,7 +2636,7 @@ const App = (() => {
                     ${_renderDeportes(window._deportesPerfil)}
                 </div>
 
-                <!-- Notificaciones en vivo (Pro Max) -->
+                <!-- Notificaciones en vivo (Palco) -->
                 ${await (async () => {
                     if (plan !== 'promax') return `
                         <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
@@ -2644,11 +2644,11 @@ const App = (() => {
                             <div style="text-align:center; padding:1rem; border:1px dashed var(--border-glass); border-radius:12px;">
                                 <div style="font-size:2rem; margin-bottom:0.5rem;">🔒</div>
                                 <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">
-                                    Las notificaciones de goles en vivo son exclusivas de Pro Max.
+                                    Las notificaciones de goles en vivo son exclusivas del Palco.
                                 </p>
                                 <button class="btn-primary" style="background:#ffd700; color:#000;"
                                     onclick="window.location.hash='#/planes'">
-                                    VER PRO MAX 👑
+                                    VER PALCO 👑
                                 </button>
                             </div>
                         </div>`;
@@ -2686,19 +2686,19 @@ const App = (() => {
                     ${plan === 'promax' ? `
                         <div style="text-align:center; padding:1rem;">
                             <div style="font-size:2rem; margin-bottom:0.5rem;">👑</div>
-                            <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:800; color:#ffd700;">Pro Max activo</div>
+                            <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:800; color:#ffd700;">Palco activo</div>
                             <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.5rem;">Tenés acceso a todas las funciones.</p>
                         </div>
                     ` : plan === 'pro' ? `
                         <div style="text-align:center; padding:1rem;">
                             <div style="font-size:2rem; margin-bottom:0.5rem;">🔥</div>
-                            <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:800; color:#39ff14;">Pro activo</div>
+                            <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:800; color:#39ff14;">Platea activo</div>
                             <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.5rem;">
                                 Accedé a todas las ligas de fútbol, stats y alineaciones.
                             </p>
                             <button class="btn-primary" style="margin-top:1rem; background:#ffd700; color:#000;"
                                 onclick="window.location.hash='#/planes'">
-                                PASARTE A PRO MAX 👑
+                                PASARTE A PALCO 👑
                             </button>
                         </div>
                     ` : `
@@ -3031,14 +3031,14 @@ const App = (() => {
                 return '<h3 style="font-family:var(--font-heading); font-size:1.1rem; font-weight:800; margin-bottom:1rem;">🏅 Otros deportes</h3>' +
                     '<div style="text-align:center; padding:1.5rem; border:1px dashed var(--border-glass); border-radius:12px;">' +
                     '<div style="font-size:2rem; margin-bottom:0.5rem;">🔒</div>' +
-                    '<p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Los otros deportes están disponibles desde el plan Pro.</p>' +
+                    '<p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Los otros deportes están disponibles desde el plan Platea.</p>' +
                     '<p style="color:var(--text-muted); font-size:0.75rem;">Podés actualizar tu plan después desde el perfil.</p>' +
                     '</div>';
             }
 
             const planLabel = plan === 'pro'
-                ? 'Plan Pro — podés elegir 1 deporte adicional.'
-                : 'Plan Pro Max — elegí todos los que quieras.';
+                ? 'Plan Platea — podés elegir 1 deporte adicional.'
+                : 'Plan Palco — elegí todos los que quieras.';
 
             const cards = DEPORTES_DISP.map(d => {
                 const sel      = _datos.deportes.includes(d.id);
@@ -3144,7 +3144,7 @@ const App = (() => {
         <div style="padding:2rem; text-align:center; border:1px dashed var(--border-glass); border-radius:12px; margin:1rem 0;">
             <div style="font-size:2rem; margin-bottom:0.5rem;">${requiere === 'promax' ? '👑' : '🔥'}</div>
             <p style="font-weight:700; color:${requiere === 'promax' ? '#ffd700' : 'var(--accent-neon)'}; font-family:var(--font-heading); margin-bottom:0.5rem;">
-                Requiere ${requiere === 'promax' ? 'Pro Max' : 'Pro'}
+                Requiere ${requiere === 'promax' ? 'Palco' : 'Pro'}
             </p>
             <p style="color:var(--text-muted); font-size:0.82rem; margin-bottom:1rem;">${mensaje}</p>
             <button onclick="window.location.hash='#/planes'"
@@ -3249,10 +3249,10 @@ const App = (() => {
                     <div class="glass-panel" style="padding:3rem; text-align:center; margin-bottom:2rem;">
                         <div style="font-size:3rem; margin-bottom:1rem;">👑</div>
                         <h3 style="font-family:var(--font-heading); font-size:1.3rem; font-weight:900; color:#ffd700; margin-bottom:0.8rem;">
-                            Requiere Pro Max
+                            Requiere Palco
                         </h3>
                         <p style="color:var(--text-muted); font-size:0.9rem; line-height:1.6; max-width:400px; margin:0 auto 1.5rem;">
-                            Accedé a todos los deportes — básquet, tenis, F1, NFL, MLB, NHL, golf, MMA y más — con el plan Pro Max.
+                            Accedé a todos los deportes — básquet, tenis, F1, NFL, MLB, NHL, golf, MMA y más — con el plan Palco.
                         </p>
                         <button onclick="window.location.hash='#/planes'"
                             style="padding:12px 28px; background:#ffd700; color:#000; font-weight:900;
@@ -3599,7 +3599,7 @@ const App = (() => {
                             ${_statBar(getStat(boxTeamHome,'wonCorners'), getStat(boxTeamAway,'wonCorners'), 'CORNERS')}
                             ${_statBar(getStat(boxTeamHome,'foulsCommitted'), getStat(boxTeamAway,'foulsCommitted'), 'FALTAS')}
                             ${_statBar(getStat(boxTeamHome,'yellowCards'), getStat(boxTeamAway,'yellowCards'), 'AMARILLAS')}
-                        ` : _paywallInline('pro', 'Las estadísticas completas están disponibles en el plan Pro.')}
+                        ` : _paywallInline('pro', 'Las estadísticas completas están disponibles en el plan Platea.')}
                     </div>` : ''}
 
                     ${(rosterHome || rosterAway) ? `
@@ -3620,7 +3620,7 @@ const App = (() => {
                                 </p>
                                 ${_miniPizarra(rosterAway, away.team?.id, '#cc2222', '#ffffff')}
                             </div>
-                        </div>` : _paywallInline('pro', 'Las alineaciones tácticas están disponibles en el plan Pro.')}
+                        </div>` : _paywallInline('pro', 'Las alineaciones tácticas están disponibles en el plan Platea.')}
                     </div>` : ''}
 
                     ${plays.length > 0 ? `
@@ -3667,6 +3667,19 @@ const App = (() => {
     // ── STRIPE CHECKOUT ──────────────────────────────────────────────────────
     const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
 
+    // Mapeo de keys de UI a variant keys de Lemon Squeezy
+    const LS_VARIANT_KEYS = {
+        pro_mensual:    'platea_mensual',
+        pro_anual:      'platea_anual',
+        promax_mensual: 'palco_mensual',
+        promax_anual:   'palco_anual',
+        // también acepta directo
+        platea_mensual: 'platea_mensual',
+        platea_anual:   'platea_anual',
+        palco_mensual:  'palco_mensual',
+        palco_anual:    'palco_anual',
+    };
+
     window._suscribirse = async (priceKey) => {
         const user = window.FirebaseAuth?.getUser();
         if (!user) { abrirAuth('registro'); return; }
@@ -3674,16 +3687,17 @@ const App = (() => {
         const btn = document.getElementById('btn-' + priceKey);
         if (btn) { btn.textContent = 'Redirigiendo...'; btn.disabled = true; }
 
+        const variantKey = LS_VARIANT_KEYS[priceKey] ?? priceKey;
+
         try {
-            const res = await fetch(`${CF_WORKER}/stripe/checkout`, {
+            const res = await fetch(`${CF_WORKER}/ls/checkout`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    priceKey,
+                    variantKey,
                     uid:        user.uid,
                     email:      user.email,
                     successUrl: 'https://solgoyhe-gif.github.io/elfulbo/#/perfil?pago=ok',
-                    cancelUrl:  'https://solgoyhe-gif.github.io/elfulbo/#/planes'
                 })
             });
             const data = await res.json();
@@ -3694,7 +3708,7 @@ const App = (() => {
                 if (btn) { btn.textContent = 'SUSCRIBIRME'; btn.disabled = false; }
             }
         } catch(err) {
-            console.error('[Stripe]', err);
+            console.error('[LS]', err);
             alert('Error de conexión. Intentá de nuevo.');
             if (btn) { btn.textContent = 'SUSCRIBIRME'; btn.disabled = false; }
         }
@@ -3748,7 +3762,7 @@ const App = (() => {
                         { label:'Total usuarios', valor: data.total, color:'var(--text-main)', emoji:'👥' },
                         { label:'Free',           valor: data.free,  color:'var(--text-muted)', emoji:'⚽' },
                         { label:'Pro',            valor: data.pro,   color:'var(--accent-neon)', emoji:'🔥' },
-                        { label:'Pro Max',        valor: data.promax,color:'#ffd700', emoji:'👑' },
+                        { label:'Palco',        valor: data.promax,color:'#ffd700', emoji:'👑' },
                     ].map(s => `
                         <div class="glass-panel" style="padding:1.5rem; text-align:center;">
                             <div style="font-size:1.8rem; margin-bottom:0.3rem;">${s.emoji}</div>
@@ -3788,7 +3802,7 @@ const App = (() => {
                                                     border:1px solid var(--border-glass); border-radius:6px; padding:4px 8px; font-size:0.8rem; cursor:pointer; color-scheme:dark;">
                                                     <option value="free"   ${u.plan==='free'   ?'selected':''}>Free</option>
                                                     <option value="pro"    ${u.plan==='pro'    ?'selected':''}>Pro</option>
-                                                    <option value="promax" ${u.plan==='promax' ?'selected':''}>Pro Max</option>
+                                                    <option value="promax" ${u.plan==='promax' ?'selected':''}>Palco</option>
                                                 </select>
                                             </td>
                                         </tr>`).join('')}
