@@ -1,0 +1,25 @@
+{
+  "name": "Whistle",
+  "short_name": "Whistle",
+  "description": "The sound of sport.",
+  "start_url": "/elfulbo/",
+  "scope": "/elfulbo/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0a0a",
+  "theme_color": "#39ff14",
+  "icons": [
+    {
+      "src": "favicon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "favicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
