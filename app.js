@@ -20,140 +20,71 @@ const App = (() => {
     const appContainer = document.getElementById('app');
 
     // ══════════════════════════════════════════════════════════════════════════
-    // MAPA DE SIGLAS ESPN — orden X por fila
-    // Verificado contra ARG vs ALG (event 760433) y RMA vs ATM (event 392450)
+    // SISTEMA TÁCTICO — usa formationPlace + formación para calcular filas
     // ══════════════════════════════════════════════════════════════════════════
-    const ORDEN_SIGLA = {
-        // ── Fila 0: Portero ───────────────────────────────────────────────────
-        'G':    { fila: 0, orden: 0 },
-        'GK':   { fila: 0, orden: 0 },
 
-        // ── Fila 1: Defensa (izquierda → derecha) ─────────────────────────────
-        'LB':   { fila: 1, orden: 0 },
-        'LWB':  { fila: 1, orden: 0 },
-        'CD-L': { fila: 1, orden: 1 },
-        'CB-L': { fila: 1, orden: 1 },
-        'CB':   { fila: 1, orden: 1 },   // genérico: se distribuye con los demás
-        'CD-R': { fila: 1, orden: 2 },
-        'CB-R': { fila: 1, orden: 2 },
-        'RB':   { fila: 1, orden: 3 },
-        'RWB':  { fila: 1, orden: 3 },
-
-        // ── Fila 2: Mediocampo (izquierda → derecha) ──────────────────────────
-        //   LM  < CM-L < CDM/DM  < CM/AM  < CM-R  < RM
-        //   En un 4-3-3 con un solo CM, la distribución equitativa lo ubica
-        //   en el centro automáticamente sin importar el "orden" absoluto.
-        'LM':   { fila: 2, orden: 0 },
-        'AM-L': { fila: 2, orden: 1 },
-        'CM-L': { fila: 2, orden: 1 },
-        'CDM':  { fila: 2, orden: 2 },
-        'DM':   { fila: 2, orden: 2 },
-        'M':    { fila: 2, orden: 2 },
-        'CM':   { fila: 2, orden: 3 },
-        'CAM':  { fila: 2, orden: 4 },
-        'AM':   { fila: 2, orden: 4 },
-        'AM-R': { fila: 2, orden: 5 },
-        'CM-R': { fila: 2, orden: 5 },
-        'RM':   { fila: 2, orden: 6 },
-
-        // ── Fila 3: Enganche (fila propia entre medio y ataque) ──────────────
-        'CAM':  { fila: 3, orden: 1 },
-        'AM':   { fila: 3, orden: 1 },
-
-        // ── Fila 4: Ataque (izquierda → derecha) ──────────────────────────────
-        'LF':   { fila: 4, orden: 0 },
-        'LW':   { fila: 4, orden: 0 },
-        'CF-L': { fila: 4, orden: 0 },
-        'ST':   { fila: 4, orden: 1 },
-        'F':    { fila: 4, orden: 1 },
-        'FW':   { fila: 4, orden: 1 },
-        'CF':   { fila: 4, orden: 1 },
-        'M':    { fila: 4, orden: 1 },
-        'ST-L': { fila: 4, orden: 0 },
-        'ST-R': { fila: 4, orden: 2 },
-        'CF-R': { fila: 4, orden: 2 },
-        'RW':   { fila: 4, orden: 2 },
-        'RF':   { fila: 4, orden: 2 },
+    // Parsea una formación "4-3-3" → [1, 4, 3, 3] (GK + líneas)
+    const _parsearFormacion = (formStr = '') => {
+        const nums = formStr.split('-').map(Number).filter(n => !isNaN(n) && n > 0);
+        if (nums.length >= 2 && nums.reduce((a,b) => a+b, 0) <= 10) {
+            return [1, ...nums]; // agregar GK
+        }
+        return [1, 4, 3, 3]; // default 4-3-3
     };
 
-    // ── Fallback: si la sigla no está en el mapa, la deduce por prefijo ──────
-    const _getSiglaData = (abbr = '') => {
-        const a = abbr.toUpperCase().trim();
-        if (ORDEN_SIGLA[a]) return ORDEN_SIGLA[a];
+    // Calcula posiciones X/Y usando formationPlace (1=GK, 2-11=campo)
+    // y la formación del equipo para saber qué fila le toca a cada jugador
+    const _calcularPosicionesTacticas = (titulares, svgW = 400, svgH = 560, formacionStr = '') => {
+        // Ordenar por formationPlace
+        const sorted = [...titulares].sort((a, b) => a.formationPlace - b.formationPlace);
 
-        // Intentar por prefijo
-        if (a === 'G' || a === 'GK') return { fila: 0, orden: 0 };
-        if (a.startsWith('LB') || a.startsWith('LWB')) return { fila: 1, orden: 0 };
-        if (a.startsWith('RB') || a.startsWith('RWB')) return { fila: 1, orden: 3 };
-        if (a.startsWith('CB') || a.startsWith('CD')) return { fila: 1, orden: 1 };
-        if (a.startsWith('LM') || (a.startsWith('LW') && !a.startsWith('LWB'))) return { fila: 2, orden: 0 };
-        if (a.startsWith('RM') || (a.startsWith('RW') && !a.startsWith('RWB'))) return { fila: 2, orden: 5 };
-        if (a.startsWith('CM') || a.startsWith('DM')) return { fila: 2, orden: 3 };
-        if (a.startsWith('AM') || a.startsWith('CAM')) return { fila: 3, orden: 1 };
-        if (a.startsWith('LF') || a.startsWith('CF-L') || a.startsWith('ST-L')) return { fila: 4, orden: 0 };
-        if (a.startsWith('RF') || a.startsWith('CF-R') || a.startsWith('ST-R')) return { fila: 4, orden: 2 };
-        if (a.startsWith('ST') || a.startsWith('CF') || a === 'F' || a === 'FW') return { fila: 4, orden: 1 };
+        // Parsear formación → saber cuántos jugadores van en cada fila
+        const lineas = _parsearFormacion(formacionStr);
+        // lineas[0]=1 (GK), lineas[1]=defensas, lineas[2]=medios, etc.
 
-        return { fila: 2, orden: 3 }; // default: mediocampo centro
-    };
-
-    // ── Calcular posiciones X/Y para todos los titulares ─────────────────────
-    // Recibe array de jugadores con .position.abbreviation y .formationPlace
-    // Devuelve Map<formationPlace, {x, y}>
-    const _calcularPosicionesTacticas = (titulares, svgW = 400, svgH = 560) => {
-        // Agrupar por fila
-        const filas = { 0: [], 1: [], 2: [], 3: [], 4: [] };
-        titulares.forEach(j => {
-            const sig = _getSiglaData(j.position?.abbreviation ?? '');
-            filas[sig.fila].push({ ...j, _orden: sig.orden });
-        });
-
-        // Ordenar cada fila por orden (izq → der)
-        [0, 1, 2, 3, 4].forEach(f => {
-            filas[f].sort((a, b) => a._orden - b._orden);
-        });
-
-        // Filas con jugadores
-        const filasOcupadas = [0, 1, 2, 3, 4].filter(f => filas[f].length > 0);
-
-        // Coordenadas Y: GK abajo, delanteros arriba
-        const yGK  = svgH * 0.91;  // ≈ 510 en 560
-        const yFWD = svgH * 0.21;  // ≈ 118 en 560
-
-        // Margen horizontal
-        // xMin/xMax se ajustan según cantidad de jugadores en la fila
-        // con 5+ jugadores se usa todo el ancho disponible
-        const xMinBase = svgW * 0.125; // ≈  50 en 400
-        const xMaxBase = svgW * 0.875; // ≈ 350 en 400
-
+        // Asignar fila a cada jugador según su posición en el orden
+        // formationPlace 1 = GK, 2..N = campo en orden de fila
         const coordsMap = new Map();
 
-        filasOcupadas.forEach((fila, idx) => {
-            const grupo = filas[fila];
-            const n     = grupo.length;
+        const yGK  = svgH * 0.90;
+        const yFWD = svgH * 0.12;
+        const totalLineas = lineas.length;
 
-            // Interpolar Y entre GK (idx=0) y FWD (idx=last)
-            const t = filasOcupadas.length === 1 ? 0 : idx / (filasOcupadas.length - 1);
+        let placeIdx = 0;
+        lineas.forEach((count, lineaIdx) => {
+            // Y interpolado: GK (lineaIdx=0) → FWD (lineaIdx=last)
+            const t = totalLineas === 1 ? 0 : lineaIdx / (totalLineas - 1);
             const y = Math.round(yGK - t * (yGK - yFWD));
 
-            const xMin = xMinBase;
-                const xMax = xMaxBase;
+            const xMin = svgW * 0.10;
+            const xMax = svgW * 0.90;
 
-                grupo.forEach((j, i) => {
+            for (let i = 0; i < count; i++) {
+                if (placeIdx >= sorted.length) break;
+                const j = sorted[placeIdx];
                 let x;
-                if (n === 1) {
+                if (count === 1) {
                     x = svgW / 2;
-                } else if (n === 2 && fila === 3) {
-                    // CF-L y CF-R: centrados en 150/250 (no en los extremos)
-                    x = i === 0
-                        ? Math.round(svgW * 0.375)  // 150 en 400
-                        : Math.round(svgW * 0.625); // 250 en 400
                 } else {
-                    x = Math.round(xMin + (i / (n - 1)) * (xMax - xMin));
+                    x = Math.round(xMin + (i / (count - 1)) * (xMax - xMin));
                 }
+                coordsMap.set(j.formationPlace, { x, y, n: count });
+                placeIdx++;
+            }
+        });
+
+        // Si sobraron jugadores (formación no coincide), distribuirlos en una fila extra
+        if (placeIdx < sorted.length) {
+            const restantes = sorted.slice(placeIdx);
+            const y = Math.round(yFWD);
+            const xMin = svgW * 0.10;
+            const xMax = svgW * 0.90;
+            const n = restantes.length;
+            restantes.forEach((j, i) => {
+                const x = n === 1 ? svgW/2 : Math.round(xMin + (i/(n-1))*(xMax-xMin));
                 coordsMap.set(j.formationPlace, { x, y, n });
             });
-        });
+        }
 
         return coordsMap;
     };
@@ -1739,7 +1670,7 @@ const App = (() => {
             if (titulares.length === 0) return;
 
             // Usar el sistema centralizado de coordenadas
-            const coordsMap = _calcularPosicionesTacticas(titulares, 400, 560);
+            const coordsMap = _calcularPosicionesTacticas(titulares, 400, 560, formacion);
 
             titulares.forEach(j => {
                 const coords = coordsMap.get(j.formationPlace);
@@ -1940,7 +1871,7 @@ const App = (() => {
             if (titulares.length === 0) return '<p style="color:var(--text-muted); text-align:center; font-size:0.8rem; padding:0.5rem;">Sin titulares confirmados.</p>';
 
             const W = 280, H = 380;
-            const coordsMap = _calcularPosicionesTacticas(titulares, W, H);
+            const coordsMap = _calcularPosicionesTacticas(titulares, W, H, roster.formation ?? '');
 
             let tokens = '';
             titulares.forEach(j => {
@@ -3470,7 +3401,7 @@ const App = (() => {
                     .sort((a,b) => a.formationPlace - b.formationPlace);
                 if (titulares.length === 0) return '<p style="color:var(--text-muted); text-align:center; font-size:0.8rem;">Sin titulares.</p>';
                 const W = 280, H = 380;
-                const coordsMap = _calcularPosicionesTacticas(titulares, W, H);
+                const coordsMap = _calcularPosicionesTacticas(titulares, W, H, roster.formation ?? '');
                 let tokens = '';
                 titulares.forEach(j => {
                     const c = coordsMap.get(j.formationPlace);
