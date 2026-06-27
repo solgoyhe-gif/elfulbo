@@ -56,8 +56,14 @@ const App = (() => {
             const t = totalLineas === 1 ? 0 : lineaIdx / (totalLineas - 1);
             const y = Math.round(yGK - t * (yGK - yFWD));
 
-            const xMin = svgW * 0.10;
-            const xMax = svgW * 0.90;
+            // Margen horizontal dinámico según cantidad de jugadores
+            // Con 1 → centrado, con 2 → algo centrado, con 4-5 → bien abiertos
+            const spread = count === 1 ? 0 :
+                           count === 2 ? 0.25 :
+                           count === 3 ? 0.35 :
+                           count === 4 ? 0.42 : 0.45;
+            const xMin = svgW * (0.5 - spread);
+            const xMax = svgW * (0.5 + spread);
 
             for (let i = 0; i < count; i++) {
                 if (placeIdx >= sorted.length) break;
