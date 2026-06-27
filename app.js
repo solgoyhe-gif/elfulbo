@@ -2543,10 +2543,150 @@ const App = (() => {
     };
 
     // ── PERFIL ────────────────────────────────────────────────────────────────
+    // ── PUSH NOTIFICATIONS ───────────────────────────────────────────────────
+    const CF_WORKER_PUSH = 'https://elfulbo.solgoyhe.workers.dev';
+
+    const _urlBase64ToUint8Array = (base64String) => {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const raw     = atob(base64);
+        return new Uint8Array([...raw].map(c => c.charCodeAt(0)));
+    };
+
+    const pushEstaActivo = async () => {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+        const reg = await navigator.serviceWorker.getRegistration('/elfulbo/sw.js').catch(() => null);
+        if (!reg) return false;
+        const sub = await reg.pushManager.getSubscription().catch(() => null);
+        return !!sub;
+    };
+
+    window._activarPush = async (btnEl) => {
+        if (window.FirebaseAuth?.getPlan() !== 'promax') return;
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            alert('Tu navegador no soporta notificaciones push.');
+            return;
+        }
+        try {
+            btnEl.textContent = 'Activando...';
+            btnEl.disabled = true;
+            const reg = await navigator.serviceWorker.register('/elfulbo/sw.js', { scope: '/elfulbo/' });
+            await navigator.serviceWorker.ready;
+            const permiso = await Notification.requestPermission();
+            if (permiso !== 'granted') { btnEl.textContent = '🔔 ACTIVAR NOTIFICACIONES'; btnEl.disabled = false; return; }
+            const vapidRes = await fetch(`${CF_WORKER_PUSH}/push/vapid-key`);
+            const { key: vapidKey } = await vapidRes.json();
+            const subscription = await reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: _urlBase64ToUint8Array(vapidKey),
+            });
+            const perfil = window.FirebaseAuth?.getPerfil();
+            const uid    = window.FirebaseAuth?.getUser()?.uid;
+            await fetch(`${CF_WORKER_PUSH}/push/suscribir`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    uid, subscription: subscription.toJSON(),
+                    equipoFavorito: perfil?.equipoFavorito ?? '',
+                    ligas: perfil?.ligaNacional ? [perfil.ligaNacional] : [],
+                }),
+            });
+            const estadoEl = document.getElementById('push-estado');
+            if (estadoEl) estadoEl.innerHTML = `
+                <span style="color:var(--accent-neon); font-weight:700;">🔔 Notificaciones activas</span>
+                <button onclick="window._desactivarPush(this)"
+                    style="margin-left:12px; background:none; border:1px solid #ff4757;
+                    color:#ff4757; border-radius:6px; padding:4px 10px; cursor:pointer;
+                    font-size:0.75rem; font-family:var(--font-heading);">DESACTIVAR</button>`;
+        } catch(err) {
+            console.error('[PUSH]', err);
+            btnEl.textContent = '⚠️ Error — Intentá de nuevo';
+            btnEl.disabled = false;
+        }
+    };
+
+    window._desactivarPush = async (btnEl) => {
+        try {
+            btnEl.textContent = 'Desactivando...'; btnEl.disabled = true;
+            const reg = await navigator.serviceWorker.getRegistration('/elfulbo/sw.js').catch(() => null);
+            if (reg) { const sub = await reg.pushManager.getSubscription().catch(() => null); if (sub) await sub.unsubscribe(); }
+            const uid = window.FirebaseAuth?.getUser()?.uid;
+            if (uid) await fetch(`${CF_WORKER_PUSH}/push/desuscribir`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid }) });
+            const estadoEl = document.getElementById('push-estado');
+            if (estadoEl) estadoEl.innerHTML = `<button id="push-btn-activar" class="btn-primary" onclick="window._activarPush(this)" style="width:100%;">🔔 ACTIVAR NOTIFICACIONES</button>`;
+        } catch(err) { console.error('[PUSH]', err); btnEl.textContent = '⚠️ Error'; btnEl.disabled = false; }
+    };
+
     const renderPerfil = async () => {
         const user   = window.FirebaseAuth?.getUser();
         const perfil = window.FirebaseAuth?.getPerfil();
         const plan   = window.FirebaseAuth?.getPlan() ?? 'free';
+
+        const planMeta = {
+            free:   { color: '#888',    bg: 'rgba(136,136,136,0.2)', emoji: '⚽', label: 'POPULAR' },
+            pro:    { color: '#39ff14', bg: 'rgba(57,255,20,0.2)',   emoji: '🎟️', label: 'PLATEA'  },
+            promax: { color: '#ffd700', bg: 'rgba(255,215,0,0.2)',   emoji: '👑', label: 'PALCO'   },
+        };
+        const meta = planMeta[plan] ?? planMeta.free;
+
+        const DEPORTES_DISP = [
+            {id:'basketball', nombre:'Básquet',            emoji:'🏀'},
+            {id:'tennis',     nombre:'Tenis',              emoji:'🎾'},
+            {id:'racing',     nombre:'Fórmula 1',          emoji:'🏎️'},
+            {id:'football',   nombre:'Fútbol Americano',   emoji:'🏈'},
+            {id:'baseball',   nombre:'Baseball',           emoji:'⚾'},
+            {id:'hockey',     nombre:'Hockey sobre Hielo', emoji:'🏒'},
+            {id:'golf',       nombre:'Golf',               emoji:'⛳'},
+            {id:'mma',        nombre:'MMA',                emoji:'🥊'},
+            {id:'rugby',      nombre:'Rugby',              emoji:'🏉'},
+        ];
+
+        const maxDep = plan === 'promax' ? 99 : plan === 'pro' ? 1 : 0;
+        window._deportesPerfil = [...(perfil?.deportes ?? [])];
+
+        const _renderDeportes = (deportesActuales) => {
+            if (maxDep === 0) return `
+                <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
+                    <h3 class="panel-title" style="margin-bottom:1rem;">🏅 Otros deportes</h3>
+                    <div style="text-align:center; padding:1.5rem; border:1px dashed var(--border-glass); border-radius:12px;">
+                        <div style="font-size:2rem; margin-bottom:0.5rem;">🔒</div>
+                        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Disponibles desde el plan Platea.</p>
+                        <button class="btn-primary" style="background:#39ff14; color:#000;" onclick="window.location.hash='#/planes'">VER PLANES →</button>
+                    </div>
+                </div>`;
+
+            const planLabel = plan === 'pro'
+                ? '🎟️ Plan Platea — podés elegir 1 deporte adicional.'
+                : '👑 Plan Palco — elegí todos los que quieras.';
+
+            const cards = DEPORTES_DISP.map(d => {
+                const sel  = deportesActuales.includes(d.id);
+                const bloq = !sel && deportesActuales.length >= maxDep;
+                return `<div ${bloq ? '' : `onclick="window._perfilToggleDeporte('${d.id}')"`}
+                    style="padding:12px; border-radius:8px; text-align:center; transition:all 0.2s;
+                    border:2px solid ${sel ? 'var(--accent-neon)' : 'var(--border-glass)'};
+                    background:${sel ? 'rgba(57,255,20,0.1)' : 'rgba(255,255,255,0.03)'};
+                    cursor:${bloq ? 'default' : 'pointer'}; opacity:${bloq ? '0.4' : '1'};">
+                    <div style="font-size:1.5rem; margin-bottom:4px;">${d.emoji}</div>
+                    <div style="font-size:0.78rem; font-weight:600;">${d.nombre}</div>
+                    ${sel ? '<div style="font-size:0.65rem; color:var(--accent-neon); margin-top:3px;">✓ Elegido</div>' : ''}
+                </div>`;
+            }).join('');
+
+            return `
+                <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
+                    <h3 class="panel-title" style="margin-bottom:0.5rem;">🏅 Mis deportes</h3>
+                    <p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:1.2rem;">${planLabel} El fútbol siempre está incluido.</p>
+                    <div id="deportes-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:0.6rem; margin-bottom:1.2rem;">
+                        ${cards}
+                    </div>
+                    <button class="btn-primary" onclick="window._perfilGuardarDeportes()" style="width:100%;">GUARDAR DEPORTES</button>
+                    <div id="deportes-ok" style="display:none; color:var(--accent-neon); font-size:0.85rem; font-weight:700; margin-top:8px; text-align:center;">✓ Deportes guardados</div>
+                </div>`;
+        };
+
+        // Push status
+        const pushActivo = plan === 'promax' ? await pushEstaActivo() : false;
 
         appContainer.innerHTML = `
             ${renderNavbar('#/perfil')}
@@ -2555,21 +2695,21 @@ const App = (() => {
 
                 <!-- Info del usuario -->
                 <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
-                    <div style="display:flex; align-items:center; gap:1.2rem; margin-bottom:1.2rem;">
-                        <div style="width:60px; height:60px; border-radius:50%; background:rgba(57,255,20,0.15);
-                            border:2px solid var(--accent-neon); display:flex; align-items:center;
-                            justify-content:center; font-size:1.5rem; font-weight:800; font-family:var(--font-heading);">
+                    <div style="display:flex; align-items:center; gap:1.2rem;">
+                        <div style="width:60px; height:60px; border-radius:50%;
+                            background:${meta.bg}; border:2px solid ${meta.color};
+                            display:flex; align-items:center; justify-content:center;
+                            font-size:1.5rem; font-weight:800; font-family:var(--font-heading);">
                             ${(perfil?.nombre ?? 'U').charAt(0).toUpperCase()}
                         </div>
                         <div>
                             <div style="font-weight:800; font-size:1.1rem;">${perfil?.nombre ?? 'Usuario'}</div>
                             <div style="color:var(--text-muted); font-size:0.85rem;">${user?.email ?? ''}</div>
                             <div style="margin-top:4px;">
-                                <span style="background:${plan === 'premium' ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.08)'};
-                                    color:${plan === 'premium' ? '#ffd700' : 'var(--text-muted)'};
+                                <span style="background:${meta.bg}; color:${meta.color};
                                     padding:2px 10px; border-radius:20px; font-size:0.7rem; font-weight:800;
                                     font-family:var(--font-heading); letter-spacing:1px;">
-                                    ${plan.toUpperCase()}
+                                    ${meta.emoji} ${meta.label}
                                 </span>
                             </div>
                         </div>
@@ -2581,8 +2721,7 @@ const App = (() => {
                     <h3 class="panel-title" style="margin-bottom:1rem;">⭐ Equipo Favorito</h3>
                     <select id="equipo-fav-select" style="width:100%; background:var(--surface-color);
                         color:var(--text-main); border:1px solid var(--border-glass); border-radius:8px;
-                        padding:10px; font-size:0.9rem; cursor:pointer; margin-bottom:1rem;
-                        color-scheme:dark;">
+                        padding:10px; font-size:0.9rem; cursor:pointer; margin-bottom:1rem; color-scheme:dark;">
                         <option value="">— Sin seleccionar —</option>
                         ${[
                             {id:'202',n:'🇦🇷 Argentina'},{id:'478',n:'🇫🇷 Francia'},{id:'205',n:'🇧🇷 Brasil'},
@@ -2594,6 +2733,39 @@ const App = (() => {
                     </select>
                     <button class="btn-primary" onclick="window._guardarEquipoFav()">GUARDAR</button>
                     <span id="fav-ok" style="display:none; color:var(--accent-neon); font-size:0.85rem; margin-left:10px; font-weight:700;">✓ Guardado</span>
+                </div>
+
+                <!-- Deportes -->
+                <div id="deportes-section">${_renderDeportes(window._deportesPerfil)}</div>
+
+                <!-- Notificaciones (solo Palco) -->
+                <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
+                    <h3 class="panel-title" style="margin-bottom:0.5rem;">🔔 Notificaciones en vivo</h3>
+                    ${plan !== 'promax' ? `
+                        <div style="text-align:center; padding:1rem; border:1px dashed var(--border-glass); border-radius:12px;">
+                            <div style="font-size:2rem; margin-bottom:0.5rem;">🔒</div>
+                            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Exclusivas del plan Palco.</p>
+                            <button class="btn-primary" style="background:#ffd700; color:#000;" onclick="window.location.hash='#/planes'">VER PALCO 👑</button>
+                        </div>
+                    ` : `
+                        <p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:1.2rem;">
+                            Recibí una notificación cuando tu equipo favorito meta un gol.
+                        </p>
+                        <div id="push-estado">
+                            ${pushActivo ? `
+                                <span style="color:var(--accent-neon); font-weight:700;">🔔 Notificaciones activas</span>
+                                <button onclick="window._desactivarPush(this)"
+                                    style="margin-left:12px; background:none; border:1px solid #ff4757;
+                                    color:#ff4757; border-radius:6px; padding:4px 10px; cursor:pointer;
+                                    font-size:0.75rem; font-family:var(--font-heading);">DESACTIVAR</button>
+                            ` : `
+                                <button id="push-btn-activar" class="btn-primary"
+                                    onclick="window._activarPush(this)" style="width:100%;">
+                                    🔔 ACTIVAR NOTIFICACIONES
+                                </button>
+                            `}
+                        </div>
+                    `}
                 </div>
 
                 <!-- Plan actual -->
@@ -2610,9 +2782,7 @@ const App = (() => {
                             <div style="font-size:2rem; margin-bottom:0.5rem;">🎟️</div>
                             <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:800; color:#39ff14;">Platea activo</div>
                             <button class="btn-primary" style="margin-top:1rem; background:#ffd700; color:#000;"
-                                onclick="window.location.hash='#/planes'">
-                                PASARTE A PALCO 👑
-                            </button>
+                                onclick="window.location.hash='#/planes'">PASARTE A PALCO 👑</button>
                         </div>
                     ` : `
                         <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1rem;">
@@ -2640,6 +2810,23 @@ const App = (() => {
             await window.FirebaseAuth?.actualizarPerfil({ equipoFavorito: sel });
             const ok = document.getElementById('fav-ok');
             if (ok) { ok.style.display = 'inline'; setTimeout(() => ok.style.display = 'none', 2000); }
+        };
+
+        window._perfilToggleDeporte = (id) => {
+            const idx = window._deportesPerfil.indexOf(id);
+            if (idx >= 0) window._deportesPerfil.splice(idx, 1);
+            else if (window._deportesPerfil.length < maxDep) window._deportesPerfil.push(id);
+            const sec = document.getElementById('deportes-section');
+            if (sec) sec.innerHTML = _renderDeportes(window._deportesPerfil);
+        };
+
+        window._perfilGuardarDeportes = async () => {
+            const deportesGuardar = plan === 'promax'
+                ? window._deportesPerfil
+                : window._deportesPerfil.slice(0, 1);
+            await window.FirebaseAuth?.actualizarPerfil({ deportes: deportesGuardar });
+            const ok = document.getElementById('deportes-ok');
+            if (ok) { ok.style.display = 'block'; setTimeout(() => ok.style.display = 'none', 2000); }
         };
     };
 
