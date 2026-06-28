@@ -271,7 +271,7 @@ const App = (() => {
 
     // ── VISTAS PRINCIPALES ────────────────────────────────────────────────────
     const renderHome = async () => {
-        const CF_WORKER  = 'https://elfulbo.solgoyhe.workers.dev';
+        const CF_WORKER  = 'https://whistle.solgoyhe.workers.dev';
         const perfil     = window.FirebaseAuth?.getPerfil() ?? {};
         const nombre     = window.FirebaseAuth?.getNombre()?.split(' ')[0] ?? '';
         const deportes   = perfil.deportes ?? [];
@@ -636,7 +636,7 @@ const App = (() => {
         `;
 
         let gruposData = [];
-        const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
+        const CF_WORKER = 'https://whistle.solgoyhe.workers.dev';
 
         try {
             const espnUrl      = 'https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings';
@@ -884,7 +884,7 @@ const App = (() => {
 
     // ── BRACKET MUNDIAL 2026 (SVG tipo llave clásica) ───────────────────────
     const renderBracketMundial = async (container) => {
-        const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
+        const CF_WORKER = 'https://whistle.solgoyhe.workers.dev';
 
         container.innerHTML = `
             <div style="text-align:center; padding:2rem;">
@@ -1184,7 +1184,7 @@ const App = (() => {
         `;
 
         let equipos = [];
-        const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
+        const CF_WORKER = 'https://whistle.solgoyhe.workers.dev';
 
         try {
             const espnProxyUrl  = `${CF_WORKER}/?url=${encodeURIComponent('https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings')}`;
@@ -1284,7 +1284,7 @@ const App = (() => {
     // ── VISTA: PERFIL DE EQUIPO ───────────────────────────────────────────────
     const renderEquipoDetalle = async (equipoId, ligaId, nombreEquipoDecoded) => {
         const name       = decodeURIComponent(nombreEquipoDecoded || 'Selección');
-        const CF_WORKER  = 'https://elfulbo.solgoyhe.workers.dev';
+        const CF_WORKER  = 'https://whistle.solgoyhe.workers.dev';
         const espnLeague = ESPN.getSlug(ligaId) ?? ligaId;
 
         appContainer.innerHTML = `
@@ -1840,7 +1840,7 @@ const App = (() => {
 
     // ── H2H ──────────────────────────────────────────────────────────────────
     const renderH2H = async () => {
-        const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
+        const CF_WORKER = 'https://whistle.solgoyhe.workers.dev';
 
         // Días del Mundial completo — fase de grupos + eliminación directa
         const DIAS_MUNDIAL = [];
@@ -2207,7 +2207,7 @@ const App = (() => {
 
     // ── INFO ──────────────────────────────────────────────────────────────────
     const renderInfo = async () => {
-        const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
+        const CF_WORKER = 'https://whistle.solgoyhe.workers.dev';
 
         // Skeleton mientras carga
         appContainer.innerHTML = `
@@ -2592,7 +2592,7 @@ const App = (() => {
 
     // ── PERFIL ────────────────────────────────────────────────────────────────
     // ── PUSH NOTIFICATIONS ───────────────────────────────────────────────────
-    const CF_WORKER_PUSH = 'https://elfulbo.solgoyhe.workers.dev';
+    const CF_WORKER_PUSH = 'https://whistle.solgoyhe.workers.dev';
 
     const _urlBase64ToUint8Array = (base64String) => {
         const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -3356,7 +3356,7 @@ const App = (() => {
         }
 
         const isProMax = window.FirebaseAuth?.getPlan() === 'promax';
-        const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
+        const CF_WORKER = 'https://whistle.solgoyhe.workers.dev';
 
         // Solo ProMax puede ver Other Sports
         if (!isProMax) {
@@ -3549,7 +3549,7 @@ const App = (() => {
 
     // ── VISTA DE PARTIDO ─────────────────────────────────────────────────────
     const renderPartido = async (eventId, ligaId) => {
-        const CF_WORKER  = 'https://elfulbo.solgoyhe.workers.dev';
+        const CF_WORKER  = 'https://whistle.solgoyhe.workers.dev';
         const espnLeague = ESPN.getSlug(ligaId) ?? ligaId ?? 'fifa.world';
         const esPro      = _esPro();
 
@@ -3783,7 +3783,7 @@ const App = (() => {
     };
 
     // ── STRIPE CHECKOUT ──────────────────────────────────────────────────────
-    const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
+    const CF_WORKER = 'https://whistle.solgoyhe.workers.dev';
 
     // Mapeo de keys de UI a variant keys de Lemon Squeezy
     const LS_VARIANT_KEYS = {
