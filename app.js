@@ -32,25 +32,39 @@ const App = (() => {
         return [1, 4, 3, 3];
     };
 
-    // Orden X por sigla de posición (izquierda → derecha)
+    // Orden X por sigla de posición ESPN (izquierda=0 → derecha=10)
     const _ordenPosicion = (abbr = '') => {
         const a = abbr.toUpperCase().trim();
         const mapa = {
-            'GK':0,'G':0,
-            'LB':0,'LWB':0,'LM':0,'LW':0,'LF':0,'LWF':0,
-            'CB-L':1,'CD-L':1,
-            'CB':2,'CD':2,'CDM':2,'DM':2,'CM':2,'M':2,'CAM':2,'AM':2,
-            'CB-R':3,'CD-R':3,
-            'ST-L':3,'CF-L':3,'AM-L':1,'CM-L':1,
-            'ST':4,'CF':4,'FW':4,'F':4,
-            'AM-R':5,'CM-R':5,
-            'ST-R':6,'CF-R':6,
-            'RB':7,'RWB':7,'RM':7,'RW':7,'RF':7,'RWF':7,
+            // Portero
+            'G': 5, 'GK': 5,
+            // Defensas
+            'LB': 0, 'LWB': 0,
+            'CD-L': 1, 'CB-L': 1,
+            'CB': 5, 'CD': 5,
+            'CD-R': 9, 'CB-R': 9,
+            'RB': 10, 'RWB': 10,
+            // Mediocampo — ESPN usa LM/RM para volantes centrales izq/der
+            'LM': 2,   // volante por izquierda (ej: Koné)
+            'CDM': 4, 'DM': 4,
+            'CM': 5, 'M': 5,
+            'CAM': 5,
+            'RM': 8,   // volante por derecha (ej: Tchouaméni)
+            // Extremos y mediapuntas
+            'AM-L': 1, // extremo izquierdo (ej: Doué)
+            'AM': 5,   // mediapunta centro (ej: Olise)
+            'AM-R': 9, // extremo derecho (ej: Dembélé)
+            'CM-L': 2, 'CM-R': 8,
+            // Delanteros
+            'LF': 0, 'LW': 0, 'CF-L': 2, 'ST-L': 2,
+            'ST': 5, 'CF': 5, 'F': 5, 'FW': 5,
+            'CF-R': 8, 'ST-R': 8,
+            'RW': 10, 'RF': 10,
         };
         if (mapa[a] !== undefined) return mapa[a];
         if (a.startsWith('L')) return 0;
-        if (a.startsWith('R')) return 7;
-        return 4;
+        if (a.startsWith('R')) return 10;
+        return 5;
     };
 
     // Calcula posiciones X/Y usando formationPlace (1=GK, 2-11=campo)
