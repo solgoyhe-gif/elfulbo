@@ -27,37 +27,47 @@ const App = (() => {
     const _parsearFormacion = (formStr = '') => {
         const nums = formStr.split('-').map(Number).filter(n => !isNaN(n) && n > 0);
         if (nums.length >= 2 && nums.reduce((a,b) => a+b, 0) <= 10) {
-            return [1, ...nums]; // agregar GK
+            return [1, ...nums];
         }
-        return [1, 4, 3, 3]; // default 4-3-3
+        return [1, 4, 3, 3];
+    };
+
+    // Orden X por sigla de posición (izquierda → derecha)
+    const _ordenPosicion = (abbr = '') => {
+        const a = abbr.toUpperCase().trim();
+        const mapa = {
+            'GK':0,'G':0,
+            'LB':0,'LWB':0,'LM':0,'LW':0,'LF':0,'LWF':0,
+            'CB-L':1,'CD-L':1,
+            'CB':2,'CD':2,'CDM':2,'DM':2,'CM':2,'M':2,'CAM':2,'AM':2,
+            'CB-R':3,'CD-R':3,
+            'ST-L':3,'CF-L':3,'AM-L':1,'CM-L':1,
+            'ST':4,'CF':4,'FW':4,'F':4,
+            'AM-R':5,'CM-R':5,
+            'ST-R':6,'CF-R':6,
+            'RB':7,'RWB':7,'RM':7,'RW':7,'RF':7,'RWF':7,
+        };
+        if (mapa[a] !== undefined) return mapa[a];
+        if (a.startsWith('L')) return 0;
+        if (a.startsWith('R')) return 7;
+        return 4;
     };
 
     // Calcula posiciones X/Y usando formationPlace (1=GK, 2-11=campo)
     // y la formación del equipo para saber qué fila le toca a cada jugador
     const _calcularPosicionesTacticas = (titulares, svgW = 400, svgH = 560, formacionStr = '') => {
-        // Ordenar por formationPlace
         const sorted = [...titulares].sort((a, b) => a.formationPlace - b.formationPlace);
-
-        // Parsear formación → saber cuántos jugadores van en cada fila
         const lineas = _parsearFormacion(formacionStr);
-        // lineas[0]=1 (GK), lineas[1]=defensas, lineas[2]=medios, etc.
-
-        // Asignar fila a cada jugador según su posición en el orden
-        // formationPlace 1 = GK, 2..N = campo en orden de fila
         const coordsMap = new Map();
-
         const yGK  = svgH * 0.90;
         const yFWD = svgH * 0.12;
         const totalLineas = lineas.length;
 
         let placeIdx = 0;
         lineas.forEach((count, lineaIdx) => {
-            // Y interpolado: GK (lineaIdx=0) → FWD (lineaIdx=last)
             const t = totalLineas === 1 ? 0 : lineaIdx / (totalLineas - 1);
             const y = Math.round(yGK - t * (yGK - yFWD));
 
-            // Margen horizontal dinámico según cantidad de jugadores
-            // Con 1 → centrado, con 2 → algo centrado, con 4-5 → bien abiertos
             const spread = count === 1 ? 0 :
                            count === 2 ? 0.25 :
                            count === 3 ? 0.35 :
@@ -65,27 +75,26 @@ const App = (() => {
             const xMin = svgW * (0.5 - spread);
             const xMax = svgW * (0.5 + spread);
 
-            for (let i = 0; i < count; i++) {
-                if (placeIdx >= sorted.length) break;
-                const j = sorted[placeIdx];
-                let x;
-                if (count === 1) {
-                    x = svgW / 2;
-                } else {
-                    x = Math.round(xMin + (i / (count - 1)) * (xMax - xMin));
-                }
+            // Tomar los jugadores de esta fila y ordenarlos por posición (izq → der)
+            const grupo = sorted.slice(placeIdx, placeIdx + count);
+            grupo.sort((a, b) =>
+                _ordenPosicion(a.position?.abbreviation ?? '') -
+                _ordenPosicion(b.position?.abbreviation ?? '')
+            );
+
+            grupo.forEach((j, i) => {
+                const x = count === 1 ? svgW / 2 : Math.round(xMin + (i / (count - 1)) * (xMax - xMin));
                 coordsMap.set(j.formationPlace, { x, y, n: count });
-                placeIdx++;
-            }
+            });
+            placeIdx += count;
         });
 
-        // Si sobraron jugadores (formación no coincide), distribuirlos en una fila extra
+        // Sobrantes
         if (placeIdx < sorted.length) {
             const restantes = sorted.slice(placeIdx);
             const y = Math.round(yFWD);
-            const xMin = svgW * 0.10;
-            const xMax = svgW * 0.90;
             const n = restantes.length;
+            const xMin = svgW * 0.10, xMax = svgW * 0.90;
             restantes.forEach((j, i) => {
                 const x = n === 1 ? svgW/2 : Math.round(xMin + (i/(n-1))*(xMax-xMin));
                 coordsMap.set(j.formationPlace, { x, y, n });
@@ -1802,11 +1811,19 @@ const App = (() => {
     const renderH2H = async () => {
         const CF_WORKER = 'https://elfulbo.solgoyhe.workers.dev';
 
-        // Días del Mundial fase de grupos (UTC-3 Argentina)
+        // Días del Mundial completo — fase de grupos + eliminación directa
         const DIAS_MUNDIAL = [];
-        for (let d = 11; d <= 27; d++) {
+        // Fase de grupos: 11-27 junio
+        for (let d = 11; d <= 30; d++) {
             const fecha = `202606${String(d).padStart(2, '0')}`;
             const label = new Date(`2026-06-${String(d).padStart(2, '0')}T12:00:00-03:00`)
+                .toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' });
+            DIAS_MUNDIAL.push({ fecha, label });
+        }
+        // Julio: octavos, cuartos, semis, final (1-19 julio)
+        for (let d = 1; d <= 19; d++) {
+            const fecha = `202607${String(d).padStart(2, '0')}`;
+            const label = new Date(`2026-07-${String(d).padStart(2, '0')}T12:00:00-03:00`)
                 .toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' });
             DIAS_MUNDIAL.push({ fecha, label });
         }
