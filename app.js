@@ -67,19 +67,56 @@ const App = (() => {
         return 5;
     };
 
-    // Calcula posiciones X/Y usando formationPlace (1=GK, 2-11=campo)
-    // y la formación del equipo para saber qué fila le toca a cada jugador
+    // Determina la fila táctica (0=GK, 1=DEF, 2=MED, 3=ATQ/EXT, 4=DEL) por sigla ESPN
+    const _filaDesigla = (abbr = '') => {
+        const a = abbr.toUpperCase().trim();
+        // Portero
+        if (a === 'G' || a === 'GK') return 0;
+        // Defensas
+        if (['LB','LWB','RB','RWB','CB','CB-L','CB-R','CD','CD-L','CD-R','SW'].includes(a)) return 1;
+        if (a.startsWith('CB') || a.startsWith('CD')) return 1;
+        // Volantes defensivos / mediocampo base
+        if (['CDM','DM','CM','LM','RM','CM-L','CM-R'].includes(a)) return 2;
+        // Mediapuntas y extremos
+        if (['CAM','AM','AM-L','AM-R','LW','RW','LF','RF','WF'].includes(a)) return 3;
+        if (a.startsWith('AM') || a.startsWith('LW') || a.startsWith('RW')) return 3;
+        // Delanteros
+        if (['ST','CF','F','FW','ST-L','ST-R','CF-L','CF-R'].includes(a)) return 4;
+        if (a.startsWith('ST') || a.startsWith('CF') || a === 'F' || a === 'FW') return 4;
+        // Fallback por prefijo
+        if (a.startsWith('L') || a.startsWith('R')) return 1;
+        return 2;
+    };
+
+    // Calcula posiciones X/Y agrupando por sigla de posición (no formationPlace)
     const _calcularPosicionesTacticas = (titulares, svgW = 400, svgH = 560, formacionStr = '') => {
-        const sorted = [...titulares].sort((a, b) => a.formationPlace - b.formationPlace);
-        const lineas = _parsearFormacion(formacionStr);
-        const coordsMap = new Map();
+        // Agrupar por fila táctica según sigla
+        const filas = {0:[], 1:[], 2:[], 3:[], 4:[]};
+        titulares.forEach(j => {
+            const fila = _filaDesigla(j.position?.abbreviation ?? '');
+            filas[fila].push(j);
+        });
+
+        // Ordenar dentro de cada fila por orden X
+        Object.values(filas).forEach(grupo => {
+            grupo.sort((a, b) =>
+                _ordenPosicion(a.position?.abbreviation ?? '') -
+                _ordenPosicion(b.position?.abbreviation ?? '')
+            );
+        });
+
+        // Filas ocupadas de abajo (GK) hacia arriba (DEL)
+        const filasOcupadas = [0,1,2,3,4].filter(f => filas[f].length > 0);
+
         const yGK  = svgH * 0.90;
         const yFWD = svgH * 0.12;
-        const totalLineas = lineas.length;
+        const totalLineas = filasOcupadas.length;
+        const coordsMap = new Map();
 
-        let placeIdx = 0;
-        lineas.forEach((count, lineaIdx) => {
-            const t = totalLineas === 1 ? 0 : lineaIdx / (totalLineas - 1);
+        filasOcupadas.forEach((fila, idx) => {
+            const grupo = filas[fila];
+            const count = grupo.length;
+            const t = totalLineas === 1 ? 0 : idx / (totalLineas - 1);
             const y = Math.round(yGK - t * (yGK - yFWD));
 
             const spread = count === 1 ? 0 :
@@ -89,31 +126,11 @@ const App = (() => {
             const xMin = svgW * (0.5 - spread);
             const xMax = svgW * (0.5 + spread);
 
-            // Tomar los jugadores de esta fila y ordenarlos por posición (izq → der)
-            const grupo = sorted.slice(placeIdx, placeIdx + count);
-            grupo.sort((a, b) =>
-                _ordenPosicion(a.position?.abbreviation ?? '') -
-                _ordenPosicion(b.position?.abbreviation ?? '')
-            );
-
             grupo.forEach((j, i) => {
                 const x = count === 1 ? svgW / 2 : Math.round(xMin + (i / (count - 1)) * (xMax - xMin));
                 coordsMap.set(j.formationPlace, { x, y, n: count });
             });
-            placeIdx += count;
         });
-
-        // Sobrantes
-        if (placeIdx < sorted.length) {
-            const restantes = sorted.slice(placeIdx);
-            const y = Math.round(yFWD);
-            const n = restantes.length;
-            const xMin = svgW * 0.10, xMax = svgW * 0.90;
-            restantes.forEach((j, i) => {
-                const x = n === 1 ? svgW/2 : Math.round(xMin + (i/(n-1))*(xMax-xMin));
-                coordsMap.set(j.formationPlace, { x, y, n });
-            });
-        }
 
         return coordsMap;
     };
