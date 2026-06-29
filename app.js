@@ -451,8 +451,9 @@ const App = (() => {
 
     const renderLigas = () => {
         const esPro        = _esPro();
-        const esAdmin      = window.FirebaseAuth?.getPerfil()?.plan === 'admin' ||
-                             window.location.search.includes('admin=1');
+        const _hashUrl     = new URL('http://x.com' + window.location.hash.replace('#', ''));
+        const esAdmin      = _hashUrl.searchParams.get('admin') === '1' ||
+                             window.FirebaseAuth?.getPerfil()?.plan === 'admin';
         const ligaNacional = window.FirebaseAuth?.getPerfil()?.ligaNacional ?? null;
 
         let html = `
