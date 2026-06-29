@@ -3471,6 +3471,130 @@ const App = (() => {
 
         // ── Deporte estático (Patín sobre Hielo) ─────────────────────────────
         if (deporteActual.estatico) {
+            const PATIN_PERFILES = {
+                'Ilia Malinin': {
+                    pais: '🇺🇸 EE.UU.', nacimiento: '2004', entrenador: 'Rafael Arutyunyan',
+                    ranking: 1,
+                    pb: { sp: '111.71', fs: '230.51', total: '342.22' },
+                    sp: { tes: '64.18', pcs: '47.53', caidas: 0,
+                        elementos: ['4Lz (GOE +4.1)', '4T+3T (GOE +3.8)', 'FCSp4', 'CSSp4', 'StSq4', '3A (GOE +3.2)', 'CCoSp4'] },
+                    fs: { tes: '139.04', pcs: '91.47', caidas: 0,
+                        elementos: ['4A (GOE +4.0)', '4Lz+3T', '4F', '4Lo', '4S+2T', '3A+1Eu+3S', '3Lz', 'ChSq1', 'FCSp4', 'CSSp4', 'StSq4', 'CCoSp4'] },
+                    palmarés: ['🥇 World 2023', '🥇 World 2025', '🥇 GP Final 2022', '🥇 4 Continents 2024'],
+                    nota: 'Único patinador en historia en completar un 4A (Axel cuádruple) en competencia oficial.'
+                },
+                'Yuma Kagiyama': {
+                    pais: '🇯🇵 Japón', nacimiento: '2003', entrenador: 'Stéphane Lambiel',
+                    ranking: 2,
+                    pb: { sp: '103.53', fs: '210.40', total: '298.41' },
+                    sp: { tes: '58.21', pcs: '45.32', caidas: 0,
+                        elementos: ['4F (GOE +2.8)', '4T+3T (GOE +2.4)', 'FCSp4', 'CSSp4', 'StSq4', '3A (GOE +2.9)', 'CCoSp4'] },
+                    fs: { tes: '118.07', pcs: '92.33', caidas: 0,
+                        elementos: ['4F', '4T+3T', '4S', '3A+1Eu+3F', '3Lz+3T', '3Lo', '3A', 'ChSq1', 'FCSp4', 'CSSp4', 'StSq4', 'CCoSp4'] },
+                    palmarés: ['🥈 Olympic 2022', '🥈 World 2022', '🥈 World 2025', '🥇 4 Continents 2022'],
+                    nota: 'Conocido por su elegancia artística y patinaje técnicamente limpio.'
+                },
+                'Adam Siao Him Fa': {
+                    pais: '🇫🇷 Francia', nacimiento: '2000', entrenador: 'Frédéric Dambier',
+                    ranking: 3,
+                    pb: { sp: '96.18', fs: '180.00', total: '276.18' },
+                    sp: { tes: '54.10', pcs: '42.08', caidas: 0,
+                        elementos: ['4T (GOE +1.9)', '3A+3T', 'FCSp4', 'CSSp4', 'StSq3', '3Lz (GOE +1.4)', 'CCoSp4'] },
+                    fs: { tes: '100.22', pcs: '79.78', caidas: 1,
+                        elementos: ['4T', '4S', '3A+3T', '3Lz+1Eu+3S', '3F', '3Lo', '3A', 'ChSq1', 'FCSp4', 'CSSp4', 'StSq3', 'CCoSp4'] },
+                    palmarés: ['🥉 World 2025', '🥇 Europeans 2023', '🥇 Europeans 2024'],
+                    nota: 'Dos veces campeón europeo consecutivo. Estilo artístico muy valorado.'
+                },
+                'Shun Sato': {
+                    pais: '🇯🇵 Japón', nacimiento: '2001', entrenador: 'Mie Hamada',
+                    ranking: 4,
+                    pb: { sp: '98.44', fs: '172.61', total: '271.05' },
+                    sp: { tes: '55.30', pcs: '43.14', caidas: 0,
+                        elementos: ['4T+3T', '3A (GOE +2.1)', 'FCSp4', 'CSSp4', 'StSq4', '3Lz', 'CCoSp4'] },
+                    fs: { tes: '96.18', pcs: '76.43', caidas: 1,
+                        elementos: ['4T', '4S', '3A+3T', '3Lz+1Eu+3F', '3Lo', '3F', '3A', 'ChSq1', 'FCSp4', 'CSSp4', 'StSq3', 'CCoSp4'] },
+                    palmarés: ['🥇 NHK Trophy 2022', '🥈 GP Final 2022'],
+                    nota: 'Patinador japonés de gran proyección, destacado por su versatilidad.'
+                },
+                'Kevin Aymoz': {
+                    pais: '🇫🇷 Francia', nacimiento: '1997', entrenador: 'Katja Winkler',
+                    ranking: 5,
+                    pb: { sp: '94.55', fs: '173.78', total: '268.33' },
+                    sp: { tes: '52.11', pcs: '42.44', caidas: 0,
+                        elementos: ['4T (GOE +1.2)', '3A+3T', 'FCSp4', 'CSSp4', 'StSq4', '3Lz', 'CCoSp4'] },
+                    fs: { tes: '94.00', pcs: '79.78', caidas: 1,
+                        elementos: ['4T', '3A+3T', '3Lz+1Eu+3S', '3F', '3Lo', '3S', '3A', 'ChSq1', 'FCSp4', 'CSSp4', 'StSq4', 'CCoSp4'] },
+                    palmarés: ['🥇 GP Rostelecom 2019', '🥈 Europeans 2020'],
+                    nota: 'Reconocido por sus excepcionales Program Component Scores (artístico).'
+                },
+                'Kaori Sakamoto': {
+                    pais: '🇯🇵 Japón', nacimiento: '2000', entrenador: 'Sonoko Nakano',
+                    ranking: 1,
+                    pb: { sp: '81.31', fs: '151.82', total: '233.13' },
+                    sp: { tes: '45.18', pcs: '36.13', caidas: 0,
+                        elementos: ['3Lz+3T (GOE +2.4)', '3F (GOE +2.8)', 'FCSp4', 'LSp4', 'StSq4', '2A (GOE +2.0)', 'CCoSp4'] },
+                    fs: { tes: '83.44', pcs: '68.38', caidas: 0,
+                        elementos: ['3Lz+3T', '3F+1Eu+3S', '3Lo', '3Lz', '3S', '2A+3T', '2A', 'ChSq1', 'FCSp4', 'LSp4', 'StSq4', 'CCoSp4'] },
+                    palmarés: ['🥇 World 2022', '🥇 World 2023', '🥇 World 2025', '🥇 GP Final 2021', '🥇 GP Final 2022'],
+                    nota: 'Tres veces campeona mundial. Velocidad y consistencia excepcionales.'
+                },
+                'Isabeau Levito': {
+                    pais: '🇺🇸 EE.UU.', nacimiento: '2006', entrenador: 'Nikolai Morozov',
+                    ranking: 2,
+                    pb: { sp: '74.52', fs: '147.35', total: '221.87' },
+                    sp: { tes: '40.11', pcs: '34.41', caidas: 0,
+                        elementos: ['3Lz+3T', '3F', 'FCSp4', 'LSp4', 'StSq4', '2A', 'CCoSp4'] },
+                    fs: { tes: '80.22', pcs: '67.13', caidas: 0,
+                        elementos: ['3Lz+3T', '3F+1Eu+3S', '3Lo', '3Lz', '3S+3T', '2A', '3F', 'ChSq1', 'FCSp4', 'LSp4', 'StSq4', 'CCoSp4'] },
+                    palmarés: ['🥈 World 2025', '🥇 US Nationals 2024', '🥈 GP Final 2023'],
+                    nota: 'Una de las jóvenes más prometedoras del patinaje femenino mundial.'
+                },
+                'Loena Hendrickx': {
+                    pais: '🇧🇪 Bélgica', nacimiento: '1999', entrenador: 'Jorik Hendrickx',
+                    ranking: 3,
+                    pb: { sp: '76.88', fs: '141.56', total: '218.44' },
+                    sp: { tes: '42.00', pcs: '34.88', caidas: 0,
+                        elementos: ['3Lz+3T', '3F', 'FCSp4', 'LSp4', 'StSq4', '2A', 'CCoSp4'] },
+                    fs: { tes: '76.44', pcs: '65.12', caidas: 0,
+                        elementos: ['3Lz+3T', '3F+1Eu+3Lo', '3Lo', '3Lz', '3S', '2A+3T', '2A', 'ChSq1', 'FCSp4', 'LSp4', 'StSq4', 'CCoSp4'] },
+                    palmarés: ['🥉 World 2025', '🥇 Europeans 2023', '🥉 GP Final 2022'],
+                    nota: 'Primer medallista mundial belga en patinaje artístico femenino.'
+                },
+                'Madison Chock / Evan Bates': {
+                    pais: '🇺🇸 EE.UU.', nacimiento: '1992 / 1989', entrenador: 'Igor Shpilband',
+                    ranking: 1,
+                    pb: { sp: '91.43', fs: '137.98', total: '229.41' },
+                    sp: { tes: '52.18', pcs: '39.25', caidas: 0,
+                        elementos: ['TwB4', 'SyTwM4/W4', 'StaLi4', 'SlLi4', 'CoSp4', 'DiSt1', 'ChSt1'] },
+                    fs: { tes: '78.44', pcs: '59.54', caidas: 0,
+                        elementos: ['TwB4', 'SyTwM4/W4', 'OFStM3/W3', 'MiSt3', 'CoSp4', 'CuLi4', 'StaLi4', 'SlLi4', 'ChSp1', 'ChSt1'] },
+                    palmarés: ['🥇 World 2025', '🥇 GP Final 2023', '🥈 Olympic 2022', '🥇 US Nationals 2024'],
+                    nota: 'Pareja dominante del patinaje de danza. Medallistas olímpicos en Beijing 2022.'
+                },
+                'Piper Gilles / Paul Poirier': {
+                    pais: '🇨🇦 Canadá', nacimiento: '1993 / 1991', entrenador: 'Marie-France Dubreuil',
+                    ranking: 2,
+                    pb: { sp: '88.14', fs: '133.74', total: '221.88' },
+                    sp: { tes: '50.22', pcs: '37.92', caidas: 0,
+                        elementos: ['TwB3', 'SyTwM4/W3', 'StaLi4', 'SlLi4', 'CoSp4', 'DiSt1', 'ChSt1'] },
+                    fs: { tes: '75.00', pcs: '58.74', caidas: 0,
+                        elementos: ['TwB3', 'SyTwM4/W3', 'OFStM3/W3', 'MiSt3', 'CoSp4', 'CuLi4', 'StaLi4', 'SlLi4', 'ChSp1', 'ChSt1'] },
+                    palmarés: ['🥈 World 2025', '🥇 Canadian Nationals 2022-2024', '🥉 GP Final 2023'],
+                    nota: 'Conocidos por sus programas creativos y musicalmente innovadores.'
+                },
+                'Riku Miura / Ryuichi Kihara': {
+                    pais: '🇯🇵 Japón', nacimiento: '1999 / 1994', entrenador: 'Bruno Marcotte',
+                    ranking: 1,
+                    pb: { sp: '80.11', fs: '148.81', total: '228.92' },
+                    sp: { tes: '46.22', pcs: '33.89', caidas: 0,
+                        elementos: ['3Tw3', '3S+COMBO', 'BiDs3', 'FiDs4', 'BoDs3', 'PCoSp4', 'StSq3'] },
+                    fs: { tes: '85.44', pcs: '63.37', caidas: 0,
+                        elementos: ['3Tw4', '3T+3T', '3S', '3Lo', '2A+1Eu+3S', 'BiDs4', 'FiDs4', 'BoDs3', 'PCoSp4', 'ChSq1', 'StSq3', 'Li4'] },
+                    palmarés: ['🥇 World 2025', '🥈 World 2023', '🥇 4 Continents 2023'],
+                    nota: 'Primera pareja japonesa en ganar el Campeonato Mundial.'
+                },
+            };
+
             const PATIN_DATA = {
                 men: {
                     titulo: 'Individual Masculino — ISU World Championships 2025',
@@ -3524,22 +3648,111 @@ const App = (() => {
 
             const medallas = ['🥇', '🥈', '🥉'];
 
+            // Función para mostrar perfil de patinador
+            window._verPatinador = (nombre) => {
+                const p = PATIN_PERFILES[nombre];
+                if (!p) return;
+                const container = document.getElementById('other-sports-content');
+                container.innerHTML = `
+                    <button onclick="window._volverPatin()" style="background:transparent; border:1px solid var(--border-glass);
+                        color:var(--text-muted); padding:6px 14px; border-radius:12px; cursor:pointer;
+                        font-size:0.8rem; margin-bottom:1.2rem;">← Volver</button>
+
+                    <div class="glass-panel" style="padding:1.5rem; margin-bottom:1rem;">
+                        <div style="display:flex; align-items:flex-start; gap:16px; margin-bottom:1.2rem;">
+                            <div style="width:48px; height:48px; background:rgba(57,255,20,0.1); border:2px solid var(--accent-neon);
+                                border-radius:50%; display:flex; align-items:center; justify-content:center;
+                                font-size:1.4rem; flex-shrink:0;">⛸️</div>
+                            <div>
+                                <div style="font-family:var(--font-heading); font-size:1.1rem; font-weight:900;
+                                    color:var(--text-main);">${nombre}</div>
+                                <div style="font-size:0.8rem; color:var(--text-muted);">${p.pais} · Ranking #${p.ranking}</div>
+                                <div style="font-size:0.75rem; color:var(--text-muted);">Nacido/a: ${p.nacimiento} · Entrenador: ${p.entrenador}</div>
+                            </div>
+                        </div>
+
+                        <!-- Personal Bests -->
+                        <p style="font-size:0.72rem; color:var(--accent-neon); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Personal Best</p>
+                        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:1.2rem;">
+                            ${[['SP', p.pb.sp], ['FS', p.pb.fs], ['Total', p.pb.total]].map(([label, val]) => `
+                                <div style="background:rgba(255,255,255,0.04); border-radius:10px; padding:10px; text-align:center;">
+                                    <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px;">${label}</div>
+                                    <div style="font-family:var(--font-heading); font-size:1.1rem; font-weight:900;
+                                        color:${label === 'Total' ? '#ffd700' : 'var(--text-main)'};">${val}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <!-- Short Program -->
+                        <p style="font-size:0.72rem; color:var(--accent-neon); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Short Program</p>
+                        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:8px;">
+                            ${[['TES', p.sp.tes], ['PCS', p.sp.pcs], ['Caídas', p.sp.caidas]].map(([label, val]) => `
+                                <div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:8px; text-align:center;">
+                                    <div style="font-size:0.68rem; color:var(--text-muted);">${label}</div>
+                                    <div style="font-weight:700; font-size:0.9rem;">${val}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:1.2rem;">
+                            ${p.sp.elementos.map(e => `<span style="background:rgba(255,255,255,0.06); padding:3px 8px;
+                                border-radius:10px; font-size:0.7rem; color:var(--text-muted); font-family:monospace;">${e}</span>`).join('')}
+                        </div>
+
+                        <!-- Free Skating -->
+                        <p style="font-size:0.72rem; color:var(--accent-neon); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Free Skating</p>
+                        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:8px;">
+                            ${[['TES', p.fs.tes], ['PCS', p.fs.pcs], ['Caídas', p.fs.caidas]].map(([label, val]) => `
+                                <div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:8px; text-align:center;">
+                                    <div style="font-size:0.68rem; color:var(--text-muted);">${label}</div>
+                                    <div style="font-weight:700; font-size:0.9rem;">${val}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:1.2rem;">
+                            ${p.fs.elementos.map(e => `<span style="background:rgba(255,255,255,0.06); padding:3px 8px;
+                                border-radius:10px; font-size:0.7rem; color:var(--text-muted); font-family:monospace;">${e}</span>`).join('')}
+                        </div>
+
+                        <!-- Palmarés -->
+                        <p style="font-size:0.72rem; color:var(--accent-neon); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Palmarés</p>
+                        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:1rem;">
+                            ${p.palmarés.map(m => `<span style="background:rgba(255,215,0,0.1); border:1px solid rgba(255,215,0,0.3);
+                                padding:4px 10px; border-radius:12px; font-size:0.75rem; color:#ffd700;">${m}</span>`).join('')}
+                        </div>
+
+                        ${p.nota ? `<p style="font-size:0.78rem; color:var(--text-muted); font-style:italic; border-top:1px solid var(--border-glass); padding-top:1rem;">${p.nota}</p>` : ''}
+                    </div>
+                `;
+            };
+
+            window._volverPatin = () => {
+                window.location.hash = `#/other-sports?deporte=figure-skating&liga=${ligaActual.id}`;
+            };
+
             container.innerHTML = `
                 <div class="glass-panel" style="padding:1.2rem; margin-bottom:1rem;">
                     <p style="font-size:0.75rem; color:var(--accent-neon); text-transform:uppercase; letter-spacing:1px; margin-bottom:1rem;">${data.titulo}</p>
                     ${data.podio.map(p => `
-                        <div style="display:flex; align-items:center; gap:12px; padding:10px 0;
-                            border-bottom:1px solid var(--border-glass);">
+                        <div onclick="${PATIN_PERFILES[p.nombre] ? `window._verPatinador('${p.nombre.replace(/'/g,"\\'")}')` : ''}"
+                            style="display:flex; align-items:center; gap:12px; padding:10px 0;
+                            border-bottom:1px solid var(--border-glass);
+                            cursor:${PATIN_PERFILES[p.nombre] ? 'pointer' : 'default'};
+                            transition:background 0.15s;"
+                            onmouseover="${PATIN_PERFILES[p.nombre] ? "this.style.background='rgba(57,255,20,0.04)'" : ''}"
+                            onmouseout="this.style.background='transparent'">
                             <span style="font-size:${p.pos <= 3 ? '1.4rem' : '0.9rem'}; min-width:28px; text-align:center;">
-                                ${p.pos <= 3 ? medallas[p.pos-1] : p.pos + '.'}
+                                ${p.pos <= 3 ? medallas[p.pos - 1] : p.pos + '.'}
                             </span>
                             <div style="flex:1;">
                                 <div style="font-weight:${p.pos === 1 ? '800' : '600'}; font-size:0.9rem;
                                     color:${p.pos === 1 ? '#ffd700' : 'var(--text-main)'};">${p.nombre}</div>
                                 <div style="font-size:0.75rem; color:var(--text-muted);">${p.pais}</div>
                             </div>
-                            <div style="font-family:var(--font-heading); font-weight:700; font-size:0.9rem;
-                                color:var(--text-muted);">${p.puntos} pts</div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="font-family:var(--font-heading); font-weight:700; font-size:0.9rem;
+                                    color:var(--text-muted);">${p.puntos} pts</span>
+                                ${PATIN_PERFILES[p.nombre] ? `<span style="font-size:0.7rem; color:var(--accent-neon);">Ver →</span>` : ''}
+                            </div>
                         </div>
                     `).join('')}
                     <p style="font-size:0.72rem; color:var(--text-muted); margin-top:1rem; font-style:italic;">${data.proximos}</p>
