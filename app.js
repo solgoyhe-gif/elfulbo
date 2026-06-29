@@ -3349,7 +3349,16 @@ const App = (() => {
         {id:'handball',    nombre:'Handball',          emoji:'🤾', proximamente:true},
         {id:'table-tennis',nombre:'Ping Pong',         emoji:'🏓', proximamente:true},
         {id:'boxing',      nombre:'Boxeo',             emoji:'🥊', proximamente:true},
-        {id:'figure-skating',nombre:'Patín sobre Hielo',emoji:'⛸️', proximamente:true},
+        {
+            id: 'figure-skating', nombre: 'Patín sobre Hielo', emoji: '⛸️',
+            estatico: true,
+            ligas: [
+                { id: 'men',    nombre: 'Individual Masculino', emoji: '👨' },
+                { id: 'women',  nombre: 'Individual Femenino',  emoji: '👩' },
+                { id: 'pairs',  nombre: 'Parejas',              emoji: '👫' },
+                { id: 'dance',  nombre: 'Danza sobre Hielo',    emoji: '💃' },
+            ]
+        },
         {id:'olympics',    nombre:'Juegos Olímpicos',  emoji:'🏅', proximamente:true},
     ];
 
@@ -3459,6 +3468,85 @@ const App = (() => {
         `;
 
         if (!deporteActual || !ligaActual) return;
+
+        // ── Deporte estático (Patín sobre Hielo) ─────────────────────────────
+        if (deporteActual.estatico) {
+            const PATIN_DATA = {
+                men: {
+                    titulo: 'Individual Masculino — ISU World Championships 2025',
+                    podio: [
+                        { pos: 1, nombre: 'Ilia Malinin',      pais: '🇺🇸 EE.UU.',   puntos: '342.22' },
+                        { pos: 2, nombre: 'Yuma Kagiyama',     pais: '🇯🇵 Japón',    puntos: '298.41' },
+                        { pos: 3, nombre: 'Adam Siao Him Fa',  pais: '🇫🇷 Francia',  puntos: '276.18' },
+                        { pos: 4, nombre: 'Shun Sato',         pais: '🇯🇵 Japón',    puntos: '271.05' },
+                        { pos: 5, nombre: 'Kevin Aymoz',       pais: '🇫🇷 Francia',  puntos: '268.33' },
+                    ],
+                    proximos: 'Grand Prix Series 2025/26 — Temporada por comenzar (oct 2025)'
+                },
+                women: {
+                    titulo: 'Individual Femenino — ISU World Championships 2025',
+                    podio: [
+                        { pos: 1, nombre: 'Kaori Sakamoto',    pais: '🇯🇵 Japón',    puntos: '233.13' },
+                        { pos: 2, nombre: 'Isabeau Levito',    pais: '🇺🇸 EE.UU.',   puntos: '221.87' },
+                        { pos: 3, nombre: 'Loena Hendrickx',   pais: '🇧🇪 Bélgica',  puntos: '218.44' },
+                        { pos: 4, nombre: 'Chaeyeon Kim',      pais: '🇰🇷 Corea',    puntos: '215.92' },
+                        { pos: 5, nombre: 'Niina Petrokina',   pais: '🇪🇪 Estonia',  puntos: '210.07' },
+                    ],
+                    proximos: 'Grand Prix Series 2025/26 — Temporada por comenzar (oct 2025)'
+                },
+                pairs: {
+                    titulo: 'Parejas — ISU World Championships 2025',
+                    podio: [
+                        { pos: 1, nombre: 'Riku Miura / Ryuichi Kihara',         pais: '🇯🇵 Japón',   puntos: '228.92' },
+                        { pos: 2, nombre: 'Deanna Stellato / Max Deschamps',     pais: '🇨🇦 Canadá',  puntos: '221.44' },
+                        { pos: 3, nombre: 'Anastasia Mishina / Aleksandr Galliamov', pais: '🇷🇺*',    puntos: '219.71' },
+                        { pos: 4, nombre: 'Julianne Séguin / Charlie Bilodeau',  pais: '🇨🇦 Canadá',  puntos: '207.33' },
+                        { pos: 5, nombre: 'Rebecca Ghilardi / Filippo Ambrosini',pais: '🇮🇹 Italia',  puntos: '204.18' },
+                    ],
+                    proximos: '* Compiten bajo bandera neutral ISU'
+                },
+                dance: {
+                    titulo: 'Danza sobre Hielo — ISU World Championships 2025',
+                    podio: [
+                        { pos: 1, nombre: 'Madison Chock / Evan Bates',         pais: '🇺🇸 EE.UU.',  puntos: '229.41' },
+                        { pos: 2, nombre: 'Piper Gilles / Paul Poirier',         pais: '🇨🇦 Canadá',  puntos: '221.88' },
+                        { pos: 3, nombre: 'Charlène Guignard / Marco Fabbri',   pais: '🇮🇹 Italia',  puntos: '218.07' },
+                        { pos: 4, nombre: 'Lilah Fear / Lewis Gibson',           pais: '🇬🇧 GB',       puntos: '210.54' },
+                        { pos: 5, nombre: 'Laurence Fournier Beaudry / Nikolaj Sørensen', pais: '🇨🇦🇩🇰', puntos: '207.92' },
+                    ],
+                    proximos: 'Grand Prix Series 2025/26 — Temporada por comenzar (oct 2025)'
+                }
+            };
+
+            const data = PATIN_DATA[ligaActual.id];
+            const container = document.getElementById('other-sports-content');
+            if (!container || !data) return;
+
+            const medallas = ['🥇', '🥈', '🥉'];
+
+            container.innerHTML = `
+                <div class="glass-panel" style="padding:1.2rem; margin-bottom:1rem;">
+                    <p style="font-size:0.75rem; color:var(--accent-neon); text-transform:uppercase; letter-spacing:1px; margin-bottom:1rem;">${data.titulo}</p>
+                    ${data.podio.map(p => `
+                        <div style="display:flex; align-items:center; gap:12px; padding:10px 0;
+                            border-bottom:1px solid var(--border-glass);">
+                            <span style="font-size:${p.pos <= 3 ? '1.4rem' : '0.9rem'}; min-width:28px; text-align:center;">
+                                ${p.pos <= 3 ? medallas[p.pos-1] : p.pos + '.'}
+                            </span>
+                            <div style="flex:1;">
+                                <div style="font-weight:${p.pos === 1 ? '800' : '600'}; font-size:0.9rem;
+                                    color:${p.pos === 1 ? '#ffd700' : 'var(--text-main)'};">${p.nombre}</div>
+                                <div style="font-size:0.75rem; color:var(--text-muted);">${p.pais}</div>
+                            </div>
+                            <div style="font-family:var(--font-heading); font-weight:700; font-size:0.9rem;
+                                color:var(--text-muted);">${p.puntos} pts</div>
+                        </div>
+                    `).join('')}
+                    <p style="font-size:0.72rem; color:var(--text-muted); margin-top:1rem; font-style:italic;">${data.proximos}</p>
+                </div>
+            `;
+            return;
+        }
 
         // Cargar scoreboard del deporte/liga
         try {
