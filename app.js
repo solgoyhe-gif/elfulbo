@@ -3480,39 +3480,42 @@ const App = (() => {
                 if (!container) return;
 
                 const F1_PILOTOS = [
-                    { pos:1,  nombre:'Kimi Antonelli',      equipo:'Mercedes',           pais:'🇮🇹', puntos:171, victorias:5,  podios:7,  poles:4,  num:12 },
-                    { pos:2,  nombre:'George Russell',      equipo:'Mercedes',           pais:'🇬🇧', puntos:131, victorias:2,  podios:4,  poles:2,  num:63 },
-                    { pos:3,  nombre:'Lewis Hamilton',      equipo:'Ferrari',            pais:'🇬🇧', puntos:125, victorias:1,  podios:3,  poles:1,  num:44 },
-                    { pos:4,  nombre:'Oscar Piastri',       equipo:'McLaren',            pais:'🇦🇺', puntos:80,  victorias:0,  podios:2,  poles:0,  num:81 },
-                    { pos:5,  nombre:'Lando Norris',        equipo:'McLaren',            pais:'🇬🇧', puntos:79,  victorias:0,  podios:2,  poles:1,  num:4  },
-                    { pos:6,  nombre:'Charles Leclerc',     equipo:'Ferrari',            pais:'🇲🇨', puntos:79,  victorias:0,  podios:2,  poles:1,  num:16 },
-                    { pos:7,  nombre:'Max Verstappen',      equipo:'Red Bull Racing',    pais:'🇳🇱', puntos:73,  victorias:0,  podios:2,  poles:0,  num:1  },
-                    { pos:8,  nombre:'Isack Hadjar',        equipo:'Red Bull Racing',    pais:'🇫🇷', puntos:42,  victorias:0,  podios:0,  poles:0,  num:6  },
-                    { pos:9,  nombre:'Pierre Gasly',        equipo:'Alpine',             pais:'🇫🇷', puntos:36,  victorias:0,  podios:0,  poles:0,  num:10 },
-                    { pos:10, nombre:'Jack Doohan',         equipo:'Alpine',             pais:'🇦🇺', puntos:28,  victorias:0,  podios:0,  poles:0,  num:7  },
-                    { pos:11, nombre:'Nico Hülkenberg',     equipo:'Sauber',             pais:'🇩🇪', puntos:24,  victorias:0,  podios:0,  poles:0,  num:27 },
-                    { pos:12, nombre:'Carlos Sainz',        equipo:'Williams',           pais:'🇪🇸', puntos:20,  victorias:0,  podios:0,  poles:0,  num:55 },
-                    { pos:13, nombre:'Liam Lawson',         equipo:'Racing Bulls',       pais:'🇳🇿', puntos:18,  victorias:0,  podios:0,  poles:0,  num:30 },
-                    { pos:14, nombre:'Yuki Tsunoda',        equipo:'Racing Bulls',       pais:'🇯🇵', puntos:14,  victorias:0,  podios:0,  poles:0,  num:22 },
-                    { pos:15, nombre:'Kimi Räikkönen II / Oliver Bearman', equipo:'Haas', pais:'🇬🇧', puntos:10, victorias:0, podios:0, poles:0, num:87 },
-                    { pos:16, nombre:'Esteban Ocon',        equipo:'Haas',               pais:'🇫🇷', puntos:8,   victorias:0,  podios:0,  poles:0,  num:31 },
-                    { pos:17, nombre:'Gabriel Bortoleto',   equipo:'Sauber',             pais:'🇧🇷', puntos:4,   victorias:0,  podios:0,  poles:0,  num:5  },
-                    { pos:18, nombre:'Alexander Albon',     equipo:'Williams',           pais:'🇹🇭', puntos:2,   victorias:0,  podios:0,  poles:0,  num:23 },
-                    { pos:19, nombre:'Lance Stroll',        equipo:'Aston Martin',       pais:'🇨🇦', puntos:2,   victorias:0,  podios:0,  poles:0,  num:18 },
-                    { pos:20, nombre:'Fernando Alonso',     equipo:'Aston Martin',       pais:'🇪🇸', puntos:0,   victorias:0,  podios:0,  poles:0,  num:14 },
+                    { pos:1,  nombre:'Kimi Antonelli',   equipo:'Mercedes',      pais:'🇮🇹', puntos:171, victorias:5, podios:7, poles:4, num:12 },
+                    { pos:2,  nombre:'George Russell',   equipo:'Mercedes',      pais:'🇬🇧', puntos:131, victorias:2, podios:4, poles:2, num:63 },
+                    { pos:3,  nombre:'Lewis Hamilton',   equipo:'Ferrari',       pais:'🇬🇧', puntos:125, victorias:1, podios:3, poles:1, num:44 },
+                    { pos:4,  nombre:'Oscar Piastri',    equipo:'McLaren',       pais:'🇦🇺', puntos:80,  victorias:0, podios:2, poles:0, num:81 },
+                    { pos:5,  nombre:'Lando Norris',     equipo:'McLaren',       pais:'🇬🇧', puntos:79,  victorias:0, podios:2, poles:1, num:4  },
+                    { pos:6,  nombre:'Charles Leclerc',  equipo:'Ferrari',       pais:'🇲🇨', puntos:79,  victorias:0, podios:2, poles:1, num:16 },
+                    { pos:7,  nombre:'Max Verstappen',   equipo:'Red Bull',      pais:'🇳🇱', puntos:73,  victorias:0, podios:2, poles:0, num:1  },
+                    { pos:8,  nombre:'Isack Hadjar',     equipo:'Red Bull',      pais:'🇫🇷', puntos:42,  victorias:0, podios:0, poles:0, num:6  },
+                    { pos:9,  nombre:'Pierre Gasly',     equipo:'Alpine',        pais:'🇫🇷', puntos:36,  victorias:0, podios:0, poles:0, num:10 },
+                    { pos:10, nombre:'Franco Colapinto', equipo:'Alpine',        pais:'🇦🇷', puntos:28,  victorias:0, podios:0, poles:0, num:43 },
+                    { pos:11, nombre:'Nico Hülkenberg',  equipo:'Audi',          pais:'🇩🇪', puntos:24,  victorias:0, podios:0, poles:0, num:27 },
+                    { pos:12, nombre:'Carlos Sainz',     equipo:'Williams',      pais:'🇪🇸', puntos:20,  victorias:0, podios:0, poles:0, num:55 },
+                    { pos:13, nombre:'Liam Lawson',      equipo:'Racing Bulls',  pais:'🇳🇿', puntos:18,  victorias:0, podios:0, poles:0, num:30 },
+                    { pos:14, nombre:'Oliver Bearman',   equipo:'Haas',          pais:'🇬🇧', puntos:14,  victorias:0, podios:0, poles:0, num:87 },
+                    { pos:15, nombre:'Gabriel Bortoleto',equipo:'Audi',          pais:'🇧🇷', puntos:10,  victorias:0, podios:0, poles:0, num:5  },
+                    { pos:16, nombre:'Esteban Ocon',     equipo:'Haas',          pais:'🇫🇷', puntos:8,   victorias:0, podios:0, poles:0, num:31 },
+                    { pos:17, nombre:'Arvid Lindblad',   equipo:'Racing Bulls',  pais:'🇸🇪', puntos:6,   victorias:0, podios:0, poles:0, num:41 },
+                    { pos:18, nombre:'Alexander Albon',  equipo:'Williams',      pais:'🇹🇭', puntos:4,   victorias:0, podios:0, poles:0, num:23 },
+                    { pos:19, nombre:'Sergio Pérez',     equipo:'Cadillac',      pais:'🇲🇽', puntos:2,   victorias:0, podios:0, poles:0, num:11 },
+                    { pos:20, nombre:'Valtteri Bottas',  equipo:'Cadillac',      pais:'🇫🇮', puntos:2,   victorias:0, podios:0, poles:0, num:77 },
+                    { pos:21, nombre:'Lance Stroll',     equipo:'Aston Martin',  pais:'🇨🇦', puntos:2,   victorias:0, podios:0, poles:0, num:18 },
+                    { pos:22, nombre:'Fernando Alonso',  equipo:'Aston Martin',  pais:'🇪🇸', puntos:0,   victorias:0, podios:0, poles:0, num:14 },
                 ];
 
                 const F1_CONSTRUCTORES = [
-                    { pos:1, equipo:'Mercedes',        pais:'🇩🇪', color:'#27F4D2', puntos:302 },
-                    { pos:2, equipo:'Ferrari',         pais:'🇮🇹', color:'#E8002D', puntos:204 },
-                    { pos:3, equipo:'McLaren',         pais:'🇬🇧', color:'#FF8000', puntos:159 },
-                    { pos:4, equipo:'Red Bull Racing', pais:'🇦🇹', color:'#3671C6', puntos:115 },
-                    { pos:5, equipo:'Alpine',          pais:'🇫🇷', color:'#FF87BC', puntos:64  },
-                    { pos:6, equipo:'Sauber',          pais:'🇨🇭', color:'#52E252', puntos:28  },
-                    { pos:7, equipo:'Williams',        pais:'🇬🇧', color:'#64C4FF', puntos:22  },
-                    { pos:8, equipo:'Racing Bulls',    pais:'🇮🇹', color:'#6692FF', puntos:32  },
-                    { pos:9, equipo:'Haas',            pais:'🇺🇸', color:'#B6BABD', puntos:18  },
-                    { pos:10,equipo:'Aston Martin',    pais:'🇬🇧', color:'#229971', puntos:2   },
+                    { pos:1,  equipo:'Mercedes',      pais:'🇩🇪', color:'#27F4D2', puntos:302 },
+                    { pos:2,  equipo:'Ferrari',       pais:'🇮🇹', color:'#E8002D', puntos:204 },
+                    { pos:3,  equipo:'McLaren',       pais:'🇬🇧', color:'#FF8000', puntos:159 },
+                    { pos:4,  equipo:'Red Bull',      pais:'🇦🇹', color:'#3671C6', puntos:115 },
+                    { pos:5,  equipo:'Alpine',        pais:'🇫🇷', color:'#FF87BC', puntos:64  },
+                    { pos:6,  equipo:'Racing Bulls',  pais:'🇮🇹', color:'#6692FF', puntos:24  },
+                    { pos:7,  equipo:'Audi',          pais:'🇩🇪', color:'#52E252', puntos:34  },
+                    { pos:8,  equipo:'Williams',      pais:'🇬🇧', color:'#64C4FF', puntos:24  },
+                    { pos:9,  equipo:'Haas',          pais:'🇺🇸', color:'#B6BABD', puntos:22  },
+                    { pos:10, equipo:'Cadillac',      pais:'🇺🇸', color:'#C8102E', puntos:4   },
+                    { pos:11, equipo:'Aston Martin',  pais:'🇬🇧', color:'#229971', puntos:2   },
                 ];
 
                 // Circuitos SVG simplificados — trazado esquemático
@@ -3800,7 +3803,7 @@ const App = (() => {
                 } else if (ligaActual.id === 'pilotos') {
                     container.innerHTML = `
                         <p style="font-size:0.7rem; color:var(--accent-neon); text-transform:uppercase; letter-spacing:1px; margin-bottom:1rem;">
-                            Campeonato de Pilotos 2026 — Ronda 8 de 22 (Bahréin y Arabia Saudita cancelados)
+                            Campeonato de Pilotos 2026 — Ronda 8 de 22 · 22 pilotos · 11 equipos
                         </p>
                         <div class="glass-panel" style="padding:1rem;">
                             ${F1_PILOTOS.map(p => `
