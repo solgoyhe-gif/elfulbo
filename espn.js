@@ -12,7 +12,7 @@
 const ESPN = (() => {
 
     // ── Config ────────────────────────────────────────────────────────────────
-    const CF_WORKER  = 'https://elfulbo.solgoyhe.workers.dev';
+    const CF_WORKER  = 'https://whistle.solgoyhe.workers.dev';
     const ESPN_V2    = 'https://site.api.espn.com/apis/v2/sports/soccer';
     const ESPN_SITE  = 'https://site.api.espn.com/apis/site/v2/sports/soccer';
 
@@ -47,9 +47,22 @@ const ESPN = (() => {
         // Sudamérica
         libertadores:  'conmebol.libertadores',
         sudamericana:  'conmebol.sudamericana',
-        // Argentina — copa_liga no tiene slug ESPN oficial, se omite graciosamente
+        // Argentina
         liga_prof:     'arg.1',
-        copa_liga:     null,  // ESPN no tiene este torneo — se maneja en el fallback
+        copa_liga:     null,       // ESPN no tiene este torneo — se maneja en el fallback
+        copa_argentina:'arg.copa',
+        // Sudamérica extra (ocultas)
+        copa_america:  'conmebol.copa_america',
+        recopa:        'conmebol.recopa',
+        // CONCACAF (ocultas)
+        concacaf_champions: 'concacaf.champions',
+        concacaf_nations:   'concacaf.nations',
+        // Europa extra (ocultas)
+        eurocopa:      'uefa.euro',
+        // Ligas nacionales extra (ocultas)
+        brasileirao:   'bra.1',
+        mls:           'usa.1',
+        liga_arabe:    'uae.league',
     };
 
     // ── Caché en memoria + localStorage ──────────────────────────────────────
