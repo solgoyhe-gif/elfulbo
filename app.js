@@ -174,6 +174,7 @@ const App = (() => {
             { href: '#/h2h',          icon: '⚔️', label: 'H2H',          active: activeHash === '#/h2h' },
             { href: '#/info',         icon: '📰', label: 'Info',         active: activeHash === '#/info' },
             { href: '#/other-sports', icon: '🎽', label: 'Other Sports', active: activeHash.includes('#/other-sports') },
+            { href: '#/awards',       icon: '🏅', label: 'Awards',       active: activeHash === '#/awards' },
             { href: '#/perfil',       icon: '👤', label: 'Perfil',       active: activeHash === '#/perfil' },
         ];
 
@@ -3960,6 +3961,142 @@ const App = (() => {
     };
 
     // ── ROUTER ────────────────────────────────────────────────────────────────
+    // ── AWARDS ────────────────────────────────────────────────────────────────
+    const renderAwards = () => {
+        const BALON_ORO = [
+            { año: 2024, jugador: 'Rodri',           club: 'Manchester City',  pais: '🇪🇸', foto: 'https://img.uefa.com/imgml/TP/players/1/2024/324x324/250092118.jpg' },
+            { año: 2023, jugador: 'Lionel Messi',    club: 'Inter Miami',      pais: '🇦🇷', foto: 'https://img.uefa.com/imgml/TP/players/1/2023/324x324/250007264.jpg' },
+            { año: 2022, jugador: 'Karim Benzema',   club: 'Real Madrid',      pais: '🇫🇷', foto: 'https://img.uefa.com/imgml/TP/players/1/2022/324x324/250016209.jpg' },
+            { año: 2021, jugador: 'Lionel Messi',    club: 'Paris SG',         pais: '🇦🇷', foto: '' },
+            { año: 2020, jugador: 'No entregado',    club: '(COVID-19)',        pais: '—',   foto: '' },
+            { año: 2019, jugador: 'Lionel Messi',    club: 'FC Barcelona',     pais: '🇦🇷', foto: '' },
+            { año: 2018, jugador: 'Luka Modrić',     club: 'Real Madrid',      pais: '🇭🇷', foto: '' },
+            { año: 2017, jugador: 'Cristiano Ronaldo', club: 'Real Madrid',    pais: '🇵🇹', foto: '' },
+            { año: 2016, jugador: 'Cristiano Ronaldo', club: 'Real Madrid',    pais: '🇵🇹', foto: '' },
+            { año: 2015, jugador: 'Lionel Messi',    club: 'FC Barcelona',     pais: '🇦🇷', foto: '' },
+        ];
+
+        const BOTA_ORO = [
+            { temporada: '2024/25', jugador: 'Harry Kane',      club: 'Bayern München', pais: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', goles: 36 },
+            { temporada: '2023/24', jugador: 'Kylian Mbappé',   club: 'Real Madrid',    pais: '🇫🇷', goles: 27 },
+            { temporada: '2022/23', jugador: 'Erling Haaland',  club: 'Manchester City',pais: '🇳🇴', goles: 36 },
+            { temporada: '2021/22', jugador: 'Sonny Colbrelli', club: 'Bayern München', pais: '🇩🇪', goles: 35 },
+            { temporada: '2020/21', jugador: 'Cristiano Ronaldo', club: 'Juventus',     pais: '🇵🇹', goles: 29 },
+            { temporada: '2019/20', jugador: 'Ciro Immobile',   club: 'Lazio',          pais: '🇮🇹', goles: 36 },
+            { temporada: '2018/19', jugador: 'Lionel Messi',    club: 'FC Barcelona',   pais: '🇦🇷', goles: 36 },
+            { temporada: '2017/18', jugador: 'Mohamed Salah',   club: 'Liverpool',      pais: '🇪🇬', goles: 32 },
+        ];
+
+        const GUANTE_ORO = [
+            { temporada: '2024/25', jugador: 'Mike Maignan',    club: 'AC Milan',        pais: '🇫🇷' },
+            { temporada: '2023/24', jugador: 'Emiliano Martínez', club: 'Aston Villa',  pais: '🇦🇷' },
+            { temporada: '2022/23', jugador: 'Emiliano Martínez', club: 'Aston Villa',  pais: '🇦🇷' },
+            { temporada: '2021/22', jugador: 'Thibaut Courtois', club: 'Real Madrid',   pais: '🇧🇪' },
+            { temporada: '2020/21', jugador: 'Gianluigi Donnarumma', club: 'PSG',       pais: '🇮🇹' },
+            { temporada: '2019/20', jugador: 'Manuel Neuer',    club: 'Bayern München', pais: '🇩🇪' },
+            { temporada: '2018/19', jugador: 'Alisson Becker',  club: 'Liverpool',      pais: '🇧🇷' },
+            { temporada: '2017/18', jugador: 'Thibaut Courtois', club: 'Real Madrid',   pais: '🇧🇪' },
+        ];
+
+        const EQUIPO_ANIO = [
+            { año: 2024, equipo: 'Real Madrid', liga: 'La Liga', pais: '🇪🇸', jugadores: ['Courtois', 'Carvajal', 'Militão', 'Rüdiger', 'Mendy', 'Kroos', 'Modric', 'Bellingham', 'Vinicius', 'Mbappé', 'Rodrygo'] },
+            { año: 2023, equipo: 'Manchester City', liga: 'Premier League', pais: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', jugadores: ['Ederson', 'Walker', 'Rúben Dias', 'Akanji', 'Gvardiol', 'Rodri', 'De Bruyne', 'Bernardo Silva', 'Haaland', 'Foden', 'Grealish'] },
+            { año: 2022, equipo: 'Real Madrid', liga: 'La Liga', pais: '🇪🇸', jugadores: ['Courtois', 'Carvajal', 'Militão', 'Alaba', 'Mendy', 'Kroos', 'Casemiro', 'Modric', 'Valverde', 'Benzema', 'Vinicius'] },
+        ];
+
+        const EQUIPO_TEMPORADA = {
+            'Premier League': { temporada: '2024/25', jugadores: ['Salah', 'Haaland', 'Palmer', 'Saka', 'Isak', 'Trent', 'Virgil', 'Alexander Arnold', 'Ederson', 'Matz Sels', 'Mykolenko'] },
+            'La Liga':        { temporada: '2024/25', jugadores: ['Mbappé', 'Vinicius', 'Yamal', 'Dani Olmo', 'Bellingham', 'Valverde', 'Modric', 'Carvajal', 'Militão', 'Rüdiger', 'Courtois'] },
+            'Serie A':        { temporada: '2024/25', jugadores: ['Lookman', 'Thuram', 'Dovbyk', 'Pulisic', 'Calhanoglu', 'De Roon', 'Bastoni', 'Maignan', 'Provedel', 'Di Lorenzo', 'Dimarco'] },
+            'Bundesliga':     { temporada: '2024/25', jugadores: ['Kane', 'Olise', 'Musiala', 'Sané', 'Kimmich', 'Goretzka', 'Davies', 'Upamecano', 'Kim Min-jae', 'Neuer', 'Gnabry'] },
+            'Ligue 1':        { temporada: '2024/25', jugadores: ['Barcola', 'Ramos', 'Désiré Doué', 'Hakimi', 'Marquinhos', 'Pacho', 'Lucas Beraldo', 'Donnarumma', 'Ben Yedder', 'Laborde', 'Ndiaye'] },
+        };
+
+        const _card = (titulo, emoji, contenido) => `
+            <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
+                <h3 style="font-family:var(--font-heading); font-size:1.1rem; font-weight:900;
+                    color:var(--accent-neon); text-transform:uppercase; letter-spacing:2px;
+                    margin-bottom:1.2rem; display:flex; align-items:center; gap:8px;">
+                    ${emoji} ${titulo}
+                </h3>
+                ${contenido}
+            </div>
+        `;
+
+        const _tabla = (headers, filas) => `
+            <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:0.82rem;">
+                    <thead>
+                        <tr style="border-bottom:1px solid var(--border-glass);">
+                            ${headers.map(h => `<th style="padding:6px 8px; text-align:left; color:var(--text-muted); font-weight:600; white-space:nowrap;">${h}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filas.map((f, i) => `
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.04); ${i === 0 ? 'background:rgba(255,215,0,0.06);' : ''}">
+                                ${f.map((c, ci) => `<td style="padding:7px 8px; color:${ci === 0 && i === 0 ? '#ffd700' : 'var(--text-main)'}; font-weight:${i === 0 ? '700' : '400'};">${c}</td>`).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        const balonHtml = _tabla(
+            ['Año', 'Jugador', 'Club', ''],
+            BALON_ORO.map(b => [b.año, b.jugador, b.club, b.pais])
+        );
+
+        const botaHtml = _tabla(
+            ['Temporada', 'Jugador', 'Club', 'Goles', ''],
+            BOTA_ORO.map(b => [b.temporada, b.jugador, b.club, b.goles, b.pais])
+        );
+
+        const guanteHtml = _tabla(
+            ['Temporada', 'Jugador', 'Club', ''],
+            GUANTE_ORO.map(g => [g.temporada, g.jugador, g.club, g.pais])
+        );
+
+        const equipoAnioHtml = EQUIPO_ANIO.map((e, i) => `
+            <div style="margin-bottom:${i < EQUIPO_ANIO.length - 1 ? '1.2rem' : '0'}; padding-bottom:${i < EQUIPO_ANIO.length - 1 ? '1.2rem' : '0'}; border-bottom:${i < EQUIPO_ANIO.length - 1 ? '1px solid var(--border-glass)' : 'none'};">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                    <span style="font-weight:800; color:#ffd700; font-size:0.9rem;">${e.año}</span>
+                    <span style="font-weight:700; color:var(--text-main);">${e.equipo} ${e.pais}</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">${e.liga}</span>
+                </div>
+                <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                    ${e.jugadores.map(j => `<span style="background:rgba(255,255,255,0.06); padding:3px 8px; border-radius:12px; font-size:0.72rem; color:var(--text-muted);">${j}</span>`).join('')}
+                </div>
+            </div>
+        `).join('');
+
+        const equipoTempHtml = Object.entries(EQUIPO_TEMPORADA).map(([liga, data]) => `
+            <div style="margin-bottom:1.2rem;">
+                <div style="font-weight:700; color:var(--accent-neon); font-size:0.82rem; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">${liga} ${data.temporada}</div>
+                <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                    ${data.jugadores.map(j => `<span style="background:rgba(57,255,20,0.08); padding:3px 8px; border-radius:12px; font-size:0.72rem; color:var(--text-muted);">${j}</span>`).join('')}
+                </div>
+            </div>
+        `).join('');
+
+        appContainer.innerHTML = `
+            ${renderNavbar('#/awards')}
+            <main class="page-container fade-in" style="max-width:800px; margin:0 auto;">
+                <h2 class="section-title">🏅 Awards</h2>
+                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1.5rem;">
+                    Los premios individuales y colectivos más importantes del fútbol mundial.
+                </p>
+
+                ${_card('Balón de Oro', '🥇', balonHtml)}
+                ${_card('Bota de Oro', '👟', botaHtml)}
+                ${_card('Guante de Oro', '🧤', guanteHtml)}
+                ${_card('Equipo del Año UEFA', '🏆', equipoAnioHtml)}
+                ${_card('Equipo de la Temporada', '🌟', equipoTempHtml)}
+            </main>
+            ${_closeSidebarWrapper()}
+        `;
+    };
+
     const router = async () => {
         const hash = window.location.hash || '#/';
         const url  = new URL('http://dummy.com' + hash.replace('#', ''));
@@ -4012,6 +4149,9 @@ const App = (() => {
                 break;
             case '#/info':
                 await renderInfo();
+                break;
+            case '#/awards':
+                renderAwards();
                 break;
             case '#/perfil':
                 await renderPerfil();
