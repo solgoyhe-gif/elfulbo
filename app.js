@@ -3964,8 +3964,9 @@ const App = (() => {
     // ── AWARDS ────────────────────────────────────────────────────────────────
     const renderAwards = () => {
         const BALON_ORO = [
-            { año: 2024, jugador: 'Rodri',           club: 'Manchester City',  pais: '🇪🇸', foto: 'https://img.uefa.com/imgml/TP/players/1/2024/324x324/250092118.jpg' },
-            { año: 2023, jugador: 'Lionel Messi',    club: 'Inter Miami',      pais: '🇦🇷', foto: 'https://img.uefa.com/imgml/TP/players/1/2023/324x324/250007264.jpg' },
+            { año: 2025, jugador: 'Ousmane Dembélé', club: 'Paris Saint-Germain', pais: '🇫🇷', foto: '' },
+            { año: 2024, jugador: 'Rodri',           club: 'Manchester City',  pais: '🇪🇸', foto: '' },
+            { año: 2023, jugador: 'Lionel Messi',    club: 'Inter Miami',      pais: '🇦🇷', foto: '' },
             { año: 2022, jugador: 'Karim Benzema',   club: 'Real Madrid',      pais: '🇫🇷', foto: 'https://img.uefa.com/imgml/TP/players/1/2022/324x324/250016209.jpg' },
             { año: 2021, jugador: 'Lionel Messi',    club: 'Paris SG',         pais: '🇦🇷', foto: '' },
             { año: 2020, jugador: 'No entregado',    club: '(COVID-19)',        pais: '—',   foto: '' },
@@ -3977,7 +3978,7 @@ const App = (() => {
         ];
 
         const BOTA_ORO = [
-            { temporada: '2024/25', jugador: 'Harry Kane',      club: 'Bayern München', pais: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', goles: 36 },
+            { temporada: '2024/25', jugador: 'Viktor Gyökeres', club: 'Sporting CP / Arsenal', pais: '🇸🇪', goles: 43 },
             { temporada: '2023/24', jugador: 'Kylian Mbappé',   club: 'Real Madrid',    pais: '🇫🇷', goles: 27 },
             { temporada: '2022/23', jugador: 'Erling Haaland',  club: 'Manchester City',pais: '🇳🇴', goles: 36 },
             { temporada: '2021/22', jugador: 'Sonny Colbrelli', club: 'Bayern München', pais: '🇩🇪', goles: 35 },
@@ -3988,7 +3989,7 @@ const App = (() => {
         ];
 
         const GUANTE_ORO = [
-            { temporada: '2024/25', jugador: 'Mike Maignan',    club: 'AC Milan',        pais: '🇫🇷' },
+            { temporada: '2024/25', jugador: 'Gianluigi Donnarumma', club: 'Paris Saint-Germain', pais: '🇮🇹' },
             { temporada: '2023/24', jugador: 'Emiliano Martínez', club: 'Aston Villa',  pais: '🇦🇷' },
             { temporada: '2022/23', jugador: 'Emiliano Martínez', club: 'Aston Villa',  pais: '🇦🇷' },
             { temporada: '2021/22', jugador: 'Thibaut Courtois', club: 'Real Madrid',   pais: '🇧🇪' },
