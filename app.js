@@ -3480,39 +3480,39 @@ const App = (() => {
                 if (!container) return;
 
                 const F1_PILOTOS = [
-                    { pos:1,  nombre:'Max Verstappen',     equipo:'Red Bull Racing',    pais:'🇳🇱', puntos:195, victorias:5,  podios:9,  poles:4,  num:1  },
-                    { pos:2,  nombre:'Lando Norris',        equipo:'McLaren',            pais:'🇬🇧', puntos:171, victorias:4,  podios:8,  poles:3,  num:4  },
-                    { pos:3,  nombre:'Charles Leclerc',     equipo:'Ferrari',            pais:'🇲🇨', puntos:148, victorias:3,  podios:7,  poles:5,  num:16 },
-                    { pos:4,  nombre:'Oscar Piastri',       equipo:'McLaren',            pais:'🇦🇺', puntos:131, victorias:2,  podios:6,  poles:1,  num:81 },
-                    { pos:5,  nombre:'Carlos Sainz',        equipo:'Williams',           pais:'🇪🇸', puntos:112, victorias:1,  podios:5,  poles:2,  num:55 },
-                    { pos:6,  nombre:'George Russell',      equipo:'Mercedes',           pais:'🇬🇧', puntos:98,  victorias:1,  podios:4,  poles:1,  num:63 },
-                    { pos:7,  nombre:'Lewis Hamilton',      equipo:'Ferrari',            pais:'🇬🇧', puntos:85,  victorias:0,  podios:4,  poles:0,  num:44 },
-                    { pos:8,  nombre:'Fernando Alonso',     equipo:'Aston Martin',       pais:'🇪🇸', puntos:62,  victorias:0,  podios:2,  poles:0,  num:14 },
-                    { pos:9,  nombre:'Lance Stroll',        equipo:'Aston Martin',       pais:'🇨🇦', puntos:24,  victorias:0,  podios:0,  poles:0,  num:18 },
-                    { pos:10, nombre:'Nico Hülkenberg',     equipo:'Sauber',             pais:'🇩🇪', puntos:22,  victorias:0,  podios:0,  poles:0,  num:27 },
-                    { pos:11, nombre:'Yuki Tsunoda',        equipo:'Red Bull Racing',    pais:'🇯🇵', puntos:20,  victorias:0,  podios:0,  poles:0,  num:22 },
-                    { pos:12, nombre:'Kimi Antonelli',      equipo:'Mercedes',           pais:'🇮🇹', puntos:18,  victorias:0,  podios:0,  poles:0,  num:12 },
-                    { pos:13, nombre:'Pierre Gasly',        equipo:'Alpine',             pais:'🇫🇷', puntos:14,  victorias:0,  podios:0,  poles:0,  num:10 },
-                    { pos:14, nombre:'Esteban Ocon',        equipo:'Haas',               pais:'🇫🇷', puntos:11,  victorias:0,  podios:0,  poles:0,  num:31 },
-                    { pos:15, nombre:'Oliver Bearman',      equipo:'Haas',               pais:'🇬🇧', puntos:9,   victorias:0,  podios:0,  poles:0,  num:87 },
-                    { pos:16, nombre:'Isack Hadjar',        equipo:'Racing Bulls',       pais:'🇫🇷', puntos:6,   victorias:0,  podios:0,  poles:0,  num:6  },
-                    { pos:17, nombre:'Jack Doohan',         equipo:'Alpine',             pais:'🇦🇺', puntos:4,   victorias:0,  podios:0,  poles:0,  num:7  },
-                    { pos:18, nombre:'Liam Lawson',         equipo:'Racing Bulls',       pais:'🇳🇿', puntos:2,   victorias:0,  podios:0,  poles:0,  num:30 },
-                    { pos:19, nombre:'Gabriel Bortoleto',   equipo:'Sauber',             pais:'🇧🇷', puntos:0,   victorias:0,  podios:0,  poles:0,  num:5  },
-                    { pos:20, nombre:'Alexander Albon',     equipo:'Williams',           pais:'🇹🇭', puntos:0,   victorias:0,  podios:0,  poles:0,  num:23 },
+                    { pos:1,  nombre:'Kimi Antonelli',      equipo:'Mercedes',           pais:'🇮🇹', puntos:171, victorias:5,  podios:7,  poles:4,  num:12 },
+                    { pos:2,  nombre:'George Russell',      equipo:'Mercedes',           pais:'🇬🇧', puntos:131, victorias:2,  podios:4,  poles:2,  num:63 },
+                    { pos:3,  nombre:'Lewis Hamilton',      equipo:'Ferrari',            pais:'🇬🇧', puntos:125, victorias:1,  podios:3,  poles:1,  num:44 },
+                    { pos:4,  nombre:'Oscar Piastri',       equipo:'McLaren',            pais:'🇦🇺', puntos:80,  victorias:0,  podios:2,  poles:0,  num:81 },
+                    { pos:5,  nombre:'Lando Norris',        equipo:'McLaren',            pais:'🇬🇧', puntos:79,  victorias:0,  podios:2,  poles:1,  num:4  },
+                    { pos:6,  nombre:'Charles Leclerc',     equipo:'Ferrari',            pais:'🇲🇨', puntos:79,  victorias:0,  podios:2,  poles:1,  num:16 },
+                    { pos:7,  nombre:'Max Verstappen',      equipo:'Red Bull Racing',    pais:'🇳🇱', puntos:73,  victorias:0,  podios:2,  poles:0,  num:1  },
+                    { pos:8,  nombre:'Isack Hadjar',        equipo:'Red Bull Racing',    pais:'🇫🇷', puntos:42,  victorias:0,  podios:0,  poles:0,  num:6  },
+                    { pos:9,  nombre:'Pierre Gasly',        equipo:'Alpine',             pais:'🇫🇷', puntos:36,  victorias:0,  podios:0,  poles:0,  num:10 },
+                    { pos:10, nombre:'Jack Doohan',         equipo:'Alpine',             pais:'🇦🇺', puntos:28,  victorias:0,  podios:0,  poles:0,  num:7  },
+                    { pos:11, nombre:'Nico Hülkenberg',     equipo:'Sauber',             pais:'🇩🇪', puntos:24,  victorias:0,  podios:0,  poles:0,  num:27 },
+                    { pos:12, nombre:'Carlos Sainz',        equipo:'Williams',           pais:'🇪🇸', puntos:20,  victorias:0,  podios:0,  poles:0,  num:55 },
+                    { pos:13, nombre:'Liam Lawson',         equipo:'Racing Bulls',       pais:'🇳🇿', puntos:18,  victorias:0,  podios:0,  poles:0,  num:30 },
+                    { pos:14, nombre:'Yuki Tsunoda',        equipo:'Racing Bulls',       pais:'🇯🇵', puntos:14,  victorias:0,  podios:0,  poles:0,  num:22 },
+                    { pos:15, nombre:'Kimi Räikkönen II / Oliver Bearman', equipo:'Haas', pais:'🇬🇧', puntos:10, victorias:0, podios:0, poles:0, num:87 },
+                    { pos:16, nombre:'Esteban Ocon',        equipo:'Haas',               pais:'🇫🇷', puntos:8,   victorias:0,  podios:0,  poles:0,  num:31 },
+                    { pos:17, nombre:'Gabriel Bortoleto',   equipo:'Sauber',             pais:'🇧🇷', puntos:4,   victorias:0,  podios:0,  poles:0,  num:5  },
+                    { pos:18, nombre:'Alexander Albon',     equipo:'Williams',           pais:'🇹🇭', puntos:2,   victorias:0,  podios:0,  poles:0,  num:23 },
+                    { pos:19, nombre:'Lance Stroll',        equipo:'Aston Martin',       pais:'🇨🇦', puntos:2,   victorias:0,  podios:0,  poles:0,  num:18 },
+                    { pos:20, nombre:'Fernando Alonso',     equipo:'Aston Martin',       pais:'🇪🇸', puntos:0,   victorias:0,  podios:0,  poles:0,  num:14 },
                 ];
 
                 const F1_CONSTRUCTORES = [
-                    { pos:1, equipo:'McLaren',         pais:'🇬🇧', color:'#FF8000', puntos:302 },
-                    { pos:2, equipo:'Red Bull Racing', pais:'🇦🇹', color:'#3671C6', puntos:215 },
-                    { pos:3, equipo:'Ferrari',         pais:'🇮🇹', color:'#E8002D', puntos:233 },
-                    { pos:4, equipo:'Mercedes',        pais:'🇩🇪', color:'#27F4D2', puntos:116 },
-                    { pos:5, equipo:'Williams',        pais:'🇬🇧', color:'#64C4FF', puntos:112 },
-                    { pos:6, equipo:'Aston Martin',    pais:'🇬🇧', color:'#229971', puntos:86  },
-                    { pos:7, equipo:'Racing Bulls',    pais:'🇮🇹', color:'#6692FF', puntos:28  },
-                    { pos:8, equipo:'Sauber',          pais:'🇨🇭', color:'#52E252', puntos:22  },
-                    { pos:9, equipo:'Haas',            pais:'🇺🇸', color:'#B6BABD', puntos:20  },
-                    { pos:10,equipo:'Alpine',          pais:'🇫🇷', color:'#FF87BC', puntos:18  },
+                    { pos:1, equipo:'Mercedes',        pais:'🇩🇪', color:'#27F4D2', puntos:302 },
+                    { pos:2, equipo:'Ferrari',         pais:'🇮🇹', color:'#E8002D', puntos:204 },
+                    { pos:3, equipo:'McLaren',         pais:'🇬🇧', color:'#FF8000', puntos:159 },
+                    { pos:4, equipo:'Red Bull Racing', pais:'🇦🇹', color:'#3671C6', puntos:115 },
+                    { pos:5, equipo:'Alpine',          pais:'🇫🇷', color:'#FF87BC', puntos:64  },
+                    { pos:6, equipo:'Sauber',          pais:'🇨🇭', color:'#52E252', puntos:28  },
+                    { pos:7, equipo:'Williams',        pais:'🇬🇧', color:'#64C4FF', puntos:22  },
+                    { pos:8, equipo:'Racing Bulls',    pais:'🇮🇹', color:'#6692FF', puntos:32  },
+                    { pos:9, equipo:'Haas',            pais:'🇺🇸', color:'#B6BABD', puntos:18  },
+                    { pos:10,equipo:'Aston Martin',    pais:'🇬🇧', color:'#229971', puntos:2   },
                 ];
 
                 // Circuitos SVG simplificados — trazado esquemático
@@ -3688,41 +3688,40 @@ const App = (() => {
                     </svg>`,
                 };
 
+                // ⚠️ Bahréin y Arabia Saudita cancelados por conflicto en Medio Oriente
                 const F1_CALENDARIO = [
-                    { ronda:1,  gp:'Australia',     circuito:'Albert Park',        fecha:'16 Mar',  ganador:'Lando Norris',       equipo:'McLaren',         completada:true  },
-                    { ronda:2,  gp:'China',         circuito:'Shanghái Int.',       fecha:'23 Mar',  ganador:'Max Verstappen',     equipo:'Red Bull',         completada:true  },
-                    { ronda:3,  gp:'Japón',         circuito:'Suzuka',              fecha:'6 Abr',   ganador:'Charles Leclerc',    equipo:'Ferrari',          completada:true  },
-                    { ronda:4,  gp:'Bahréin',       circuito:'Sakhir',              fecha:'13 Abr',  ganador:'Lando Norris',       equipo:'McLaren',          completada:true  },
-                    { ronda:5,  gp:'Arabia Saudita',circuito:'Jeddah Corniche',     fecha:'20 Abr',  ganador:'Oscar Piastri',      equipo:'McLaren',          completada:true  },
-                    { ronda:6,  gp:'Miami',         circuito:'Miami Int. Autodrome',fecha:'4 May',   ganador:'Max Verstappen',     equipo:'Red Bull',         completada:true  },
-                    { ronda:7,  gp:'Imola',         circuito:'Enzo e Dino Ferrari', fecha:'18 May',  ganador:'Charles Leclerc',    equipo:'Ferrari',          completada:true  },
-                    { ronda:8,  gp:'Mónaco',        circuito:'Circuit de Monaco',   fecha:'25 May',  ganador:'Max Verstappen',     equipo:'Red Bull',         completada:true  },
-                    { ronda:9,  gp:'España',        circuito:'Circuit de Barcelona', fecha:'1 Jun',  ganador:'Lando Norris',       equipo:'McLaren',          completada:true  },
-                    { ronda:10, gp:'Canadá',        circuito:'Gilles Villeneuve',   fecha:'15 Jun',  ganador:'Carlos Sainz',       equipo:'Williams',         completada:true  },
-                    { ronda:11, gp:'Austria',       circuito:'Red Bull Ring',        fecha:'29 Jun',  ganador:null,                equipo:null,               completada:false },
-                    { ronda:12, gp:'Reino Unido',   circuito:'Silverstone',          fecha:'6 Jul',   ganador:null,                equipo:null,               completada:false },
-                    { ronda:13, gp:'Hungría',       circuito:'Hungaroring',          fecha:'27 Jul',  ganador:null,                equipo:null,               completada:false },
-                    { ronda:14, gp:'Bélgica',       circuito:'Spa-Francorchamps',    fecha:'3 Ago',   ganador:null,                equipo:null,               completada:false },
-                    { ronda:15, gp:'Países Bajos',  circuito:'Zandvoort',            fecha:'31 Ago',  ganador:null,                equipo:null,               completada:false },
-                    { ronda:16, gp:'Italia',        circuito:'Monza',                fecha:'7 Sep',   ganador:null,                equipo:null,               completada:false },
-                    { ronda:17, gp:'Azerbaiyán',    circuito:'Baku City Circuit',    fecha:'21 Sep',  ganador:null,                equipo:null,               completada:false },
-                    { ronda:18, gp:'Singapur',      circuito:'Marina Bay Street',    fecha:'5 Oct',   ganador:null,                equipo:null,               completada:false },
-                    { ronda:19, gp:'EEUU (Austin)', circuito:'Circuit of the Americas',fecha:'19 Oct',ganador:null,               equipo:null,               completada:false },
-                    { ronda:20, gp:'México',        circuito:'Hermanos Rodríguez',   fecha:'26 Oct',  ganador:null,                equipo:null,               completada:false },
-                    { ronda:21, gp:'Brasil',        circuito:'Interlagos',           fecha:'9 Nov',   ganador:null,                equipo:null,               completada:false },
-                    { ronda:22, gp:'Las Vegas',     circuito:'Las Vegas Strip',      fecha:'22 Nov',  ganador:null,                equipo:null,               completada:false },
-                    { ronda:23, gp:'Qatar',         circuito:'Lusail Int. Circuit',  fecha:'30 Nov',  ganador:null,                equipo:null,               completada:false },
-                    { ronda:24, gp:'Abu Dhabi',     circuito:'Yas Marina Circuit',   fecha:'7 Dic',   ganador:null,                equipo:null,               completada:false },
+                    { ronda:1,  gp:'Australia',     circuito:'Albert Park',            fecha:'8 Mar',   ganador:'George Russell',     equipo:'Mercedes',        completada:true  },
+                    { ronda:2,  gp:'China',         circuito:'Shanghái Int.',           fecha:'23 Mar',  ganador:'Kimi Antonelli',     equipo:'Mercedes',        completada:true  },
+                    { ronda:3,  gp:'Japón',         circuito:'Suzuka',                  fecha:'6 Abr',   ganador:'Kimi Antonelli',     equipo:'Mercedes',        completada:true  },
+                    { ronda:4,  gp:'Miami',         circuito:'Miami Int. Autodrome',    fecha:'4 May',   ganador:'Kimi Antonelli',     equipo:'Mercedes',        completada:true  },
+                    { ronda:5,  gp:'Canadá',        circuito:'Gilles Villeneuve',       fecha:'25 May',  ganador:'Kimi Antonelli',     equipo:'Mercedes',        completada:true  },
+                    { ronda:6,  gp:'Mónaco',        circuito:'Circuit de Monaco',       fecha:'1 Jun',   ganador:'Kimi Antonelli',     equipo:'Mercedes',        completada:true  },
+                    { ronda:7,  gp:'España',        circuito:'Circuit de Barcelona',    fecha:'14 Jun',  ganador:'Lewis Hamilton',     equipo:'Ferrari',         completada:true  },
+                    { ronda:8,  gp:'Austria',       circuito:'Red Bull Ring',           fecha:'28 Jun',  ganador:'George Russell',     equipo:'Mercedes',        completada:true  },
+                    { ronda:9,  gp:'Reino Unido',   circuito:'Silverstone',             fecha:'5 Jul',   ganador:null,                 equipo:null,              completada:false },
+                    { ronda:10, gp:'Hungría',       circuito:'Hungaroring',             fecha:'27 Jul',  ganador:null,                 equipo:null,              completada:false },
+                    { ronda:11, gp:'Bélgica',       circuito:'Spa-Francorchamps',       fecha:'2 Ago',   ganador:null,                 equipo:null,              completada:false },
+                    { ronda:12, gp:'Italia',        circuito:'Monza',                   fecha:'6 Sep',   ganador:null,                 equipo:null,              completada:false },
+                    { ronda:13, gp:'Azerbaiyán',    circuito:'Baku City Circuit',       fecha:'20 Sep',  ganador:null,                 equipo:null,              completada:false },
+                    { ronda:14, gp:'Singapur',      circuito:'Marina Bay Street',       fecha:'4 Oct',   ganador:null,                 equipo:null,              completada:false },
+                    { ronda:15, gp:'EEUU (Austin)', circuito:'Circuit of the Americas', fecha:'18 Oct',  ganador:null,                 equipo:null,              completada:false },
+                    { ronda:16, gp:'México',        circuito:'Hermanos Rodríguez',      fecha:'25 Oct',  ganador:null,                 equipo:null,              completada:false },
+                    { ronda:17, gp:'Brasil',        circuito:'Interlagos',              fecha:'8 Nov',   ganador:null,                 equipo:null,              completada:false },
+                    { ronda:18, gp:'Las Vegas',     circuito:'Las Vegas Strip',         fecha:'21 Nov',  ganador:null,                 equipo:null,              completada:false },
+                    { ronda:19, gp:'Qatar',         circuito:'Lusail Int. Circuit',     fecha:'29 Nov',  ganador:null,                 equipo:null,              completada:false },
+                    { ronda:20, gp:'Madrid',        circuito:'Circuito de Madrid',      fecha:'6 Dic',   ganador:null,                 equipo:null,              completada:false },
+                    { ronda:21, gp:'Abu Dhabi',     circuito:'Yas Marina Circuit',      fecha:'13 Dic',  ganador:null,                 equipo:null,              completada:false },
                 ];
 
                 const F1_PERFILES = {
-                    'Max Verstappen':   { edad:27, pais:'🇳🇱 Países Bajos', equipo:'Red Bull Racing', num:1,  campeonatos:4, victorias:63, poles:40, vueltas_rapidas:32, debut:2015, descripcion:'Cuatro veces campeón del mundo. El piloto más dominante de la era híbrida.' },
+                    'Kimi Antonelli':   { edad:19, pais:'🇮🇹 Italia',       equipo:'Mercedes',         num:12, campeonatos:0, victorias:5,  poles:4,  vueltas_rapidas:5,  debut:2026, descripcion:'El rookie más dominante en décadas. Lidera el campeonato 2026 con 5 victorias en 8 carreras.' },
+                    'Max Verstappen':   { edad:28, pais:'🇳🇱 Países Bajos', equipo:'Red Bull Racing', num:1,  campeonatos:4, victorias:63, poles:40, vueltas_rapidas:32, debut:2015, descripcion:'Cuatro veces campeón del mundo. Lucha por recuperar el nivel dominante de temporadas anteriores.' },
                     'Lando Norris':     { edad:25, pais:'🇬🇧 Reino Unido',  equipo:'McLaren',         num:4,  campeonatos:0, victorias:8,  poles:5,  vueltas_rapidas:12, debut:2019, descripcion:'Referente de la nueva generación. Subcampeón 2025 y rival directo de Verstappen.' },
                     'Charles Leclerc':  { edad:27, pais:'🇲🇨 Mónaco',       equipo:'Ferrari',          num:16, campeonatos:0, victorias:8,  poles:24, vueltas_rapidas:9,  debut:2018, descripcion:'El velocista de Ferrari. Récord de poles en el equipo de Maranello.' },
                     'Oscar Piastri':    { edad:23, pais:'🇦🇺 Australia',     equipo:'McLaren',          num:81, campeonatos:0, victorias:4,  poles:2,  vueltas_rapidas:6,  debut:2023, descripcion:'Compañero de Norris y parte del dúo más rápido de la parrilla 2025.' },
                     'Carlos Sainz':     { edad:30, pais:'🇪🇸 España',        equipo:'Williams',         num:55, campeonatos:0, victorias:4,  poles:6,  vueltas_rapidas:6,  debut:2015, descripcion:'Fichaje estrella de Williams. Campeón del GP de Australia 2024 con Ferrari.' },
-                    'Lewis Hamilton':   { edad:40, pais:'🇬🇧 Reino Unido',  equipo:'Ferrari',          num:44, campeonatos:7, victorias:105,poles:104,vueltas_rapidas:67, debut:2007, descripcion:'El más ganador de la historia. Se unió a Ferrari para buscar su octavo título.' },
-                    'George Russell':   { edad:27, pais:'🇬🇧 Reino Unido',  equipo:'Mercedes',         num:63, campeonatos:0, victorias:2,  poles:3,  vueltas_rapidas:7,  debut:2019, descripcion:'Líder del proyecto de recuperación de Mercedes.' },
+                    'Lewis Hamilton':   { edad:40, pais:'🇬🇧 Reino Unido',  equipo:'Ferrari',          num:44, campeonatos:7, victorias:105,poles:104,vueltas_rapidas:67, debut:2007, descripcion:'Debutó en Ferrari en 2026 y ya ganó en Barcelona. Tercero en el campeonato. Busca su octavo título.' },
+                    'George Russell':   { edad:28, pais:'🇬🇧 Reino Unido',  equipo:'Mercedes',         num:63, campeonatos:0, victorias:2,  poles:2,  vueltas_rapidas:7,  debut:2019, descripcion:'Ganó Australia y Austria 2026. Segundo en el campeonato a 40 puntos de Antonelli.' },
                     'Fernando Alonso':  { edad:43, pais:'🇪🇸 España',        equipo:'Aston Martin',     num:14, campeonatos:2, victorias:32, poles:22, vueltas_rapidas:23, debut:2001, descripcion:'El bicampeón eterno. Sigue compitiendo con la misma pasión de siempre.' },
                 };
 
@@ -3801,7 +3800,7 @@ const App = (() => {
                 } else if (ligaActual.id === 'pilotos') {
                     container.innerHTML = `
                         <p style="font-size:0.7rem; color:var(--accent-neon); text-transform:uppercase; letter-spacing:1px; margin-bottom:1rem;">
-                            Campeonato de Pilotos 2026 — Ronda 10 de 24
+                            Campeonato de Pilotos 2026 — Ronda 8 de 22 (Bahréin y Arabia Saudita cancelados)
                         </p>
                         <div class="glass-panel" style="padding:1rem;">
                             ${F1_PILOTOS.map(p => `
@@ -3876,7 +3875,7 @@ const App = (() => {
                 } else if (ligaActual.id === 'constructores') {
                     container.innerHTML = `
                         <p style="font-size:0.7rem; color:var(--accent-neon); text-transform:uppercase; letter-spacing:1px; margin-bottom:1rem;">
-                            Campeonato de Constructores 2026 — Ronda 10 de 24
+                            Campeonato de Constructores 2026 — Ronda 8 de 22
                         </p>
                         <div class="glass-panel" style="padding:1rem;">
                             ${F1_CONSTRUCTORES.map(c => `
