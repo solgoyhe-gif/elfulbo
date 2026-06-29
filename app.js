@@ -3296,9 +3296,11 @@ const App = (() => {
             ]
         },
         {
-            id: 'racing', nombre: 'Fórmula 1', emoji: '🏎️',
+            id: 'racing', nombre: 'Fórmula 1', emoji: '🏎️', estatico: true,
             ligas: [
-                {id:'f1', nombre:'Formula 1', slug:'racing/f1'},
+                {id:'carreras',      nombre:'Calendario',    emoji:'📅'},
+                {id:'pilotos',       nombre:'Pilotos',       emoji:'🪖'},
+                {id:'constructores', nombre:'Constructores', emoji:'🏭'},
             ]
         },
         {
@@ -3471,6 +3473,439 @@ const App = (() => {
 
         // ── Deporte estático (Patín sobre Hielo) ─────────────────────────────
         if (deporteActual.estatico) {
+
+            // ── F1 ──────────────────────────────────────────────────────────
+            if (deporteActual.id === 'racing') {
+                const container = document.getElementById('other-sports-content');
+                if (!container) return;
+
+                const F1_PILOTOS = [
+                    { pos:1,  nombre:'Max Verstappen',     equipo:'Red Bull Racing',    pais:'🇳🇱', puntos:195, victorias:5,  podios:9,  poles:4,  num:1  },
+                    { pos:2,  nombre:'Lando Norris',        equipo:'McLaren',            pais:'🇬🇧', puntos:171, victorias:4,  podios:8,  poles:3,  num:4  },
+                    { pos:3,  nombre:'Charles Leclerc',     equipo:'Ferrari',            pais:'🇲🇨', puntos:148, victorias:3,  podios:7,  poles:5,  num:16 },
+                    { pos:4,  nombre:'Oscar Piastri',       equipo:'McLaren',            pais:'🇦🇺', puntos:131, victorias:2,  podios:6,  poles:1,  num:81 },
+                    { pos:5,  nombre:'Carlos Sainz',        equipo:'Williams',           pais:'🇪🇸', puntos:112, victorias:1,  podios:5,  poles:2,  num:55 },
+                    { pos:6,  nombre:'George Russell',      equipo:'Mercedes',           pais:'🇬🇧', puntos:98,  victorias:1,  podios:4,  poles:1,  num:63 },
+                    { pos:7,  nombre:'Lewis Hamilton',      equipo:'Ferrari',            pais:'🇬🇧', puntos:85,  victorias:0,  podios:4,  poles:0,  num:44 },
+                    { pos:8,  nombre:'Fernando Alonso',     equipo:'Aston Martin',       pais:'🇪🇸', puntos:62,  victorias:0,  podios:2,  poles:0,  num:14 },
+                    { pos:9,  nombre:'Lance Stroll',        equipo:'Aston Martin',       pais:'🇨🇦', puntos:24,  victorias:0,  podios:0,  poles:0,  num:18 },
+                    { pos:10, nombre:'Nico Hülkenberg',     equipo:'Sauber',             pais:'🇩🇪', puntos:22,  victorias:0,  podios:0,  poles:0,  num:27 },
+                    { pos:11, nombre:'Yuki Tsunoda',        equipo:'Red Bull Racing',    pais:'🇯🇵', puntos:20,  victorias:0,  podios:0,  poles:0,  num:22 },
+                    { pos:12, nombre:'Kimi Antonelli',      equipo:'Mercedes',           pais:'🇮🇹', puntos:18,  victorias:0,  podios:0,  poles:0,  num:12 },
+                    { pos:13, nombre:'Pierre Gasly',        equipo:'Alpine',             pais:'🇫🇷', puntos:14,  victorias:0,  podios:0,  poles:0,  num:10 },
+                    { pos:14, nombre:'Esteban Ocon',        equipo:'Haas',               pais:'🇫🇷', puntos:11,  victorias:0,  podios:0,  poles:0,  num:31 },
+                    { pos:15, nombre:'Oliver Bearman',      equipo:'Haas',               pais:'🇬🇧', puntos:9,   victorias:0,  podios:0,  poles:0,  num:87 },
+                    { pos:16, nombre:'Isack Hadjar',        equipo:'Racing Bulls',       pais:'🇫🇷', puntos:6,   victorias:0,  podios:0,  poles:0,  num:6  },
+                    { pos:17, nombre:'Jack Doohan',         equipo:'Alpine',             pais:'🇦🇺', puntos:4,   victorias:0,  podios:0,  poles:0,  num:7  },
+                    { pos:18, nombre:'Liam Lawson',         equipo:'Racing Bulls',       pais:'🇳🇿', puntos:2,   victorias:0,  podios:0,  poles:0,  num:30 },
+                    { pos:19, nombre:'Gabriel Bortoleto',   equipo:'Sauber',             pais:'🇧🇷', puntos:0,   victorias:0,  podios:0,  poles:0,  num:5  },
+                    { pos:20, nombre:'Alexander Albon',     equipo:'Williams',           pais:'🇹🇭', puntos:0,   victorias:0,  podios:0,  poles:0,  num:23 },
+                ];
+
+                const F1_CONSTRUCTORES = [
+                    { pos:1, equipo:'McLaren',         pais:'🇬🇧', color:'#FF8000', puntos:302 },
+                    { pos:2, equipo:'Red Bull Racing', pais:'🇦🇹', color:'#3671C6', puntos:215 },
+                    { pos:3, equipo:'Ferrari',         pais:'🇮🇹', color:'#E8002D', puntos:233 },
+                    { pos:4, equipo:'Mercedes',        pais:'🇩🇪', color:'#27F4D2', puntos:116 },
+                    { pos:5, equipo:'Williams',        pais:'🇬🇧', color:'#64C4FF', puntos:112 },
+                    { pos:6, equipo:'Aston Martin',    pais:'🇬🇧', color:'#229971', puntos:86  },
+                    { pos:7, equipo:'Racing Bulls',    pais:'🇮🇹', color:'#6692FF', puntos:28  },
+                    { pos:8, equipo:'Sauber',          pais:'🇨🇭', color:'#52E252', puntos:22  },
+                    { pos:9, equipo:'Haas',            pais:'🇺🇸', color:'#B6BABD', puntos:20  },
+                    { pos:10,equipo:'Alpine',          pais:'🇫🇷', color:'#FF87BC', puntos:18  },
+                ];
+
+                // Circuitos SVG simplificados — trazado esquemático
+                const F1_CIRCUITOS = {
+                    'Australia': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M30,80 Q30,30 80,30 L140,30 Q170,30 170,60 Q170,80 150,90 Q130,100 130,120 Q130,140 100,140 Q70,140 50,130 Q30,120 30,100 Z"
+                            fill="none" stroke="#39ff14" stroke-width="3" stroke-linejoin="round"/>
+                        <circle cx="30" cy="80" r="5" fill="#ff4757"/>
+                        <text x="20" y="75" font-size="7" fill="#fff" font-family="system-ui">START</text>
+                        <text x="90" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MELBOURNE</text>
+                    </svg>`,
+                    'China': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M40,100 L40,60 Q40,30 80,30 L160,30 Q170,40 160,70 Q150,90 120,90 L100,90 Q80,90 80,110 Q80,130 60,130 Q40,130 40,115 Z"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="40" cy="100" r="5" fill="#ff4757"/>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">SHANGHÁI</text>
+                    </svg>`,
+                    'Japón': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M100,130 Q60,130 40,100 Q20,70 40,50 Q60,30 100,30 Q130,30 150,50 L170,50 Q180,60 170,80 Q160,100 140,110 Q150,130 130,135 Q115,140 100,130 Z"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="100" cy="130" r="5" fill="#ff4757"/>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">SUZUKA</text>
+                    </svg>`,
+                    'Bahréin': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M40,90 L40,50 Q40,30 70,30 Q100,30 100,50 Q100,70 80,80 Q100,90 120,80 Q150,70 160,50 Q170,30 185,50 Q185,80 160,100 Q140,120 100,120 Q60,120 40,110 Z"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="40" cy="90" r="5" fill="#ff4757"/>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">SAKHIR</text>
+                    </svg>`,
+                    'Arabia Saudita': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M160,120 L160,40 Q160,30 150,30 L60,30 Q50,30 50,40 L50,60 Q50,70 60,70 L130,70 Q140,70 140,80 L140,100 Q140,110 130,110 L60,110 Q50,110 50,120 L50,135"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="160" cy="120" r="5" fill="#ff4757"/>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">JEDDAH</text>
+                    </svg>`,
+                    'Miami': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M50,130 L50,80 Q50,50 80,40 L150,40 Q170,40 170,60 Q170,80 150,85 Q130,90 120,100 Q110,115 120,130 Q130,145 100,145 Q70,145 50,130 Z"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="50" cy="130" r="5" fill="#ff4757"/>
+                        <text x="100" y="28" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MIAMI</text>
+                    </svg>`,
+                    'Imola': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M100,130 Q60,130 40,100 Q20,70 50,50 Q70,35 100,40 Q130,45 150,30 Q170,15 180,40 Q185,60 170,80 Q155,100 140,110 Q140,130 100,130 Z"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="100" cy="130" r="5" fill="#ff4757"/>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">IMOLA</text>
+                    </svg>`,
+                    'Mónaco': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M170,100 L170,60 Q165,30 140,25 Q110,20 80,40 Q50,60 40,90 Q30,115 50,130 Q70,145 110,140 Q140,135 160,120 Q170,115 170,100 Z"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="170" cy="100" r="5" fill="#ff4757"/>
+                        <text x="100" y="15" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MONACO</text>
+                    </svg>`,
+                    'España': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M60,120 L60,70 Q60,40 100,35 Q140,30 160,55 Q175,75 160,95 Q145,115 120,115 Q120,130 90,135 Q65,138 60,120 Z"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="60" cy="120" r="5" fill="#ff4757"/>
+                        <text x="100" y="22" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">BARCELONA</text>
+                    </svg>`,
+                    'Canadá': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M50,100 L50,50 L170,50 L170,70 L110,70 L110,90 L170,90 L170,120 L80,120 Q50,120 50,100 Z"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="50" cy="100" r="5" fill="#ff4757"/>
+                        <text x="100" y="38" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MONTREAL</text>
+                    </svg>`,
+                    'Austria': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M80,130 Q40,130 30,100 Q20,70 50,50 Q80,30 120,40 Q160,50 170,80 Q175,100 160,120 Q145,140 110,135 Q95,133 80,130 Z"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="80" cy="130" r="5" fill="#ff4757"/>
+                        <text x="100" y="22" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">RED BULL RING</text>
+                    </svg>`,
+                    'Reino Unido': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M90,130 Q50,125 35,100 Q20,70 40,50 Q60,30 100,30 Q140,30 160,55 Q175,75 165,100 Q155,125 125,135 Q110,140 90,130 Z"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="90" cy="130" r="5" fill="#ff4757"/>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">SILVERSTONE</text>
+                    </svg>`,
+                    'Hungría': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M80,130 Q40,120 30,90 Q20,60 50,40 Q80,20 120,30 Q160,40 170,70 Q180,100 160,120 Q140,140 100,135 Q90,133 80,130 Z"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="80" cy="130" r="5" fill="#ff4757"/>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">HUNGARORING</text>
+                    </svg>`,
+                    'Bélgica': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M40,100 Q30,70 50,45 Q70,20 110,25 Q150,30 170,55 Q185,80 170,105 Q155,130 120,138 Q85,145 60,130 Q40,118 40,100 Z"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="40" cy="100" r="5" fill="#ff4757"/>
+                        <text x="100" y="15" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">SPA-FRANCORCHAMPS</text>
+                    </svg>`,
+                    'Países Bajos': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M100,135 Q60,130 40,105 Q20,80 35,55 Q50,30 90,25 Q130,20 155,45 Q175,65 170,95 Q165,125 135,138 Q118,145 100,135 Z"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="100" cy="135" r="5" fill="#ff4757"/>
+                        <text x="100" y="15" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">ZANDVOORT</text>
+                    </svg>`,
+                    'Italia': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M30,80 Q30,40 70,30 L140,30 Q165,30 170,55 Q175,80 160,95 Q145,110 130,100 Q115,90 100,100 Q85,110 85,130 Q85,145 60,145 Q35,145 30,120 Z"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="30" cy="80" r="5" fill="#ff4757"/>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MONZA</text>
+                    </svg>`,
+                    'Azerbaiyán': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M160,120 L160,40 Q155,25 140,25 L60,25 Q45,25 45,40 L45,60 Q45,75 60,75 L140,75 Q155,75 155,90 L155,110 Q155,125 140,130 L60,130 Q45,130 45,120"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="160" cy="120" r="5" fill="#ff4757"/>
+                        <text x="100" y="15" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">BAKÚ</text>
+                    </svg>`,
+                    'Singapur': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M40,110 L40,50 Q40,30 60,30 L100,30 Q120,30 120,50 Q120,70 100,75 Q80,80 80,100 Q80,120 100,125 L150,125 Q170,125 170,110 Q170,95 155,90 Q140,85 140,70 Q140,55 155,50 Q170,45 175,60 Q175,80 165,100"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="40" cy="110" r="5" fill="#ff4757"/>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MARINA BAY</text>
+                    </svg>`,
+                    'EEUU (Austin)': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M50,120 L50,60 Q50,30 90,25 Q130,20 155,45 Q175,65 165,90 Q155,115 130,120 Q115,125 100,115 Q85,105 75,115 Q65,125 50,120 Z"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="50" cy="120" r="5" fill="#ff4757"/>
+                        <text x="100" y="14" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">COTA - AUSTIN</text>
+                    </svg>`,
+                    'México': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M60,120 Q30,120 25,90 Q20,60 50,40 Q80,20 120,25 Q160,30 170,60 Q175,85 160,105 Q145,125 115,130 Q90,135 60,120 Z"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="60" cy="120" r="5" fill="#ff4757"/>
+                        <text x="100" y="14" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">CDMX - HERMANOS RODRÍGUEZ</text>
+                    </svg>`,
+                    'Brasil': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M80,130 Q40,125 30,95 Q20,65 50,45 Q80,25 120,30 Q155,35 168,65 Q178,90 165,115 Q150,140 110,140 Q95,140 80,130 Z"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="80" cy="130" r="5" fill="#ff4757"/>
+                        <text x="100" y="18" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">INTERLAGOS</text>
+                    </svg>`,
+                    'Las Vegas': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M160,130 L160,40 Q160,25 145,25 L55,25 Q40,25 40,40 L40,70 L140,70 L140,100 L40,100 L40,130 Q40,145 55,145 L145,145 Q160,145 160,130 Z"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="160" cy="130" r="5" fill="#ff4757"/>
+                        <text x="100" y="15" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">LAS VEGAS STRIP</text>
+                    </svg>`,
+                    'Qatar': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M80,130 Q40,125 28,95 Q16,65 40,45 Q64,25 105,28 Q145,31 163,60 Q178,85 165,112 Q150,138 112,142 Q96,145 80,130 Z"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="80" cy="130" r="5" fill="#ff4757"/>
+                        <text x="100" y="17" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">LUSAIL</text>
+                    </svg>`,
+                    'Abu Dhabi': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M60,120 Q30,115 25,85 Q20,55 50,35 Q80,15 125,20 Q165,25 175,55 Q182,80 168,105 Q152,130 118,138 Q85,145 60,120 Z"
+                            fill="none" stroke="#39ff14" stroke-width="3"/>
+                        <circle cx="60" cy="120" r="5" fill="#ff4757"/>
+                        <text x="100" y="9" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">YAS MARINA</text>
+                    </svg>`,
+                };
+
+                const F1_CALENDARIO = [
+                    { ronda:1,  gp:'Australia',     circuito:'Albert Park',        fecha:'16 Mar',  ganador:'Lando Norris',       equipo:'McLaren',         completada:true  },
+                    { ronda:2,  gp:'China',         circuito:'Shanghái Int.',       fecha:'23 Mar',  ganador:'Max Verstappen',     equipo:'Red Bull',         completada:true  },
+                    { ronda:3,  gp:'Japón',         circuito:'Suzuka',              fecha:'6 Abr',   ganador:'Charles Leclerc',    equipo:'Ferrari',          completada:true  },
+                    { ronda:4,  gp:'Bahréin',       circuito:'Sakhir',              fecha:'13 Abr',  ganador:'Lando Norris',       equipo:'McLaren',          completada:true  },
+                    { ronda:5,  gp:'Arabia Saudita',circuito:'Jeddah Corniche',     fecha:'20 Abr',  ganador:'Oscar Piastri',      equipo:'McLaren',          completada:true  },
+                    { ronda:6,  gp:'Miami',         circuito:'Miami Int. Autodrome',fecha:'4 May',   ganador:'Max Verstappen',     equipo:'Red Bull',         completada:true  },
+                    { ronda:7,  gp:'Imola',         circuito:'Enzo e Dino Ferrari', fecha:'18 May',  ganador:'Charles Leclerc',    equipo:'Ferrari',          completada:true  },
+                    { ronda:8,  gp:'Mónaco',        circuito:'Circuit de Monaco',   fecha:'25 May',  ganador:'Max Verstappen',     equipo:'Red Bull',         completada:true  },
+                    { ronda:9,  gp:'España',        circuito:'Circuit de Barcelona', fecha:'1 Jun',  ganador:'Lando Norris',       equipo:'McLaren',          completada:true  },
+                    { ronda:10, gp:'Canadá',        circuito:'Gilles Villeneuve',   fecha:'15 Jun',  ganador:'Carlos Sainz',       equipo:'Williams',         completada:true  },
+                    { ronda:11, gp:'Austria',       circuito:'Red Bull Ring',        fecha:'29 Jun',  ganador:null,                equipo:null,               completada:false },
+                    { ronda:12, gp:'Reino Unido',   circuito:'Silverstone',          fecha:'6 Jul',   ganador:null,                equipo:null,               completada:false },
+                    { ronda:13, gp:'Hungría',       circuito:'Hungaroring',          fecha:'27 Jul',  ganador:null,                equipo:null,               completada:false },
+                    { ronda:14, gp:'Bélgica',       circuito:'Spa-Francorchamps',    fecha:'3 Ago',   ganador:null,                equipo:null,               completada:false },
+                    { ronda:15, gp:'Países Bajos',  circuito:'Zandvoort',            fecha:'31 Ago',  ganador:null,                equipo:null,               completada:false },
+                    { ronda:16, gp:'Italia',        circuito:'Monza',                fecha:'7 Sep',   ganador:null,                equipo:null,               completada:false },
+                    { ronda:17, gp:'Azerbaiyán',    circuito:'Baku City Circuit',    fecha:'21 Sep',  ganador:null,                equipo:null,               completada:false },
+                    { ronda:18, gp:'Singapur',      circuito:'Marina Bay Street',    fecha:'5 Oct',   ganador:null,                equipo:null,               completada:false },
+                    { ronda:19, gp:'EEUU (Austin)', circuito:'Circuit of the Americas',fecha:'19 Oct',ganador:null,               equipo:null,               completada:false },
+                    { ronda:20, gp:'México',        circuito:'Hermanos Rodríguez',   fecha:'26 Oct',  ganador:null,                equipo:null,               completada:false },
+                    { ronda:21, gp:'Brasil',        circuito:'Interlagos',           fecha:'9 Nov',   ganador:null,                equipo:null,               completada:false },
+                    { ronda:22, gp:'Las Vegas',     circuito:'Las Vegas Strip',      fecha:'22 Nov',  ganador:null,                equipo:null,               completada:false },
+                    { ronda:23, gp:'Qatar',         circuito:'Lusail Int. Circuit',  fecha:'30 Nov',  ganador:null,                equipo:null,               completada:false },
+                    { ronda:24, gp:'Abu Dhabi',     circuito:'Yas Marina Circuit',   fecha:'7 Dic',   ganador:null,                equipo:null,               completada:false },
+                ];
+
+                const F1_PERFILES = {
+                    'Max Verstappen':   { edad:27, pais:'🇳🇱 Países Bajos', equipo:'Red Bull Racing', num:1,  campeonatos:4, victorias:63, poles:40, vueltas_rapidas:32, debut:2015, descripcion:'Cuatro veces campeón del mundo. El piloto más dominante de la era híbrida.' },
+                    'Lando Norris':     { edad:25, pais:'🇬🇧 Reino Unido',  equipo:'McLaren',         num:4,  campeonatos:0, victorias:8,  poles:5,  vueltas_rapidas:12, debut:2019, descripcion:'Referente de la nueva generación. Subcampeón 2025 y rival directo de Verstappen.' },
+                    'Charles Leclerc':  { edad:27, pais:'🇲🇨 Mónaco',       equipo:'Ferrari',          num:16, campeonatos:0, victorias:8,  poles:24, vueltas_rapidas:9,  debut:2018, descripcion:'El velocista de Ferrari. Récord de poles en el equipo de Maranello.' },
+                    'Oscar Piastri':    { edad:23, pais:'🇦🇺 Australia',     equipo:'McLaren',          num:81, campeonatos:0, victorias:4,  poles:2,  vueltas_rapidas:6,  debut:2023, descripcion:'Compañero de Norris y parte del dúo más rápido de la parrilla 2025.' },
+                    'Carlos Sainz':     { edad:30, pais:'🇪🇸 España',        equipo:'Williams',         num:55, campeonatos:0, victorias:4,  poles:6,  vueltas_rapidas:6,  debut:2015, descripcion:'Fichaje estrella de Williams. Campeón del GP de Australia 2024 con Ferrari.' },
+                    'Lewis Hamilton':   { edad:40, pais:'🇬🇧 Reino Unido',  equipo:'Ferrari',          num:44, campeonatos:7, victorias:105,poles:104,vueltas_rapidas:67, debut:2007, descripcion:'El más ganador de la historia. Se unió a Ferrari para buscar su octavo título.' },
+                    'George Russell':   { edad:27, pais:'🇬🇧 Reino Unido',  equipo:'Mercedes',         num:63, campeonatos:0, victorias:2,  poles:3,  vueltas_rapidas:7,  debut:2019, descripcion:'Líder del proyecto de recuperación de Mercedes.' },
+                    'Fernando Alonso':  { edad:43, pais:'🇪🇸 España',        equipo:'Aston Martin',     num:14, campeonatos:2, victorias:32, poles:22, vueltas_rapidas:23, debut:2001, descripcion:'El bicampeón eterno. Sigue compitiendo con la misma pasión de siempre.' },
+                };
+
+                // Render según la liga seleccionada
+                if (ligaActual.id === 'carreras') {
+                    const proxima = F1_CALENDARIO.find(c => !c.completada);
+                    container.innerHTML = `
+                        <div style="margin-bottom:1rem;">
+                            ${proxima ? `<div style="background:rgba(57,255,20,0.08); border:1px solid rgba(57,255,20,0.3);
+                                border-radius:10px; padding:12px 16px; margin-bottom:1rem; display:flex; align-items:center; gap:12px;">
+                                <span style="font-size:1.5rem;">🏁</span>
+                                <div>
+                                    <div style="font-size:0.7rem; color:var(--accent-neon); font-weight:700; text-transform:uppercase; letter-spacing:1px;">Próxima carrera</div>
+                                    <div style="font-weight:800; font-size:1rem;">GP de ${proxima.gp} — ${proxima.fecha}</div>
+                                    <div style="font-size:0.78rem; color:var(--text-muted);">${proxima.circuito}</div>
+                                </div>
+                            </div>` : ''}
+                        </div>
+
+                        ${F1_CALENDARIO.map(c => `
+                            <div onclick="${F1_CIRCUITOS[c.gp] ? `window._verCircuito('${c.gp}')` : ''}"
+                                style="display:grid; grid-template-columns:36px 1fr auto; align-items:center; gap:12px;
+                                padding:10px 12px; border-radius:10px; margin-bottom:6px;
+                                background:${!c.completada && c === proxima ? 'rgba(57,255,20,0.06)' : 'rgba(255,255,255,0.03)'};
+                                border:1px solid ${!c.completada && c === proxima ? 'rgba(57,255,20,0.3)' : 'var(--border-glass)'};
+                                cursor:${F1_CIRCUITOS[c.gp] ? 'pointer' : 'default'};
+                                transition:background 0.15s;"
+                                onmouseover="${F1_CIRCUITOS[c.gp] ? "this.style.background='rgba(57,255,20,0.08)'" : ''}"
+                                onmouseout="this.style.background='${!c.completada && c === proxima ? 'rgba(57,255,20,0.06)' : 'rgba(255,255,255,0.03)'}'">
+                                <div style="font-family:var(--font-heading); font-size:0.85rem; font-weight:800;
+                                    color:var(--text-muted); text-align:center;">R${c.ronda}</div>
+                                <div>
+                                    <div style="font-weight:700; font-size:0.9rem; color:${c.completada ? 'var(--text-main)' : c === proxima ? 'var(--accent-neon)' : 'var(--text-muted)'};">
+                                        🏁 GP de ${c.gp}
+                                    </div>
+                                    <div style="font-size:0.72rem; color:var(--text-muted);">${c.circuito}</div>
+                                    ${c.completada ? `<div style="font-size:0.72rem; color:var(--accent-neon); margin-top:2px;">🏆 ${c.ganador} (${c.equipo})</div>` : ''}
+                                </div>
+                                <div style="text-align:right;">
+                                    <div style="font-size:0.8rem; font-weight:700; color:${c.completada ? 'var(--text-muted)' : 'var(--accent-neon)'};">${c.fecha}</div>
+                                    ${c.completada ? '<div style="font-size:0.65rem; color:var(--text-muted);">✓ FIN</div>' : c === proxima ? '<div style="font-size:0.65rem; color:var(--accent-neon);">PRÓXIMA</div>' : ''}
+                                    ${F1_CIRCUITOS[c.gp] ? '<div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">Ver circuito →</div>' : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    `;
+
+                    window._verCircuito = (gp) => {
+                        const carrera = F1_CALENDARIO.find(c => c.gp === gp);
+                        container.innerHTML = `
+                            <button onclick="window.location.hash='#/other-sports?deporte=racing&liga=carreras'"
+                                style="background:transparent; border:1px solid var(--border-glass); color:var(--text-muted);
+                                padding:6px 14px; border-radius:12px; cursor:pointer; font-size:0.8rem; margin-bottom:1.2rem;">← Volver</button>
+
+                            <div class="glass-panel" style="padding:1.5rem; margin-bottom:1rem;">
+                                <h3 style="font-family:var(--font-heading); font-size:1.1rem; font-weight:900; color:var(--accent-neon); margin-bottom:0.3rem;">
+                                    🏁 GP de ${gp}
+                                </h3>
+                                <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1.2rem;">${carrera?.circuito} — ${carrera?.fecha}</p>
+
+                                ${F1_CIRCUITOS[gp]}
+
+                                ${carrera?.completada ? `
+                                <div style="margin-top:1rem; padding:12px; background:rgba(57,255,20,0.06); border-radius:8px; border:1px solid rgba(57,255,20,0.2);">
+                                    <div style="font-size:0.7rem; color:var(--accent-neon); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Ganador</div>
+                                    <div style="font-weight:800; font-size:1rem;">🏆 ${carrera.ganador}</div>
+                                    <div style="font-size:0.8rem; color:var(--text-muted);">${carrera.equipo}</div>
+                                </div>` : `
+                                <div style="margin-top:1rem; padding:12px; background:rgba(255,255,255,0.04); border-radius:8px;">
+                                    <div style="font-size:0.8rem; color:var(--text-muted);">Carrera pendiente — ${carrera?.fecha}</div>
+                                </div>`}
+                            </div>
+                        `;
+                    };
+
+                } else if (ligaActual.id === 'pilotos') {
+                    container.innerHTML = `
+                        <p style="font-size:0.7rem; color:var(--accent-neon); text-transform:uppercase; letter-spacing:1px; margin-bottom:1rem;">
+                            Campeonato de Pilotos 2026 — Ronda 10 de 24
+                        </p>
+                        <div class="glass-panel" style="padding:1rem;">
+                            ${F1_PILOTOS.map(p => `
+                                <div onclick="${F1_PERFILES[p.nombre] ? `window._verPiloto('${p.nombre.replace(/'/g,"\'")}')` : ''}"
+                                    style="display:grid; grid-template-columns:30px 32px 1fr auto; align-items:center; gap:10px;
+                                    padding:10px 8px; border-bottom:1px solid var(--border-glass);
+                                    cursor:${F1_PERFILES[p.nombre] ? 'pointer' : 'default'}; transition:background 0.15s;"
+                                    onmouseover="${F1_PERFILES[p.nombre] ? "this.style.background='rgba(57,255,20,0.04)'" : ''}"
+                                    onmouseout="this.style.background='transparent'">
+                                    <span style="font-weight:800; font-size:0.85rem;
+                                        color:${p.pos === 1 ? '#ffd700' : p.pos === 2 ? '#c0c0c0' : p.pos === 3 ? '#cd7f32' : 'var(--text-muted)'};">
+                                        ${p.pos}
+                                    </span>
+                                    <div style="background:rgba(255,255,255,0.08); border-radius:6px; width:28px; height:28px;
+                                        display:flex; align-items:center; justify-content:center; font-family:var(--font-heading);
+                                        font-size:0.75rem; font-weight:900;">${p.num}</div>
+                                    <div>
+                                        <div style="font-weight:700; font-size:0.88rem;">${p.nombre} ${p.pais}</div>
+                                        <div style="font-size:0.72rem; color:var(--text-muted);">${p.equipo}</div>
+                                    </div>
+                                    <div style="text-align:right;">
+                                        <div style="font-family:var(--font-heading); font-weight:900; font-size:1rem;
+                                            color:${p.pos === 1 ? '#ffd700' : 'var(--text-main)'};">${p.puntos}</div>
+                                        <div style="font-size:0.65rem; color:var(--text-muted);">pts</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+
+                    window._verPiloto = (nombre) => {
+                        const p = F1_PERFILES[nombre];
+                        const d = F1_PILOTOS.find(x => x.nombre === nombre);
+                        if (!p || !d) return;
+                        container.innerHTML = `
+                            <button onclick="window.location.hash='#/other-sports?deporte=racing&liga=pilotos'"
+                                style="background:transparent; border:1px solid var(--border-glass); color:var(--text-muted);
+                                padding:6px 14px; border-radius:12px; cursor:pointer; font-size:0.8rem; margin-bottom:1.2rem;">← Volver</button>
+
+                            <div class="glass-panel" style="padding:1.5rem;">
+                                <div style="display:flex; align-items:center; gap:16px; margin-bottom:1.2rem;">
+                                    <div style="width:56px; height:56px; border-radius:50%; background:rgba(57,255,20,0.1);
+                                        border:2px solid var(--accent-neon); display:flex; align-items:center; justify-content:center;
+                                        font-family:var(--font-heading); font-size:1.3rem; font-weight:900; flex-shrink:0;">${d.num}</div>
+                                    <div>
+                                        <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:900;">${nombre}</div>
+                                        <div style="font-size:0.8rem; color:var(--text-muted);">${p.pais} · ${p.equipo}</div>
+                                        <div style="font-size:0.75rem; color:var(--text-muted);">Edad: ${p.edad} · Debut: ${p.debut}</div>
+                                    </div>
+                                </div>
+
+                                <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:1.2rem;">
+                                    ${[
+                                        ['Puntos 2026', d.puntos, 'var(--accent-neon)'],
+                                        ['Victorias 2026', d.victorias, 'var(--text-main)'],
+                                        ['Poles 2026', d.poles, 'var(--text-main)'],
+                                        ['Podios 2026', d.podios, 'var(--text-main)'],
+                                        ['Campeonatos', p.campeonatos, '#ffd700'],
+                                        ['Victorias total', p.victorias, '#ffd700'],
+                                    ].map(([label, val, color]) => `
+                                        <div style="background:rgba(255,255,255,0.04); border-radius:10px; padding:10px; text-align:center;">
+                                            <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:900; color:${color};">${val}</div>
+                                            <div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">${label}</div>
+                                        </div>`).join('')}
+                                </div>
+
+                                <p style="font-size:0.82rem; color:var(--text-muted); line-height:1.6; border-top:1px solid var(--border-glass); padding-top:1rem;">${p.descripcion}</p>
+                            </div>
+                        `;
+                    };
+
+                } else if (ligaActual.id === 'constructores') {
+                    container.innerHTML = `
+                        <p style="font-size:0.7rem; color:var(--accent-neon); text-transform:uppercase; letter-spacing:1px; margin-bottom:1rem;">
+                            Campeonato de Constructores 2026 — Ronda 10 de 24
+                        </p>
+                        <div class="glass-panel" style="padding:1rem;">
+                            ${F1_CONSTRUCTORES.map(c => `
+                                <div style="display:grid; grid-template-columns:30px 12px 1fr auto; align-items:center; gap:12px;
+                                    padding:12px 8px; border-bottom:1px solid var(--border-glass);">
+                                    <span style="font-weight:800; font-size:0.9rem;
+                                        color:${c.pos === 1 ? '#ffd700' : c.pos === 2 ? '#c0c0c0' : c.pos === 3 ? '#cd7f32' : 'var(--text-muted)'};">${c.pos}</span>
+                                    <div style="width:12px; height:32px; border-radius:3px; background:${c.color};"></div>
+                                    <div>
+                                        <div style="font-weight:700; font-size:0.9rem;">${c.equipo} ${c.pais}</div>
+                                        <div style="font-size:0.72rem; color:var(--text-muted);">
+                                            ${F1_PILOTOS.filter(p => p.equipo === c.equipo).map(p => p.nombre.split(' ').pop()).join(' · ')}
+                                        </div>
+                                    </div>
+                                    <div style="text-align:right;">
+                                        <div style="font-family:var(--font-heading); font-weight:900; font-size:1rem;
+                                            color:${c.pos === 1 ? '#ffd700' : 'var(--text-main)'};">${c.puntos}</div>
+                                        <div style="font-size:0.65rem; color:var(--text-muted);">pts</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                return;
+            }
+            // ── FIN F1 ───────────────────────────────────────────────────────
+
             const PATIN_PERFILES = {
                 'Ilia Malinin': {
                     pais: '🇺🇸 EE.UU.', nacimiento: '2004', entrenador: 'Rafael Arutyunyan',
