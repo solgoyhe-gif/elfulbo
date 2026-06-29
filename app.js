@@ -450,7 +450,9 @@ const App = (() => {
     };
 
     const renderLigas = () => {
-        const esPro       = _esPro();
+        const esPro        = _esPro();
+        const esAdmin      = window.FirebaseAuth?.getPerfil()?.plan === 'admin' ||
+                             window.location.search.includes('admin=1');
         const ligaNacional = window.FirebaseAuth?.getPerfil()?.ligaNacional ?? null;
 
         let html = `
@@ -476,6 +478,8 @@ const App = (() => {
 
         for (const key in LIGAS) {
             const categoria = LIGAS[key];
+            // Ligas ocultas: solo visibles para admin
+            if (categoria.hidden && !esAdmin) continue;
             const esCopa    = KEYS_COPAS.includes(key);
 
             html += `
