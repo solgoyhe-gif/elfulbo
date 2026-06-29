@@ -1,41 +1,77 @@
 /**
- * styles-additions.css — El Fulbo
- * Pegá este bloque al FINAL de tu styles.css existente.
- * No modifica nada anterior — solo agrega.
+ * styles-additions.css — Whistle / Score90X
+ * Complementa styles.css. No redefine variables base.
  */
 
-/* ── Skeleton loaders ────────────────────────────────────────────────────── */
+/* ── Skeleton ─────────────────────────────────────────────────────────────── */
 .skel-cell {
-    height: 14px;
-    background: linear-gradient(
-        90deg,
-        rgba(255,255,255,0.04) 25%,
-        rgba(255,255,255,0.08) 50%,
-        rgba(255,255,255,0.04) 75%
-    );
-    background-size: 300% 100%;
-    animation: skel-shimmer 1.5s ease-in-out infinite;
-    border-radius: 4px;
+    height:14px;
+    background:linear-gradient(90deg,
+        rgba(255,255,255,.04) 25%,
+        rgba(255,255,255,.09) 50%,
+        rgba(255,255,255,.04) 75%);
+    background-size:300% 100%;
+    animation:skel-shimmer 1.5s ease-in-out infinite;
+    border-radius:4px;
 }
 
-@keyframes skel-shimmer {
-    0%   { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
-
-/* ── Animación live pulse ────────────────────────────────────────────────── */
+/* ── Live pulse (badge y minuto) ─────────────────────────────────────────── */
 @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.4; }
+    0%,100% { opacity:1; }
+    50%      { opacity:.4; }
 }
 
-/* ── Escudos en tabla de posiciones ─────────────────────────────────────── */
-.standings-table .col-team {
-    display: flex;
-    align-items: center;
+/* ── Standings col-team flex fix ─────────────────────────────────────────── */
+.standings-table .col-team { display:flex; align-items:center; }
+
+/* ── Match item border cleanup ───────────────────────────────────────────── */
+.match-item:last-child { border-bottom:none !important; }
+
+/* ── Score display (partido detail) ─────────────────────────────────────── */
+.score-display {
+    font-family:var(--font-heading);
+    font-size:3.5rem; font-weight:900;
+    color:var(--text-main); line-height:1;
+    text-shadow:0 2px 20px rgba(108,92,231,.3);
 }
 
-/* ── Partidos scoreboard ─────────────────────────────────────────────────── */
-.match-item:last-child {
-    border-bottom: none !important;
+/* ── Live badge global ───────────────────────────────────────────────────── */
+.live-badge {
+    display:inline-flex; align-items:center; gap:5px;
+    background:var(--accent-red);
+    color:#fff; font-family:var(--font-heading);
+    font-size:.62rem; font-weight:800; letter-spacing:1px;
+    padding:3px 8px; border-radius:20px;
+    animation:livePulse 2s ease-in-out infinite;
 }
+
+/* ── Chip / pill buttons ─────────────────────────────────────────────────── */
+.chip {
+    padding:6px 14px; border-radius:20px; cursor:pointer;
+    font-family:var(--font-heading); font-weight:700; font-size:.78rem;
+    border:1px solid var(--border-glass);
+    background:rgba(255,255,255,.04);
+    color:var(--text-muted);
+    transition:all .18s; white-space:nowrap;
+}
+.chip.active, .chip:hover {
+    border-color:var(--accent-neon);
+    background:rgba(108,92,231,.14);
+    color:var(--accent-neon);
+}
+
+/* ── Bracket hover ───────────────────────────────────────────────────────── */
+.bracket-match:hover rect { filter:brightness(1.25); }
+
+/* ── Glassmorphism hero gradient overlay ─────────────────────────────────── */
+.hero-gradient {
+    background:linear-gradient(135deg,
+        rgba(108,92,231,.18) 0%,
+        rgba(59,130,246,.12) 50%,
+        rgba(16,185,129,.08) 100%);
+}
+
+/* ── Color accents on plan badges ────────────────────────────────────────── */
+.plan-badge-free   { background:rgba(100,116,139,.2); color:#94A3B8; }
+.plan-badge-pro    { background:rgba(108,92,231,.2);  color:var(--accent-neon); }
+.plan-badge-promax { background:rgba(245,158,11,.2);  color:var(--accent-gold); }
