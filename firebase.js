@@ -35,7 +35,7 @@ window.PLANES = {
         nombre: 'Platea',
         precio: '$4.99',
         precioAnual: '$39.99',
-        color: '#39ff14',
+        color: '#6C5CE7',
         emoji: '🎟️',
         descripcion: 'Todas las ligas de fútbol, estadísticas completas, alineaciones tácticas y noticias traducidas. Viví el fútbol desde la Platea.',
         features: [
