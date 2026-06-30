@@ -53,7 +53,7 @@ window.PLANES = {
         nombre: 'Palco',
         precio: '$14.99',
         precioAnual: '$119.99',
-        color: '#ffd700',
+        color: '#F59E0B',
         emoji: '👑',
         descripcion: 'Acceso completo a todas las ligas, deportes y estadísticas. Notificaciones en tiempo real e historial extendido. La experiencia definitiva.',
         features: [
