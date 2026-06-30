@@ -1,6 +1,6 @@
 /**
  * styles-additions.css — Whistle / Score90X
- * Complementa styles.css. No redefine variables base.
+ * Complementa styles.css. Hover states fieles al .dc.html original.
  */
 
 /* ── Skeleton ─────────────────────────────────────────────────────────────── */
@@ -15,7 +15,7 @@
     border-radius:4px;
 }
 
-/* ── Live pulse (badge y minuto) ─────────────────────────────────────────── */
+/* ── Live pulse keyframes (compat) ───────────────────────────────────────── */
 @keyframes pulse {
     0%,100% { opacity:1; }
     50%      { opacity:.4; }
@@ -27,51 +27,45 @@
 /* ── Match item border cleanup ───────────────────────────────────────────── */
 .match-item:last-child { border-bottom:none !important; }
 
-/* ── Score display (partido detail) ─────────────────────────────────────── */
-.score-display {
-    font-family:var(--font-heading);
-    font-size:3.5rem; font-weight:900;
-    color:var(--text-main); line-height:1;
-    text-shadow:0 2px 20px rgba(108,92,231,.3);
-}
+/* ── Hover states — réplica exacta del .dc.html original ─────────────────── */
+.s90row:hover  { background:rgba(255,255,255,.035); border-color:rgba(108,92,231,.35); }
+.s90nav:hover  { background:rgba(255,255,255,.05); color:#E6E8F2; }
+.s90tab:hover  { color:#E6E8F2; }
+.s90btn:hover  { filter:brightness(1.12); }
+.s90news:hover { background:rgba(255,255,255,.04); }
+.s90link:hover { color:#6C5CE7; }
+.s90hdr:hover  { color:#E6E8F2; }
 
-/* ── Live badge global ───────────────────────────────────────────────────── */
+/* ── Live badge global (compat con código que use .live-badge) ──────────── */
 .live-badge {
-    display:inline-flex; align-items:center; gap:5px;
+    display:inline-flex; align-items:center; gap:6px;
     background:var(--accent-red);
-    color:#fff; font-family:var(--font-heading);
-    font-size:.62rem; font-weight:800; letter-spacing:1px;
-    padding:3px 8px; border-radius:20px;
-    animation:livePulse 2s ease-in-out infinite;
+    color:#fff; font-family:var(--font-body);
+    font-size:.62rem; font-weight:800; letter-spacing:.5px;
+    padding:5px 11px; border-radius:9px;
+    animation:livePulse 1.8s ease-in-out infinite;
 }
 
-/* ── Chip / pill buttons ─────────────────────────────────────────────────── */
-.chip {
-    padding:6px 14px; border-radius:20px; cursor:pointer;
-    font-family:var(--font-heading); font-weight:700; font-size:.78rem;
-    border:1px solid var(--border-glass);
-    background:rgba(255,255,255,.04);
-    color:var(--text-muted);
-    transition:all .18s; white-space:nowrap;
-}
-.chip.active, .chip:hover {
-    border-color:var(--accent-neon);
-    background:rgba(108,92,231,.14);
-    color:var(--accent-neon);
-}
-
-/* ── Bracket hover ───────────────────────────────────────────────────────── */
-.bracket-match:hover rect { filter:brightness(1.25); }
-
-/* ── Glassmorphism hero gradient overlay ─────────────────────────────────── */
+/* ── Hero gradient overlay (radial igual al hero del dashboard) ─────────── */
 .hero-gradient {
-    background:linear-gradient(135deg,
-        rgba(108,92,231,.18) 0%,
-        rgba(59,130,246,.12) 50%,
-        rgba(16,185,129,.08) 100%);
+    background:radial-gradient(120% 140% at 50% -20%, #5A2A8C 0%, #2A2270 38%, #141A3A 72%, #0E1228 100%);
 }
 
-/* ── Color accents on plan badges ────────────────────────────────────────── */
-.plan-badge-free   { background:rgba(100,116,139,.2); color:#94A3B8; }
-.plan-badge-pro    { background:rgba(108,92,231,.2);  color:var(--accent-neon); }
-.plan-badge-promax { background:rgba(245,158,11,.2);  color:var(--accent-gold); }
+/* ── Top nav header link (estilo .s90hdr para barras superiores futuras) ── */
+.topnav-link {
+    font-size:13.5px; font-weight:600; color:var(--text-muted);
+    text-decoration:none; padding:21px 0; position:relative;
+    transition:color .15s;
+}
+.topnav-link.active {
+    color:var(--text-bright); font-weight:700;
+    box-shadow:inset 0 -2px 0 var(--accent-neon);
+}
+
+/* ── Avatar circle (estilo "JD" del header) ──────────────────────────────── */
+.avatar-circle {
+    width:32px; height:32px; border-radius:50%;
+    background:linear-gradient(135deg,#6C5CE7,#3B82F6);
+    display:grid; place-items:center;
+    font-size:13px; font-weight:800; color:#fff;
+}
