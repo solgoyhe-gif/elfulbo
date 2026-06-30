@@ -164,7 +164,7 @@ const App = (() => {
         const planMeta = {
             free:   { color: '#888',    bg: 'rgba(136,136,136,0.2)', emoji: '⚽', label: 'POPULAR' },
             pro:    { color: '#6C5CE7', bg: 'rgba(108,92,231,0.2)',   emoji: '🎟️', label: 'PLATEA'  },
-            promax: { color: '#ffd700', bg: 'rgba(255,215,0,0.2)',   emoji: '👑', label: 'PALCO'   },
+            promax: { color: '#F59E0B', bg: 'rgba(245,158,11,0.2)',   emoji: '👑', label: 'PALCO'   },
         };
         const pm = planMeta[plan] ?? planMeta.free;
 
@@ -204,7 +204,7 @@ const App = (() => {
                         <span class="sidebar-plan-name">${nombre}</span>
                     </div>
                     <button class="sidebar-link" onclick="window.FirebaseAuth?.logout()"
-                        style="color:#ff4757;">
+                        style="color:#EF4444;">
                         <span class="sidebar-icon">🚪</span>
                         <span class="sidebar-label">Salir</span>
                     </button>
@@ -381,7 +381,7 @@ const App = (() => {
             const marcador = (esPost||esLive) ? homeScore + ' - ' + awayScore : horaAR;
             const sz = (esPost||esLive) ? '1.3rem' : '0.9rem';
             const col = (esPost||esLive) ? 'var(--text-main)' : 'var(--accent-neon)';
-            const liveBadge = esLive ? `<span style="background:#ff4757; color:#fff; padding:2px 8px; border-radius:10px; font-size:0.65rem; font-weight:800; display:inline-block; margin-bottom:6px; animation:pulse 1s infinite;">● EN VIVO ${clock}'</span>` : '';
+            const liveBadge = esLive ? `<span style="background:#EF4444; color:#fff; padding:2px 8px; border-radius:10px; font-size:0.65rem; font-weight:800; display:inline-block; margin-bottom:6px; animation:pulse 1s infinite;">● EN VIVO ${clock}'</span>` : '';
 
             return `<div onclick="${ir}" style="cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
                 ${liveBadge}
@@ -601,7 +601,7 @@ const App = (() => {
                 let matchesHtml = partidosRaw.map(partido => {
                     const statusDesc = partido.status?.description ?? partido.status?.state ?? '';
                     const isLive     = partido.status?.state === 'in' || statusDesc.toLowerCase().includes("'");
-                    const liveBadge  = isLive ? `<span style="color: #ff4757; font-size: 0.7rem; font-weight: bold; animation: pulse 1s infinite; margin-left: 6px;">● VIVO</span>` : '';
+                    const liveBadge  = isLive ? `<span style="color: #EF4444; font-size: 0.7rem; font-weight: bold; animation: pulse 1s infinite; margin-left: 6px;">● VIVO</span>` : '';
                     const homeLogoHtml = partido.homeTeam?.logo ? `<img src="${partido.homeTeam.logo}" width="18" height="18" style="object-fit:contain; margin-right:6px; vertical-align:middle;">` : '';
                     const awayLogoHtml = partido.awayTeam?.logo ? `<img src="${partido.awayTeam.logo}" width="18" height="18" style="object-fit:contain; margin-right:6px; vertical-align:middle;">` : '';
 
@@ -987,7 +987,7 @@ const App = (() => {
                 };
 
                 const liveBadge = d.live ? `
-                    <rect x="${x}" y="${y-12}" width="${BW}" height="11" rx="3" fill="#ff4757"/>
+                    <rect x="${x}" y="${y-12}" width="${BW}" height="11" rx="3" fill="#EF4444"/>
                     <text x="${x + BW/2}" y="${y-5}" text-anchor="middle" dominant-baseline="middle"
                         font-family="system-ui" font-size="7" font-weight="800" fill="#fff">● EN VIVO</text>` : '';
 
@@ -1143,9 +1143,9 @@ const App = (() => {
                         <!-- Labels de fases -->
                         <text x="${COL_L1 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#6CABDD" letter-spacing="1">OCTAVOS</text>
                         <text x="${COL_L2 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#6C5CE7" letter-spacing="1">CUARTOS</text>
-                        <text x="${COL_L3 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#ffd700" letter-spacing="1">SEMIS</text>
-                        <text x="${COL_MID + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#ffd700" letter-spacing="1">FINAL</text>
-                        <text x="${COL_R3 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#ffd700" letter-spacing="1">SEMIS</text>
+                        <text x="${COL_L3 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#F59E0B" letter-spacing="1">SEMIS</text>
+                        <text x="${COL_MID + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#F59E0B" letter-spacing="1">FINAL</text>
+                        <text x="${COL_R3 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#F59E0B" letter-spacing="1">SEMIS</text>
                         <text x="${COL_R2 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#6C5CE7" letter-spacing="1">CUARTOS</text>
                         <text x="${COL_R1 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#6CABDD" letter-spacing="1">OCTAVOS</text>
                     </svg>
@@ -1153,7 +1153,7 @@ const App = (() => {
 
         } catch(err) {
             console.error('[Bracket]', err);
-            container.innerHTML = '<div class="glass-panel" style="padding:2rem; text-align:center;"><p style="color:#ff4757;">Error cargando el bracket.</p></div>';
+            container.innerHTML = '<div class="glass-panel" style="padding:2rem; text-align:center;"><p style="color:#EF4444;">Error cargando el bracket.</p></div>';
         }
 
         // Auto-refresh cada 30s si hay partidos en vivo
@@ -1247,7 +1247,7 @@ const App = (() => {
                     <td style="padding: 12px; display: flex; align-items: center; font-weight: 600; font-size: 1.05rem;">${logoHtml} ${eq.nombre}</td>
                     <td style="padding: 12px; text-align: center;">${eq.pj}</td>
                     <td style="padding: 12px; text-align: center; color: #6CABDD;">${eq.gf}</td>
-                    <td style="padding: 12px; text-align: center; color: #ff4757;">${eq.gc}</td>
+                    <td style="padding: 12px; text-align: center; color: #EF4444;">${eq.gc}</td>
                     <td style="padding: 12px; text-align: center; font-weight: bold;">${eq.dif > 0 ? '+' + eq.dif : eq.dif}</td>
                     <td style="padding: 12px; text-align: center; font-weight: 900; color: var(--text-main); font-size: 1.1rem;">${eq.pts}</td>
                 </tr>
@@ -1474,7 +1474,7 @@ const App = (() => {
                 <button onclick="window._seleccionarPartido(${i})" id="chip-partido-${i}"
                     style="flex-shrink:0; padding: 10px 18px; border-radius: 20px; border: 2px solid ${i === 0 ? 'var(--accent-neon)' : 'var(--border-glass)'}; background: ${i === 0 ? 'rgba(108,92,231,0.12)' : 'rgba(255,255,255,0.04)'}; color: ${i === 0 ? 'var(--accent-neon)' : 'var(--text-muted)'}; cursor: pointer; font-family: var(--font-heading); font-weight: 700; font-size: 0.9rem; white-space: nowrap; transition: all 0.2s;">
                     vs ${p.rival}
-                    ${p.isLive ? '<span style="color:#ff4757; margin-left:6px; font-size:0.75rem;">● VIVO</span>' : ''}
+                    ${p.isLive ? '<span style="color:#EF4444; margin-left:6px; font-size:0.75rem;">● VIVO</span>' : ''}
                     <span style="display:block; font-size:0.75rem; font-weight:400; margin-top:2px; color:var(--text-muted);">${p.resultado}</span>
                 </button>`).join('')
             : `<p style="color:var(--text-muted); font-size:0.85rem; padding: 10px;">Sin partidos registrados aún.</p>`;
@@ -1570,7 +1570,7 @@ const App = (() => {
                 <!-- HISTORIAL EXTENDIDO (solo Palco) -->
                 ${esProMaxHistorial ? `
                 <div class="glass-panel" style="padding:1.5rem; margin-top:2rem;">
-                    <h3 class="panel-title" style="margin-bottom:1rem;">📊 Historial Extendido <span style="font-size:0.7rem; background:rgba(255,215,0,0.15); color:#ffd700; padding:2px 8px; border-radius:10px; margin-left:8px; font-family:var(--font-heading);">👑 PALCO</span></h3>
+                    <h3 class="panel-title" style="margin-bottom:1rem;">📊 Historial Extendido <span style="font-size:0.7rem; background:rgba(245,158,11,0.15); color:#F59E0B; padding:2px 8px; border-radius:10px; margin-left:8px; font-family:var(--font-heading);">👑 PALCO</span></h3>
 
                     <!-- Stats acumuladas -->
                     ${statsAcum.pj > 0 ? `
@@ -1579,9 +1579,9 @@ const App = (() => {
                             {label:'PJ', valor: statsAcum.pj, color:'var(--text-main)'},
                             {label:'PG', valor: statsAcum.pg, color:'var(--accent-neon)'},
                             {label:'PE', valor: statsAcum.pe, color:'#f0a500'},
-                            {label:'PP', valor: statsAcum.pp, color:'#ff4757'},
+                            {label:'PP', valor: statsAcum.pp, color:'#EF4444'},
                             {label:'GF', valor: statsAcum.gf, color:'var(--accent-neon)'},
-                            {label:'GC', valor: statsAcum.gc, color:'#ff4757'},
+                            {label:'GC', valor: statsAcum.gc, color:'#EF4444'},
                         ].map(s => `
                             <div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:10px 4px;">
                                 <div style="font-family:var(--font-heading); font-size:1.3rem; font-weight:900; color:${s.color};">${s.valor}</div>
@@ -1597,7 +1597,7 @@ const App = (() => {
                             const esGanado = p.jugado && p.golesAFavor > p.golesEnCon;
                             const esEmpatado = p.jugado && p.golesAFavor === p.golesEnCon;
                             const esPerdido = p.jugado && p.golesAFavor < p.golesEnCon;
-                            const resultColor = esGanado ? 'var(--accent-neon)' : esPerdido ? '#ff4757' : '#f0a500';
+                            const resultColor = esGanado ? 'var(--accent-neon)' : esPerdido ? '#EF4444' : '#f0a500';
                             const resultLabel = esGanado ? 'G' : esPerdido ? 'P' : esEmpatado ? 'E' : '—';
                             const logoHtml = p.rivalLogo
                                 ? `<img src="${p.rivalLogo}" width="20" height="20" style="object-fit:contain; border-radius:50%;" onerror="this.style.display='none'">`
@@ -1617,9 +1617,9 @@ const App = (() => {
                                         ${p.esMundial ? '<span style="font-size:0.6rem; background:rgba(200,168,75,0.2); color:#c8a84b; padding:1px 5px; border-radius:8px; flex-shrink:0;">🏆 MUN</span>' : '<span style="font-size:0.6rem; background:rgba(255,255,255,0.08); color:var(--text-muted); padding:1px 5px; border-radius:8px; flex-shrink:0;">AMIST</span>'}
                                     </div>
                                     <span style="font-family:var(--font-heading); font-size:0.9rem; font-weight:800; color:var(--text-main); white-space:nowrap;">
-                                        ${p.jugado ? p.resultado : p.isLive ? `<span style="color:#ff4757;">● ${p.resultado}</span>` : '—'}
+                                        ${p.jugado ? p.resultado : p.isLive ? `<span style="color:#EF4444;">● ${p.resultado}</span>` : '—'}
                                     </span>
-                                    <span style="width:22px; height:22px; border-radius:50%; background:${p.jugado ? `rgba(${esGanado?'108,92,231':esPerdido?'255,71,87':'240,165,0'},0.15)` : 'rgba(255,255,255,0.06)'};
+                                    <span style="width:22px; height:22px; border-radius:50%; background:${p.jugado ? `rgba(${esGanado?'108,92,231':esPerdido?'239,68,68':'240,165,0'},0.15)` : 'rgba(255,255,255,0.06)'};
                                         color:${p.jugado ? resultColor : 'var(--text-muted)'}; font-size:0.7rem; font-weight:800;
                                         display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                                         ${resultLabel}
@@ -1630,10 +1630,10 @@ const App = (() => {
                 </div>` : `
                 <div class="glass-panel" style="padding:1.5rem; margin-top:2rem; text-align:center;">
                     <div style="font-size:2rem; margin-bottom:0.5rem;">👑</div>
-                    <p style="font-weight:700; color:#ffd700; font-family:var(--font-heading); margin-bottom:0.5rem;">Historial Extendido</p>
+                    <p style="font-weight:700; color:#F59E0B; font-family:var(--font-heading); margin-bottom:0.5rem;">Historial Extendido</p>
                     <p style="color:var(--text-muted); font-size:0.82rem; margin-bottom:1rem;">Accedé al historial completo de partidos y estadísticas acumuladas del torneo con el plan Palco.</p>
                     <button onclick="window.location.hash='#/planes'"
-                        style="padding:8px 20px; background:#ffd700; color:#000; font-weight:800;
+                        style="padding:8px 20px; background:#F59E0B; color:#000; font-weight:800;
                         font-family:var(--font-heading); border:none; border-radius:8px; cursor:pointer; font-size:0.85rem;">
                         VER PALCO
                     </button>
@@ -2047,7 +2047,7 @@ const App = (() => {
                                         ? (() => {
                                             const esHT = shortDetail.toLowerCase().includes('half') || shortDetail.toLowerCase().includes('ht');
                                             const etiqueta = esHT ? 'EN VIVO · HALF TIME' : `EN VIVO ${minuto}`;
-                                            return `<span style="background:#ff4757; color:#fff; padding:3px 10px; border-radius:12px; font-size:0.7rem; font-weight:800; animation:pulse 1s infinite;">● ${etiqueta}</span>`;
+                                            return `<span style="background:#EF4444; color:#fff; padding:3px 10px; border-radius:12px; font-size:0.7rem; font-weight:800; animation:pulse 1s infinite;">● ${etiqueta}</span>`;
                                           })()
                                         : `<span style="background:rgba(255,255,255,0.08); color:var(--text-muted); padding:3px 10px; border-radius:12px; font-size:0.7rem;">FINALIZADO</span>`}
                                 </div>
@@ -2093,7 +2093,7 @@ const App = (() => {
 
             } catch(err) {
                 console.error('[H2H día]', err);
-                container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;"><p style="color:#ff4757;">Error cargando partidos.</p></div>`;
+                container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;"><p style="color:#EF4444;">Error cargando partidos.</p></div>`;
             }
         };
 
@@ -2175,7 +2175,7 @@ const App = (() => {
 
             } catch(err) {
                 console.error('[expandir partido]', err);
-                statsDiv.innerHTML = `<p style="color:#ff4757; font-size:0.85rem; text-align:center;">Error cargando estadísticas.</p>`;
+                statsDiv.innerHTML = `<p style="color:#EF4444; font-size:0.85rem; text-align:center;">Error cargando estadísticas.</p>`;
                 statsDiv.style.display = 'block';
                 btn.textContent = 'VER ESTADÍSTICAS ↓';
                 btn.disabled = false;
@@ -2250,13 +2250,13 @@ const App = (() => {
                 if (tipo === 'Transfer' || texto.includes('transfer') || texto.includes('sign') || texto.includes('fichaj') || texto.includes('vende') || texto.includes('compra') || texto.includes('contrat'))
                     return { label: 'Mercado', color: '#f0a500', emoji: '🔄' };
                 if (texto.includes('injur') || texto.includes('lesion') || texto.includes('lesión') || texto.includes('baja médica') || texto.includes('fractur') || texto.includes('ligament'))
-                    return { label: 'Lesión', color: '#ff4757', emoji: '🚑' };
+                    return { label: 'Lesión', color: '#EF4444', emoji: '🚑' };
                 if (texto.includes('coach') || texto.includes('manager') || texto.includes('dt ') || texto.includes('técnico') || texto.includes('entrenador') || texto.includes('sack') || texto.includes('fired') || texto.includes('appoint'))
                     return { label: 'Cuerpo Técnico', color: '#7d5fff', emoji: '🧠' };
                 if (texto.includes('said') || texto.includes('says') || texto.includes('declared') || texto.includes('declaró') || texto.includes('afirmó') || texto.includes('press') || texto.includes('interview'))
                     return { label: 'Declaraciones', color: '#2ed573', emoji: '🎙️' };
                 if (texto.includes('world cup') || texto.includes('mundial') || texto.includes('fifa') || texto.includes('group') || texto.includes('grupo'))
-                    return { label: 'Mundial 2026', color: '#ffd700', emoji: '🏆' };
+                    return { label: 'Mundial 2026', color: '#F59E0B', emoji: '🏆' };
                 return { label: 'Noticias', color: 'var(--accent-neon)', emoji: '📰' };
             };
 
@@ -2558,12 +2558,12 @@ const App = (() => {
 
                         <!-- PRO MAX -->
                         <div class="glass-panel" style="padding:1.8rem; text-align:left;
-                            border-color:#ffd700; background:rgba(255,215,0,0.04); position:relative;">
+                            border-color:#F59E0B; background:rgba(245,158,11,0.04); position:relative;">
                             <div style="font-size:1.8rem; margin-bottom:0.5rem;">👑</div>
                             <div style="font-family:var(--font-heading); font-size:1.3rem; font-weight:900;
-                                color:#ffd700; margin-bottom:0.3rem;">Palco</div>
+                                color:#F59E0B; margin-bottom:0.3rem;">Palco</div>
                             <div id="precio-promax" style="font-family:var(--font-heading); font-size:1.8rem;
-                                font-weight:900; color:#ffd700; margin-bottom:0.8rem;">
+                                font-weight:900; color:#F59E0B; margin-bottom:0.8rem;">
                                 $14.99<span style="font-size:0.85rem; color:var(--text-muted);">/mes</span>
                             </div>
                             <p style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; margin-bottom:1.2rem;">
@@ -2582,7 +2582,7 @@ const App = (() => {
                                     <span>✅</span><span>${f.t}</span>
                                 </div>`).join('')}
                             <button id="btn-promax_mensual" onclick="window._suscribirse('promax_mensual')"
-                                style="width:100%; margin-top:1.5rem; padding:11px; background:#ffd700;
+                                style="width:100%; margin-top:1.5rem; padding:11px; background:#F59E0B;
                                 color:#000; font-weight:900; font-family:var(--font-heading);
                                 border:none; border-radius:8px; cursor:pointer;
                                 font-size:0.9rem; letter-spacing:1px;">
@@ -2649,8 +2649,8 @@ const App = (() => {
             if (estadoEl) estadoEl.innerHTML = `
                 <span style="color:var(--accent-neon); font-weight:700;">🔔 Notificaciones activas</span>
                 <button onclick="window._desactivarPush(this)"
-                    style="margin-left:12px; background:none; border:1px solid #ff4757;
-                    color:#ff4757; border-radius:6px; padding:4px 10px; cursor:pointer;
+                    style="margin-left:12px; background:none; border:1px solid #EF4444;
+                    color:#EF4444; border-radius:6px; padding:4px 10px; cursor:pointer;
                     font-size:0.75rem; font-family:var(--font-heading);">DESACTIVAR</button>`;
         } catch(err) {
             console.error('[PUSH]', err);
@@ -2679,7 +2679,7 @@ const App = (() => {
         const planMeta = {
             free:   { color: '#888',    bg: 'rgba(136,136,136,0.2)', emoji: '⚽', label: 'POPULAR' },
             pro:    { color: '#6C5CE7', bg: 'rgba(108,92,231,0.2)',   emoji: '🎟️', label: 'PLATEA'  },
-            promax: { color: '#ffd700', bg: 'rgba(255,215,0,0.2)',   emoji: '👑', label: 'PALCO'   },
+            promax: { color: '#F59E0B', bg: 'rgba(245,158,11,0.2)',   emoji: '👑', label: 'PALCO'   },
         };
         const meta = planMeta[plan] ?? planMeta.free;
 
@@ -2799,7 +2799,7 @@ const App = (() => {
                         <div style="text-align:center; padding:1rem; border:1px dashed var(--border-glass); border-radius:12px;">
                             <div style="font-size:2rem; margin-bottom:0.5rem;">🔒</div>
                             <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Exclusivas del plan Palco.</p>
-                            <button class="btn-primary" style="background:#ffd700; color:#000;" onclick="window.location.hash='#/planes'">VER PALCO 👑</button>
+                            <button class="btn-primary" style="background:#F59E0B; color:#000;" onclick="window.location.hash='#/planes'">VER PALCO 👑</button>
                         </div>
                     ` : `
                         <p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:1.2rem;">
@@ -2809,8 +2809,8 @@ const App = (() => {
                             ${pushActivo ? `
                                 <span style="color:var(--accent-neon); font-weight:700;">🔔 Notificaciones activas</span>
                                 <button onclick="window._desactivarPush(this)"
-                                    style="margin-left:12px; background:none; border:1px solid #ff4757;
-                                    color:#ff4757; border-radius:6px; padding:4px 10px; cursor:pointer;
+                                    style="margin-left:12px; background:none; border:1px solid #EF4444;
+                                    color:#EF4444; border-radius:6px; padding:4px 10px; cursor:pointer;
                                     font-size:0.75rem; font-family:var(--font-heading);">DESACTIVAR</button>
                             ` : `
                                 <button id="push-btn-activar" class="btn-primary"
@@ -2828,14 +2828,14 @@ const App = (() => {
                     ${plan === 'promax' ? `
                         <div style="text-align:center; padding:1rem;">
                             <div style="font-size:2rem; margin-bottom:0.5rem;">👑</div>
-                            <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:800; color:#ffd700;">Palco activo</div>
+                            <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:800; color:#F59E0B;">Palco activo</div>
                             <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.5rem;">Tenés acceso a todas las funciones.</p>
                         </div>
                     ` : plan === 'pro' ? `
                         <div style="text-align:center; padding:1rem;">
                             <div style="font-size:2rem; margin-bottom:0.5rem;">🎟️</div>
                             <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:800; color:#6C5CE7;">Platea activo</div>
-                            <button class="btn-primary" style="margin-top:1rem; background:#ffd700; color:#000;"
+                            <button class="btn-primary" style="margin-top:1rem; background:#F59E0B; color:#000;"
                                 onclick="window.location.hash='#/planes'">PASARTE A PALCO 👑</button>
                         </div>
                     ` : `
@@ -2850,8 +2850,8 @@ const App = (() => {
 
                 <!-- Cerrar sesión -->
                 <button onclick="window.FirebaseAuth?.logout()"
-                    style="width:100%; padding:12px; background:rgba(255,71,87,0.1); border:1px solid #ff4757;
-                    color:#ff4757; border-radius:8px; cursor:pointer; font-family:var(--font-heading);
+                    style="width:100%; padding:12px; background:rgba(239,68,68,0.1); border:1px solid #EF4444;
+                    color:#EF4444; border-radius:8px; cursor:pointer; font-family:var(--font-heading);
                     font-weight:700; letter-spacing:1px; margin-bottom:4rem;">
                     CERRAR SESIÓN
                 </button>
@@ -2912,7 +2912,7 @@ const App = (() => {
                 <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1.5rem; margin-bottom:4rem;">
                     ${_card('free',   { color: '#888'    })}
                     ${_card('pro',    { color: '#6C5CE7' })}
-                    ${_card('promax', { color: '#ffd700' })}
+                    ${_card('promax', { color: '#F59E0B' })}
                 </div>
             </main>
         ${_closeSidebarWrapper()}
@@ -3267,12 +3267,12 @@ const App = (() => {
     const _paywallInline = (requiere = 'pro', mensaje = '') => `
         <div style="padding:2rem; text-align:center; border:1px dashed var(--border-glass); border-radius:12px; margin:1rem 0;">
             <div style="font-size:2rem; margin-bottom:0.5rem;">${requiere === 'promax' ? '👑' : '🔥'}</div>
-            <p style="font-weight:700; color:${requiere === 'promax' ? '#ffd700' : 'var(--accent-neon)'}; font-family:var(--font-heading); margin-bottom:0.5rem;">
+            <p style="font-weight:700; color:${requiere === 'promax' ? '#F59E0B' : 'var(--accent-neon)'}; font-family:var(--font-heading); margin-bottom:0.5rem;">
                 Requiere ${requiere === 'promax' ? 'Palco' : 'Platea'}
             </p>
             <p style="color:var(--text-muted); font-size:0.82rem; margin-bottom:1rem;">${mensaje}</p>
             <button onclick="window.location.hash='#/planes'"
-                style="padding:8px 20px; background:${requiere === 'promax' ? '#ffd700' : 'var(--accent-neon)'}; color:#000;
+                style="padding:8px 20px; background:${requiere === 'promax' ? '#F59E0B' : 'var(--accent-neon)'}; color:#000;
                 font-weight:800; font-family:var(--font-heading); border:none; border-radius:8px; cursor:pointer; font-size:0.85rem;">
                 VER PLANES
             </button>
@@ -3383,14 +3383,14 @@ const App = (() => {
                     <h2 class="section-title">🏅 Other Sports</h2>
                     <div class="glass-panel" style="padding:3rem; text-align:center; margin-bottom:2rem;">
                         <div style="font-size:3rem; margin-bottom:1rem;">👑</div>
-                        <h3 style="font-family:var(--font-heading); font-size:1.3rem; font-weight:900; color:#ffd700; margin-bottom:0.8rem;">
+                        <h3 style="font-family:var(--font-heading); font-size:1.3rem; font-weight:900; color:#F59E0B; margin-bottom:0.8rem;">
                             Requiere Palco
                         </h3>
                         <p style="color:var(--text-muted); font-size:0.9rem; line-height:1.6; max-width:400px; margin:0 auto 1.5rem;">
                             Accedé a todos los deportes — básquet, tenis, F1, NFL, MLB, NHL, golf, MMA y más — con el plan Palco.
                         </p>
                         <button onclick="window.location.hash='#/planes'"
-                            style="padding:12px 28px; background:#ffd700; color:#000; font-weight:900;
+                            style="padding:12px 28px; background:#F59E0B; color:#000; font-weight:900;
                             font-family:var(--font-heading); border:none; border-radius:8px; cursor:pointer;
                             font-size:0.95rem; letter-spacing:1px;">
                             VER PLANES ⭐
@@ -3524,170 +3524,170 @@ const App = (() => {
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M30,80 Q30,30 80,30 L140,30 Q170,30 170,60 Q170,80 150,90 Q130,100 130,120 Q130,140 100,140 Q70,140 50,130 Q30,120 30,100 Z"
                             fill="none" stroke="#6C5CE7" stroke-width="3" stroke-linejoin="round"/>
-                        <circle cx="30" cy="80" r="5" fill="#ff4757"/>
+                        <circle cx="30" cy="80" r="5" fill="#EF4444"/>
                         <text x="20" y="75" font-size="7" fill="#fff" font-family="system-ui">START</text>
-                        <text x="90" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MELBOURNE</text>
+                        <text x="90" y="20" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">MELBOURNE</text>
                     </svg>`,
                     'China': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M40,100 L40,60 Q40,30 80,30 L160,30 Q170,40 160,70 Q150,90 120,90 L100,90 Q80,90 80,110 Q80,130 60,130 Q40,130 40,115 Z"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="40" cy="100" r="5" fill="#ff4757"/>
-                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">SHANGHÁI</text>
+                        <circle cx="40" cy="100" r="5" fill="#EF4444"/>
+                        <text x="100" y="20" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">SHANGHÁI</text>
                     </svg>`,
                     'Japón': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M100,130 Q60,130 40,100 Q20,70 40,50 Q60,30 100,30 Q130,30 150,50 L170,50 Q180,60 170,80 Q160,100 140,110 Q150,130 130,135 Q115,140 100,130 Z"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="100" cy="130" r="5" fill="#ff4757"/>
-                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">SUZUKA</text>
+                        <circle cx="100" cy="130" r="5" fill="#EF4444"/>
+                        <text x="100" y="20" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">SUZUKA</text>
                     </svg>`,
                     'Bahréin': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M40,90 L40,50 Q40,30 70,30 Q100,30 100,50 Q100,70 80,80 Q100,90 120,80 Q150,70 160,50 Q170,30 185,50 Q185,80 160,100 Q140,120 100,120 Q60,120 40,110 Z"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="40" cy="90" r="5" fill="#ff4757"/>
-                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">SAKHIR</text>
+                        <circle cx="40" cy="90" r="5" fill="#EF4444"/>
+                        <text x="100" y="20" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">SAKHIR</text>
                     </svg>`,
                     'Arabia Saudita': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M160,120 L160,40 Q160,30 150,30 L60,30 Q50,30 50,40 L50,60 Q50,70 60,70 L130,70 Q140,70 140,80 L140,100 Q140,110 130,110 L60,110 Q50,110 50,120 L50,135"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="160" cy="120" r="5" fill="#ff4757"/>
-                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">JEDDAH</text>
+                        <circle cx="160" cy="120" r="5" fill="#EF4444"/>
+                        <text x="100" y="20" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">JEDDAH</text>
                     </svg>`,
                     'Miami': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M50,130 L50,80 Q50,50 80,40 L150,40 Q170,40 170,60 Q170,80 150,85 Q130,90 120,100 Q110,115 120,130 Q130,145 100,145 Q70,145 50,130 Z"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="50" cy="130" r="5" fill="#ff4757"/>
-                        <text x="100" y="28" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MIAMI</text>
+                        <circle cx="50" cy="130" r="5" fill="#EF4444"/>
+                        <text x="100" y="28" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">MIAMI</text>
                     </svg>`,
                     'Imola': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M100,130 Q60,130 40,100 Q20,70 50,50 Q70,35 100,40 Q130,45 150,30 Q170,15 180,40 Q185,60 170,80 Q155,100 140,110 Q140,130 100,130 Z"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="100" cy="130" r="5" fill="#ff4757"/>
-                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">IMOLA</text>
+                        <circle cx="100" cy="130" r="5" fill="#EF4444"/>
+                        <text x="100" y="20" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">IMOLA</text>
                     </svg>`,
                     'Mónaco': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M170,100 L170,60 Q165,30 140,25 Q110,20 80,40 Q50,60 40,90 Q30,115 50,130 Q70,145 110,140 Q140,135 160,120 Q170,115 170,100 Z"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="170" cy="100" r="5" fill="#ff4757"/>
-                        <text x="100" y="15" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MONACO</text>
+                        <circle cx="170" cy="100" r="5" fill="#EF4444"/>
+                        <text x="100" y="15" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">MONACO</text>
                     </svg>`,
                     'España': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M60,120 L60,70 Q60,40 100,35 Q140,30 160,55 Q175,75 160,95 Q145,115 120,115 Q120,130 90,135 Q65,138 60,120 Z"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="60" cy="120" r="5" fill="#ff4757"/>
-                        <text x="100" y="22" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">BARCELONA</text>
+                        <circle cx="60" cy="120" r="5" fill="#EF4444"/>
+                        <text x="100" y="22" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">BARCELONA</text>
                     </svg>`,
                     'Canadá': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M50,100 L50,50 L170,50 L170,70 L110,70 L110,90 L170,90 L170,120 L80,120 Q50,120 50,100 Z"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="50" cy="100" r="5" fill="#ff4757"/>
-                        <text x="100" y="38" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MONTREAL</text>
+                        <circle cx="50" cy="100" r="5" fill="#EF4444"/>
+                        <text x="100" y="38" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">MONTREAL</text>
                     </svg>`,
                     'Austria': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M80,130 Q40,130 30,100 Q20,70 50,50 Q80,30 120,40 Q160,50 170,80 Q175,100 160,120 Q145,140 110,135 Q95,133 80,130 Z"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="80" cy="130" r="5" fill="#ff4757"/>
-                        <text x="100" y="22" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">RED BULL RING</text>
+                        <circle cx="80" cy="130" r="5" fill="#EF4444"/>
+                        <text x="100" y="22" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">RED BULL RING</text>
                     </svg>`,
                     'Reino Unido': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M90,130 Q50,125 35,100 Q20,70 40,50 Q60,30 100,30 Q140,30 160,55 Q175,75 165,100 Q155,125 125,135 Q110,140 90,130 Z"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="90" cy="130" r="5" fill="#ff4757"/>
-                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">SILVERSTONE</text>
+                        <circle cx="90" cy="130" r="5" fill="#EF4444"/>
+                        <text x="100" y="20" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">SILVERSTONE</text>
                     </svg>`,
                     'Hungría': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M80,130 Q40,120 30,90 Q20,60 50,40 Q80,20 120,30 Q160,40 170,70 Q180,100 160,120 Q140,140 100,135 Q90,133 80,130 Z"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="80" cy="130" r="5" fill="#ff4757"/>
-                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">HUNGARORING</text>
+                        <circle cx="80" cy="130" r="5" fill="#EF4444"/>
+                        <text x="100" y="20" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">HUNGARORING</text>
                     </svg>`,
                     'Bélgica': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M40,100 Q30,70 50,45 Q70,20 110,25 Q150,30 170,55 Q185,80 170,105 Q155,130 120,138 Q85,145 60,130 Q40,118 40,100 Z"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="40" cy="100" r="5" fill="#ff4757"/>
-                        <text x="100" y="15" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">SPA-FRANCORCHAMPS</text>
+                        <circle cx="40" cy="100" r="5" fill="#EF4444"/>
+                        <text x="100" y="15" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">SPA-FRANCORCHAMPS</text>
                     </svg>`,
                     'Países Bajos': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M100,135 Q60,130 40,105 Q20,80 35,55 Q50,30 90,25 Q130,20 155,45 Q175,65 170,95 Q165,125 135,138 Q118,145 100,135 Z"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="100" cy="135" r="5" fill="#ff4757"/>
-                        <text x="100" y="15" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">ZANDVOORT</text>
+                        <circle cx="100" cy="135" r="5" fill="#EF4444"/>
+                        <text x="100" y="15" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">ZANDVOORT</text>
                     </svg>`,
                     'Italia': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M30,80 Q30,40 70,30 L140,30 Q165,30 170,55 Q175,80 160,95 Q145,110 130,100 Q115,90 100,100 Q85,110 85,130 Q85,145 60,145 Q35,145 30,120 Z"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="30" cy="80" r="5" fill="#ff4757"/>
-                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MONZA</text>
+                        <circle cx="30" cy="80" r="5" fill="#EF4444"/>
+                        <text x="100" y="20" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">MONZA</text>
                     </svg>`,
                     'Azerbaiyán': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M160,120 L160,40 Q155,25 140,25 L60,25 Q45,25 45,40 L45,60 Q45,75 60,75 L140,75 Q155,75 155,90 L155,110 Q155,125 140,130 L60,130 Q45,130 45,120"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="160" cy="120" r="5" fill="#ff4757"/>
-                        <text x="100" y="15" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">BAKÚ</text>
+                        <circle cx="160" cy="120" r="5" fill="#EF4444"/>
+                        <text x="100" y="15" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">BAKÚ</text>
                     </svg>`,
                     'Singapur': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M40,110 L40,50 Q40,30 60,30 L100,30 Q120,30 120,50 Q120,70 100,75 Q80,80 80,100 Q80,120 100,125 L150,125 Q170,125 170,110 Q170,95 155,90 Q140,85 140,70 Q140,55 155,50 Q170,45 175,60 Q175,80 165,100"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="40" cy="110" r="5" fill="#ff4757"/>
-                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MARINA BAY</text>
+                        <circle cx="40" cy="110" r="5" fill="#EF4444"/>
+                        <text x="100" y="20" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">MARINA BAY</text>
                     </svg>`,
                     'EEUU (Austin)': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M50,120 L50,60 Q50,30 90,25 Q130,20 155,45 Q175,65 165,90 Q155,115 130,120 Q115,125 100,115 Q85,105 75,115 Q65,125 50,120 Z"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="50" cy="120" r="5" fill="#ff4757"/>
-                        <text x="100" y="14" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">COTA - AUSTIN</text>
+                        <circle cx="50" cy="120" r="5" fill="#EF4444"/>
+                        <text x="100" y="14" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">COTA - AUSTIN</text>
                     </svg>`,
                     'México': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M60,120 Q30,120 25,90 Q20,60 50,40 Q80,20 120,25 Q160,30 170,60 Q175,85 160,105 Q145,125 115,130 Q90,135 60,120 Z"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="60" cy="120" r="5" fill="#ff4757"/>
-                        <text x="100" y="14" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">CDMX - HERMANOS RODRÍGUEZ</text>
+                        <circle cx="60" cy="120" r="5" fill="#EF4444"/>
+                        <text x="100" y="14" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">CDMX - HERMANOS RODRÍGUEZ</text>
                     </svg>`,
                     'Brasil': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M80,130 Q40,125 30,95 Q20,65 50,45 Q80,25 120,30 Q155,35 168,65 Q178,90 165,115 Q150,140 110,140 Q95,140 80,130 Z"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="80" cy="130" r="5" fill="#ff4757"/>
-                        <text x="100" y="18" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">INTERLAGOS</text>
+                        <circle cx="80" cy="130" r="5" fill="#EF4444"/>
+                        <text x="100" y="18" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">INTERLAGOS</text>
                     </svg>`,
                     'Las Vegas': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M160,130 L160,40 Q160,25 145,25 L55,25 Q40,25 40,40 L40,70 L140,70 L140,100 L40,100 L40,130 Q40,145 55,145 L145,145 Q160,145 160,130 Z"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="160" cy="130" r="5" fill="#ff4757"/>
-                        <text x="100" y="15" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">LAS VEGAS STRIP</text>
+                        <circle cx="160" cy="130" r="5" fill="#EF4444"/>
+                        <text x="100" y="15" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">LAS VEGAS STRIP</text>
                     </svg>`,
                     'Qatar': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M80,130 Q40,125 28,95 Q16,65 40,45 Q64,25 105,28 Q145,31 163,60 Q178,85 165,112 Q150,138 112,142 Q96,145 80,130 Z"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="80" cy="130" r="5" fill="#ff4757"/>
-                        <text x="100" y="17" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">LUSAIL</text>
+                        <circle cx="80" cy="130" r="5" fill="#EF4444"/>
+                        <text x="100" y="17" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">LUSAIL</text>
                     </svg>`,
                     'Abu Dhabi': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
                         <path d="M60,120 Q30,115 25,85 Q20,55 50,35 Q80,15 125,20 Q165,25 175,55 Q182,80 168,105 Q152,130 118,138 Q85,145 60,120 Z"
                             fill="none" stroke="#6C5CE7" stroke-width="3"/>
-                        <circle cx="60" cy="120" r="5" fill="#ff4757"/>
-                        <text x="100" y="9" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">YAS MARINA</text>
+                        <circle cx="60" cy="120" r="5" fill="#EF4444"/>
+                        <text x="100" y="9" font-size="8" fill="#F59E0B" font-family="system-ui" font-weight="bold" text-anchor="middle">YAS MARINA</text>
                     </svg>`,
                 };
 
@@ -3814,7 +3814,7 @@ const App = (() => {
                                     onmouseover="${F1_PERFILES[p.nombre] ? "this.style.background='rgba(108,92,231,0.04)'" : ''}"
                                     onmouseout="this.style.background='transparent'">
                                     <span style="font-weight:800; font-size:0.85rem;
-                                        color:${p.pos === 1 ? '#ffd700' : p.pos === 2 ? '#c0c0c0' : p.pos === 3 ? '#cd7f32' : 'var(--text-muted)'};">
+                                        color:${p.pos === 1 ? '#F59E0B' : p.pos === 2 ? '#c0c0c0' : p.pos === 3 ? '#cd7f32' : 'var(--text-muted)'};">
                                         ${p.pos}
                                     </span>
                                     <div style="background:rgba(255,255,255,0.08); border-radius:6px; width:28px; height:28px;
@@ -3826,7 +3826,7 @@ const App = (() => {
                                     </div>
                                     <div style="text-align:right;">
                                         <div style="font-family:var(--font-heading); font-weight:900; font-size:1rem;
-                                            color:${p.pos === 1 ? '#ffd700' : 'var(--text-main)'};">${p.puntos}</div>
+                                            color:${p.pos === 1 ? '#F59E0B' : 'var(--text-main)'};">${p.puntos}</div>
                                         <div style="font-size:0.65rem; color:var(--text-muted);">pts</div>
                                     </div>
                                 </div>
@@ -3861,8 +3861,8 @@ const App = (() => {
                                         ['Victorias 2026', d.victorias, 'var(--text-main)'],
                                         ['Poles 2026', d.poles, 'var(--text-main)'],
                                         ['Podios 2026', d.podios, 'var(--text-main)'],
-                                        ['Campeonatos', p.campeonatos, '#ffd700'],
-                                        ['Victorias total', p.victorias, '#ffd700'],
+                                        ['Campeonatos', p.campeonatos, '#F59E0B'],
+                                        ['Victorias total', p.victorias, '#F59E0B'],
                                     ].map(([label, val, color]) => `
                                         <div style="background:rgba(255,255,255,0.04); border-radius:10px; padding:10px; text-align:center;">
                                             <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:900; color:${color};">${val}</div>
@@ -3885,7 +3885,7 @@ const App = (() => {
                                 <div style="display:grid; grid-template-columns:30px 12px 1fr auto; align-items:center; gap:12px;
                                     padding:12px 8px; border-bottom:1px solid var(--border-glass);">
                                     <span style="font-weight:800; font-size:0.9rem;
-                                        color:${c.pos === 1 ? '#ffd700' : c.pos === 2 ? '#c0c0c0' : c.pos === 3 ? '#cd7f32' : 'var(--text-muted)'};">${c.pos}</span>
+                                        color:${c.pos === 1 ? '#F59E0B' : c.pos === 2 ? '#c0c0c0' : c.pos === 3 ? '#cd7f32' : 'var(--text-muted)'};">${c.pos}</span>
                                     <div style="width:12px; height:32px; border-radius:3px; background:${c.color};"></div>
                                     <div>
                                         <div style="font-weight:700; font-size:0.9rem;">${c.equipo} ${c.pais}</div>
@@ -3895,7 +3895,7 @@ const App = (() => {
                                     </div>
                                     <div style="text-align:right;">
                                         <div style="font-family:var(--font-heading); font-weight:900; font-size:1rem;
-                                            color:${c.pos === 1 ? '#ffd700' : 'var(--text-main)'};">${c.puntos}</div>
+                                            color:${c.pos === 1 ? '#F59E0B' : 'var(--text-main)'};">${c.puntos}</div>
                                         <div style="font-size:0.65rem; color:var(--text-muted);">pts</div>
                                     </div>
                                 </div>
@@ -4115,7 +4115,7 @@ const App = (() => {
                                 <div style="background:rgba(255,255,255,0.04); border-radius:10px; padding:10px; text-align:center;">
                                     <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px;">${label}</div>
                                     <div style="font-family:var(--font-heading); font-size:1.1rem; font-weight:900;
-                                        color:${label === 'Total' ? '#ffd700' : 'var(--text-main)'};">${val}</div>
+                                        color:${label === 'Total' ? '#F59E0B' : 'var(--text-main)'};">${val}</div>
                                 </div>
                             `).join('')}
                         </div>
@@ -4153,8 +4153,8 @@ const App = (() => {
                         <!-- Palmarés -->
                         <p style="font-size:0.72rem; color:var(--accent-neon); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Palmarés</p>
                         <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:1rem;">
-                            ${p.palmarés.map(m => `<span style="background:rgba(255,215,0,0.1); border:1px solid rgba(255,215,0,0.3);
-                                padding:4px 10px; border-radius:12px; font-size:0.75rem; color:#ffd700;">${m}</span>`).join('')}
+                            ${p.palmarés.map(m => `<span style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3);
+                                padding:4px 10px; border-radius:12px; font-size:0.75rem; color:#F59E0B;">${m}</span>`).join('')}
                         </div>
 
                         ${p.nota ? `<p style="font-size:0.78rem; color:var(--text-muted); font-style:italic; border-top:1px solid var(--border-glass); padding-top:1rem;">${p.nota}</p>` : ''}
@@ -4182,7 +4182,7 @@ const App = (() => {
                             </span>
                             <div style="flex:1;">
                                 <div style="font-weight:${p.pos === 1 ? '800' : '600'}; font-size:0.9rem;
-                                    color:${p.pos === 1 ? '#ffd700' : 'var(--text-main)'};">${p.nombre}</div>
+                                    color:${p.pos === 1 ? '#F59E0B' : 'var(--text-main)'};">${p.nombre}</div>
                                 <div style="font-size:0.75rem; color:var(--text-muted);">${p.pais}</div>
                             </div>
                             <div style="display:flex; align-items:center; gap:8px;">
@@ -4259,7 +4259,7 @@ const App = (() => {
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
                             <span style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">${ligaActual.nombre} · ${desc}</span>
                             ${esLive
-                                ? `<span style="background:#ff4757; color:#fff; padding:3px 10px; border-radius:12px; font-size:0.7rem; font-weight:800; animation:pulse 1s infinite;">● EN VIVO ${clock}</span>`
+                                ? `<span style="background:#EF4444; color:#fff; padding:3px 10px; border-radius:12px; font-size:0.7rem; font-weight:800; animation:pulse 1s infinite;">● EN VIVO ${clock}</span>`
                                 : esPost
                                     ? `<span style="background:rgba(255,255,255,0.08); color:var(--text-muted); padding:3px 10px; border-radius:12px; font-size:0.7rem;">FINALIZADO</span>`
                                     : `<span style="color:var(--accent-neon); font-family:var(--font-heading); font-weight:700; font-size:0.85rem;">${horaAR} ARG</span>`}
@@ -4286,7 +4286,7 @@ const App = (() => {
             const container = document.getElementById('other-sports-content');
             if (container) container.innerHTML = `
                 <div class="glass-panel" style="padding:2rem; text-align:center;">
-                    <p style="color:#ff4757;">Error cargando datos.</p>
+                    <p style="color:#EF4444;">Error cargando datos.</p>
                 </div>`;
         }
     };
@@ -4425,7 +4425,7 @@ const App = (() => {
 
                     <!-- CABECERA -->
                     <div class="glass-panel" style="padding:1.5rem; text-align:center; margin-bottom:1.5rem;">
-                        ${esLive ? `<div style="background:#ff4757; display:inline-block; padding:3px 14px; border-radius:20px; font-size:0.7rem; font-weight:800; color:#fff; margin-bottom:0.8rem; animation:pulse 1s infinite;">● EN VIVO · ${clock}'</div>` :
+                        ${esLive ? `<div style="background:#EF4444; display:inline-block; padding:3px 14px; border-radius:20px; font-size:0.7rem; font-weight:800; color:#fff; margin-bottom:0.8rem; animation:pulse 1s infinite;">● EN VIVO · ${clock}'</div>` :
                           esPost ? `<div style="background:rgba(255,255,255,0.08); display:inline-block; padding:3px 14px; border-radius:20px; font-size:0.7rem; color:var(--text-muted); margin-bottom:0.8rem;">FINALIZADO</div>` :
                           `<div style="background:rgba(108,92,231,0.12); display:inline-block; padding:3px 14px; border-radius:20px; font-size:0.7rem; font-weight:700; color:var(--accent-neon); margin-bottom:0.8rem;">${shortDet || 'PRÓXIMO'}</div>`}
 
@@ -4520,7 +4520,7 @@ const App = (() => {
             appContainer.innerHTML = `
                 ${renderNavbar('#/h2h')}
                 <main class="page-container fade-in" style="text-align:center; padding-top:4rem;">
-                    <p style="color:#ff4757;">Error cargando el partido.</p>
+                    <p style="color:#EF4444;">Error cargando el partido.</p>
                     <a href="javascript:history.back()" style="color:var(--accent-neon); margin-top:1rem; display:inline-block;">← Volver</a>
                 </main>`;
         }
@@ -4604,7 +4604,7 @@ const App = (() => {
             if (!res.ok) {
                 document.getElementById('admin-container').innerHTML = `
                     <div class="glass-panel" style="padding:2rem; text-align:center;">
-                        <p style="color:#ff4757; font-size:1.1rem;">⛔ Acceso denegado</p>
+                        <p style="color:#EF4444; font-size:1.1rem;">⛔ Acceso denegado</p>
                     </div>`;
                 return;
             }
@@ -4613,7 +4613,7 @@ const App = (() => {
             const usRes  = await fetch(`${CF_WORKER}/admin/usuarios?adminKey=${encodeURIComponent(adminKey)}`);
             const usuarios = usRes.ok ? await usRes.json() : [];
 
-            const planColor = { free: 'var(--text-muted)', pro: 'var(--accent-neon)', promax: '#ffd700' };
+            const planColor = { free: 'var(--text-muted)', pro: 'var(--accent-neon)', promax: '#F59E0B' };
             const planEmoji = { free: '⚽', pro: '🔥', promax: '👑' };
 
             document.getElementById('admin-container').innerHTML = `
@@ -4623,7 +4623,7 @@ const App = (() => {
                         { label:'Total usuarios', valor: data.total, color:'var(--text-main)', emoji:'👥' },
                         { label:'Free',           valor: data.free,  color:'var(--text-muted)', emoji:'⚽' },
                         { label:'Pro',            valor: data.pro,   color:'var(--accent-neon)', emoji:'🔥' },
-                        { label:'Pro Max',        valor: data.promax,color:'#ffd700', emoji:'👑' },
+                        { label:'Pro Max',        valor: data.promax,color:'#F59E0B', emoji:'👑' },
                     ].map(s => `
                         <div class="glass-panel" style="padding:1.5rem; text-align:center;">
                             <div style="font-size:1.8rem; margin-bottom:0.3rem;">${s.emoji}</div>
@@ -4693,7 +4693,7 @@ const App = (() => {
             console.error('[Admin]', err);
             document.getElementById('admin-container').innerHTML = `
                 <div class="glass-panel" style="padding:2rem; text-align:center;">
-                    <p style="color:#ff4757;">Error cargando datos.</p>
+                    <p style="color:#EF4444;">Error cargando datos.</p>
                 </div>`;
         }
     };
@@ -4772,8 +4772,8 @@ const App = (() => {
                     </thead>
                     <tbody>
                         ${filas.map((f, i) => `
-                            <tr style="border-bottom:1px solid rgba(255,255,255,0.04); ${i === 0 ? 'background:rgba(255,215,0,0.06);' : ''}">
-                                ${f.map((c, ci) => `<td style="padding:7px 8px; color:${ci === 0 && i === 0 ? '#ffd700' : 'var(--text-main)'}; font-weight:${i === 0 ? '700' : '400'};">${c}</td>`).join('')}
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.04); ${i === 0 ? 'background:rgba(245,158,11,0.06);' : ''}">
+                                ${f.map((c, ci) => `<td style="padding:7px 8px; color:${ci === 0 && i === 0 ? '#F59E0B' : 'var(--text-main)'}; font-weight:${i === 0 ? '700' : '400'};">${c}</td>`).join('')}
                             </tr>
                         `).join('')}
                     </tbody>
@@ -4799,7 +4799,7 @@ const App = (() => {
         const equipoAnioHtml = EQUIPO_ANIO.map((e, i) => `
             <div style="margin-bottom:${i < EQUIPO_ANIO.length - 1 ? '1.2rem' : '0'}; padding-bottom:${i < EQUIPO_ANIO.length - 1 ? '1.2rem' : '0'}; border-bottom:${i < EQUIPO_ANIO.length - 1 ? '1px solid var(--border-glass)' : 'none'};">
                 <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-                    <span style="font-weight:800; color:#ffd700; font-size:0.9rem;">${e.año}</span>
+                    <span style="font-weight:800; color:#F59E0B; font-size:0.9rem;">${e.año}</span>
                     <span style="font-weight:700; color:var(--text-main);">${e.equipo} ${e.pais}</span>
                     <span style="font-size:0.75rem; color:var(--text-muted);">${e.liga}</span>
                 </div>
