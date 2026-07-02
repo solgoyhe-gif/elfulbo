@@ -181,7 +181,13 @@ const App = (() => {
         return `
             <aside id="app-sidebar" class="sidebar ${abierta ? '' : 'closed'}">
                 <div class="sidebar-header">
-                    <span class="sidebar-logo">WHISTLE</span>
+                    <div class="sidebar-logo">
+                        <div class="sidebar-logo-icon">W</div>
+                        <div class="sidebar-logo-text">
+                            <div style="font-family:var(--font-heading);font-size:.95rem;font-weight:700;color:#fff;letter-spacing:-.01em;">Whistle</div>
+                            <div style="font-family:var(--font-display);font-size:.55rem;letter-spacing:.16em;color:var(--muted);">SPORTS LIVE</div>
+                        </div>
+                    </div>
                     <button id="sidebar-toggle-btn" class="sidebar-toggle"
                         onclick="window._sidebarToggle()" title="Expandir / retraer">
                         ${abierta ? '‹' : '›'}
@@ -198,13 +204,13 @@ const App = (() => {
                 <div class="sidebar-footer">
                     <div class="sidebar-plan">
                         <span class="sidebar-plan-badge"
-                            style="background:${pm.bg}; color:${pm.color};">
+                            style="background:rgba(255,255,255,0.22); color:#fff;">
                             ${pm.emoji} ${pm.label}
                         </span>
-                        <span class="sidebar-plan-name">${nombre}</span>
+                        <span class="sidebar-plan-name">${nombre || 'Mi cuenta'}</span>
                     </div>
                     <button class="sidebar-link" onclick="window.FirebaseAuth?.logout()"
-                        style="color:#ff4757;">
+                        style="color:var(--red-live);">
                         <span class="sidebar-icon">🚪</span>
                         <span class="sidebar-label">Salir</span>
                     </button>
@@ -293,27 +299,28 @@ const App = (() => {
         // Render inicial con skeleton
         appContainer.innerHTML = `
             ${renderNavbar('#/home')}
-            <main class="page-container fade-in" style="max-width:800px; margin:0 auto;">
+            <main class="page-container fade-in" style="max-width:820px; margin:0 auto;">
 
                 <!-- Saludo -->
-                <div style="margin-bottom:1.5rem;">
-                    <h2 style="font-family:var(--font-heading); font-size:1.6rem; font-weight:900; margin-bottom:0.2rem;">
-                        Hola${nombre ? ', ' + nombre : ''} 👋
-                    </h2>
-                    <p style="color:var(--text-muted); font-size:0.85rem;">The sound of sport.</p>
+                <div style="margin-bottom:1.6rem;display:flex;align-items:center;justify-content:space-between;">
+                    <div>
+                        <h2 style="font-family:var(--font-heading);font-size:1.5rem;font-weight:700;margin-bottom:2px;letter-spacing:-.02em;">
+                            ${nombre ? 'Hola, ' + nombre : 'Bienvenido'} 👋
+                        </h2>
+                        <p style="color:var(--muted);font-size:.82rem;font-family:var(--font-body);">The sound of sport.</p>
+                    </div>
+                    <a href="#/ligas" style="font-family:var(--font-body);font-size:.78rem;font-weight:600;color:var(--blue);text-decoration:none;">Ver ligas →</a>
                 </div>
 
                 <!-- Sección fútbol -->
-                <div style="margin-bottom:0.5rem; display:flex; align-items:center; justify-content:space-between;">
-                    <h3 style="font-family:var(--font-heading); font-size:0.8rem; font-weight:800; text-transform:uppercase; letter-spacing:2px; color:var(--accent-neon);">
-                        ⚽ FÚTBOL
-                    </h3>
-                    <a href="#/h2h" style="font-size:0.75rem; color:var(--text-muted); text-decoration:none;">Ver todos →</a>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                    <span style="font-family:var(--font-display);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);">⚽ Fútbol</span>
+                    <a href="#/h2h" class="subsection-link">Ver todos →</a>
                 </div>
-                <div id="home-futbol" class="glass-panel" style="padding:1rem; margin-bottom:1.5rem;">
-                    <div style="display:flex; gap:8px; align-items:center;">
-                        <div style="width:20px; height:20px; border:2px solid var(--accent-neon); border-right-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></div>
-                        <span style="color:var(--text-muted); font-size:0.82rem;">Cargando partidos...</span>
+                <div id="home-futbol" class="glass-panel" style="padding:1rem;margin-bottom:1.5rem;gap:6px;">
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <div style="width:18px;height:18px;border:2px solid var(--blue);border-right-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></div>
+                        <span style="color:var(--muted);font-size:.82rem;">Cargando partidos...</span>
                     </div>
                 </div>
 
@@ -323,16 +330,14 @@ const App = (() => {
                         const info = DEPORTE_INFO[d];
                         if (!info) return '';
                         return `
-                            <div style="margin-bottom:0.5rem; display:flex; align-items:center; justify-content:space-between;">
-                                <h3 style="font-family:var(--font-heading); font-size:0.8rem; font-weight:800; text-transform:uppercase; letter-spacing:2px; color:var(--text-muted);">
-                                    ${info.emoji} ${info.nombre.toUpperCase()}
-                                </h3>
-                                <a href="#/other-sports?deporte=${d}" style="font-size:0.75rem; color:var(--text-muted); text-decoration:none;">Ver todos →</a>
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                                <span style="font-family:var(--font-display);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);">${info.emoji} ${info.nombre}</span>
+                                <a href="#/other-sports?deporte=${d}" class="subsection-link">Ver todos →</a>
                             </div>
-                            <div id="home-deporte-${d}" class="glass-panel" style="padding:1rem; margin-bottom:1.5rem;">
-                                <div style="display:flex; gap:8px; align-items:center;">
-                                    <div style="width:20px; height:20px; border:2px solid var(--text-muted); border-right-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></div>
-                                    <span style="color:var(--text-muted); font-size:0.82rem;">Cargando...</span>
+                            <div id="home-deporte-${d}" class="glass-panel" style="padding:1rem;margin-bottom:1.5rem;gap:6px;">
+                                <div style="display:flex;gap:8px;align-items:center;">
+                                    <div style="width:18px;height:18px;border:2px solid var(--muted);border-right-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></div>
+                                    <span style="color:var(--muted);font-size:.82rem;">Cargando...</span>
                                 </div>
                             </div>`;
                     }).join('') : ''}
@@ -340,12 +345,12 @@ const App = (() => {
 
                 <!-- Upgrade CTA si no tiene deportes elegidos -->
                 ${deportes.length === 0 && !esProMax ? `
-                <div class="glass-panel" style="padding:1.5rem; text-align:center; border-color:rgba(61,111,255,0.2);">
-                    <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1rem;">
-                        ¿Querés seguir más deportes en tu home?
-                    </p>
-                    <a href="#/planes" style="padding:8px 20px; background:var(--accent-neon); color:#000; font-weight:800; font-family:var(--font-heading); border-radius:8px; text-decoration:none; font-size:0.85rem;">
-                        VER PLANES
+                <div style="background:linear-gradient(135deg,rgba(61,111,255,.1),rgba(139,92,246,.08));border:1px solid rgba(61,111,255,.2);border-radius:var(--r-lg);padding:1.5rem;text-align:center;">
+                    <div style="font-size:1.8rem;margin-bottom:.7rem;">🏆</div>
+                    <p style="font-family:var(--font-heading);font-size:.95rem;font-weight:700;color:var(--text-main);margin-bottom:.4rem;">Seguí más deportes</p>
+                    <p style="font-size:.82rem;color:var(--muted);margin-bottom:1.1rem;">Con Platea o Palco podés personalizar tu home.</p>
+                    <a href="#/planes" style="display:inline-flex;align-items:center;gap:8px;padding:10px 22px;background:linear-gradient(135deg,#3D6FFF,#8B5CF6);color:#fff;font-weight:700;font-family:var(--font-body);border-radius:var(--r-md);text-decoration:none;font-size:.84rem;box-shadow:0 8px 20px rgba(61,111,255,.3);">
+                        Ver planes →
                     </a>
                 </div>` : ''}
 
@@ -381,15 +386,32 @@ const App = (() => {
             const marcador = (esPost||esLive) ? homeScore + ' - ' + awayScore : horaAR;
             const sz = (esPost||esLive) ? '1.3rem' : '0.9rem';
             const col = (esPost||esLive) ? 'var(--text-main)' : 'var(--accent-neon)';
-            const liveBadge = esLive ? `<span style="background:#ff4757; color:#fff; padding:2px 8px; border-radius:10px; font-size:0.65rem; font-weight:800; display:inline-block; margin-bottom:6px; animation:pulse 1s infinite;">● EN VIVO ${clock}'</span>` : '';
+            const liveBadge = esLive
+                ? `<div class="badge-live" style="display:inline-flex;margin-bottom:8px;">
+                    <span class="badge-live-dot"></span>
+                    EN VIVO ${clock}'
+                   </div>`
+                : '';
 
-            return `<div onclick="${ir}" style="cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
-                ${liveBadge}
-                <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:0.5rem;">
-                    <div style="display:flex; align-items:center; gap:6px;">${logoHtml(homeLogo,homeName)}<span style="font-size:0.88rem; font-weight:600;">${homeName}</span></div>
-                    <div style="font-family:var(--font-heading); font-weight:900; font-size:${sz}; color:${col}; text-align:center; min-width:50px;">${marcador}</div>
-                    <div style="display:flex; align-items:center; gap:6px; justify-content:flex-end;"><span style="font-size:0.88rem; font-weight:600;">${awayName}</span>${logoHtml(awayLogo,awayName)}</div>
+            return `<div onclick="${ir}" class="match-row${esLive ? ' live' : ''}" style="margin-bottom:6px;">
+                <div>
+                    ${liveBadge}
+                    ${!esLive ? `<div class="match-state-main" style="color:${esPost ? 'var(--muted)' : 'var(--blue)'}">${esPost ? 'FT' : horaAR}</div>` : ''}
                 </div>
+                <div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;min-width:0;">
+                    <span class="match-team-name">${homeName}</span>
+                    <div style="width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        ${homeLogo ? `<img src="${homeLogo}" width="20" height="20" style="object-fit:contain;border-radius:50%;" onerror="this.style.display='none'">` : `<span style="font-size:.7rem;font-weight:800;">${homeName.charAt(0)}</span>`}
+                    </div>
+                </div>
+                <div class="match-score-cell${(esPost||esLive)?'':' no-score'}">${marcador}</div>
+                <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+                    <div style="width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        ${awayLogo ? `<img src="${awayLogo}" width="20" height="20" style="object-fit:contain;border-radius:50%;" onerror="this.style.display='none'">` : `<span style="font-size:.7rem;font-weight:800;">${awayName.charAt(0)}</span>`}
+                    </div>
+                    <span class="match-team-name">${awayName}</span>
+                </div>
+                <span class="match-star">★</span>
             </div>`;
         };
 
@@ -462,15 +484,13 @@ const App = (() => {
             <main class="page-container fade-in">
                 <h2 class="section-title">🏆 Competiciones Disponibles</h2>
                 ${!esPro ? `
-                <div style="background:rgba(61,111,255,0.06); border:1px solid rgba(61,111,255,0.2); border-radius:10px;
-                    padding:12px 16px; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; gap:1rem;">
+                <div style="background:rgba(61,111,255,.06);border:1px solid rgba(61,111,255,.2);border-radius:var(--r-md);padding:12px 16px;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;">
                     <div>
-                        <span style="font-size:0.82rem; color:var(--text-main); font-weight:600;">Plan Popular — 1 liga nacional + todas las copas</span>
-                        <span style="display:block; font-size:0.75rem; color:var(--text-muted);">Pasate a Platea para ver todas las ligas.</span>
+                        <span style="font-family:var(--font-body);font-size:.82rem;color:var(--text-main);font-weight:600;">Plan Popular — 1 liga nacional + todas las copas</span>
+                        <span style="display:block;font-size:.73rem;color:var(--muted);margin-top:2px;">Pasate a Platea para ver todas las ligas.</span>
                     </div>
-                    <a href="#/planes" style="padding:6px 14px; background:var(--accent-neon); color:#000; font-weight:800;
-                        font-family:var(--font-heading); border-radius:6px; text-decoration:none; font-size:0.78rem; white-space:nowrap;">
-                        VER PRO
+                    <a href="#/planes" style="padding:7px 16px;background:linear-gradient(135deg,#3D6FFF,#8B5CF6);color:#fff;font-weight:700;font-family:var(--font-body);border-radius:var(--r-sm);text-decoration:none;font-size:.78rem;white-space:nowrap;">
+                        Ver planes
                     </a>
                 </div>` : ''}
         `;
@@ -497,7 +517,7 @@ const App = (() => {
                 html += `
                     <div class="glass-card league-card"
                         onclick="${bloqueada ? `window.location.hash='#/planes'` : `window.location.hash='#/liga?id=${liga.id}'`}"
-                        style="${bloqueada ? 'opacity:0.6;' : ''}">
+                        style="${bloqueada ? 'opacity:0.55;' : ''}">
                         <div class="league-info">
                             <span class="league-flag">${liga.flag}</span>
                             <div>
@@ -505,7 +525,7 @@ const App = (() => {
                                 <div class="league-country">${liga.pais}</div>
                             </div>
                         </div>
-                        <span class="badge-liga" style="background-color: ${bloqueada ? '#444' : liga.badge_color};">${bloqueada ? 'PRO' : liga.id.substring(0, 5)}</span>
+                        <span class="badge-liga" style="background:${bloqueada ? 'rgba(255,255,255,.08)' : liga.badge_color + '22'};color:${bloqueada ? 'var(--muted)' : liga.badge_color};border:1px solid ${bloqueada ? 'rgba(255,255,255,.06)' : liga.badge_color + '55'};font-family:var(--font-display);font-size:.65rem;font-weight:700;">${bloqueada ? 'PRO' : liga.id.substring(0, 5).toUpperCase()}</span>
                     </div>
                 `;
             });
@@ -544,11 +564,11 @@ const App = (() => {
                 </div>
                 <div class="liga-content-grid">
                     <div class="glass-panel" id="standings-box" style="padding: 1.5rem;">
-                        <h3 class="panel-title" style="color: ${ligaData.badge_color};">Tabla de Posiciones</h3>
+                        <h3 class="panel-title">Tabla de Posiciones</h3>
                         <div class="table-responsive">${_skeletonTabla()}</div>
                     </div>
                     <div class="glass-panel" id="matches-box" style="padding: 1.5rem; height: fit-content;">
-                        <h3 class="panel-title" style="color: ${ligaData.badge_color};">Partidos Recientes</h3>
+                        <h3 class="panel-title">Partidos Recientes</h3>
                         ${_skeletonPartidos()}
                     </div>
                 </div>
@@ -606,7 +626,7 @@ const App = (() => {
                     const awayLogoHtml = partido.awayTeam?.logo ? `<img src="${partido.awayTeam.logo}" width="18" height="18" style="object-fit:contain; margin-right:6px; vertical-align:middle;">` : '';
 
                     return `
-                        <div class="match-item" style="padding: 12px 0; border-bottom: 1px solid var(--border-glass);">
+                        <div class="match-item">
                             <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; font-weight: 500;">
                                 <div style="display: flex; flex-direction: column; gap: 4px;">
                                     <span>${homeLogoHtml}${partido.homeTeam?.name ?? '—'}</span>
@@ -2427,7 +2447,7 @@ const App = (() => {
                     </p>
                     <div style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; margin-bottom:4rem;">
                         <button onclick="abrirAuth('registro')"
-                            style="padding:14px 32px; background:var(--accent-neon); color:#000; font-weight:900;
+                            style="padding:14px 32px; background:linear-gradient(135deg,#3D6FFF,#8B5CF6); color:#fff; font-weight:900;
                             font-family:var(--font-heading); border:none; border-radius:8px; cursor:pointer;
                             font-size:1rem; letter-spacing:1px; transition:opacity 0.2s;"
                             onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
@@ -2519,7 +2539,7 @@ const App = (() => {
                         <div class="glass-panel" style="padding:1.8rem; text-align:left;
                             border-color:var(--accent-neon); background:rgba(61,111,255,0.04); position:relative;">
                             <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%);
-                                background:var(--accent-neon); color:#000; font-size:0.65rem; font-weight:800;
+                                background:linear-gradient(135deg,#3D6FFF,#8B5CF6); color:#fff; font-size:0.65rem; font-weight:800;
                                 padding:3px 14px; border-radius:20px; font-family:var(--font-heading); letter-spacing:1px; white-space:nowrap;">
                                 MÁS POPULAR
                             </div>
@@ -2894,7 +2914,7 @@ const App = (() => {
             if (!p) return '';
             return `
                 <div class="glass-panel" style="padding:1.5rem; position:relative; ${actual ? 'border-color:' + meta.color + ';' : ''}">
-                    ${actual ? '<div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:var(--accent-neon); color:#000; font-size:0.65rem; font-weight:800; padding:3px 14px; border-radius:20px; font-family:var(--font-heading); letter-spacing:1px; white-space:nowrap;">PLAN ACTUAL</div>' : ''}
+                    ${actual ? '<div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg,#3D6FFF,#8B5CF6); color:#fff; font-size:0.65rem; font-weight:800; padding:3px 14px; border-radius:20px; font-family:var(--font-heading); letter-spacing:1px; white-space:nowrap;">PLAN ACTUAL</div>' : ''}
                     <div style="font-size:1.5rem; margin-bottom:0.4rem;">${p.emoji ?? ''}</div>
                     <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:900; color:${meta.color}; margin-bottom:0.2rem;">${p.nombre ?? planKey}</div>
                     <div style="font-family:var(--font-heading); font-size:1.6rem; font-weight:900; color:${meta.color}; margin-bottom:0.8rem;">
@@ -3051,7 +3071,7 @@ const App = (() => {
                                 ← ATRÁS
                             </button>` : ''}
                         <button onclick="window._setupSiguiente()"
-                            style="flex:2; padding:12px; background:var(--accent-neon); color:#000;
+                            style="flex:2; padding:12px; background:linear-gradient(135deg,#3D6FFF,#8B5CF6); color:#fff;
                             border:none; border-radius:8px; cursor:pointer;
                             font-family:var(--font-heading); font-weight:900; font-size:0.95rem; letter-spacing:1px;">
                             ${_paso === 4 ? '¡LISTO! →' : 'SIGUIENTE →'}
