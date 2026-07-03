@@ -958,11 +958,11 @@ const App = (() => {
             const final_  = _getPartidos('final');
 
             // ── SVG dimensions ────────────────────────────────────────────────
-            const W      = 1200;
-            const H      = 900;
-            const BW     = 130; // box width
-            const BH     = 38;  // box height
-            const GAP    = 4;   // gap between home/away
+            const W      = 1100;
+            const H      = 820;
+            const BW     = 110; // box width
+            const BH     = 34;  // box height
+            const GAP    = 3;   // gap between home/away
             const MATCHH = BH * 2 + GAP; // total match height
 
             // ── Helper: info de partido ────────────────────────────────────────
@@ -991,8 +991,8 @@ const App = (() => {
 
                 return {
                     id:   ev.id,
-                    home: home?.team?.abbreviation ?? home?.team?.shortDisplayName ?? '?',
-                    away: away?.team?.abbreviation ?? away?.team?.shortDisplayName ?? '?',
+                    home: home?.team?.abbreviation ?? home?.team?.shortDisplayName ?? (home?.team?.displayName ? home.team.displayName.substring(0,8) : '·'),
+                    away: away?.team?.abbreviation ?? away?.team?.shortDisplayName ?? (away?.team?.displayName ? away.team.displayName.substring(0,8) : '·'),
                     hs, as_, nota,
                     hl:   home?.team?.logo ?? '',
                     al:   away?.team?.logo ?? '',
@@ -1012,9 +1012,10 @@ const App = (() => {
 
                 const _row = (name, score, logo, win, isHome) => {
                     const ry = isHome ? y : y + BH + GAP;
-                    const fill    = win ? '#3D6FFF' : '#ffffff';
-                    const bgFill  = win ? 'rgba(61,111,255,0.15)' : 'rgba(30,30,50,0.95)';
-                    const weight  = win ? '700' : '400';
+                    const isPending = (name === '?' || name === '·' || name === '');
+                    const fill    = win ? '#3D6FFF' : isPending ? 'rgba(255,255,255,0.25)' : '#ffffff';
+                    const bgFill  = win ? 'rgba(61,111,255,0.15)' : isPending ? 'rgba(255,255,255,0.03)' : 'rgba(30,30,50,0.95)';
+                    const weight  = win ? '700' : isPending ? '400' : '500';
                     return `
                         <rect x="${x}" y="${ry}" width="${BW}" height="${BH}" rx="4"
                             fill="${bgFill}" stroke="${win ? '#3D6FFF' : 'rgba(255,255,255,0.15)'}" stroke-width="${win?1.5:1}"/>
@@ -1169,9 +1170,9 @@ const App = (() => {
                 </text>`;
 
             container.innerHTML = `
-                <div style="overflow-x:auto; overflow-y:auto; padding:0.5rem;">
+                <div style="overflow-x:auto; overflow-y:hidden; padding:0.5rem; -webkit-overflow-scrolling:touch;">
                     <svg viewBox="0 0 ${W} ${H+60}" xmlns="http://www.w3.org/2000/svg"
-                        style="width:100%; min-width:900px; display:block; background:rgba(0,0,0,0.2); border-radius:12px;">
+                        style="width:${W}px; max-width:100%; min-width:700px; display:block; background:rgba(0,0,0,0.2); border-radius:12px;">
                         <defs>
                             <style>
                                 .bracket-match { cursor: pointer; }
