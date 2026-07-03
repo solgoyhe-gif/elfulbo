@@ -4389,7 +4389,18 @@ const App = (() => {
             // Detectar alargue y penales
             const esPenales = /pen/i.test(shortDet) || /shoot/i.test(shortDet);
             const esAlargue = /aet/i.test(shortDet) || /extra/i.test(shortDet) || (esPost && periodo > 2);
-            const notaPartido = esPost ? (esPenales ? '⚽ Definido por penales' : esAlargue ? '⏱ Definido en alargue' : '') : '';
+
+            // Score de penales desde linescores (ESPN: el último período extra es penales)
+            const homeLinescores = home.linescores ?? [];
+            const awayLinescores = away.linescores ?? [];
+            let homePen = '', awayPen = '';
+            if (esPenales && homeLinescores.length > 0) {
+                // El último linescore es el de penales
+                homePen = homeLinescores[homeLinescores.length - 1]?.displayValue ?? '';
+                awayPen = awayLinescores[awayLinescores.length - 1]?.displayValue ?? '';
+            }
+            const penScore = (homePen && awayPen) ? '(' + homePen + '-' + awayPen + ' pen)' : '';
+            const notaPartido = esPost ? (esPenales ? '⚽ Definido por penales ' + penScore : esAlargue ? '⏱ Definido en alargue' : '') : '';
 
             // Stats del partido desde boxscore
             const boxTeamHome = (summary.boxscore?.teams ?? []).find(t => t.team?.id === home.team?.id);
