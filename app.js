@@ -989,7 +989,7 @@ const App = (() => {
 
             const r32 = _byFase('octavos');   // 16 partidos
             const cuartos = _byFase('cuartos'); // 8 partidos (M89-M96)
-            const r4 = _byFase('semis');        // 4 partidos (M97-M100)
+            const semis = _byFase('semis');        // 4 partidos (M97-M100)
             const tercero = _byFase('tercero'); // 1 partido  (M103)
             const final_  = _byFase('final');   // 1 partido  (M104)
 
