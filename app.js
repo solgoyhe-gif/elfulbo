@@ -383,7 +383,11 @@ const App = (() => {
             };
 
             const ir = `window.location.hash='#/partido?id=${ev.id}&liga=${ligaId}'`;
-            const marcador = (esPost||esLive) ? homeScore + ' - ' + awayScore : horaAR;
+            const statusDet = comp?.status?.type?.shortDetail ?? '';
+            const esPenHome = /pen/i.test(statusDet) || /shoot/i.test(statusDet);
+            const esAETHome = /aet/i.test(statusDet) || /extra/i.test(statusDet) || ((comp?.status?.period ?? 0) > 2 && estado === 'post');
+            const sufijo    = esPost ? (esPenHome ? ' (PEN)' : esAETHome ? ' (AET)' : '') : '';
+            const marcador  = (esPost||esLive) ? homeScore + ' - ' + awayScore + sufijo : horaAR;
             const sz = (esPost||esLive) ? '1.3rem' : '0.9rem';
             const col = (esPost||esLive) ? 'var(--text-main)' : 'var(--accent-neon)';
             const liveBadge = esLive
@@ -942,7 +946,9 @@ const App = (() => {
                 const fechas  = FASES_FECHAS[fase];
                 const eventos = fechas.flatMap(f => eventosPorFecha[f] ?? []);
                 const vistos  = new Set();
-                return eventos.filter(ev => { if (vistos.has(ev.id)) return false; vistos.add(ev.id); return true; });
+                const unicos  = eventos.filter(ev => { if (vistos.has(ev.id)) return false; vistos.add(ev.id); return true; });
+                // Ordenar por fecha para que los slots sean estables
+                return unicos.sort((a,b) => new Date(a.date) - new Date(b.date));
             };
 
             const octavos = _getPartidos('octavos');
@@ -961,23 +967,39 @@ const App = (() => {
 
             // ── Helper: info de partido ────────────────────────────────────────
             const _info = (ev) => {
-                if (!ev) return { home: '?', away: '?', hs: '', as_: '', live: false, post: false, id: '' };
-                const comp  = ev.competitions?.[0];
-                const home  = comp?.competitors?.find(c => c.homeAway === 'home');
-                const away  = comp?.competitors?.find(c => c.homeAway === 'away');
-                const state = comp?.status?.type?.state ?? 'pre';
+                if (!ev) return { home: '?', away: '?', hs: '', as_: '', live: false, post: false, id: '', nota: '' };
+                const comp   = ev.competitions?.[0];
+                const home   = comp?.competitors?.find(c => c.homeAway === 'home');
+                const away   = comp?.competitors?.find(c => c.homeAway === 'away');
+                const state  = comp?.status?.type?.state ?? 'pre';
+                const detail = comp?.status?.type?.shortDetail ?? '';
+                const period = comp?.status?.period ?? 0;
+
+                // Detectar penales y alargue desde shortDetail o period
+                const esPen   = /pen/i.test(detail) || /shoot/i.test(detail);
+                const esAET   = /aet/i.test(detail) || /extra/i.test(detail) || period > 2;
+                let nota = '';
+                if (state === 'post') {
+                    if (esPen)      nota = 'PEN';
+                    else if (esAET) nota = 'AET';
+                }
+
+                const hs = home?.score ?? '';
+                const as_ = away?.score ?? '';
+                const hsN = parseInt(hs || '0');
+                const asN = parseInt(as_ || '0');
+
                 return {
                     id:   ev.id,
                     home: home?.team?.abbreviation ?? home?.team?.shortDisplayName ?? '?',
                     away: away?.team?.abbreviation ?? away?.team?.shortDisplayName ?? '?',
-                    hs:   home?.score ?? '',
-                    as_:  away?.score ?? '',
+                    hs, as_, nota,
                     hl:   home?.team?.logo ?? '',
                     al:   away?.team?.logo ?? '',
                     live: state === 'in',
                     post: state === 'post',
-                    hw:   state === 'post' && parseInt(home?.score??'0') > parseInt(away?.score??'0'),
-                    aw:   state === 'post' && parseInt(away?.score??'0') > parseInt(home?.score??'0'),
+                    hw:   state === 'post' && hsN > asN,
+                    aw:   state === 'post' && asN > hsN,
                 };
             };
 
@@ -1015,12 +1037,21 @@ const App = (() => {
                     <text x="${x + BW/2}" y="${y - (d.live?16:4)}" text-anchor="middle"
                         font-family="system-ui" font-size="8" fill="rgba(255,255,255,0.4)">${label}</text>` : '';
 
+                // Badge PEN / AET
+                const notaBadge = d.nota ? `
+                    <rect x="${x + BW - 26}" y="${y + MATCHH - 2}" width="24" height="10" rx="3"
+                        fill="${d.nota==='PEN' ? 'rgba(245,195,59,0.25)' : 'rgba(61,111,255,0.2)'}"/>
+                    <text x="${x + BW - 14}" y="${y + MATCHH + 4}" text-anchor="middle" dominant-baseline="middle"
+                        font-family="system-ui" font-size="6.5" font-weight="800"
+                        fill="${d.nota==='PEN' ? '#F5C33B' : '#3D6FFF'}">${d.nota}</text>` : '';
+
                 return `
                     <g ${onclick} style="${cursor}" class="bracket-match">
                         ${labelEl}
                         ${liveBadge}
                         ${_row(d.home, d.hs, d.hl, d.hw, true)}
                         ${_row(d.away, d.as_, d.al, d.aw, false)}
+                        ${notaBadge}
                     </g>`;
             };
 
@@ -4355,6 +4386,11 @@ const App = (() => {
             const homeWin   = esPost && parseInt(homeScore) > parseInt(awayScore);
             const awayWin   = esPost && parseInt(awayScore) > parseInt(homeScore);
 
+            // Detectar alargue y penales
+            const esPenales = /pen/i.test(shortDet) || /shoot/i.test(shortDet);
+            const esAlargue = /aet/i.test(shortDet) || /extra/i.test(shortDet) || (esPost && periodo > 2);
+            const notaPartido = esPost ? (esPenales ? '⚽ Definido por penales' : esAlargue ? '⏱ Definido en alargue' : '') : '';
+
             // Stats del partido desde boxscore
             const boxTeamHome = (summary.boxscore?.teams ?? []).find(t => t.team?.id === home.team?.id);
             const boxTeamAway = (summary.boxscore?.teams ?? []).find(t => t.team?.id === away.team?.id);
@@ -4454,8 +4490,11 @@ const App = (() => {
                                 ${homeLogo ? `<img src="${homeLogo}" width="56" height="56" style="object-fit:contain; margin-bottom:8px; display:block; margin-left:auto; margin-right:auto;" onerror="this.style.display='none'">` : ''}
                                 <div style="font-family:var(--font-heading); font-weight:800; font-size:1rem; ${homeWin ? 'color:var(--accent-neon);' : ''}">${homeName}</div>
                             </div>
-                            <div style="font-family:var(--font-heading); font-size:${(esPost||esLive)?'3rem':'1.5rem'}; font-weight:900; color:var(--text-main); min-width:100px; text-align:center;">
-                                ${(esPost||esLive) ? `${homeScore} - ${awayScore}` : 'vs'}
+                            <div style="text-align:center; min-width:100px;">
+                                <div style="font-family:var(--font-display); font-size:${(esPost||esLive)?'3rem':'1.5rem'}; font-weight:700; color:var(--text-main);">
+                                    ${(esPost||esLive) ? `${homeScore} - ${awayScore}` : 'vs'}
+                                </div>
+                                ${notaPartido ? `<div style="margin-top:6px; display:inline-block; padding:3px 10px; border-radius:6px; font-family:var(--font-display); font-size:0.68rem; font-weight:700; background:${esPenales ? 'rgba(245,195,59,0.15)' : 'rgba(61,111,255,0.15)'}; color:${esPenales ? '#F5C33B' : '#3D6FFF'}; letter-spacing:.5px;">${notaPartido}</div>` : ''}
                             </div>
                             <div>
                                 ${awayLogo ? `<img src="${awayLogo}" width="56" height="56" style="object-fit:contain; margin-bottom:8px; display:block; margin-left:auto; margin-right:auto;" onerror="this.style.display='none'">` : ''}
