@@ -942,20 +942,62 @@ const App = (() => {
             const eventosPorFecha = {};
             todasFechas.forEach((f, i) => { eventosPorFecha[f] = scoreboards[i]?.events ?? []; });
 
-            const _getPartidos = (fase) => {
-                const fechas  = FASES_FECHAS[fase];
-                const eventos = fechas.flatMap(f => eventosPorFecha[f] ?? []);
-                const vistos  = new Set();
-                const unicos  = eventos.filter(ev => { if (vistos.has(ev.id)) return false; vistos.add(ev.id); return true; });
-                // Ordenar por fecha para que los slots sean estables
-                return unicos.sort((a,b) => new Date(a.date) - new Date(b.date));
+            // Mapeo oficial FIFA: número de partido → slot en el bracket
+            // Partidos 73-88: Round of 32 (16avos/octavos en terminología del torneo)
+            // El orden en el SVG sigue el bracket oficial de izquierda a derecha
+            // Izq (slots 0-7): M73,M76,M74,M75,M78,M77,M79,M80
+            // Der (slots 8-15): M82,M81,M84,M88,M86,M87,M83,M85 (espejado)
+            // Cuartos (M89-M96): M90,M89,M91,M92,M94,M93,M95,M96
+            // Semis (M97-M100): M97,M99,M98,M100
+            // Tercero: M103, Final: M104
+
+            // Construir mapa de todos los eventos por número de partido (ESPN usa "name" o "shortName" con el número)
+            const todosEventos = Object.values(eventosPorFecha).flat();
+            const vistos = new Set();
+            const unicos = todosEventos.filter(ev => { if(vistos.has(ev.id)) return false; vistos.add(ev.id); return true; });
+
+            // ESPN incluye el número de partido en ev.name o ev.shortName (ej: "Match 73" o en uid)
+            // También podemos usar ev.uid que tiene formato "s:600~l:XXXX~e:MATCHID"
+            // Mejor estrategia: ordenar por fecha (ESPN respeta el orden oficial)
+            // y asignar slots según el orden oficial de FIFA
+            const _byFase = (fase) => {
+                const fechas = FASES_FECHAS[fase];
+                const evs = fechas.flatMap(f => eventosPorFecha[f] ?? []);
+                const seen = new Set();
+                return evs.filter(ev => { if(seen.has(ev.id)) return false; seen.add(ev.id); return true; })
+                           .sort((a,b) => new Date(a.date) - new Date(b.date));
             };
 
-            const octavos = _getPartidos('octavos');
-            const cuartos = _getPartidos('cuartos');
-            const semis   = _getPartidos('semis');
-            const tercero = _getPartidos('tercero');
-            const final_  = _getPartidos('final');
+            // Orden oficial del bracket izquierdo (slots 0-7):
+            // M73: 2ºA vs 2ºB — 28jun
+            // M76: 1ºC vs 2ºF — 28jun  
+            // M74: 1ºE vs 3º — 29jun
+            // M75: 1ºF vs 2ºC — 29jun
+            // M78: 2ºE vs 2ºI — 30jun
+            // M77: 1ºI vs 3º — 30jun
+            // M79: 1ºA vs 3º — 1jul
+            // M80: 1ºL vs 3º — 1jul
+            // Bracket derecho (slots 8-15, espejado):
+            // M82: 1ºG vs 3º — 2jul
+            // M81: 1ºD vs 3º — 2jul
+            // M84: 1ºH vs 2ºJ — 3jul
+            // M88: 2ºD vs 2ºG — 3jul
+            // M86: 1ºJ vs 2ºH — 2jul
+            // M87: 1ºK vs 3º — 3jul
+            // M83: 2ºK vs 2ºL — 2jul
+            // M85: 1ºB vs 3º — 3jul
+
+            const r32 = _byFase('octavos');   // 16 partidos
+            const cuartos = _byFase('cuartos'); // 8 partidos (M89-M96)
+            const r4 = _byFase('semis');        // 4 partidos (M97-M100)
+            const tercero = _byFase('tercero'); // 1 partido  (M103)
+            const final_  = _byFase('final');   // 1 partido  (M104)
+
+            // Slots del bracket (orden oficial FIFA por fecha de juego)
+            // Izquierda arriba→abajo: M73(28jun), M76(28jun), M74(29jun), M75(29jun), M78(30jun), M77(30jun), M79(1jul), M80(1jul)
+            // Derecha arriba→abajo:  M82(2jul), M81(2jul), M84(3jul), M88(3jul), M86(2jul), M87(3jul), M83(2jul), M85(3jul)
+            // Como r32 está ordenado por fecha, los slots 0-7 son izquierda y 8-15 derecha
+            const octavos = r32; // ordenado por fecha = orden oficial
 
             // ── SVG dimensions ────────────────────────────────────────────────
             const W      = 1100;
@@ -1100,7 +1142,7 @@ const App = (() => {
             let linesSVG   = '';
 
             // ── Octavos izquierda (slots 0-7) ─────────────────────────────────
-            const oct_l = octavos.slice(0, 8);
+            const oct_l = r32.slice(0, 8);
             for (let i = 0; i < 8; i++) {
                 matchesSVG += _match(COL_L1, ysL1[i], oct_l[i] ?? null, `P${i+1}`);
                 // línea al cuarto
@@ -1133,7 +1175,7 @@ const App = (() => {
             matchesSVG += _match(COL_MID, yTercero, tercero[0] ?? null, '3er PUESTO');
 
             // ── Octavos derecha (slots 8-15) ───────────────────────────────────
-            const oct_r = octavos.slice(8, 16);
+            const oct_r = r32.slice(8, 16);
             const ysR1  = [...ysL1];
             for (let i = 0; i < 8; i++) {
                 matchesSVG += _match(COL_R1, ysR1[i], oct_r[i] ?? null, `P${i+9}`);
