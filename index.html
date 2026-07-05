@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WHISTLE — The sound of sport.</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#39ff14">
+    <meta name="theme-color" content="#0A0D1A">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -483,7 +483,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/elfulbo/sw.js', { scope: '/elfulbo/' })
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
                     .catch(err => console.warn('[SW]', err));
             });
         }
