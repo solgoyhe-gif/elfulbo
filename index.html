@@ -292,10 +292,12 @@
             <div id="form-login">
                 <div class="auth-title">Bienvenido</div>
                 <div class="auth-subtitle">Ingresá a tu cuenta de WHISTLE</div>
-                <input id="login-email"    type="email"    class="auth-input" placeholder="Email">
-                <input id="login-password" type="password" class="auth-input" placeholder="Contraseña">
-                <div id="login-error" class="auth-error"></div>
-                <button class="btn-primary" style="width:100%;" onclick="submitLogin()">INGRESAR</button>
+                <form onsubmit="event.preventDefault(); submitLogin();">
+                    <input id="login-email"    type="email"    class="auth-input" placeholder="Email" autocomplete="username">
+                    <input id="login-password" type="password" class="auth-input" placeholder="Contraseña" autocomplete="current-password">
+                    <div id="login-error" class="auth-error"></div>
+                    <button type="submit" class="btn-primary" style="width:100%;">INGRESAR</button>
+                </form>
                 <div class="auth-switch">
                     ¿No tenés cuenta? <a onclick="mostrarRegistro()">Registrate gratis</a>
                     &nbsp;·&nbsp;
@@ -307,11 +309,13 @@
             <div id="form-registro" style="display:none;">
                 <div class="auth-title">Crear cuenta</div>
                 <div class="auth-subtitle" id="reg-subtitulo">Es gratis, siempre</div>
-                <input id="reg-nombre"   type="text"     class="auth-input" placeholder="Tu nombre">
-                <input id="reg-email"    type="email"    class="auth-input" placeholder="Email">
-                <input id="reg-password" type="password" class="auth-input" placeholder="Contraseña (mín. 6 caracteres)">
-                <div id="reg-error" class="auth-error"></div>
-                <button class="btn-primary" style="width:100%;" onclick="submitRegistro()">CREAR CUENTA</button>
+                <form onsubmit="event.preventDefault(); submitRegistro();">
+                    <input id="reg-nombre"   type="text"     class="auth-input" placeholder="Tu nombre" autocomplete="name">
+                    <input id="reg-email"    type="email"    class="auth-input" placeholder="Email" autocomplete="username">
+                    <input id="reg-password" type="password" class="auth-input" placeholder="Contraseña (mín. 6 caracteres)" autocomplete="new-password">
+                    <div id="reg-error" class="auth-error"></div>
+                    <button type="submit" class="btn-primary" style="width:100%;">CREAR CUENTA</button>
+                </form>
                 <div class="auth-switch">¿Ya tenés cuenta? <a onclick="mostrarLogin()">Ingresá</a></div>
             </div>
 
