@@ -922,12 +922,14 @@ const App = (() => {
                 <p style="color:var(--accent-neon); margin-top:1rem; font-size:0.85rem;">Cargando bracket...</p>
             </div>`;
 
+        // 5 rondas reales del Mundial 2026 (48 equipos → 32 clasifican a eliminación directa)
         const FASES_FECHAS = {
-            octavos:   ['20260628','20260629','20260630','20260701','20260702','20260703','20260704'],
-            cuartos:   ['20260707','20260708','20260709','20260710'],
-            semis:     ['20260714','20260715'],
-            tercero:   ['20260718'],
-            final:     ['20260719'],
+            r32:       ['20260628','20260629','20260630','20260701','20260702','20260703'], // Dieciseisavos (Round of 32) — 16 partidos (M73-M88)
+            r16:       ['20260704','20260705','20260706','20260707'],                        // Octavos (Round of 16) — 8 partidos (M89-M96)
+            cuartos:   ['20260709','20260710','20260711'],                                    // Cuartos de Final — 4 partidos (M97-M100)
+            semis:     ['20260714','20260715'],                                               // Semifinales — 2 partidos (M101-M102)
+            tercero:   ['20260718'],                                                          // Tercer puesto (M103)
+            final:     ['20260719'],                                                          // Final (M104)
         };
 
         try {
@@ -943,12 +945,11 @@ const App = (() => {
             todasFechas.forEach((f, i) => { eventosPorFecha[f] = scoreboards[i]?.events ?? []; });
 
             // Mapeo oficial FIFA: número de partido → slot en el bracket
-            // Partidos 73-88: Round of 32 (16avos/octavos en terminología del torneo)
             // El orden en el SVG sigue el bracket oficial de izquierda a derecha
-            // Izq (slots 0-7): M73,M76,M74,M75,M78,M77,M79,M80
-            // Der (slots 8-15): M82,M81,M84,M88,M86,M87,M83,M85 (espejado)
-            // Cuartos (M89-M96): M90,M89,M91,M92,M94,M93,M95,M96
-            // Semis (M97-M100): M97,M99,M98,M100
+            // Dieciseisavos/R32 (M73-M88): 16 partidos, 8 por lado
+            // Octavos/R16 (M89-M96): 8 partidos, 4 por lado
+            // Cuartos (M97-M100): 4 partidos, 2 por lado
+            // Semifinal (M101-M102): 2 partidos, 1 por lado
             // Tercero: M103, Final: M104
 
             // Construir mapa de todos los eventos por número de partido (ESPN usa "name" o "shortName" con el número)
@@ -987,22 +988,22 @@ const App = (() => {
             // M83: 2ºK vs 2ºL — 2jul
             // M85: 1ºB vs 3º — 3jul
 
-            const r32 = _byFase('octavos');   // 16 partidos
-            const cuartos = _byFase('cuartos'); // 8 partidos (M89-M96)
-            const semis = _byFase('semis');        // 4 partidos (M97-M100)
-            const tercero = _byFase('tercero'); // 1 partido  (M103)
-            const final_  = _byFase('final');   // 1 partido  (M104)
+            const r32     = _byFase('r32');     // 16 partidos (M73-M88) — Dieciseisavos
+            const octavos = _byFase('r16');     // 8 partidos  (M89-M96) — Octavos (antes mezclados con cuartos)
+            const cuartos = _byFase('cuartos'); // 4 partidos  (M97-M100) — Cuartos
+            const semis   = _byFase('semis');   // 2 partidos  (M101-M102) — Semifinal real
+            const tercero = _byFase('tercero'); // 1 partido   (M103)
+            const final_  = _byFase('final');   // 1 partido   (M104)
 
-            // Slots del bracket (orden oficial FIFA por fecha de juego)
-            // Izquierda arriba→abajo: M73(28jun), M76(28jun), M74(29jun), M75(29jun), M78(30jun), M77(30jun), M79(1jul), M80(1jul)
-            // Derecha arriba→abajo:  M82(2jul), M81(2jul), M84(3jul), M88(3jul), M86(2jul), M87(3jul), M83(2jul), M85(3jul)
-            // Como r32 está ordenado por fecha, los slots 0-7 son izquierda y 8-15 derecha
-            const octavos = r32; // ordenado por fecha = orden oficial
+            // Cada fase viene ordenada por fecha (ESPN respeta el orden oficial FIFA),
+            // así que los primeros N/2 elementos de cada array son el lado izquierdo
+            // del bracket y los siguientes N/2 son el lado derecho.
 
             // ── SVG dimensions ────────────────────────────────────────────────
-            const W      = 1100;
+            // Ahora hay 4 columnas por lado (16avos, 8vos, cuartos, semifinal) + final al centro
+            const W      = 1360;
             const H      = 820;
-            const BW     = 110; // box width
+            const BW     = 95;  // box width
             const BH     = 34;  // box height
             const GAP    = 3;   // gap between home/away
             const MATCHH = BH * 2 + GAP; // total match height
@@ -1109,27 +1110,32 @@ const App = (() => {
             };
 
             // ── Layout ─────────────────────────────────────────────────────────
-            // Izquierda: 8 partidos de octavos (R1-R8)
-            // Derecha:   8 partidos de octavos (R9-R16)
-            // Centro: cuartos → semis → final
+            // Izquierda: 8 (16avos) → 4 (8vos) → 2 (cuartos) → 1 (semifinal)
+            // Derecha:   espejado igual
+            // Centro: final + 3er puesto
 
-            const COL_L1 = 10;           // octavos izq
-            const COL_L2 = COL_L1 + BW + 40; // cuartos izq
-            const COL_L3 = COL_L2 + BW + 40; // semis izq
+            const COL_L1 = 10;               // 16avos izq
+            const COL_L2 = COL_L1 + BW + 30;  // 8vos izq
+            const COL_L3 = COL_L2 + BW + 30;  // cuartos izq
+            const COL_L4 = COL_L3 + BW + 30;  // semifinal izq
             const COL_MID = W/2 - BW/2;       // final / centro
-            const COL_R3  = W - COL_L3 - BW;  // semis der
-            const COL_R2  = W - COL_L2 - BW;  // cuartos der
-            const COL_R1  = W - COL_L1 - BW;  // octavos der
+            const COL_R4  = W - COL_L4 - BW;  // semifinal der
+            const COL_R3  = W - COL_L3 - BW;  // cuartos der
+            const COL_R2  = W - COL_L2 - BW;  // 8vos der
+            const COL_R1  = W - COL_L1 - BW;  // 16avos der
 
-            // Y positions para octavos izquierda (8 partidos)
+            // Y positions para 16avos izquierda (8 partidos)
             const spacingL1 = (H - 60) / 8;
             const ysL1 = Array.from({length:8}, (_,i) => 30 + i * spacingL1);
 
-            // Y positions cuartos izq (4)
+            // Y positions 8vos izq (4)
             const ysL2 = [0,1,2,3].map(i => (ysL1[i*2] + ysL1[i*2+1]) / 2 + MATCHH/4);
 
-            // Y semis izq (2)
+            // Y cuartos izq (2)
             const ysL3 = [0,1].map(i => (ysL2[i*2] + ysL2[i*2+1]) / 2);
+
+            // Y semifinal izq (1)
+            const ysL4 = [(ysL3[0] + ysL3[1]) / 2];
 
             // Y final (1)
             const yFinal = H/2 - MATCHH/2;
@@ -1141,31 +1147,39 @@ const App = (() => {
             let matchesSVG = '';
             let linesSVG   = '';
 
-            // ── Octavos izquierda (slots 0-7) ─────────────────────────────────
-            const oct_l = r32.slice(0, 8);
+            // ── 16avos izquierda (slots 0-7) ────────────────────────────────────
+            const r32_l = r32.slice(0, 8);
             for (let i = 0; i < 8; i++) {
-                matchesSVG += _match(COL_L1, ysL1[i], oct_l[i] ?? null, `P${i+1}`);
-                // línea al cuarto
+                matchesSVG += _match(COL_L1, ysL1[i], r32_l[i] ?? null, `P${i+1}`);
                 const fromY = ysL1[i] + MATCHH / 2;
                 const toY   = ysL2[Math.floor(i/2)] + MATCHH / 2;
                 linesSVG += _connect(COL_L1 + BW, fromY, COL_L2, toY);
             }
 
-            // ── Cuartos izquierda ──────────────────────────────────────────────
-            const cua_l = cuartos.slice(0, 4);
+            // ── 8vos izquierda (4) ───────────────────────────────────────────────
+            const oct_l = octavos.slice(0, 4);
             for (let i = 0; i < 4; i++) {
-                matchesSVG += _match(COL_L2, ysL2[i], cua_l[i] ?? null);
+                matchesSVG += _match(COL_L2, ysL2[i], oct_l[i] ?? null);
                 const fromY = ysL2[i] + MATCHH / 2;
                 const toY   = ysL3[Math.floor(i/2)] + MATCHH / 2;
                 linesSVG += _connect(COL_L2 + BW, fromY, COL_L3, toY);
             }
 
-            // ── Semis izquierda ────────────────────────────────────────────────
-            const sem_l = semis.slice(0, 2);
+            // ── Cuartos izquierda (2) ────────────────────────────────────────────
+            const cua_l = cuartos.slice(0, 2);
             for (let i = 0; i < 2; i++) {
-                matchesSVG += _match(COL_L3, ysL3[i], sem_l[i] ?? null);
+                matchesSVG += _match(COL_L3, ysL3[i], cua_l[i] ?? null);
                 const fromY = ysL3[i] + MATCHH / 2;
-                linesSVG += _connect(COL_L3 + BW, fromY, COL_MID, yFinal + MATCHH/2);
+                const toY   = ysL4[0] + MATCHH / 2;
+                linesSVG += _connect(COL_L3 + BW, fromY, COL_L4, toY);
+            }
+
+            // ── Semifinal izquierda (1) ──────────────────────────────────────────
+            const sem_l = semis.slice(0, 1);
+            {
+                matchesSVG += _match(COL_L4, ysL4[0], sem_l[0] ?? null);
+                const fromY = ysL4[0] + MATCHH / 2;
+                linesSVG += _connect(COL_L4 + BW, fromY, COL_MID, yFinal + MATCHH/2);
             }
 
             // ── Final ──────────────────────────────────────────────────────────
@@ -1174,31 +1188,40 @@ const App = (() => {
             // ── Tercer puesto ──────────────────────────────────────────────────
             matchesSVG += _match(COL_MID, yTercero, tercero[0] ?? null, '3er PUESTO');
 
-            // ── Octavos derecha (slots 8-15) ───────────────────────────────────
-            const oct_r = r32.slice(8, 16);
+            // ── 16avos derecha (slots 8-15) ──────────────────────────────────────
+            const r32_r = r32.slice(8, 16);
             const ysR1  = [...ysL1];
             for (let i = 0; i < 8; i++) {
-                matchesSVG += _match(COL_R1, ysR1[i], oct_r[i] ?? null, `P${i+9}`);
+                matchesSVG += _match(COL_R1, ysR1[i], r32_r[i] ?? null, `P${i+9}`);
                 const fromY = ysR1[i] + MATCHH / 2;
                 const toY   = ysL2[Math.floor(i/2)] + MATCHH / 2;
                 linesSVG += _connect(COL_R2 + BW, toY, COL_R1, fromY);
             }
 
-            // ── Cuartos derecha ────────────────────────────────────────────────
-            const cua_r = cuartos.slice(4, 8);
+            // ── 8vos derecha (4) ─────────────────────────────────────────────────
+            const oct_r = octavos.slice(4, 8);
             for (let i = 0; i < 4; i++) {
-                matchesSVG += _match(COL_R2, ysL2[i], cua_r[i] ?? null);
+                matchesSVG += _match(COL_R2, ysL2[i], oct_r[i] ?? null);
                 const fromY = ysL2[i] + MATCHH / 2;
                 const toY   = ysL3[Math.floor(i/2)] + MATCHH / 2;
                 linesSVG += _connect(COL_R3 + BW, toY, COL_R2, fromY);
             }
 
-            // ── Semis derecha ──────────────────────────────────────────────────
-            const sem_r = semis.slice(2, 4);
+            // ── Cuartos derecha (2) ──────────────────────────────────────────────
+            const cua_r = cuartos.slice(2, 4);
             for (let i = 0; i < 2; i++) {
-                matchesSVG += _match(COL_R3, ysL3[i], sem_r[i] ?? null);
+                matchesSVG += _match(COL_R3, ysL3[i], cua_r[i] ?? null);
                 const fromY = ysL3[i] + MATCHH / 2;
-                linesSVG += _connect(COL_MID + BW, yFinal + MATCHH/2, COL_R3, fromY);
+                const toY   = ysL4[0] + MATCHH / 2;
+                linesSVG += _connect(COL_R4 + BW, toY, COL_R3, fromY);
+            }
+
+            // ── Semifinal derecha (1) ────────────────────────────────────────────
+            const sem_r = semis.slice(1, 2);
+            {
+                matchesSVG += _match(COL_R4, ysL4[0], sem_r[0] ?? null);
+                const fromY = ysL4[0] + MATCHH / 2;
+                linesSVG += _connect(COL_MID + BW, yFinal + MATCHH/2, COL_R4, fromY);
             }
 
             // ── Copa en el centro ──────────────────────────────────────────────
@@ -1214,7 +1237,7 @@ const App = (() => {
             container.innerHTML = `
                 <div style="overflow-x:auto; overflow-y:hidden; padding:0.5rem; -webkit-overflow-scrolling:touch;">
                     <svg viewBox="0 0 ${W} ${H+60}" xmlns="http://www.w3.org/2000/svg"
-                        style="width:${W}px; max-width:100%; min-width:700px; display:block; background:rgba(0,0,0,0.2); border-radius:12px;">
+                        style="width:${W}px; max-width:100%; min-width:820px; display:block; background:rgba(0,0,0,0.2); border-radius:12px;">
                         <defs>
                             <style>
                                 .bracket-match { cursor: pointer; }
@@ -1235,13 +1258,15 @@ const App = (() => {
                         ${matchesSVG}
 
                         <!-- Labels de fases -->
-                        <text x="${COL_L1 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#6CABDD" letter-spacing="1">OCTAVOS</text>
-                        <text x="${COL_L2 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#3D6FFF" letter-spacing="1">CUARTOS</text>
-                        <text x="${COL_L3 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#ffd700" letter-spacing="1">SEMIS</text>
+                        <text x="${COL_L1 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#6CABDD" letter-spacing="1">16AVOS</text>
+                        <text x="${COL_L2 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#6CABDD" letter-spacing="1">OCTAVOS</text>
+                        <text x="${COL_L3 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#3D6FFF" letter-spacing="1">CUARTOS</text>
+                        <text x="${COL_L4 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#ffd700" letter-spacing="1">SEMIS</text>
                         <text x="${COL_MID + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#ffd700" letter-spacing="1">FINAL</text>
-                        <text x="${COL_R3 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#ffd700" letter-spacing="1">SEMIS</text>
-                        <text x="${COL_R2 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#3D6FFF" letter-spacing="1">CUARTOS</text>
-                        <text x="${COL_R1 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#6CABDD" letter-spacing="1">OCTAVOS</text>
+                        <text x="${COL_R4 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#ffd700" letter-spacing="1">SEMIS</text>
+                        <text x="${COL_R3 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#3D6FFF" letter-spacing="1">CUARTOS</text>
+                        <text x="${COL_R2 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#6CABDD" letter-spacing="1">OCTAVOS</text>
+                        <text x="${COL_R1 + BW/2}" y="16" text-anchor="middle" font-family="system-ui" font-size="8" font-weight="800" fill="#6CABDD" letter-spacing="1">16AVOS</text>
                     </svg>
                 </div>`;
 
