@@ -2795,7 +2795,7 @@ const App = (() => {
 
     const pushEstaActivo = async () => {
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
-        const reg = await navigator.serviceWorker.getRegistration('/elfulbo/sw.js').catch(() => null);
+        const reg = await navigator.serviceWorker.getRegistration('/sw.js').catch(() => null);
         if (!reg) return false;
         const sub = await reg.pushManager.getSubscription().catch(() => null);
         return !!sub;
@@ -2810,7 +2810,7 @@ const App = (() => {
         try {
             btnEl.textContent = 'Activando...';
             btnEl.disabled = true;
-            const reg = await navigator.serviceWorker.register('/elfulbo/sw.js', { scope: '/elfulbo/' });
+            const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
             await navigator.serviceWorker.ready;
             const permiso = await Notification.requestPermission();
             if (permiso !== 'granted') { btnEl.textContent = '🔔 ACTIVAR NOTIFICACIONES'; btnEl.disabled = false; return; }
@@ -2848,7 +2848,7 @@ const App = (() => {
     window._desactivarPush = async (btnEl) => {
         try {
             btnEl.textContent = 'Desactivando...'; btnEl.disabled = true;
-            const reg = await navigator.serviceWorker.getRegistration('/elfulbo/sw.js').catch(() => null);
+            const reg = await navigator.serviceWorker.getRegistration('/sw.js').catch(() => null);
             if (reg) { const sub = await reg.pushManager.getSubscription().catch(() => null); if (sub) await sub.unsubscribe(); }
             const uid = window.FirebaseAuth?.getUser()?.uid;
             if (uid) await fetch(`${CF_WORKER_PUSH}/push/desuscribir`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid }) });
@@ -4763,7 +4763,7 @@ const App = (() => {
                     variantKey,
                     uid:        user.uid,
                     email:      user.email,
-                    successUrl: 'https://solgoyhe-gif.github.io/elfulbo/#/perfil?pago=ok',
+                    successUrl: 'https://whistle.com.ar/#/perfil?pago=ok',
                 })
             });
             const data = await res.json();
