@@ -957,13 +957,8 @@ const App = (() => {
             const vistos = new Set();
             const unicos = todosEventos.filter(ev => { if(vistos.has(ev.id)) return false; vistos.add(ev.id); return true; });
 
-            // ESPN incluye el número de partido en ev.name o ev.shortName (ej: "Match 73" o en uid)
-            // También podemos usar ev.uid que tiene formato "s:600~l:XXXX~e:MATCHID"
-            // Mejor estrategia: ordenar por fecha (ESPN respeta el orden oficial)
-            // Sede fija por partido (FIFA fija la sede de cada número de partido desde
-            // el sorteo, sin importar qué equipos terminen jugando ahí). Esto es lo único
-            // confiable para saber el LADO del bracket — la fecha no alcanza, porque
-            // varios partidos de lados distintos se juegan el mismo día.
+            // Sede fija por partido (para Cuartos y Semis, que todavía no tienen
+            // equipos definidos — no podemos matchear por nombre porque son "Ganador de...").
             const _sedeTexto = (ev) => {
                 const v = ev?.competitions?.[0]?.venue;
                 return `${v?.fullName || ''} ${v?.address?.city || ''} ${v?.address?.state || ''}`.toLowerCase();
@@ -972,11 +967,8 @@ const App = (() => {
                 const t = _sedeTexto(ev);
                 if (izqKw.some(kw => t.includes(kw))) return 'I';
                 if (derKw.some(kw => t.includes(kw))) return 'D';
-                return null; // sede no reconocida -> se completa por descarte más abajo
+                return null;
             };
-            // Divide los partidos de una ronda en izquierda/derecha por sede;
-            // lo que no matchea ninguna sede conocida se completa por descarte
-            // (respetando el orden por fecha) para no perder partidos.
             const _dividirLados = (evs, izqKw, derKw, mitad) => {
                 const izq = [], der = [], sinSede = [];
                 evs.forEach(ev => {
@@ -987,6 +979,44 @@ const App = (() => {
                 });
                 sinSede.forEach(ev => { (izq.length < mitad ? izq : der).push(ev); });
                 return { izq: izq.slice(0, mitad), der: der.slice(0, mitad) };
+            };
+
+            // Para 16avos y Octavos SÍ conocemos los equipos reales (ya se jugaron),
+            // así que en vez de adivinar por sede/fecha, matcheamos directo por nombre
+            // de equipo contra el cruce oficial FIFA. Esto es exacto y no depende del
+            // orden en que ESPN devuelva los partidos.
+            const _nombresEquipo = (ev) => {
+                const comp = ev?.competitions?.[0];
+                const home = comp?.competitors?.find(c => c.homeAway === 'home')?.team;
+                const away = comp?.competitors?.find(c => c.homeAway === 'away')?.team;
+                return [home, away].flatMap(t => [t?.displayName, t?.shortDisplayName, t?.name, t?.location, t?.abbreviation])
+                    .filter(Boolean).map(s => s.toLowerCase());
+            };
+            // Alias para equipos cuyo nombre puede venir distinto en ESPN
+            const ALIAS = {
+                'usa': ['usa','united states','estados unidos'],
+                'bosnia': ['bosnia','herzegovina'],
+                'costa de marfil': ['ivory coast','costa de marfil',"cote d'ivoire","côte d'ivoire",'cote divoire'],
+                'congo rd': ['congo dr','dr congo','congo rd','democratic republic of the congo'],
+                'cabo verde': ['cabo verde','cape verde'],
+            };
+            const _esEquipo = (nombres, clave) => {
+                const variantes = ALIAS[clave] || [clave];
+                return nombres.some(n => variantes.some(v => n.includes(v)));
+            };
+            // Asigna eventos a pares [equipoA, equipoB] en un orden fijo, consumiendo
+            // del pool a medida que encuentra matches. Si no encuentra un partido para
+            // un slot (nombre distinto al esperado, etc.) deja null en vez de adivinar mal.
+            const _asignarPorEquipos = (evs, pares) => {
+                const pool = [...evs];
+                return pares.map(([a, b]) => {
+                    const idx = pool.findIndex(ev => {
+                        const nombres = _nombresEquipo(ev);
+                        return _esEquipo(nombres, a) && _esEquipo(nombres, b);
+                    });
+                    if (idx === -1) return null;
+                    return pool.splice(idx, 1)[0];
+                });
             };
 
             const _byFase = (fase) => {
@@ -1004,26 +1034,45 @@ const App = (() => {
             const tercero = _byFase('tercero'); // 1 partido   (M103)
             const final_  = _byFase('final');   // 1 partido   (M104)
 
-            // Sedes por lado, según el bracket oficial FIFA (confirmado con fixtures reales):
-            // Dieciseisavos → alimentan cada Octavo:
-            //   Izq: M89 Philadelphia, M90 Houston, M93 Dallas/Arlington, M94 Seattle
-            //   Der: M91 NY/NJ, M92 Ciudad de México, M95 Atlanta, M96 Vancouver
-            const R32_IZQ = ['boston','monterrey','new jersey','east rutherford','metlife','san francisco','bay area','santa clara','seattle','toronto','los angeles','inglewood','sofi'];
-            const R32_DER = ['houston','dallas','arlington','mexico city','azteca','atlanta','vancouver','bc place','miami','kansas city','arrowhead'];
+            // Cruce oficial FIFA de 16avos → Octavos (equipos reales, ya jugados y fijos):
+            // pares consecutivos (0,1)→feed oct[0], (2,3)→feed oct[1], etc.
+            const R32_IZQ_PARES = [
+                ['south africa','canada'], ['netherlands','morocco'],       // → M90 CAN-MAR
+                ['germany','paraguay'],    ['france','sweden'],             // → M89 PAR-FRA
+                ['portugal','croatia'],    ['spain','austria'],             // → M93 POR-ESP
+                ['usa','bosnia'],          ['belgium','senegal'],           // → M94 USA-BEL
+            ];
+            const R32_DER_PARES = [
+                ['brazil','japan'],        ['costa de marfil','norway'],    // → M91 BRA-NOR
+                ['mexico','ecuador'],      ['england','congo rd'],          // → M92 MEX-ENG
+                ['argentina','cabo verde'],['australia','egypt'],           // → M95 ARG-EGY
+                ['switzerland','algeria'], ['colombia','ghana'],            // → M96 SUI-COL
+            ];
+            const OCT_IZQ_PARES = [
+                ['canada','morocco'], ['paraguay','france'],   // → cuartos M97
+                ['portugal','spain'], ['usa','belgium'],       // → cuartos M98
+            ];
+            const OCT_DER_PARES = [
+                ['brazil','norway'], ['mexico','england'],     // → cuartos M99
+                ['argentina','egypt'], ['switzerland','colombia'], // → cuartos M100
+            ];
 
-            const OCT_IZQ = ['philadelphia','houston','dallas','arlington','seattle'];
-            const OCT_DER = ['new jersey','east rutherford','metlife','mexico city','azteca','atlanta','vancouver','bc place'];
+            const r32_izq = _asignarPorEquipos(r32, R32_IZQ_PARES);
+            const r32_der = _asignarPorEquipos(r32, R32_DER_PARES);
+            const oct_izq = _asignarPorEquipos(octavos, OCT_IZQ_PARES);
+            const oct_der = _asignarPorEquipos(octavos, OCT_DER_PARES);
 
+            // Cuartos y Semis todavía no tienen equipos definidos ("Ganador de..."),
+            // así que ahí sí usamos sede fija (confirmado con fixtures reales):
             const QF_IZQ  = ['boston','foxborough','gillette','los angeles','inglewood','sofi'];
             const QF_DER  = ['miami','hard rock','kansas city','arrowhead'];
 
             const SF_IZQ  = ['dallas','arlington'];
             const SF_DER  = ['atlanta'];
 
-            const { izq: r32_izq, der: r32_der }     = _dividirLados(r32, R32_IZQ, R32_DER, 8);
-            const { izq: oct_izq, der: oct_der }     = _dividirLados(octavos, OCT_IZQ, OCT_DER, 4);
-            const { izq: cua_izq, der: cua_der }     = _dividirLados(cuartos, QF_IZQ, QF_DER, 2);
-            const { izq: sem_izq, der: sem_der }     = _dividirLados(semis, SF_IZQ, SF_DER, 1);
+            const { izq: cua_izq, der: cua_der } = _dividirLados(cuartos, QF_IZQ, QF_DER, 2);
+            const { izq: sem_izq, der: sem_der } = _dividirLados(semis, SF_IZQ, SF_DER, 1);
+
 
             // ── SVG dimensions ────────────────────────────────────────────────
             // Ahora hay 4 columnas por lado (16avos, 8vos, cuartos, semifinal) + final al centro
