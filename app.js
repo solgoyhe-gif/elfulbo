@@ -293,7 +293,7 @@ const App = (() => {
             hockey:     {nombre:'Hockey sobre Hielo',emoji:'🏒', slug:'hockey/nhl',              liga:'NHL'},
             golf:       {nombre:'Golf',              emoji:'⛳', slug:'golf/pga',                liga:'PGA'},
             mma:        {nombre:'MMA',               emoji:'🥊', slug:'mma/ufc',                 liga:'UFC'},
-            rugby:      {nombre:'Rugby',             emoji:'🏉', slug:'rugby-union/international',liga:'Rugby'},
+            rugby:      {nombre:'Rugby',             emoji:'🏉', slug:'rugby/180659',            liga:'Rugby'},
         };
 
         // Render inicial con skeleton
@@ -3523,7 +3523,7 @@ const App = (() => {
         {
             id: 'rugby', nombre: 'Rugby', emoji: '🏉',
             ligas: [
-                {id:'rugby-union', nombre:'Rugby Union', slug:'rugby-union/international'},
+                {id:'rugby-union', nombre:'Six Nations', slug:'rugby/180659'},
             ]
         },
         // Próximamente
