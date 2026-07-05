@@ -960,7 +960,35 @@ const App = (() => {
             // ESPN incluye el número de partido en ev.name o ev.shortName (ej: "Match 73" o en uid)
             // También podemos usar ev.uid que tiene formato "s:600~l:XXXX~e:MATCHID"
             // Mejor estrategia: ordenar por fecha (ESPN respeta el orden oficial)
-            // y asignar slots según el orden oficial de FIFA
+            // Sede fija por partido (FIFA fija la sede de cada número de partido desde
+            // el sorteo, sin importar qué equipos terminen jugando ahí). Esto es lo único
+            // confiable para saber el LADO del bracket — la fecha no alcanza, porque
+            // varios partidos de lados distintos se juegan el mismo día.
+            const _sedeTexto = (ev) => {
+                const v = ev?.competitions?.[0]?.venue;
+                return `${v?.fullName || ''} ${v?.address?.city || ''} ${v?.address?.state || ''}`.toLowerCase();
+            };
+            const _lado = (ev, izqKw, derKw) => {
+                const t = _sedeTexto(ev);
+                if (izqKw.some(kw => t.includes(kw))) return 'I';
+                if (derKw.some(kw => t.includes(kw))) return 'D';
+                return null; // sede no reconocida -> se completa por descarte más abajo
+            };
+            // Divide los partidos de una ronda en izquierda/derecha por sede;
+            // lo que no matchea ninguna sede conocida se completa por descarte
+            // (respetando el orden por fecha) para no perder partidos.
+            const _dividirLados = (evs, izqKw, derKw, mitad) => {
+                const izq = [], der = [], sinSede = [];
+                evs.forEach(ev => {
+                    const l = _lado(ev, izqKw, derKw);
+                    if (l === 'I') izq.push(ev);
+                    else if (l === 'D') der.push(ev);
+                    else sinSede.push(ev);
+                });
+                sinSede.forEach(ev => { (izq.length < mitad ? izq : der).push(ev); });
+                return { izq: izq.slice(0, mitad), der: der.slice(0, mitad) };
+            };
+
             const _byFase = (fase) => {
                 const fechas = FASES_FECHAS[fase];
                 const evs = fechas.flatMap(f => eventosPorFecha[f] ?? []);
@@ -969,35 +997,33 @@ const App = (() => {
                            .sort((a,b) => new Date(a.date) - new Date(b.date));
             };
 
-            // Orden oficial del bracket izquierdo (slots 0-7):
-            // M73: 2ºA vs 2ºB — 28jun
-            // M76: 1ºC vs 2ºF — 28jun  
-            // M74: 1ºE vs 3º — 29jun
-            // M75: 1ºF vs 2ºC — 29jun
-            // M78: 2ºE vs 2ºI — 30jun
-            // M77: 1ºI vs 3º — 30jun
-            // M79: 1ºA vs 3º — 1jul
-            // M80: 1ºL vs 3º — 1jul
-            // Bracket derecho (slots 8-15, espejado):
-            // M82: 1ºG vs 3º — 2jul
-            // M81: 1ºD vs 3º — 2jul
-            // M84: 1ºH vs 2ºJ — 3jul
-            // M88: 2ºD vs 2ºG — 3jul
-            // M86: 1ºJ vs 2ºH — 2jul
-            // M87: 1ºK vs 3º — 3jul
-            // M83: 2ºK vs 2ºL — 2jul
-            // M85: 1ºB vs 3º — 3jul
-
             const r32     = _byFase('r32');     // 16 partidos (M73-M88) — Dieciseisavos
-            const octavos = _byFase('r16');     // 8 partidos  (M89-M96) — Octavos (antes mezclados con cuartos)
+            const octavos = _byFase('r16');     // 8 partidos  (M89-M96) — Octavos
             const cuartos = _byFase('cuartos'); // 4 partidos  (M97-M100) — Cuartos
             const semis   = _byFase('semis');   // 2 partidos  (M101-M102) — Semifinal real
             const tercero = _byFase('tercero'); // 1 partido   (M103)
             const final_  = _byFase('final');   // 1 partido   (M104)
 
-            // Cada fase viene ordenada por fecha (ESPN respeta el orden oficial FIFA),
-            // así que los primeros N/2 elementos de cada array son el lado izquierdo
-            // del bracket y los siguientes N/2 son el lado derecho.
+            // Sedes por lado, según el bracket oficial FIFA (confirmado con fixtures reales):
+            // Dieciseisavos → alimentan cada Octavo:
+            //   Izq: M89 Philadelphia, M90 Houston, M93 Dallas/Arlington, M94 Seattle
+            //   Der: M91 NY/NJ, M92 Ciudad de México, M95 Atlanta, M96 Vancouver
+            const R32_IZQ = ['boston','monterrey','new jersey','east rutherford','metlife','san francisco','bay area','santa clara','seattle','toronto','los angeles','inglewood','sofi'];
+            const R32_DER = ['houston','dallas','arlington','mexico city','azteca','atlanta','vancouver','bc place','miami','kansas city','arrowhead'];
+
+            const OCT_IZQ = ['philadelphia','houston','dallas','arlington','seattle'];
+            const OCT_DER = ['new jersey','east rutherford','metlife','mexico city','azteca','atlanta','vancouver','bc place'];
+
+            const QF_IZQ  = ['boston','foxborough','gillette','los angeles','inglewood','sofi'];
+            const QF_DER  = ['miami','hard rock','kansas city','arrowhead'];
+
+            const SF_IZQ  = ['dallas','arlington'];
+            const SF_DER  = ['atlanta'];
+
+            const { izq: r32_izq, der: r32_der }     = _dividirLados(r32, R32_IZQ, R32_DER, 8);
+            const { izq: oct_izq, der: oct_der }     = _dividirLados(octavos, OCT_IZQ, OCT_DER, 4);
+            const { izq: cua_izq, der: cua_der }     = _dividirLados(cuartos, QF_IZQ, QF_DER, 2);
+            const { izq: sem_izq, der: sem_der }     = _dividirLados(semis, SF_IZQ, SF_DER, 1);
 
             // ── SVG dimensions ────────────────────────────────────────────────
             // Ahora hay 4 columnas por lado (16avos, 8vos, cuartos, semifinal) + final al centro
@@ -1148,36 +1174,32 @@ const App = (() => {
             let linesSVG   = '';
 
             // ── 16avos izquierda (slots 0-7) ────────────────────────────────────
-            const r32_l = r32.slice(0, 8);
             for (let i = 0; i < 8; i++) {
-                matchesSVG += _match(COL_L1, ysL1[i], r32_l[i] ?? null, `P${i+1}`);
+                matchesSVG += _match(COL_L1, ysL1[i], r32_izq[i] ?? null, `P${i+1}`);
                 const fromY = ysL1[i] + MATCHH / 2;
                 const toY   = ysL2[Math.floor(i/2)] + MATCHH / 2;
                 linesSVG += _connect(COL_L1 + BW, fromY, COL_L2, toY);
             }
 
             // ── 8vos izquierda (4) ───────────────────────────────────────────────
-            const oct_l = octavos.slice(0, 4);
             for (let i = 0; i < 4; i++) {
-                matchesSVG += _match(COL_L2, ysL2[i], oct_l[i] ?? null);
+                matchesSVG += _match(COL_L2, ysL2[i], oct_izq[i] ?? null);
                 const fromY = ysL2[i] + MATCHH / 2;
                 const toY   = ysL3[Math.floor(i/2)] + MATCHH / 2;
                 linesSVG += _connect(COL_L2 + BW, fromY, COL_L3, toY);
             }
 
             // ── Cuartos izquierda (2) ────────────────────────────────────────────
-            const cua_l = cuartos.slice(0, 2);
             for (let i = 0; i < 2; i++) {
-                matchesSVG += _match(COL_L3, ysL3[i], cua_l[i] ?? null);
+                matchesSVG += _match(COL_L3, ysL3[i], cua_izq[i] ?? null);
                 const fromY = ysL3[i] + MATCHH / 2;
                 const toY   = ysL4[0] + MATCHH / 2;
                 linesSVG += _connect(COL_L3 + BW, fromY, COL_L4, toY);
             }
 
             // ── Semifinal izquierda (1) ──────────────────────────────────────────
-            const sem_l = semis.slice(0, 1);
             {
-                matchesSVG += _match(COL_L4, ysL4[0], sem_l[0] ?? null);
+                matchesSVG += _match(COL_L4, ysL4[0], sem_izq[0] ?? null);
                 const fromY = ysL4[0] + MATCHH / 2;
                 linesSVG += _connect(COL_L4 + BW, fromY, COL_MID, yFinal + MATCHH/2);
             }
@@ -1189,37 +1211,33 @@ const App = (() => {
             matchesSVG += _match(COL_MID, yTercero, tercero[0] ?? null, '3er PUESTO');
 
             // ── 16avos derecha (slots 8-15) ──────────────────────────────────────
-            const r32_r = r32.slice(8, 16);
             const ysR1  = [...ysL1];
             for (let i = 0; i < 8; i++) {
-                matchesSVG += _match(COL_R1, ysR1[i], r32_r[i] ?? null, `P${i+9}`);
+                matchesSVG += _match(COL_R1, ysR1[i], r32_der[i] ?? null, `P${i+9}`);
                 const fromY = ysR1[i] + MATCHH / 2;
                 const toY   = ysL2[Math.floor(i/2)] + MATCHH / 2;
                 linesSVG += _connect(COL_R2 + BW, toY, COL_R1, fromY);
             }
 
             // ── 8vos derecha (4) ─────────────────────────────────────────────────
-            const oct_r = octavos.slice(4, 8);
             for (let i = 0; i < 4; i++) {
-                matchesSVG += _match(COL_R2, ysL2[i], oct_r[i] ?? null);
+                matchesSVG += _match(COL_R2, ysL2[i], oct_der[i] ?? null);
                 const fromY = ysL2[i] + MATCHH / 2;
                 const toY   = ysL3[Math.floor(i/2)] + MATCHH / 2;
                 linesSVG += _connect(COL_R3 + BW, toY, COL_R2, fromY);
             }
 
             // ── Cuartos derecha (2) ──────────────────────────────────────────────
-            const cua_r = cuartos.slice(2, 4);
             for (let i = 0; i < 2; i++) {
-                matchesSVG += _match(COL_R3, ysL3[i], cua_r[i] ?? null);
+                matchesSVG += _match(COL_R3, ysL3[i], cua_der[i] ?? null);
                 const fromY = ysL3[i] + MATCHH / 2;
                 const toY   = ysL4[0] + MATCHH / 2;
                 linesSVG += _connect(COL_R4 + BW, toY, COL_R3, fromY);
             }
 
             // ── Semifinal derecha (1) ────────────────────────────────────────────
-            const sem_r = semis.slice(1, 2);
             {
-                matchesSVG += _match(COL_R4, ysL4[0], sem_r[0] ?? null);
+                matchesSVG += _match(COL_R4, ysL4[0], sem_der[0] ?? null);
                 const fromY = ysL4[0] + MATCHH / 2;
                 linesSVG += _connect(COL_MID + BW, yFinal + MATCHH/2, COL_R4, fromY);
             }
@@ -1237,7 +1255,7 @@ const App = (() => {
             container.innerHTML = `
                 <div style="overflow-x:auto; overflow-y:hidden; padding:0.5rem; -webkit-overflow-scrolling:touch;">
                     <svg viewBox="0 0 ${W} ${H+60}" xmlns="http://www.w3.org/2000/svg"
-                        style="width:${W}px; max-width:100%; min-width:820px; display:block; background:rgba(0,0,0,0.2); border-radius:12px;">
+                        style="width:${W}px; min-width:${W}px; display:block; background:rgba(0,0,0,0.2); border-radius:12px;">
                         <defs>
                             <style>
                                 .bracket-match { cursor: pointer; }
