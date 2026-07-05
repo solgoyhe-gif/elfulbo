@@ -27,11 +27,11 @@ self.addEventListener('push', (e) => {
 
     const options = {
         body:    body    ?? '',
-        icon:    icon    ?? '/elfulbo/icon-192.png',
-        badge:   badge   ?? '/elfulbo/icon-badge.png',
+        icon:    icon    ?? '/favicon-192.png',
+        badge:   badge   ?? '/favicon-192.png',
         tag:     tag     ?? 'whistle-gol',        // agrupa notifs del mismo partido
         renotify: true,                            // vibra aunque ya exista el tag
-        data:    { url: url ?? 'https://solgoyhe-gif.github.io/elfulbo/#/h2h' },
+        data:    { url: url ?? 'https://whistle.com.ar/#/h2h' },
         actions: [
             { action: 'ver', title: '⚽ Ver partido' },
             { action: 'cerrar', title: 'Cerrar' }
@@ -51,13 +51,13 @@ self.addEventListener('notificationclick', (e) => {
     if (e.action === 'cerrar') return;
 
     const targetUrl = e.notification.data?.url
-        ?? 'https://solgoyhe-gif.github.io/elfulbo/#/h2h';
+        ?? 'https://whistle.com.ar/#/h2h';
 
     e.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
             // Si ya hay una pestaña abierta, enfocala y navegá
             for (const client of windowClients) {
-                if (client.url.includes('solgoyhe-gif.github.io') && 'focus' in client) {
+                if (client.url.includes('whistle.com.ar') && 'focus' in client) {
                     client.focus();
                     client.navigate(targetUrl);
                     return;
