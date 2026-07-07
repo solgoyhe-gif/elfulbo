@@ -4508,9 +4508,15 @@ const App = (() => {
             const estado   = comp.status?.type?.state ?? 'pre';
             const esLive   = estado === 'in';
             const esPost   = estado === 'post';
+            const esPre    = estado === 'pre';
             const clock    = comp.status?.displayClock ?? '';
             const periodo  = comp.status?.period ?? '';
             const shortDet = comp.status?.type?.shortDetail ?? '';
+
+            // Horas que faltan para el arranque (para saber si vale la pena auto-refrescar
+            // en busca de la alineación, que ESPN suele publicar ~1h antes)
+            const fechaPartido    = new Date(comp.date ?? summary.header?.competitions?.[0]?.date ?? NaN);
+            const horasHastaInicio = isNaN(fechaPartido.getTime()) ? 99 : (fechaPartido - new Date()) / 3600000;
 
             const homeName  = home.team?.displayName ?? '?';
             const awayName  = away.team?.displayName ?? '?';
@@ -4669,11 +4675,12 @@ const App = (() => {
                         ` : _paywallInline('pro', 'Las estadísticas completas están disponibles en el plan Platea.')}
                     </div>` : ''}
 
-                    ${(rosterHome || rosterAway) ? `
+                    ${(rosterHome || rosterAway || !esPost) ? `
                     <!-- ALINEACIONES -->
                     <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
                         <h3 class="panel-title" style="text-align:center; color:var(--accent-neon); font-size:0.75rem; letter-spacing:2px; margin-bottom:1rem;">ALINEACIONES</h3>
-                        ${esPro ? `
+                        ${!esPro ? _paywallInline('pro', 'Las alineaciones tácticas están disponibles en el plan Platea.') :
+                          (rosterHome || rosterAway) ? `
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
                             <div>
                                 <p style="text-align:center; font-size:0.75rem; font-weight:700; color:var(--text-muted); margin-bottom:6px;">
@@ -4687,7 +4694,11 @@ const App = (() => {
                                 </p>
                                 ${_miniPizarra(rosterAway, away.team?.id, '#cc2222', '#ffffff')}
                             </div>
-                        </div>` : _paywallInline('pro', 'Las alineaciones tácticas están disponibles en el plan Platea.')}
+                        </div>` : `
+                        <p style="text-align:center; color:var(--text-muted); font-size:0.82rem; padding:1rem 0;">
+                            ⏳ Alineaciones aún no confirmadas.<br>
+                            <span style="font-size:0.75rem; opacity:0.75;">Se suelen publicar ~1 hora antes del partido.</span>
+                        </p>`}
                     </div>` : ''}
 
                     ${plays.length > 0 ? `
@@ -4711,8 +4722,10 @@ const App = (() => {
             ${_closeSidebarWrapper()}
             `;
 
-            // Auto-refresh si está en vivo
-            if (esLive) {
+            // Auto-refresh si está en vivo, o si arranca en las próximas 3hs
+            // (para que la alineación aparezca sola apenas ESPN la publique)
+            const convieneRefrescar = esLive || (esPre && horasHastaInicio <= 3 && horasHastaInicio > -1);
+            if (convieneRefrescar) {
                 if (window._partidoRefreshInterval) clearInterval(window._partidoRefreshInterval);
                 window._partidoRefreshInterval = setInterval(async () => {
                     if (!document.querySelector('.page-container')) { clearInterval(window._partidoRefreshInterval); return; }
