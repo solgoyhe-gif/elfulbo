@@ -2114,7 +2114,7 @@ const App = (() => {
             const titulares = (roster.roster ?? [])
                 .filter(j => j.starter === true && j.formationPlace >= 1 && j.formationPlace <= 11)
                 .sort((a, b) => a.formationPlace - b.formationPlace);
-            if (titulares.length === 0) return '<p style="color:var(--text-muted); text-align:center; font-size:0.8rem; padding:0.5rem;">Sin titulares confirmados.</p>';
+            if (titulares.length === 0) return '<p style="color:var(--text-muted); text-align:center; font-size:0.8rem; padding:0.5rem;">🤐 El técnico se la guarda.</p>';
 
             const W = 280, H = 380;
             const coordsMap = _calcularPosicionesTacticas(titulares, W, H, roster.formation ?? '');
@@ -4567,6 +4567,9 @@ const App = (() => {
             // Rosters para pizarras
             const rosterHome = (summary.rosters ?? []).find(r => r.team?.id === home.team?.id);
             const rosterAway = (summary.rosters ?? []).find(r => r.team?.id === away.team?.id);
+            const _titularesDe = (roster) => (roster?.roster ?? [])
+                .filter(j => j.starter && j.formationPlace >= 1 && j.formationPlace <= 11);
+            const hayTitulares = _titularesDe(rosterHome).length > 0 || _titularesDe(rosterAway).length > 0;
 
             // Helper stat bar
             const _statBar = (valA, valB, label) => {
@@ -4592,7 +4595,7 @@ const App = (() => {
                 const titulares = (roster.roster ?? [])
                     .filter(j => j.starter && j.formationPlace >= 1 && j.formationPlace <= 11)
                     .sort((a,b) => a.formationPlace - b.formationPlace);
-                if (titulares.length === 0) return '<p style="color:var(--text-muted); text-align:center; font-size:0.8rem;">Sin titulares.</p>';
+                if (titulares.length === 0) return '<p style="color:var(--text-muted); text-align:center; font-size:0.8rem;">🤐 Se la guarda.</p>';
                 const W = 280, H = 380;
                 const coordsMap = _calcularPosicionesTacticas(titulares, W, H, roster.formation ?? '');
                 let tokens = '';
@@ -4675,12 +4678,12 @@ const App = (() => {
                         ` : _paywallInline('pro', 'Las estadísticas completas están disponibles en el plan Platea.')}
                     </div>` : ''}
 
-                    ${(rosterHome || rosterAway || !esPost) ? `
+                    ${(hayTitulares || !esPost) ? `
                     <!-- ALINEACIONES -->
                     <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
                         <h3 class="panel-title" style="text-align:center; color:var(--accent-neon); font-size:0.75rem; letter-spacing:2px; margin-bottom:1rem;">ALINEACIONES</h3>
                         ${!esPro ? _paywallInline('pro', 'Las alineaciones tácticas están disponibles en el plan Platea.') :
-                          (rosterHome || rosterAway) ? `
+                          hayTitulares ? `
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
                             <div>
                                 <p style="text-align:center; font-size:0.75rem; font-weight:700; color:var(--text-muted); margin-bottom:6px;">
