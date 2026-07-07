@@ -72,6 +72,10 @@ const App = (() => {
         const a = abbr.toUpperCase().trim();
         // Portero
         if (a === 'G' || a === 'GK') return 0;
+        // Categorías genéricas de una letra (ESPN a veces no manda sigla detallada)
+        if (a === 'D') return 1;
+        if (a === 'M') return 2;
+        if (a === 'F') return 4;
         // Defensas
         if (['LB','LWB','RB','RWB','CB','CB-L','CB-R','CD','CD-L','CD-R','SW'].includes(a)) return 1;
         if (a.startsWith('CB') || a.startsWith('CD')) return 1;
@@ -81,8 +85,8 @@ const App = (() => {
         if (['CAM','AM','AM-L','AM-R','LW','RW','LF','RF','WF'].includes(a)) return 3;
         if (a.startsWith('AM') || a.startsWith('LW') || a.startsWith('RW')) return 3;
         // Delanteros
-        if (['ST','CF','F','FW','ST-L','ST-R','CF-L','CF-R'].includes(a)) return 4;
-        if (a.startsWith('ST') || a.startsWith('CF') || a === 'F' || a === 'FW') return 4;
+        if (['ST','CF','FW','ST-L','ST-R','CF-L','CF-R'].includes(a)) return 4;
+        if (a.startsWith('ST') || a.startsWith('CF') || a === 'FW') return 4;
         // Fallback por prefijo
         if (a.startsWith('L') || a.startsWith('R')) return 1;
         return 2;
@@ -4730,8 +4734,11 @@ const App = (() => {
             const convieneRefrescar = esLive || (esPre && horasHastaInicio <= 3 && horasHastaInicio > -1);
             if (convieneRefrescar) {
                 if (window._partidoRefreshInterval) clearInterval(window._partidoRefreshInterval);
+                const hashDeEstePartido = window.location.hash;
                 window._partidoRefreshInterval = setInterval(async () => {
-                    if (!document.querySelector('.page-container')) { clearInterval(window._partidoRefreshInterval); return; }
+                    // Si el usuario navegó a otra pantalla, la URL ya no es la de este
+                    // partido — frenamos el timer en vez de repintar encima de lo que ve.
+                    if (window.location.hash !== hashDeEstePartido) { clearInterval(window._partidoRefreshInterval); return; }
                     await renderPartido(eventId, ligaId);
                 }, 30000);
             }
