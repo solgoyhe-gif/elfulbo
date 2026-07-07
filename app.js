@@ -92,25 +92,49 @@ const App = (() => {
         return 2;
     };
 
-    // Calcula posiciones X/Y agrupando por sigla de posición (no formationPlace)
+    // Calcula posiciones X/Y. Prioriza el string de formación (ej "4-4-1-1") + el
+    // orden de formationPlace de ESPN para armar las líneas — es mucho más confiable
+    // que la sigla de posición de cada jugador, que a veces viene genérica
+    // ("D"/"M"/"F" en vez de "CB"/"CDM"/"AM") y no alcanza para distinguir líneas
+    // intermedias (ej: un 4-4-1-1 con el "1" de enganche terminaba mezclado con la defensa).
     const _calcularPosicionesTacticas = (titulares, svgW = 400, svgH = 560, formacionStr = '') => {
-        // Agrupar por fila táctica según sigla
-        const filas = {0:[], 1:[], 2:[], 3:[], 4:[]};
-        titulares.forEach(j => {
-            const fila = _filaDesigla(j.position?.abbreviation ?? '');
-            filas[fila].push(j);
-        });
+        const numsFormacion = (formacionStr || '').split('-').map(n => parseInt(n, 10)).filter(n => !isNaN(n) && n > 0);
+        const sumaFormacion = numsFormacion.reduce((a, b) => a + b, 0);
 
-        // Ordenar dentro de cada fila por orden X
-        Object.values(filas).forEach(grupo => {
-            grupo.sort((a, b) =>
-                _ordenPosicion(a.position?.abbreviation ?? '') -
-                _ordenPosicion(b.position?.abbreviation ?? '')
-            );
-        });
+        let filas;
+        if (numsFormacion.length && sumaFormacion === titulares.length - 1) {
+            // Formación reconocida: separamos al arquero, ordenamos el resto por
+            // formationPlace (orden táctico de ESPN, defensa → ataque) y los
+            // repartimos exactamente según los números de la formación.
+            const arquero = titulares.find(j => _filaDesigla(j.position?.abbreviation ?? '') === 0)
+                          ?? titulares.reduce((min, j) => ((j.formationPlace ?? 99) < (min?.formationPlace ?? 99) ? j : min), null);
+            const resto = titulares.filter(j => j !== arquero)
+                                    .sort((a, b) => (a.formationPlace ?? 0) - (b.formationPlace ?? 0));
+
+            filas = { 0: arquero ? [arquero] : [] };
+            let cursor = 0;
+            numsFormacion.forEach((cant, idx) => {
+                filas[idx + 1] = resto.slice(cursor, cursor + cant);
+                cursor += cant;
+            });
+        } else {
+            // Fallback: sin formación parseable, agrupamos por sigla de posición
+            filas = {0:[], 1:[], 2:[], 3:[], 4:[]};
+            titulares.forEach(j => {
+                const fila = _filaDesigla(j.position?.abbreviation ?? '');
+                filas[fila].push(j);
+            });
+            Object.values(filas).forEach(grupo => {
+                grupo.sort((a, b) =>
+                    _ordenPosicion(a.position?.abbreviation ?? '') -
+                    _ordenPosicion(b.position?.abbreviation ?? '')
+                );
+            });
+        }
 
         // Filas ocupadas de abajo (GK) hacia arriba (DEL)
-        const filasOcupadas = [0,1,2,3,4].filter(f => filas[f].length > 0);
+        const indicesFilas   = Object.keys(filas).map(Number).sort((a, b) => a - b);
+        const filasOcupadas  = indicesFilas.filter(f => filas[f].length > 0);
 
         const yGK  = svgH * 0.90;
         const yFWD = svgH * 0.12;
