@@ -4696,8 +4696,8 @@ const App = (() => {
                             </div>
                         </div>` : `
                         <p style="text-align:center; color:var(--text-muted); font-size:0.82rem; padding:1rem 0;">
-                            ⏳ Alineaciones aún no confirmadas.<br>
-                            <span style="font-size:0.75rem; opacity:0.75;">Se suelen publicar ~1 hora antes del partido.</span>
+                            🤐 El técnico se la guarda.<br>
+                            <span style="font-size:0.75rem; opacity:0.75;">El 11 sale ~1 hora antes del partido.</span>
                         </p>`}
                     </div>` : ''}
 
