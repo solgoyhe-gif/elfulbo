@@ -79,58 +79,35 @@ const App = (() => {
         // Defensas
         if (['LB','LWB','RB','RWB','CB','CB-L','CB-R','CD','CD-L','CD-R','SW'].includes(a)) return 1;
         if (a.startsWith('CB') || a.startsWith('CD')) return 1;
-        // Volantes defensivos / mediocampo base
-        if (['CDM','DM','CM','LM','RM','CM-L','CM-R'].includes(a)) return 2;
-        // Mediapuntas y extremos
-        if (['CAM','AM','AM-L','AM-R','LW','RW','LF','RF','WF'].includes(a)) return 3;
+        // Volantes defensivos / mediocampo base (incluye variantes L/R: RCM, LDM, etc.)
+        if (['CDM','DM','CM','LM','RM','CM-L','CM-R','RCM','LCM','RDM','LDM'].includes(a)) return 2;
+        // Mediapuntas y extremos (incluye variantes L/R: RAM, LAM)
+        if (['CAM','AM','AM-L','AM-R','LW','RW','LF','RF','WF','RAM','LAM'].includes(a)) return 3;
         if (a.startsWith('AM') || a.startsWith('LW') || a.startsWith('RW')) return 3;
         // Delanteros
-        if (['ST','CF','FW','ST-L','ST-R','CF-L','CF-R'].includes(a)) return 4;
+        if (['ST','CF','FW','ST-L','ST-R','CF-L','CF-R','SS'].includes(a)) return 4;
         if (a.startsWith('ST') || a.startsWith('CF') || a === 'FW') return 4;
-        // Fallback por prefijo
-        if (a.startsWith('L') || a.startsWith('R')) return 1;
+        // Sin match: por defecto al medio (más seguro que asumir defensa por prefijo L/R,
+        // que terminaba metiendo volantes tipo "RCM" en la línea de defensores)
         return 2;
     };
 
-    // Calcula posiciones X/Y. Prioriza el string de formación (ej "4-4-1-1") + el
-    // orden de formationPlace de ESPN para armar las líneas — es mucho más confiable
-    // que la sigla de posición de cada jugador, que a veces viene genérica
-    // ("D"/"M"/"F" en vez de "CB"/"CDM"/"AM") y no alcanza para distinguir líneas
-    // intermedias (ej: un 4-4-1-1 con el "1" de enganche terminaba mezclado con la defensa).
+    // Calcula posiciones X/Y agrupando por sigla de posición táctica (fila 0-4).
+    // Probamos usar formationPlace de ESPN como orden de profundidad (defensa→ataque)
+    // pero resultó ser una numeración tipo "camiseta clásica" (no secuencial por
+    // profundidad), así que mezclaba jugadores de líneas distintas. Volvemos a sigla.
     const _calcularPosicionesTacticas = (titulares, svgW = 400, svgH = 560, formacionStr = '') => {
-        const numsFormacion = (formacionStr || '').split('-').map(n => parseInt(n, 10)).filter(n => !isNaN(n) && n > 0);
-        const sumaFormacion = numsFormacion.reduce((a, b) => a + b, 0);
-
-        let filas;
-        if (numsFormacion.length && sumaFormacion === titulares.length - 1) {
-            // Formación reconocida: separamos al arquero, ordenamos el resto por
-            // formationPlace (orden táctico de ESPN, defensa → ataque) y los
-            // repartimos exactamente según los números de la formación.
-            const arquero = titulares.find(j => _filaDesigla(j.position?.abbreviation ?? '') === 0)
-                          ?? titulares.reduce((min, j) => ((j.formationPlace ?? 99) < (min?.formationPlace ?? 99) ? j : min), null);
-            const resto = titulares.filter(j => j !== arquero)
-                                    .sort((a, b) => (a.formationPlace ?? 0) - (b.formationPlace ?? 0));
-
-            filas = { 0: arquero ? [arquero] : [] };
-            let cursor = 0;
-            numsFormacion.forEach((cant, idx) => {
-                filas[idx + 1] = resto.slice(cursor, cursor + cant);
-                cursor += cant;
-            });
-        } else {
-            // Fallback: sin formación parseable, agrupamos por sigla de posición
-            filas = {0:[], 1:[], 2:[], 3:[], 4:[]};
-            titulares.forEach(j => {
-                const fila = _filaDesigla(j.position?.abbreviation ?? '');
-                filas[fila].push(j);
-            });
-            Object.values(filas).forEach(grupo => {
-                grupo.sort((a, b) =>
-                    _ordenPosicion(a.position?.abbreviation ?? '') -
-                    _ordenPosicion(b.position?.abbreviation ?? '')
-                );
-            });
-        }
+        const filas = {0:[], 1:[], 2:[], 3:[], 4:[]};
+        titulares.forEach(j => {
+            const fila = _filaDesigla(j.position?.abbreviation ?? '');
+            filas[fila].push(j);
+        });
+        Object.values(filas).forEach(grupo => {
+            grupo.sort((a, b) =>
+                _ordenPosicion(a.position?.abbreviation ?? '') -
+                _ordenPosicion(b.position?.abbreviation ?? '')
+            );
+        });
 
         // Filas ocupadas de abajo (GK) hacia arriba (DEL)
         const indicesFilas   = Object.keys(filas).map(Number).sort((a, b) => a - b);
@@ -5199,4 +5176,4 @@ const App = (() => {
     return { init };
 })();
 
-App.init();
+App.init();s
