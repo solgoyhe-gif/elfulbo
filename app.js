@@ -284,9 +284,10 @@ const App = (() => {
         // Estado desplegado (guardado en memoria para que sobreviva re-renders)
         if (!window._sidebarAccordion) window._sidebarAccordion = {};
         const acc = window._sidebarAccordion;
-        // Auto-abrir si la ruta activa está dentro de una sección
-        if (isLigasActive) acc.futbol = true;
-        if (activeHash.includes('#/other-sports')) acc.other = true;
+        // Auto-abrir solo la primera vez que se entra a esa sección
+        // (si el usuario ya lo cerró manualmente, no lo volvemos a abrir)
+        if (isLigasActive && acc.futbol === undefined) acc.futbol = true;
+        if (activeHash.includes('#/other-sports') && acc.other === undefined) acc.other = true;
 
         const _accordionBtn = (key, icon, label, isOpen) => `
             <button class="sidebar-link sidebar-accordion-btn ${isOpen ? 'open' : ''}"
