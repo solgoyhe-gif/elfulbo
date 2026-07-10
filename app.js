@@ -370,6 +370,7 @@ const App = (() => {
                 </div>
             </aside>
             <div id="sidebar-wrapper" class="sidebar-page-wrapper ${abierta ? '' : 'sidebar-closed'}">
+                ${_renderTicker()}
         `;
     };
 
@@ -385,6 +386,95 @@ const App = (() => {
         tmp.innerHTML = nuevoHTML;
         const nuevoAside = tmp.querySelector('aside');
         if (nuevoAside) sb.replaceWith(nuevoAside);
+    };
+
+    // ── TICKER DE SCORES ─────────────────────────────────────────────────────
+    const TICKER_LIGAS = ['fifa.world','eng.1','esp.1','ger.1','ita.1','fra.1','uefa.champions','conmebol.libertadores','arg.1'];
+
+    const _renderTicker = () => `<div id="ticker-bar" class="ticker-bar"><div class="ticker-content"><span class="ticker-loading">⚽ Cargando resultados...</span></div></div>`;
+
+    const _initTicker = async () => {
+        const bar = document.getElementById('ticker-bar');
+        if (!bar) return;
+        const CF_WORKER = 'https://whistle.solgoyhe.workers.dev';
+        const hoy = new Date().toISOString().slice(0,10).replace(/-/g,'');
+
+        try {
+            const results = await Promise.allSettled(
+                TICKER_LIGAS.map(slug =>
+                    fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${hoy}`)}`)
+                        .then(r => r.ok ? r.json() : {})
+                        .then(d => (d.events ?? []).map(ev => {
+                            const comp = ev.competitions?.[0];
+                            const home = comp?.competitors?.find(c => c.homeAway === 'home');
+                            const away = comp?.competitors?.find(c => c.homeAway === 'away');
+                            const estado = comp?.status?.type?.state ?? 'pre';
+                            const hora = new Date(ev.date).toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
+                            const liga = ev.season?.slug ?? slug;
+                            return { home, away, estado, hora, liga, id: ev.id };
+                        }))
+                )
+            );
+
+            const partidos = results
+                .filter(r => r.status === 'fulfilled')
+                .flatMap(r => r.value)
+                .filter(p => p.home && p.away);
+
+            if (!partidos.length) {
+                bar.querySelector('.ticker-content').innerHTML = '<span class="ticker-item" style="opacity:0.5;">No hay partidos programados para hoy</span>';
+                return;
+            }
+
+            // Ordenar: en vivo primero, después finalizados, después próximos
+            const orden = { 'in': 0, 'post': 1, 'pre': 2 };
+            partidos.sort((a, b) => (orden[a.estado] ?? 3) - (orden[b.estado] ?? 3));
+
+            const items = partidos.map(p => {
+                const hAbbr = p.home.team?.abbreviation ?? '???';
+                const aAbbr = p.away.team?.abbreviation ?? '???';
+                const hScore = p.home.score ?? '';
+                const aScore = p.away.score ?? '';
+                const hLogo = p.home.team?.logo ? `<img src="${p.home.team.logo}" alt="" style="width:16px;height:16px;vertical-align:middle;">` : '';
+                const aLogo = p.away.team?.logo ? `<img src="${p.away.team.logo}" alt="" style="width:16px;height:16px;vertical-align:middle;">` : '';
+
+                if (p.estado === 'in') {
+                    return `<a href="#/partido?id=${p.id}" class="ticker-item ticker-live">
+                        <span class="ticker-live-dot"></span>
+                        ${hLogo} ${hAbbr} <b>${hScore}</b> - <b>${aScore}</b> ${aAbbr} ${aLogo}
+                    </a>`;
+                } else if (p.estado === 'post') {
+                    return `<a href="#/partido?id=${p.id}" class="ticker-item ticker-post">
+                        ${hLogo} ${hAbbr} <b>${hScore}</b> - <b>${aScore}</b> ${aAbbr} ${aLogo} <span style="opacity:0.5;">FT</span>
+                    </a>`;
+                } else {
+                    return `<a href="#/partido?id=${p.id}" class="ticker-item ticker-pre">
+                        ${hLogo} ${hAbbr} vs ${aAbbr} ${aLogo} <span style="opacity:0.5;">${p.hora}</span>
+                    </a>`;
+                }
+            }).join('<span class="ticker-sep">│</span>');
+
+            // Duplicar para loop continuo
+            const content = bar.querySelector('.ticker-content');
+            content.innerHTML = items + '<span class="ticker-sep">│</span>' + items;
+
+            // Calcular duración de la animación según el ancho
+            requestAnimationFrame(() => {
+                const w = content.scrollWidth / 2;
+                const speed = 60; // px por segundo
+                content.style.animationDuration = `${w / speed}s`;
+                content.classList.add('ticker-scroll');
+            });
+        } catch(err) {
+            console.error('[Ticker]', err);
+        }
+    };
+
+    // Refrescar ticker cada 2 minutos
+    const _startTickerRefresh = () => {
+        _initTicker();
+        if (window._tickerInterval) clearInterval(window._tickerInterval);
+        window._tickerInterval = setInterval(_initTicker, 120000);
     };
 
     // ── EFECTOS DE CARGA (SKELETONS) ──────────────────────────────────────────
@@ -5314,6 +5404,8 @@ const App = (() => {
                 ${_closeSidebarWrapper()}
                 `;
         }
+        // Iniciar/refrescar ticker después de cada render
+        if (autenticado) _startTickerRefresh();
     };
 
     const init = async () => {
