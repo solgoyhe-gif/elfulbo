@@ -237,17 +237,17 @@ body {
 /* Ticker de scores */
 .ticker-bar {
     width:100%;
-    background:rgba(5,6,11,0.85);
+    background:linear-gradient(180deg, rgba(10,13,26,0.95) 0%, rgba(5,6,11,0.9) 100%);
     border-bottom:1px solid var(--border);
     overflow:hidden;
     white-space:nowrap;
-    height:36px;
+    height:44px;
     display:flex;
     align-items:center;
     position:sticky;
     top:0;
     z-index:50;
-    backdrop-filter:blur(8px);
+    backdrop-filter:blur(12px);
 }
 .ticker-content {
     display:inline-flex;
@@ -265,37 +265,54 @@ body {
 .ticker-item {
     display:inline-flex;
     align-items:center;
-    gap:5px;
-    padding:0 12px;
-    font-size:0.78rem;
+    gap:6px;
+    padding:4px 16px;
+    font-size:0.82rem;
     font-family:var(--font-display);
     font-weight:600;
     color:var(--text-muted);
     text-decoration:none;
     cursor:pointer;
-    transition:color 0.2s;
+    transition:all 0.2s;
+    border-radius:6px;
+    margin:0 2px;
 }
-.ticker-item:hover { color:var(--text-main); }
-.ticker-item b { color:var(--text-main); }
-.ticker-live { color:var(--red-live) !important; }
-.ticker-live b { color:#fff; }
+.ticker-item:hover { background:rgba(255,255,255,0.05); color:var(--text-main); transform:scale(1.02); }
+.ticker-badge {
+    font-size:0.6rem;
+    font-weight:800;
+    letter-spacing:0.5px;
+    padding:2px 7px;
+    border-radius:4px;
+    white-space:nowrap;
+    flex-shrink:0;
+}
+.ticker-logo { width:20px; height:20px; vertical-align:middle; flex-shrink:0; }
+.ticker-team { color:var(--text-main); font-weight:700; font-size:0.82rem; }
+.ticker-score { font-family:var(--font-display); font-weight:900; font-size:0.9rem; color:#fff; letter-spacing:1px; }
+.ticker-vs { color:var(--muted); font-size:0.7rem; font-weight:400; }
+.ticker-hora { font-size:0.7rem; color:var(--muted); opacity:0.7; }
+.ticker-ft { font-size:0.65rem; font-weight:800; color:var(--muted); letter-spacing:1px; opacity:0.6; }
+.ticker-live .ticker-team { color:#fff; }
+.ticker-live .ticker-score { color:var(--red-live); text-shadow:0 0 8px rgba(255,77,109,0.4); }
 .ticker-live-dot {
-    width:6px; height:6px;
+    width:7px; height:7px;
     background:var(--red-live);
     border-radius:50%;
     animation:livePulse 1.2s infinite;
     flex-shrink:0;
+    box-shadow:0 0 6px rgba(255,77,109,0.5);
 }
-.ticker-post { color:var(--text-muted); }
-.ticker-pre { color:var(--muted); }
 .ticker-sep {
-    color:var(--border);
-    font-size:0.7rem;
-    padding:0 2px;
-    opacity:0.4;
+    width:1px;
+    height:24px;
+    background:var(--border);
+    margin:0 4px;
+    opacity:0.3;
+    flex-shrink:0;
 }
 .ticker-loading {
-    font-size:0.75rem;
+    font-size:0.8rem;
     color:var(--muted);
     padding:0 16px;
     animation:pulse 1.5s infinite;
