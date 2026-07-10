@@ -132,7 +132,6 @@ body {
     height:100vh; width:var(--sidebar-w-open);
     background:var(--bg-surface);
     border-right:1px solid var(--border);
-    display:flex; flex-direction:column;
     z-index:1000;
     transition:width .25s ease;
 }
@@ -176,10 +175,12 @@ body {
 
 /* Nav — dots estilo dc.html */
 .sidebar-nav {
-    flex:1 1 0;
-    overflow-y:scroll; overflow-x:hidden;
+    position:absolute;
+    top:var(--nav-height);
+    bottom:100px;
+    left:0; right:0;
+    overflow-y:auto; overflow-x:hidden;
     padding:12px 8px;
-    display:flex; flex-direction:column; gap:3px;
 }
 
 .sidebar-link {
@@ -235,10 +236,12 @@ body {
 
 /* Footer — banner promocional */
 .sidebar-footer {
+    position:absolute;
+    bottom:0; left:0; right:0;
     padding:10px 8px 16px;
     border-top:1px solid var(--border);
     display:flex; flex-direction:column; gap:5px;
-    flex-shrink:0;
+    background:var(--bg-surface);
 }
 .sidebar-plan {
     display:flex; align-items:center; gap:11px;
