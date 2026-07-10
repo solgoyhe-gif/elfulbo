@@ -92,16 +92,92 @@ const App = (() => {
         return 2;
     };
 
-    // Calcula posiciones X/Y agrupando por sigla de posición táctica (fila 0-4).
-    // Probamos usar formationPlace de ESPN como orden de profundidad (defensa→ataque)
-    // pero resultó ser una numeración tipo "camiseta clásica" (no secuencial por
-    // profundidad), así que mezclaba jugadores de líneas distintas. Volvemos a sigla.
+    // Puntaje de profundidad por sigla (0=arco, 10=punta pura).
+    // Usado para ORDENAR jugadores de atrás hacia adelante dentro de la formación.
+    const _profundidadPosicion = (abbr = '') => {
+        const a = abbr.toUpperCase().trim();
+        const mapa = {
+            'G':0,'GK':0,
+            'D':2,'LB':2,'LWB':2.5,'RB':2,'RWB':2.5,'CB':1.5,'CB-L':1.5,'CB-R':1.5,'CD':1.5,'CD-L':1.5,'CD-R':1.5,'SW':1.5,
+            'CDM':4,'DM':4,'RDM':4,'LDM':4,
+            'M':5,'CM':5,'LM':5,'RM':5,'CM-L':5,'CM-R':5,'RCM':5,'LCM':5,
+            'CAM':7,'AM':7,'AM-L':7,'AM-R':7,'RAM':7,'LAM':7,
+            'LW':8,'RW':8,'LF':8,'RF':8,'WF':8,'SS':8,
+            'F':9,'ST':9,'CF':9,'FW':9,'ST-L':9,'ST-R':9,'CF-L':9,'CF-R':9,
+        };
+        if (mapa[a] !== undefined) return mapa[a];
+        if (a.startsWith('CB') || a.startsWith('CD')) return 1.5;
+        if (a.startsWith('AM')) return 7;
+        if (a.startsWith('ST') || a.startsWith('CF')) return 9;
+        return 5; // default al medio
+    };
+
+    // Calcula posiciones X/Y.
+    // Paso 1: agrupar por sigla de posición (funciona bien cuando ESPN manda siglas
+    //         detalladas, como en Suiza 4-2-3-1).
+    // Paso 2: si hay formación válida y las cantidades no coinciden con el agrupamiento
+    //         por sigla, redistribuir — sacando jugadores de filas sobrepobladas y
+    //         promoviéndolos a la siguiente (por profundidad). Esto arregla casos como
+    //         Colombia 4-4-1-1 donde Rodríguez tiene sigla genérica "M" igual que los
+    //         otros 4 mediocampistas y termina 4-5-1 en vez de 4-4-1-1.
     const _calcularPosicionesTacticas = (titulares, svgW = 400, svgH = 560, formacionStr = '') => {
+        // ── Paso 1: agrupar por sigla ──
         const filas = {0:[], 1:[], 2:[], 3:[], 4:[]};
         titulares.forEach(j => {
             const fila = _filaDesigla(j.position?.abbreviation ?? '');
             filas[fila].push(j);
         });
+
+        // ── Paso 2: ajustar con formación si existe ──
+        const numsFormacion = (formacionStr || '').split('-').map(n => parseInt(n, 10)).filter(n => !isNaN(n) && n > 0);
+        const sumaFormacion = numsFormacion.reduce((a, b) => a + b, 0);
+
+        if (numsFormacion.length >= 2 && sumaFormacion === titulares.length - 1) {
+            // Armar el target: fila 0 = arquero (1), fila 1..N = números de la formación
+            const target = { 0: 1 };
+            numsFormacion.forEach((n, i) => { target[i + 1] = n; });
+
+            // Compactar filas vacías intermedias para que coincidan con la cantidad
+            // de líneas de la formación (ej: si sigla dio filas 0,1,2,4 pero formación
+            // tiene 4 líneas, las reindexamos a 0,1,2,3,4)
+            const filasConJugadores = [0, ...([1,2,3,4].filter(f => filas[f].length > 0))];
+            if (filasConJugadores.length - 1 < numsFormacion.length) {
+                // Hay menos filas ocupadas que líneas en la formación — hay que partir alguna
+                // Redistribuimos: juntamos todos los de campo, ordenamos por profundidad,
+                // y cortamos según la formación
+                const arqueros = filas[0];
+                const campo = [1,2,3,4].flatMap(f => filas[f]);
+                campo.sort((a, b) =>
+                    _profundidadPosicion(a.position?.abbreviation ?? '') -
+                    _profundidadPosicion(b.position?.abbreviation ?? '')
+                );
+                // Limpiar filas
+                for (let f = 0; f <= 4; f++) filas[f] = [];
+                filas[0] = arqueros;
+                let cursor = 0;
+                numsFormacion.forEach((cant, idx) => {
+                    filas[idx + 1] = campo.slice(cursor, cursor + cant);
+                    cursor += cant;
+                });
+            } else {
+                // Misma cantidad de filas o más — ajustar las que sobran/faltan
+                for (let f = 1; f <= numsFormacion.length; f++) {
+                    const esperado = target[f] ?? 0;
+                    while (filas[f].length > esperado && f + 1 <= numsFormacion.length) {
+                        // Sobra gente en esta fila: promover al más "adelantado" a la siguiente
+                        filas[f].sort((a, b) =>
+                            _profundidadPosicion(a.position?.abbreviation ?? '') -
+                            _profundidadPosicion(b.position?.abbreviation ?? '')
+                        );
+                        const promovido = filas[f].pop(); // el de mayor profundidad
+                        filas[f + 1] = filas[f + 1] ?? [];
+                        filas[f + 1].unshift(promovido);
+                    }
+                }
+            }
+        }
+
+        // Ordenar dentro de cada fila de izquierda a derecha
         Object.values(filas).forEach(grupo => {
             grupo.sort((a, b) =>
                 _ordenPosicion(a.position?.abbreviation ?? '') -
@@ -174,14 +250,70 @@ const App = (() => {
         const pm = planMeta[plan] ?? planMeta.free;
 
         const links = [
-            { href: '#/home',         icon: '🏠', label: 'Inicio',       active: activeHash === '#/home' },
-            { href: '#/ligas',        icon: '🏆', label: 'Ligas',        active: isLigasActive },
-            { href: '#/h2h',          icon: '⚔️', label: 'H2H',          active: activeHash === '#/h2h' },
-            { href: '#/info',         icon: '📰', label: 'Info',         active: activeHash === '#/info' },
-            { href: '#/other-sports', icon: '🎽', label: 'Other Sports', active: activeHash.includes('#/other-sports') },
-            { href: '#/awards',       icon: '🏅', label: 'Awards',       active: activeHash === '#/awards' },
-            { href: '#/perfil',       icon: '👤', label: 'Perfil',       active: activeHash === '#/perfil' },
+            { href: '#/home',   icon: '🏠', label: 'Inicio',  active: activeHash === '#/home' },
+            { href: '#/h2h',    icon: '⚔️', label: 'H2H',     active: activeHash === '#/h2h' },
+            { href: '#/info',   icon: '📰', label: 'Info',    active: activeHash === '#/info' },
+            { href: '#/awards', icon: '🏅', label: 'Awards',  active: activeHash === '#/awards' },
+            { href: '#/perfil', icon: '👤', label: 'Perfil',  active: activeHash === '#/perfil' },
         ];
+
+        // Deportes con sub-ligas desplegables
+        const isAdmin = window.location.hash.includes('admin=1');
+        const futbolGrupos = Object.entries(LIGAS)
+            .filter(([, g]) => !g.hidden || isAdmin)
+            .map(([gid, g]) => ({
+                nombre: g.nombre,
+                ligas: g.competiciones.map(c => ({
+                    id: c.id, nombre: c.nombre, flag: c.flag,
+                    active: activeHash.includes(`#/liga?id=${c.id}`)
+                }))
+            }));
+
+        const otherSportsItems = [
+            { id: 'f1',        nombre: 'Fórmula 1',          emoji: '🏎️', href: '#/other-sports?deporte=f1' },
+            { id: 'nba',       nombre: 'NBA',                emoji: '🏀', href: '#/other-sports?deporte=nba' },
+            { id: 'nfl',       nombre: 'NFL',                emoji: '🏈', href: '#/other-sports?deporte=nfl' },
+            { id: 'tennis',    nombre: 'Tenis',              emoji: '🎾', href: '#/other-sports?deporte=tennis' },
+            { id: 'golf',      nombre: 'Golf',               emoji: '⛳', href: '#/other-sports?deporte=golf' },
+            { id: 'hockey',    nombre: 'Hockey sobre Hielo', emoji: '🏒', href: '#/other-sports?deporte=hockey' },
+            { id: 'mma',       nombre: 'MMA',                emoji: '🥊', href: '#/other-sports?deporte=mma' },
+            { id: 'rugby',     nombre: 'Rugby',              emoji: '🏉', href: '#/other-sports?deporte=rugby' },
+            { id: 'patin',     nombre: 'Patín sobre Hielo',  emoji: '⛸️', href: '#/other-sports?deporte=patin' },
+        ];
+
+        // Estado desplegado (guardado en memoria para que sobreviva re-renders)
+        if (!window._sidebarAccordion) window._sidebarAccordion = {};
+        const acc = window._sidebarAccordion;
+        // Auto-abrir si la ruta activa está dentro de una sección
+        if (isLigasActive) acc.futbol = true;
+        if (activeHash.includes('#/other-sports')) acc.other = true;
+
+        const _accordionBtn = (key, icon, label, isOpen) => `
+            <button class="sidebar-link sidebar-accordion-btn ${isOpen ? 'open' : ''}"
+                onclick="window._sidebarAccordion['${key}'] = !window._sidebarAccordion['${key}']; window._refreshSidebar();"
+                style="width:100%; display:flex; align-items:center; justify-content:space-between;">
+                <span style="display:flex; align-items:center; gap:0;">
+                    <span class="sidebar-icon">${icon}</span>
+                    <span class="sidebar-label">${label}</span>
+                </span>
+                <span class="sidebar-label sidebar-chevron" style="font-size:0.6rem; opacity:0.5; transition:transform 0.2s; transform:rotate(${isOpen ? '90deg' : '0deg'});">▶</span>
+            </button>`;
+
+        const futbolSublinks = acc.futbol ? futbolGrupos.map(g => `
+            <div class="sidebar-subgroup">
+                <div class="sidebar-sublabel">${g.nombre}</div>
+                ${g.ligas.map(l => `
+                    <a href="#/liga?id=${l.id}" class="sidebar-link sidebar-sublink ${l.active ? 'active' : ''}">
+                        <span class="sidebar-icon" style="font-size:0.85rem;">${l.flag}</span>
+                        <span class="sidebar-label">${l.nombre}</span>
+                    </a>`).join('')}
+            </div>`).join('') : '';
+
+        const otherSublinks = acc.other ? otherSportsItems.map(s => `
+            <a href="${s.href}" class="sidebar-link sidebar-sublink ${activeHash.includes(s.id) ? 'active' : ''}">
+                <span class="sidebar-icon" style="font-size:0.85rem;">${s.emoji}</span>
+                <span class="sidebar-label">${s.nombre}</span>
+            </a>`).join('') : '';
 
         return `
             <aside id="app-sidebar" class="sidebar ${abierta ? '' : 'closed'}">
@@ -199,7 +331,22 @@ const App = (() => {
                     </button>
                 </div>
                 <nav class="sidebar-nav">
-                    ${links.map(l => `
+                    <a href="#/home" class="sidebar-link ${activeHash === '#/home' ? 'active' : ''}">
+                        <span class="sidebar-icon">🏠</span>
+                        <span class="sidebar-label">Inicio</span>
+                    </a>
+
+                    ${_accordionBtn('futbol', '⚽', 'Fútbol', acc.futbol)}
+                    <div class="sidebar-accordion-body ${acc.futbol ? 'open' : ''}">
+                        ${futbolSublinks}
+                    </div>
+
+                    ${_accordionBtn('other', '🎽', 'Other Sports', acc.other)}
+                    <div class="sidebar-accordion-body ${acc.other ? 'open' : ''}">
+                        ${otherSublinks}
+                    </div>
+
+                    ${links.filter(l => l.href !== '#/home').map(l => `
                         <a href="${l.href}" class="sidebar-link ${l.active ? 'active' : ''}">
                             <span class="sidebar-icon">${l.icon}</span>
                             <span class="sidebar-label">${l.label}</span>
@@ -227,6 +374,17 @@ const App = (() => {
 
     const _closeSidebarWrapper = () => window.FirebaseAuth?.isAuthenticated() ? '</div>' : '';
     window._sidebarToggle = _sidebarToggle;
+    window._refreshSidebar = () => {
+        const sb = document.getElementById('app-sidebar');
+        if (!sb) return;
+        const hash = window.location.hash || '#/home';
+        const nuevoHTML = renderNavbar(hash);
+        // Extraer solo el <aside> del HTML generado y reemplazarlo
+        const tmp = document.createElement('div');
+        tmp.innerHTML = nuevoHTML;
+        const nuevoAside = tmp.querySelector('aside');
+        if (nuevoAside) sb.replaceWith(nuevoAside);
+    };
 
     // ── EFECTOS DE CARGA (SKELETONS) ──────────────────────────────────────────
     const _skeletonTabla = () => {
@@ -5176,4 +5334,4 @@ const App = (() => {
     return { init };
 })();
 
-App.init();s
+App.init();
