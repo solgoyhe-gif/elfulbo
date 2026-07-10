@@ -389,9 +389,20 @@ const App = (() => {
     };
 
     // ── TICKER DE SCORES ─────────────────────────────────────────────────────
-    const TICKER_LIGAS = ['fifa.world','eng.1','esp.1','ger.1','ita.1','fra.1','uefa.champions','conmebol.libertadores','arg.1'];
+    // Fuentes de datos: fútbol (ligas principales) + otros deportes
+    const TICKER_SOURCES = [
+        // Fútbol
+        ...['fifa.world','eng.1','esp.1','ger.1','ita.1','fra.1','uefa.champions','conmebol.libertadores','arg.1']
+            .map(slug => ({ sport: 'soccer', slug, emoji: '⚽', color: '#2FD98B', label: slug.split('.')[0].toUpperCase() })),
+        // Otros deportes
+        { sport: 'basketball/nba',  slug: null, emoji: '🏀', color: '#FF6B35', label: 'NBA' },
+        { sport: 'hockey/nhl',      slug: null, emoji: '🏒', color: '#6CABDD', label: 'NHL' },
+        { sport: 'baseball/mlb',    slug: null, emoji: '⚾', color: '#E63946', label: 'MLB' },
+        { sport: 'football/nfl',    slug: null, emoji: '🏈', color: '#8B5CF6', label: 'NFL' },
+        { sport: 'mma/ufc',         slug: null, emoji: '🥊', color: '#FF4D6D', label: 'UFC' },
+    ];
 
-    const _renderTicker = () => `<div id="ticker-bar" class="ticker-bar"><div class="ticker-content"><span class="ticker-loading">⚽ Cargando resultados...</span></div></div>`;
+    const _renderTicker = () => `<div id="ticker-bar" class="ticker-bar"><div class="ticker-content"><span class="ticker-loading">🏟️ Cargando eventos del día...</span></div></div>`;
 
     const _initTicker = async () => {
         const bar = document.getElementById('ticker-bar');
@@ -401,8 +412,11 @@ const App = (() => {
 
         try {
             const results = await Promise.allSettled(
-                TICKER_LIGAS.map(slug =>
-                    fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${hoy}`)}`)
+                TICKER_SOURCES.map(src => {
+                    const url = src.slug
+                        ? `https://site.api.espn.com/apis/site/v2/sports/soccer/${src.slug}/scoreboard?dates=${hoy}`
+                        : `https://site.api.espn.com/apis/site/v2/sports/${src.sport}/scoreboard?dates=${hoy}`;
+                    return fetch(`${CF_WORKER}/?url=${encodeURIComponent(url)}`)
                         .then(r => r.ok ? r.json() : {})
                         .then(d => (d.events ?? []).map(ev => {
                             const comp = ev.competitions?.[0];
@@ -410,10 +424,9 @@ const App = (() => {
                             const away = comp?.competitors?.find(c => c.homeAway === 'away');
                             const estado = comp?.status?.type?.state ?? 'pre';
                             const hora = new Date(ev.date).toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
-                            const liga = ev.season?.slug ?? slug;
-                            return { home, away, estado, hora, liga, id: ev.id };
-                        }))
-                )
+                            return { home, away, estado, hora, id: ev.id, emoji: src.emoji, color: src.color, label: src.label, sport: src.sport };
+                        }));
+                })
             );
 
             const partidos = results
@@ -422,7 +435,7 @@ const App = (() => {
                 .filter(p => p.home && p.away);
 
             if (!partidos.length) {
-                bar.querySelector('.ticker-content').innerHTML = '<span class="ticker-item" style="opacity:0.5;">No hay partidos programados para hoy</span>';
+                bar.querySelector('.ticker-content').innerHTML = '<span class="ticker-item" style="opacity:0.5;">🏟️ No hay eventos programados para hoy</span>';
                 return;
             }
 
@@ -431,37 +444,49 @@ const App = (() => {
             partidos.sort((a, b) => (orden[a.estado] ?? 3) - (orden[b.estado] ?? 3));
 
             const items = partidos.map(p => {
-                const hAbbr = p.home.team?.abbreviation ?? '???';
-                const aAbbr = p.away.team?.abbreviation ?? '???';
+                const hName = p.home.team?.abbreviation ?? p.home.team?.shortDisplayName ?? '???';
+                const aName = p.away.team?.abbreviation ?? p.away.team?.shortDisplayName ?? '???';
                 const hScore = p.home.score ?? '';
                 const aScore = p.away.score ?? '';
-                const hLogo = p.home.team?.logo ? `<img src="${p.home.team.logo}" alt="" style="width:16px;height:16px;vertical-align:middle;">` : '';
-                const aLogo = p.away.team?.logo ? `<img src="${p.away.team.logo}" alt="" style="width:16px;height:16px;vertical-align:middle;">` : '';
+                const hLogo = p.home.team?.logo ? `<img src="${p.home.team.logo}" alt="" class="ticker-logo">` : '';
+                const aLogo = p.away.team?.logo ? `<img src="${p.away.team.logo}" alt="" class="ticker-logo">` : '';
+                const badge = `<span class="ticker-badge" style="background:${p.color}20; color:${p.color};">${p.emoji} ${p.label}</span>`;
 
                 if (p.estado === 'in') {
                     return `<a href="#/partido?id=${p.id}" class="ticker-item ticker-live">
+                        ${badge}
                         <span class="ticker-live-dot"></span>
-                        ${hLogo} ${hAbbr} <b>${hScore}</b> - <b>${aScore}</b> ${aAbbr} ${aLogo}
+                        ${hLogo} <span class="ticker-team">${hName}</span>
+                        <span class="ticker-score" style="color:${p.color};">${hScore} - ${aScore}</span>
+                        <span class="ticker-team">${aName}</span> ${aLogo}
                     </a>`;
                 } else if (p.estado === 'post') {
                     return `<a href="#/partido?id=${p.id}" class="ticker-item ticker-post">
-                        ${hLogo} ${hAbbr} <b>${hScore}</b> - <b>${aScore}</b> ${aAbbr} ${aLogo} <span style="opacity:0.5;">FT</span>
+                        ${badge}
+                        ${hLogo} <span class="ticker-team">${hName}</span>
+                        <span class="ticker-score">${hScore} - ${aScore}</span>
+                        <span class="ticker-team">${aName}</span> ${aLogo}
+                        <span class="ticker-ft">FT</span>
                     </a>`;
                 } else {
                     return `<a href="#/partido?id=${p.id}" class="ticker-item ticker-pre">
-                        ${hLogo} ${hAbbr} vs ${aAbbr} ${aLogo} <span style="opacity:0.5;">${p.hora}</span>
+                        ${badge}
+                        ${hLogo} <span class="ticker-team">${hName}</span>
+                        <span class="ticker-vs">vs</span>
+                        <span class="ticker-team">${aName}</span> ${aLogo}
+                        <span class="ticker-hora">${p.hora}</span>
                     </a>`;
                 }
-            }).join('<span class="ticker-sep">│</span>');
+            }).join('<span class="ticker-sep"></span>');
 
             // Duplicar para loop continuo
             const content = bar.querySelector('.ticker-content');
-            content.innerHTML = items + '<span class="ticker-sep">│</span>' + items;
+            content.innerHTML = items + '<span class="ticker-sep"></span>' + items;
 
             // Calcular duración de la animación según el ancho
             requestAnimationFrame(() => {
                 const w = content.scrollWidth / 2;
-                const speed = 60; // px por segundo
+                const speed = 50; // px por segundo (más lento para leer mejor)
                 content.style.animationDuration = `${w / speed}s`;
                 content.classList.add('ticker-scroll');
             });
