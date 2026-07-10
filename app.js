@@ -407,8 +407,11 @@ const App = (() => {
     const _initTicker = async () => {
         const bar = document.getElementById('ticker-bar');
         if (!bar) return;
+        const content = bar.querySelector('.ticker-content');
+        if (!content) return;
         const CF_WORKER = 'https://whistle.solgoyhe.workers.dev';
         const hoy = new Date().toISOString().slice(0,10).replace(/-/g,'');
+        // No tocar el contenido actual mientras carga — solo lo reemplazamos cuando tenemos datos nuevos
 
         try {
             const results = await Promise.allSettled(
@@ -435,7 +438,7 @@ const App = (() => {
                 .filter(p => p.home && p.away);
 
             if (!partidos.length) {
-                bar.querySelector('.ticker-content').innerHTML = '<span class="ticker-item" style="opacity:0.5;">🏟️ No hay eventos programados para hoy</span>';
+                content.innerHTML = '<span class="ticker-item" style="opacity:0.5;">🏟️ No hay eventos programados para hoy</span>';
                 return;
             }
 
@@ -480,7 +483,6 @@ const App = (() => {
             }).join('<span class="ticker-sep"></span>');
 
             // Duplicar para loop continuo
-            const content = bar.querySelector('.ticker-content');
             content.innerHTML = items + '<span class="ticker-sep"></span>' + items;
 
             // Calcular duración de la animación según el ancho
