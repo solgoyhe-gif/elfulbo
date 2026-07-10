@@ -4670,12 +4670,219 @@ const App = (() => {
             const hoyAR = new Date(new Date().toLocaleString('en-US', {timeZone:'America/Argentina/Buenos_Aires'}));
             const fecha = `${hoyAR.getFullYear()}${String(hoyAR.getMonth()+1).padStart(2,'0')}${String(hoyAR.getDate()).padStart(2,'0')}`;
 
+            const container = document.getElementById('other-sports-content');
+            if (!container) return;
+
+            // ── NBA / NFL / MLB / NHL: vista con tabs ────────────────────────
+            const DEPORTES_CON_STATS = {
+                'basketball/nba':  { standingsPath: 'basketball/nba',  label: 'NBA',  statNames: ['PTS','REB','AST','STL','BLK'] },
+                'basketball/wnba': { standingsPath: 'basketball/wnba', label: 'WNBA', statNames: ['PTS','REB','AST','STL','BLK'] },
+                'football/nfl':    { standingsPath: 'football/nfl',    label: 'NFL',  statNames: ['YDS','TD','INT','SACK','FUM'] },
+                'baseball/mlb':    { standingsPath: 'baseball/mlb',    label: 'MLB',  statNames: ['HR','RBI','AVG','ERA','SO'] },
+                'hockey/nhl':      { standingsPath: 'hockey/nhl',      label: 'NHL',  statNames: ['G','A','PTS','+/-','SV%'] },
+            };
+
+            const deporteStats = DEPORTES_CON_STATS[ligaActual.slug];
+            if (deporteStats) {
+                // Tab activa (por defecto "partidos")
+                const tabActiva = window._osTab ?? 'partidos';
+
+                const tabsHtml = `
+                    <div style="display:flex; gap:4px; margin-bottom:1.2rem; border-bottom:1px solid var(--border-glass); padding-bottom:8px;">
+                        ${['partidos','posiciones','líderes'].map(t => `
+                            <button onclick="window._osTab='${t}'; document.getElementById('other-sports-content').innerHTML='<div style=\\'text-align:center;padding:2rem;\\'>Cargando...</div>'; window._loadOSTab();"
+                                style="padding:8px 18px; border:none; border-bottom:2px solid ${tabActiva === t ? 'var(--accent-neon)' : 'transparent'};
+                                background:${tabActiva === t ? 'rgba(61,111,255,0.1)' : 'transparent'};
+                                color:${tabActiva === t ? 'var(--accent-neon)' : 'var(--text-muted)'};
+                                cursor:pointer; font-family:var(--font-heading); font-weight:700; font-size:0.82rem;
+                                border-radius:6px 6px 0 0; transition:all 0.2s;">
+                                ${t === 'partidos' ? '📅 Partidos' : t === 'posiciones' ? '🏆 Posiciones' : '⭐ Líderes'}
+                            </button>`).join('')}
+                    </div>`;
+
+                // Función global para cargar tab sin re-renderizar toda la vista
+                window._loadOSTab = async () => {
+                    const c = document.getElementById('other-sports-content');
+                    if (!c) return;
+                    const tab = window._osTab ?? 'partidos';
+
+                    if (tab === 'partidos') {
+                        const url = `https://site.api.espn.com/apis/site/v2/sports/${ligaActual.slug}/scoreboard?dates=${fecha}`;
+                        const res = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(url)}`);
+                        const data = res.ok ? await res.json() : {};
+                        const eventos = data.events ?? [];
+
+                        c.innerHTML = tabsHtml + (eventos.length === 0
+                            ? `<div class="glass-panel" style="padding:2rem; text-align:center;">
+                                <p style="font-size:2rem; margin-bottom:0.5rem;">${deporteActual.emoji}</p>
+                                <p style="color:var(--text-muted);">Sin partidos hoy para ${deporteStats.label}.</p>
+                               </div>`
+                            : eventos.sort((a,b) => {
+                                const est = ev => ev.competitions?.[0]?.status?.type?.state;
+                                const p = s => s==='in'?0:s==='post'?1:2;
+                                return p(est(a)) - p(est(b));
+                            }).map(ev => {
+                                const comp = ev.competitions?.[0];
+                                const home = comp?.competitors?.find(c => c.homeAway === 'home');
+                                const away = comp?.competitors?.find(c => c.homeAway === 'away');
+                                const estado = comp?.status?.type?.state ?? 'pre';
+                                const esLive = estado === 'in';
+                                const esPost = estado === 'post';
+                                const desc = comp?.status?.type?.shortDetail ?? '';
+                                const clock = comp?.status?.displayClock ?? '';
+                                const fechaEv = new Date(ev.date);
+                                const horaAR = fechaEv.toLocaleTimeString('es-AR', {timeZone:'America/Argentina/Buenos_Aires', hour:'2-digit', minute:'2-digit'});
+                                const homeLogo = home?.team?.logo ?? '';
+                                const awayLogo = away?.team?.logo ?? '';
+                                const homeNombre = home?.team?.displayName ?? '?';
+                                const awayNombre = away?.team?.displayName ?? '?';
+                                const homeScore = home?.score ?? '-';
+                                const awayScore = away?.score ?? '-';
+                                const logoHtml = (logo, nombre) => logo
+                                    ? `<img src="${logo}" width="28" height="28" style="object-fit:contain;" onerror="this.style.display='none'">`
+                                    : `<span style="font-size:1.1rem; font-weight:800;">${nombre.charAt(0)}</span>`;
+                                return `
+                                    <div class="glass-panel" style="padding:1.2rem; margin-bottom:1rem; cursor:pointer;"
+                                        onclick="window.location.hash='#/partido?id=${ev.id}&liga=${ligaActual.slug}'">
+                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+                                            <span style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">${deporteStats.label} · ${desc}</span>
+                                            ${esLive
+                                                ? `<span style="background:#ff4757; color:#fff; padding:3px 10px; border-radius:12px; font-size:0.7rem; font-weight:800; animation:pulse 1s infinite;">● EN VIVO ${clock}</span>`
+                                                : esPost
+                                                    ? `<span style="background:rgba(255,255,255,0.08); color:var(--text-muted); padding:3px 10px; border-radius:12px; font-size:0.7rem;">FINALIZADO</span>`
+                                                    : `<span style="color:var(--accent-neon); font-family:var(--font-heading); font-weight:700; font-size:0.85rem;">${horaAR} ARG</span>`}
+                                        </div>
+                                        <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:0.8rem;">
+                                            <div style="display:flex; align-items:center; gap:8px;">
+                                                ${logoHtml(homeLogo, homeNombre)}
+                                                <span style="font-weight:600; font-size:0.9rem;">${homeNombre}</span>
+                                            </div>
+                                            <div style="font-family:var(--font-heading); font-size:${(esPost||esLive)?'1.8rem':'1.1rem'}; font-weight:900;
+                                                color:${(esPost||esLive)?'var(--text-main)':'var(--text-muted)'}; text-align:center; min-width:60px;">
+                                                ${(esPost||esLive) ? `${homeScore} - ${awayScore}` : 'vs'}
+                                            </div>
+                                            <div style="display:flex; align-items:center; gap:8px; justify-content:flex-end;">
+                                                <span style="font-weight:600; font-size:0.9rem;">${awayNombre}</span>
+                                                ${logoHtml(awayLogo, awayNombre)}
+                                            </div>
+                                        </div>
+                                    </div>`;
+                            }).join(''));
+
+                    } else if (tab === 'posiciones') {
+                        const url = `https://site.api.espn.com/apis/v2/sports/${deporteStats.standingsPath}/standings`;
+                        const res = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(url)}`);
+                        const data = res.ok ? await res.json() : {};
+                        const children = data.children ?? [];
+
+                        let html = tabsHtml;
+                        children.forEach(conf => {
+                            const confName = conf.name ?? conf.abbreviation ?? 'Conference';
+                            const standings = conf.standings?.entries ?? [];
+                            standings.sort((a,b) => {
+                                const aW = a.stats?.find(s => s.name === 'wins')?.value ?? 0;
+                                const bW = b.stats?.find(s => s.name === 'wins')?.value ?? 0;
+                                return bW - aW;
+                            });
+
+                            html += `
+                                <div class="glass-panel" style="padding:1rem; margin-bottom:1.2rem;">
+                                    <h4 style="font-family:var(--font-heading); font-size:0.8rem; color:var(--accent-neon); letter-spacing:1.5px;
+                                        text-transform:uppercase; margin-bottom:0.8rem; padding-bottom:6px; border-bottom:1px solid var(--border-glass);">
+                                        ${confName}
+                                    </h4>
+                                    <div style="display:grid; grid-template-columns:30px 1fr repeat(4, 45px); gap:4px 8px; font-size:0.78rem; align-items:center;">
+                                        <span style="color:var(--text-muted); font-weight:700;">#</span>
+                                        <span style="color:var(--text-muted); font-weight:700;">Equipo</span>
+                                        <span style="color:var(--text-muted); font-weight:700; text-align:center;">W</span>
+                                        <span style="color:var(--text-muted); font-weight:700; text-align:center;">L</span>
+                                        <span style="color:var(--text-muted); font-weight:700; text-align:center;">%</span>
+                                        <span style="color:var(--text-muted); font-weight:700; text-align:center;">GB</span>
+                                        ${standings.map((entry, i) => {
+                                            const team = entry.team ?? {};
+                                            const logo = team.logos?.[0]?.href ?? '';
+                                            const wins = entry.stats?.find(s => s.name === 'wins')?.displayValue ?? '-';
+                                            const losses = entry.stats?.find(s => s.name === 'losses')?.displayValue ?? '-';
+                                            const pct = entry.stats?.find(s => s.name === 'winPercent')?.displayValue ?? entry.stats?.find(s => s.name === 'winpercent')?.displayValue ?? '-';
+                                            const gb = entry.stats?.find(s => s.name === 'gamesBehind')?.displayValue ?? '-';
+                                            const posColor = i < 6 ? '#2FD98B' : i < 10 ? '#F5C33B' : 'var(--text-muted)';
+                                            return `
+                                                <span style="font-weight:800; color:${posColor};">${i+1}</span>
+                                                <div style="display:flex; align-items:center; gap:6px; overflow:hidden;">
+                                                    ${logo ? `<img src="${logo}" width="20" height="20" style="flex-shrink:0; object-fit:contain;">` : ''}
+                                                    <span style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${team.displayName ?? team.name ?? '?'}</span>
+                                                </div>
+                                                <span style="text-align:center; font-weight:700;">${wins}</span>
+                                                <span style="text-align:center;">${losses}</span>
+                                                <span style="text-align:center; color:var(--text-muted);">${pct}</span>
+                                                <span style="text-align:center; color:var(--text-muted);">${gb}</span>`;
+                                        }).join('')}
+                                    </div>
+                                </div>`;
+                        });
+                        c.innerHTML = html;
+
+                    } else if (tab === 'líderes') {
+                        // Leaders: usamos el scoreboard que trae leaders globales
+                        const url = `https://site.api.espn.com/apis/site/v2/sports/${ligaActual.slug}/scoreboard`;
+                        const res = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(url)}`);
+                        const data = res.ok ? await res.json() : {};
+                        const leaders = data.leagues?.[0]?.leaders ?? data.leaders ?? [];
+
+                        let html = tabsHtml;
+                        if (!leaders.length) {
+                            html += `<div class="glass-panel" style="padding:2rem; text-align:center;">
+                                <p style="color:var(--text-muted);">Líderes no disponibles en este momento.</p>
+                            </div>`;
+                        } else {
+                            leaders.forEach(cat => {
+                                const catName = cat.displayName ?? cat.name ?? 'Stat';
+                                const entries = cat.leaders ?? [];
+                                html += `
+                                    <div class="glass-panel" style="padding:1rem; margin-bottom:1rem;">
+                                        <h4 style="font-family:var(--font-heading); font-size:0.8rem; color:#F5C33B; letter-spacing:1.5px;
+                                            text-transform:uppercase; margin-bottom:0.8rem; padding-bottom:6px; border-bottom:1px solid var(--border-glass);">
+                                            ⭐ ${catName}
+                                        </h4>
+                                        ${entries.slice(0, 10).map((l, i) => {
+                                            const athlete = l.athlete ?? {};
+                                            const headshot = athlete.headshot ?? '';
+                                            const teamName = l.team?.displayName ?? '';
+                                            const posColor = i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : 'var(--text-muted)';
+                                            return `
+                                                <div style="display:grid; grid-template-columns:26px 36px 1fr auto; align-items:center; gap:8px;
+                                                    padding:8px 4px; ${i < entries.length - 1 ? 'border-bottom:1px solid rgba(255,255,255,0.04);' : ''}">
+                                                    <span style="font-weight:900; font-size:0.85rem; color:${posColor};">${i+1}</span>
+                                                    ${headshot
+                                                        ? `<img src="${headshot}" width="32" height="32" style="border-radius:50%; object-fit:cover; background:rgba(255,255,255,0.05);">`
+                                                        : `<div style="width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.7rem;">${(athlete.displayName ?? '?').charAt(0)}</div>`}
+                                                    <div style="overflow:hidden;">
+                                                        <div style="font-weight:700; font-size:0.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${athlete.displayName ?? '?'}</div>
+                                                        <div style="font-size:0.68rem; color:var(--text-muted);">${teamName}</div>
+                                                    </div>
+                                                    <div style="font-family:var(--font-heading); font-weight:900; font-size:1.1rem; color:${posColor};">
+                                                        ${l.displayValue ?? l.value ?? '-'}
+                                                    </div>
+                                                </div>`;
+                                        }).join('')}
+                                    </div>`;
+                            });
+                        }
+                        c.innerHTML = html;
+                    }
+                };
+
+                container.innerHTML = tabsHtml + '<div style="text-align:center;padding:2rem;"><div style="width:36px;height:36px;border:3px solid var(--accent-neon);border-right-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto;"></div></div>';
+                await window._loadOSTab();
+                return;
+            }
+            // ── FIN deportes con stats ────────────────────────────────────────
+
             const url = `https://site.api.espn.com/apis/site/v2/sports/${ligaActual.slug}/scoreboard?dates=${fecha}`;
             const res = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(url)}`);
             const data = res.ok ? await res.json() : {};
             const eventos = data.events ?? [];
 
-            const container = document.getElementById('other-sports-content');
             if (!container) return;
 
             if (eventos.length === 0) {
