@@ -215,6 +215,24 @@ body {
 
 .sidebar-divider { height:1px; background:var(--border); margin:6px 12px; }
 
+/* Accordion */
+.sidebar-accordion-btn { cursor:pointer; border:none; background:none; text-align:left; }
+.sidebar-accordion-body { max-height:0; overflow:hidden; transition:max-height 0.25s ease; }
+.sidebar-accordion-body.open { max-height:800px; }
+.sidebar-subgroup { margin-bottom:4px; }
+.sidebar-sublabel {
+    font-size:0.6rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--muted); padding:8px 12px 2px 20px; opacity:0.7;
+}
+.sidebar.closed .sidebar-sublabel { display:none; }
+.sidebar-sublink {
+    padding:5px 12px 5px 24px !important; font-size:0.82rem !important;
+    min-height:auto !important;
+}
+.sidebar-sublink .sidebar-icon { font-size:0.8rem !important; width:22px !important; height:22px !important; }
+.sidebar.closed .sidebar-accordion-body { display:none; }
+.sidebar.closed .sidebar-chevron { display:none; }
+
 /* Footer — banner promocional */
 .sidebar-footer {
     padding:10px 8px 16px;
