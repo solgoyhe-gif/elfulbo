@@ -135,9 +135,8 @@ body {
     display:flex; flex-direction:column;
     z-index:1000;
     transition:width .25s ease;
-    overflow:hidden;
 }
-.sidebar.closed { width:var(--sidebar-w-closed); }
+.sidebar.closed { width:var(--sidebar-w-closed); overflow:hidden; }
 
 .sidebar-header {
     display:flex; align-items:center; justify-content:space-between;
@@ -177,9 +176,9 @@ body {
 
 /* Nav — dots estilo dc.html */
 .sidebar-nav {
-    height:calc(100vh - var(--nav-height) - 110px);
-    overflow-y:auto; overflow-x:hidden;
-    padding:12px 8px; 
+    flex:1 1 0;
+    overflow-y:scroll; overflow-x:hidden;
+    padding:12px 8px;
     display:flex; flex-direction:column; gap:3px;
 }
 
