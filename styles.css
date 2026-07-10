@@ -135,7 +135,7 @@ body {
     display:flex; flex-direction:column;
     z-index:1000;
     transition:width .25s ease;
-    overflow:hidden;
+    overflow-x:clip;
 }
 .sidebar.closed { width:var(--sidebar-w-closed); }
 
