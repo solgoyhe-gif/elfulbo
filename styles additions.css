@@ -165,6 +165,64 @@
 }
 .rail-next-vs { font-size:.66rem; color:var(--dim); flex-shrink:0; }
 
+/* ── Cronología: scroller horizontal ──────────────────────────────────────── */
+.crono-scroll { display:flex; gap:10px; overflow-x:auto; padding-bottom:4px; }
+
+/* ── Grupos (grilla 2×2 en la home) ───────────────────────────────────────── */
+.home-groups { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.hg-card {
+    background:var(--bg-card); border:1px solid var(--border);
+    border-radius:var(--r-md); padding:14px 15px;
+}
+.hg-head {
+    display:grid; grid-template-columns:1fr 28px 28px; gap:6px; align-items:center;
+    margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid var(--border);
+}
+.hg-name { font-family:var(--font-display); font-weight:700; font-size:.75rem; color:var(--violet); letter-spacing:.04em; }
+.hg-h    { font-family:var(--font-display); font-weight:600; font-size:.58rem; color:var(--dim); text-align:center; }
+.hg-row  {
+    display:grid; grid-template-columns:16px 22px 1fr 28px 28px; gap:8px;
+    align-items:center; padding:5px 0; cursor:pointer;
+}
+.hg-row:hover .hg-team { color:#fff; }
+.hg-pos  { font-family:var(--font-display); font-weight:700; font-size:.7rem; }
+.hg-pos.clasifica { color:var(--green-goal); }
+.hg-pos.resto     { color:var(--dim); }
+.hg-logo { width:20px; height:20px; object-fit:contain; }
+.hg-team {
+    font-family:var(--font-body); font-size:.75rem; color:var(--text-main);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.hg-pj  { font-family:var(--font-display); font-size:.72rem; color:var(--muted); text-align:center; }
+.hg-pts { font-family:var(--font-display); font-weight:700; font-size:.72rem; color:#fff; text-align:center; }
+
+/* ── Goleadores (rail) ────────────────────────────────────────────────────── */
+.scorer-row {
+    display:grid; grid-template-columns:18px 30px 1fr auto; gap:10px;
+    align-items:center; padding:8px 0;
+    border-bottom:1px solid rgba(255,255,255,.04);
+}
+.scorer-row:last-child { border-bottom:none; }
+.scorer-rank { font-family:var(--font-display); font-weight:700; font-size:.78rem; text-align:center; }
+.scorer-face {
+    width:30px; height:30px; border-radius:50%; position:relative;
+    background:var(--bg-card-inner); overflow:visible;
+}
+.scorer-face img.cara { width:30px; height:30px; border-radius:50%; object-fit:cover; }
+.scorer-face img.bandera {
+    position:absolute; bottom:-2px; right:-3px;
+    width:14px; height:14px; border-radius:50%; object-fit:cover;
+    box-shadow:0 0 0 2px var(--bg-card);
+}
+.scorer-name {
+    font-family:var(--font-body); font-weight:600; font-size:.78rem; color:var(--text-main);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.scorer-team { font-family:var(--font-body); font-size:.62rem; color:var(--dim); }
+.scorer-goals { display:flex; align-items:baseline; gap:4px; }
+.scorer-goals .n { font-family:var(--font-display); font-weight:700; font-size:1.05rem; color:var(--violet); }
+.scorer-goals .u { font-family:var(--font-body); font-size:.58rem; color:var(--dim); }
+
 /* ── Responsive ───────────────────────────────────────────────────────────── */
 @media (max-width:1080px) {
     .home-grid { grid-template-columns:minmax(0,1fr); }
@@ -172,6 +230,7 @@
 }
 @media (max-width:760px) {
     .home-rail { grid-template-columns:1fr; }
+    .home-groups { grid-template-columns:1fr; }
     .hero-grid { grid-template-columns:1fr; gap:14px; }
     .hero-side, .hero-side.away { flex-direction:column; text-align:center; }
     .hero-score { font-size:2.4rem; }

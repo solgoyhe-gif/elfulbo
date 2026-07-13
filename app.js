@@ -601,6 +601,9 @@ const App = (() => {
                         <div class="skel-cell" style="width:35%;height:16px;margin:0 auto;"></div>
                     </div>
 
+                    <!-- Cronología del partido destacado -->
+                    <div id="home-crono" class="glass-panel" style="display:none;"></div>
+
                     <!-- Partidos del día -->
                     <div>
                         <div class="home-section-head">
@@ -617,6 +620,12 @@ const App = (() => {
                             </div>
                         </div>
                     </div>
+
+                    <!-- Grupos del Mundial -->
+                    <div id="home-grupos" style="display:none;"></div>
+
+                    <!-- Noticias -->
+                    <div id="home-noticias" style="display:none;"></div>
 
                     <!-- Deportes elegidos -->
                     <div id="home-otros-deportes">
@@ -655,6 +664,11 @@ const App = (() => {
                       <div id="rail-live" class="rail-live">
                           <div class="panel-title" style="margin-bottom:.9rem;">Partido destacado</div>
                           <div class="skel-cell" style="height:56px;"></div>
+                      </div>
+                      <div id="rail-stats" class="glass-panel" style="display:none;"></div>
+                      <div id="rail-goleadores" class="glass-panel">
+                          <div class="panel-title">Máximos goleadores</div>
+                          <div class="skel-cell" style="height:38px;"></div>
                       </div>
                       <div id="rail-next" class="glass-panel">
                           <div class="panel-title">Próximos partidos</div>
@@ -734,6 +748,7 @@ const App = (() => {
         let _tab     = 'all';   // filtro activo de los tabs
         let _delDia  = [];      // partidos que se listan (hoy, o el rango si hoy no hay)
         let _delRango= [];      // todos los partidos de los próximos 7 días (para el rail)
+        let _temporada = new Date().getFullYear();  // la pisa el scoreboard si trae season.year
 
         const _estadoEv = (ev) => ev?.competitions?.[0]?.status?.type?.state ?? 'pre';
         const _catEv    = (ev) => { const s = _estadoEv(ev); return s === 'in' ? 'live' : s === 'post' ? 'finished' : 'upcoming'; };
@@ -893,6 +908,269 @@ const App = (() => {
             }
         };
 
+        // ── Fetch a ESPN vía el proxy de Cloudflare ──────────────────────────
+        const _espn = async (url) => {
+            const r = await fetch(CF_WORKER + '/?url=' + encodeURIComponent(url));
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        };
+
+        // ── Cronología + estadísticas del partido destacado ──────────────────
+        const _cargarDetallePartido = async (ev) => {
+            if (!ev) return;
+            let sum;
+            try { sum = await _espn(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary?event=${ev.id}`); }
+            catch { return; }
+
+            // ---- Cronología (keyEvents) ----
+            const TIPOS = {
+                goal:   { clase: 'goal',   label: 'Gol' },
+                yellow: { clase: 'yellow', label: 'T. Amarilla' },
+                red:    { clase: 'red',    label: 'T. Roja' },
+                sub:    { clase: 'sub',    label: 'Cambio' },
+            };
+            // ESPN manda tipos como "Goal", "Goal - Header", "Yellow Card", "Substitution",
+            // mezclados con ruido ("Kickoff", "Start Delay"…) que descartamos.
+            const clasificar = (texto = '') => {
+                const t = texto.toLowerCase();
+                if (t.includes('goal'))         return 'goal';
+                if (t.includes('yellow'))       return 'yellow';
+                if (t.includes('red'))          return 'red';
+                if (t.includes('substitution')) return 'sub';
+                return null;
+            };
+
+            const eventos = (sum.keyEvents ?? []).map(k => {
+                const tipo = clasificar(k.type?.text);
+                if (!tipo) return null;
+                return {
+                    tipo,
+                    min:     k.clock?.displayValue ?? '',
+                    jugador: k.participants?.[0]?.athlete?.displayName ?? '',
+                };
+            }).filter(Boolean);
+
+            const elCrono = document.getElementById('home-crono');
+            if (elCrono && eventos.length) {
+                elCrono.style.display = '';
+                elCrono.innerHTML = `
+                    <div class="panel-title">Cronología del partido</div>
+                    <div class="crono-scroll">
+                        ${eventos.map(e => `
+                            <div class="event-chip">
+                                <span class="event-icon ${TIPOS[e.tipo].clase}"></span>
+                                <div>
+                                    <div class="event-min">${e.min} <span style="color:var(--muted);font-weight:500;">${e.jugador}</span></div>
+                                    <div class="event-player">${TIPOS[e.tipo].label}</div>
+                                </div>
+                            </div>`).join('')}
+                    </div>`;
+            }
+
+            // ---- Estadísticas (boxscore) ----
+            const equipos = sum.boxscore?.teams ?? [];
+            const elStats = document.getElementById('rail-stats');
+            if (!elStats || equipos.length !== 2) return;
+
+            const valor = (i, clave) => {
+                const s = (equipos[i].statistics ?? []).find(x => x.name === clave);
+                return s ? s.displayValue : null;
+            };
+            const QUIERO = [
+                ['possessionPct',  'Posesión', true],
+                ['totalShots',     'Tiros',    false],
+                ['shotsOnTarget',  'A puerta', false],
+                ['wonCorners',     'Córners',  false],
+                ['foulsCommitted', 'Faltas',   false],
+            ];
+
+            const filas = QUIERO.map(([clave, label, esPct]) => {
+                const h = valor(0, clave), a = valor(1, clave);
+                if (h == null || a == null) return '';
+                const nh = parseFloat(h) || 0;
+                const na = parseFloat(a) || 0;
+                const total = nh + na;
+                const pctH = total ? Math.round(nh / total * 100) : 50;
+                const txt  = v => esPct ? v + '%' : v;
+                return `
+                    <div class="stat-bar-row">
+                        <div class="labels">
+                            <span class="lbl-val">${txt(h)}</span>
+                            <span class="lbl-name">${label}</span>
+                            <span class="lbl-val">${txt(a)}</span>
+                        </div>
+                        <div class="stat-bar-track">
+                            <div class="stat-bar-home"><div class="stat-bar-home-fill" style="width:${pctH}%;"></div></div>
+                            <div class="stat-bar-away"><div class="stat-bar-away-fill" style="width:${100 - pctH}%;"></div></div>
+                        </div>
+                    </div>`;
+            }).join('');
+
+            if (filas.trim()) {
+                const abrev = i => equipos[i].team?.abbreviation ?? '';
+                elStats.style.display = '';
+                elStats.innerHTML = `
+                    <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center;">
+                        <span>Estadísticas</span>
+                        <span style="font-family:var(--font-display);font-size:.62rem;">
+                            <span style="color:var(--blue);">${abrev(0)}</span>
+                            <span style="color:var(--muted);margin-left:8px;">${abrev(1)}</span>
+                        </span>
+                    </div>
+                    ${filas}`;
+            }
+        };
+
+        // ── Grupos del Mundial ───────────────────────────────────────────────
+        const _cargarGrupos = async () => {
+            const el = document.getElementById('home-grupos');
+            if (!el) return;
+            try {
+                const data = await _espn('https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings');
+                const grupos = (data.children ?? []).slice(0, 4).map(g => {
+                    // OJO: ESPN NO devuelve las entradas ordenadas. La posición real está
+                    // en note.rank (note.color trae el color oficial de clasificación).
+                    const equipos = (g.standings?.entries ?? []).map(e => {
+                        const st = {};
+                        (e.stats ?? []).forEach(s => {
+                            if (s.abbreviation) st[s.abbreviation] = s.displayValue ?? s.value;
+                            if (s.name)         st[s.name]         = s.displayValue ?? s.value;
+                        });
+                        return {
+                            pos:    Number(e.note?.rank ?? st['rank'] ?? 0) || 0,
+                            color:  e.note?.color ?? null,
+                            nombre: e.team?.displayName ?? e.team?.name ?? '?',
+                            logo:   e.team?.logos?.[0]?.href ?? '',
+                            pj:     st['GP'] ?? st['gamesPlayed'] ?? '0',
+                            pts:    st['P']  ?? st['points']      ?? '0',
+                        };
+                    }).sort((a, b) => (a.pos || 99) - (b.pos || 99));
+
+                    equipos.forEach((t, i) => { if (!t.pos) t.pos = i + 1; });
+                    return { nombre: g.name, equipos };
+                }).filter(g => g.equipos.length);
+
+                if (!grupos.length) return;
+
+                el.style.display = '';
+                el.innerHTML = `
+                    <div class="home-section-head">
+                        <span class="section-title" style="font-size:1rem;border:none;padding:0;margin:0;">Vista de Grupos</span>
+                        <a href="#/liga?id=world_cup" class="subsection-link">Ver todos →</a>
+                    </div>
+                    <div class="home-groups">
+                        ${grupos.map(g => {
+                            const ir = `window.location.hash='#/grupo?id=${encodeURIComponent(g.nombre)}'`;
+                            return `
+                            <div class="hg-card">
+                                <div class="hg-head">
+                                    <span class="hg-name">${g.nombre}</span>
+                                    <span class="hg-h">PJ</span>
+                                    <span class="hg-h">PTS</span>
+                                </div>
+                                ${g.equipos.map(t => `
+                                    <div class="hg-row" onclick="${ir}">
+                                        <span class="hg-pos ${t.color ? '' : 'resto'}" ${t.color ? `style="color:${t.color};"` : ''}>${t.pos}</span>
+                                        ${t.logo ? `<img class="hg-logo" src="${t.logo}" onerror="this.style.visibility='hidden'">` : '<span class="hg-logo"></span>'}
+                                        <span class="hg-team">${t.nombre}</span>
+                                        <span class="hg-pj">${t.pj}</span>
+                                        <span class="hg-pts">${t.pts}</span>
+                                    </div>`).join('')}
+                            </div>`;
+                        }).join('')}
+                    </div>`;
+            } catch (e) { /* si falla, la sección queda oculta */ }
+        };
+
+        // ── Máximos goleadores ───────────────────────────────────────────────
+        // El core API devuelve los atletas como $ref, así que hay que resolverlos.
+        const _cargarGoleadores = async () => {
+            const el = document.getElementById('rail-goleadores');
+            if (!el) return;
+            try {
+                const data = await _espn(`https://sports.core.api.espn.com/v2/sports/soccer/leagues/fifa.world/seasons/${_temporada}/types/1/leaders`);
+                const cat  = (data.categories ?? []).find(c => c.name === 'goalsLeaders');
+                const top  = (cat?.leaders ?? []).slice(0, 5);
+                if (!top.length) { el.style.display = 'none'; return; }
+
+                const jugadores = (await Promise.all(top.map(async (l) => {
+                    const ref = l.athlete?.['$ref'];
+                    if (!ref) return null;
+                    try {
+                        const a = await _espn(ref.replace('http://', 'https://'));
+                        return {
+                            nombre:  a.shortName ?? a.displayName ?? '?',
+                            pais:    a.citizenship ?? '',
+                            cara:    a.headshot?.href ?? '',
+                            bandera: a.flag?.href ?? '',
+                            goles:   Math.round(parseFloat(l.value) || 0),
+                        };
+                    } catch { return null; }
+                }))).filter(Boolean);
+
+                if (!jugadores.length) { el.style.display = 'none'; return; }
+
+                const claseRank = i => i === 0 ? 'rank-1' : i <= 2 ? 'rank-2' : 'rank-rest';
+                el.innerHTML = `
+                    <div class="panel-title">Máximos goleadores</div>
+                    ${jugadores.map((p, i) => `
+                        <div class="scorer-row">
+                            <span class="scorer-rank ${claseRank(i)}">${i + 1}</span>
+                            <span class="scorer-face">
+                                ${p.cara    ? `<img class="cara" src="${p.cara}" onerror="this.style.display='none'">` : ''}
+                                ${p.bandera ? `<img class="bandera" src="${p.bandera}" onerror="this.style.display='none'">` : ''}
+                            </span>
+                            <div style="min-width:0;">
+                                <div class="scorer-name">${p.nombre}</div>
+                                <div class="scorer-team">${p.pais}</div>
+                            </div>
+                            <div class="scorer-goals"><span class="n">${p.goles}</span><span class="u">gol</span></div>
+                        </div>`).join('')}`;
+            } catch (e) { el.style.display = 'none'; }
+        };
+
+        // ── Noticias ─────────────────────────────────────────────────────────
+        const _cargarNoticias = async () => {
+            const el = document.getElementById('home-noticias');
+            if (!el) return;
+            try {
+                const data  = await _espn('https://now.core.api.espn.com/v1/sports/news?sport=soccer&limit=8');
+                const items = (data.headlines ?? []).slice(0, 4);
+                if (!items.length) return;
+
+                const cuando = (iso) => {
+                    const d = new Date(iso ?? '');
+                    if (isNaN(d)) return '';
+                    const hs = Math.floor((Date.now() - d.getTime()) / 3600000);
+                    if (hs < 1)  return 'recién';
+                    if (hs < 24) return `hace ${hs} h`;
+                    return `hace ${Math.floor(hs / 24)} d`;
+                };
+
+                el.style.display = '';
+                el.innerHTML = `
+                    <div class="home-section-head">
+                        <span class="section-title" style="font-size:1rem;border:none;padding:0;margin:0;">Noticias</span>
+                        <a href="#/info" class="subsection-link">Ver todas →</a>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:10px;">
+                        ${items.map(n => {
+                            const img  = n.images?.[0]?.url ?? '';
+                            const link = n.links?.web?.href ?? '#';
+                            return `
+                            <a class="news-row" href="${link}" target="_blank" rel="noopener" style="text-decoration:none;">
+                                <div class="news-thumb">${img ? `<img src="${img}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">` : '📰'}</div>
+                                <div style="flex:1;min-width:0;">
+                                    <span class="news-tag tag-oficial">${n.type ?? 'NOTICIA'}</span>
+                                    <div class="news-title">${n.headline ?? ''}</div>
+                                </div>
+                                <span class="news-date">${cuando(n.published)}</span>
+                            </a>`;
+                        }).join('')}
+                    </div>`;
+            } catch (e) { /* si falla, la sección queda oculta */ }
+        };
+
         // ── Carga de datos (un solo fetch: hoy + próximos 7 días) ────────────
         const _cargarFutbol = async () => {
             try {
@@ -904,6 +1182,11 @@ const App = (() => {
                 const res  = await fetch(CF_WORKER + '/?url=' + encodeURIComponent('https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=' + rango));
                 const data = res.ok ? await res.json() : {};
                 _delRango  = data.events ?? [];
+                // Con rango de fechas, data.season.year viene vacío: hay que sacarlo de leagues[0].
+                _temporada = data.leagues?.[0]?.season?.year
+                          ?? data.season?.year
+                          ?? _delRango[0]?.season?.year
+                          ?? _temporada;
 
                 // Listamos los de hoy; si hoy no hay partidos, mostramos todo el rango
                 const hoyStr = fmt(hoy);
@@ -922,6 +1205,15 @@ const App = (() => {
                 _pintarTabs();
                 _pintarLista();
                 _pintarRail(destacado);
+
+                // Datos complementarios: van en paralelo y cada uno se oculta si falla,
+                // así que un error acá no rompe el marcador ni la lista de arriba.
+                await Promise.all([
+                    _cargarDetallePartido(destacado),
+                    _cargarGrupos(),
+                    _cargarGoleadores(),
+                    _cargarNoticias(),
+                ]);
             } catch (e) {
                 _pintarHero(null);
                 const el = document.getElementById('home-lista');
