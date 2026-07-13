@@ -624,6 +624,9 @@ const App = (() => {
                     <!-- Grupos del Mundial -->
                     <div id="home-grupos" style="display:none;"></div>
 
+                    <!-- Alineaciones del partido destacado -->
+                    <div id="home-alineaciones" class="glass-panel" style="display:none;"></div>
+
                     <!-- Noticias -->
                     <div id="home-noticias" style="display:none;"></div>
 
@@ -665,6 +668,7 @@ const App = (() => {
                           <div class="panel-title" style="margin-bottom:.9rem;">Partido destacado</div>
                           <div class="skel-cell" style="height:56px;"></div>
                       </div>
+                      <div id="rail-destacado" class="glass-panel" style="display:none;"></div>
                       <div id="rail-stats" class="glass-panel" style="display:none;"></div>
                       <div id="rail-goleadores" class="glass-panel">
                           <div class="panel-title">Máximos goleadores</div>
@@ -967,10 +971,64 @@ const App = (() => {
                     </div>`;
             }
 
+            // ---- Alineaciones (rosters) ----
+            // Sale del mismo summary, así que no cuesta un fetch extra.
+            const elLineups = document.getElementById('home-alineaciones');
+            const rosters   = (sum.rosters ?? []).filter(r => (r.roster ?? []).some(j => j.starter));
+            if (elLineups && rosters.length === 2 && !_esPro()) {
+                // Feature de Platea (mismo candado que en #/partido)
+                elLineups.style.display = '';
+                elLineups.innerHTML = `
+                    <div class="panel-title">Alineaciones</div>
+                    ${_paywallInline('pro', 'Las alineaciones tácticas están disponibles en el plan Platea.')}`;
+            } else if (elLineups && rosters.length === 2) {
+                const columna = (r) => {
+                    // _filaDesigla traduce la sigla de ESPN a fila: 0=arquero 1=defensa 2=medio 3=ataque
+                    const titulares = (r.roster ?? [])
+                        .filter(j => j.starter)
+                        .sort((a, b) => _filaDesigla(a.position?.abbreviation) - _filaDesigla(b.position?.abbreviation));
+                    return `
+                        <div>
+                            <div class="lu-head">
+                                ${r.team?.logos?.[0]?.href ? `<img class="lu-flag" src="${r.team.logos[0].href}" onerror="this.style.display='none'">` : ''}
+                                <span class="lu-name">${r.team?.displayName ?? '?'}</span>
+                                ${r.formation ? `<span class="lu-form">${r.formation}</span>` : ''}
+                            </div>
+                            <div class="lu-list">
+                                ${titulares.map(j => {
+                                    const jid = j.athlete?.id;
+                                    return `
+                                    <div class="lu-row ${jid ? 'clickable' : ''}" ${jid ? `onclick="window.location.hash='#/jugador?id=${jid}'"` : ''}>
+                                        <span class="lu-jersey">${j.jersey ?? ''}</span>
+                                        <span class="lu-player">${j.athlete?.displayName ?? '?'}${j.captain ? ' <span class="lu-cap">(C)</span>' : ''}</span>
+                                        <span class="lu-pos">${j.position?.abbreviation ?? ''}</span>
+                                    </div>`;
+                                }).join('')}
+                            </div>
+                        </div>`;
+                };
+                elLineups.style.display = '';
+                elLineups.innerHTML = `
+                    <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center;">
+                        <span>Alineaciones</span>
+                        <span style="font-family:var(--font-body);font-size:.66rem;text-transform:none;letter-spacing:0;color:var(--dim);">Titulares</span>
+                    </div>
+                    <div class="lineups-grid">${rosters.map(columna).join('')}</div>`;
+            }
+
             // ---- Estadísticas (boxscore) ----
             const equipos = sum.boxscore?.teams ?? [];
             const elStats = document.getElementById('rail-stats');
             if (!elStats || equipos.length !== 2) return;
+
+            if (!_esPro()) {
+                // Feature de Platea (mismo candado que en #/partido)
+                elStats.style.display = '';
+                elStats.innerHTML = `
+                    <div class="panel-title">Estadísticas</div>
+                    ${_paywallInline('pro', 'Las estadísticas del partido están disponibles en el plan Platea.')}`;
+                return;
+            }
 
             const valor = (i, clave) => {
                 const s = (equipos[i].statistics ?? []).find(x => x.name === clave);
@@ -1093,17 +1151,29 @@ const App = (() => {
                 const top  = (cat?.leaders ?? []).slice(0, 5);
                 if (!top.length) { el.style.display = 'none'; return; }
 
+                const POSICIONES = { F: 'Delantero', M: 'Mediocampista', D: 'Defensor', G: 'Arquero' };
+
                 const jugadores = (await Promise.all(top.map(async (l) => {
                     const ref = l.athlete?.['$ref'];
                     if (!ref) return null;
                     try {
                         const a = await _espn(ref.replace('http://', 'https://'));
+                        // ESPN manda el resumen como "M: 6, G: 8: A: 2" (partidos, goles, asistencias)
+                        const corto = l.shortDisplayValue ?? '';
+                        const sacar = (re) => { const m = corto.match(re); return m ? m[1] : null; };
+                        const abrev = a.position?.abbreviation ?? '';
                         return {
-                            nombre:  a.shortName ?? a.displayName ?? '?',
-                            pais:    a.citizenship ?? '',
-                            cara:    a.headshot?.href ?? '',
-                            bandera: a.flag?.href ?? '',
-                            goles:   Math.round(parseFloat(l.value) || 0),
+                            id:       a.id,
+                            nombre:   a.shortName ?? a.displayName ?? '?',
+                            completo: a.displayName ?? a.shortName ?? '?',
+                            pais:     a.citizenship ?? '',
+                            cara:     a.headshot?.href ?? '',
+                            bandera:  a.flag?.href ?? '',
+                            dorsal:   a.jersey ?? '',
+                            posicion: POSICIONES[abrev] ?? abrev,
+                            goles:    Math.round(parseFloat(l.value) || 0),
+                            partidos: sacar(/M:\s*(\d+)/),
+                            asist:    sacar(/A:\s*(\d+)/),
                         };
                     } catch { return null; }
                 }))).filter(Boolean);
@@ -1114,10 +1184,12 @@ const App = (() => {
                 el.innerHTML = `
                     <div class="panel-title">Máximos goleadores</div>
                     ${jugadores.map((p, i) => `
-                        <div class="scorer-row">
+                        <div class="scorer-row clickable" onclick="window.location.hash='#/jugador?id=${p.id}'">
                             <span class="scorer-rank ${claseRank(i)}">${i + 1}</span>
                             <span class="scorer-face">
-                                ${p.cara    ? `<img class="cara" src="${p.cara}" onerror="this.style.display='none'">` : ''}
+                                ${p.cara
+                                    ? `<img class="cara" src="${p.cara}" onerror="this.style.display='none'">`
+                                    : `<span class="sin-foto">${p.nombre.charAt(0)}</span>`}
                                 ${p.bandera ? `<img class="bandera" src="${p.bandera}" onerror="this.style.display='none'">` : ''}
                             </span>
                             <div style="min-width:0;">
@@ -1126,6 +1198,35 @@ const App = (() => {
                             </div>
                             <div class="scorer-goals"><span class="n">${p.goles}</span><span class="u">gol</span></div>
                         </div>`).join('')}`;
+
+                // Jugador destacado = el goleador nº1 (sale de los datos que ya trajimos)
+                const elSpot = document.getElementById('rail-destacado');
+                const p0 = jugadores[0];
+                if (elSpot && p0) {
+                    const meta = [p0.pais, p0.posicion, p0.dorsal ? '#' + p0.dorsal : ''].filter(Boolean).join(' · ');
+                    elSpot.style.display = '';
+                    elSpot.innerHTML = `
+                        <div class="panel-title">Jugador destacado</div>
+                        <div class="spot-top">
+                            <span class="spot-face">
+                                ${p0.cara
+                                    ? `<img class="cara" src="${p0.cara}" onerror="this.style.display='none'">`
+                                    : `<span class="sin-foto">${p0.completo.charAt(0)}</span>`}
+                                ${p0.bandera ? `<img class="bandera" src="${p0.bandera}" onerror="this.style.display='none'">` : ''}
+                            </span>
+                            <div style="min-width:0;">
+                                <div class="spot-name">${p0.completo}</div>
+                                <div class="spot-meta">${meta}</div>
+                                <span class="spot-badge">★ Máximo goleador</span>
+                            </div>
+                        </div>
+                        <div class="spot-stats">
+                            <div class="spot-stat"><div class="v">${p0.goles}</div><div class="l">Goles</div></div>
+                            <div class="spot-stat"><div class="v">${p0.asist ?? '—'}</div><div class="l">Asist.</div></div>
+                            <div class="spot-stat"><div class="v">${p0.partidos ?? '—'}</div><div class="l">Partidos</div></div>
+                        </div>
+                        <div class="spot-link" onclick="window.location.hash='#/jugador?id=${p0.id}'">Ver perfil completo →</div>`;
+                }
             } catch (e) { el.style.display = 'none'; }
         };
 
@@ -6044,6 +6145,155 @@ const App = (() => {
         `;
     };
 
+    // ── FICHA DE JUGADOR ─────────────────────────────────────────────────────
+    const renderJugador = async (athleteId) => {
+        if (!athleteId) { window.location.hash = '#/home'; return; }
+
+        const CF_WORKER = 'https://whistle.solgoyhe.workers.dev';
+        const _get = async (url) => {
+            const r = await fetch(CF_WORKER + '/?url=' + encodeURIComponent(String(url).replace('http://', 'https://')));
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        };
+
+        appContainer.innerHTML = `
+            ${renderNavbar('#/jugador')}
+            <main class="page-container fade-in">
+                <a href="javascript:history.back()" class="subsection-link" style="display:inline-block;margin-bottom:1rem;">← Volver</a>
+                <div id="jug-cont">
+                    <div style="text-align:center;padding:3rem;">
+                        <div style="width:34px;height:34px;border:3px solid var(--blue);border-right-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto;"></div>
+                        <p style="color:var(--muted);margin-top:1rem;font-size:.85rem;">Cargando jugador...</p>
+                    </div>
+                </div>
+            </main>
+        ${_closeSidebarWrapper()}
+        `;
+
+        const cont = document.getElementById('jug-cont');
+        const BASE = `https://sports.core.api.espn.com/v2/sports/soccer/leagues/fifa.world/seasons/${new Date().getFullYear()}`;
+
+        try {
+            const atleta = await _get(`${BASE}/athletes/${athleteId}`);
+
+            // ---- Cabecera: la ve todo el mundo (es el gancho) ----
+            const POSICIONES = { F: 'Delantero', M: 'Mediocampista', D: 'Defensor', G: 'Arquero' };
+            const abrev = atleta.position?.abbreviation ?? '';
+            const meta  = [
+                atleta.citizenship,
+                POSICIONES[abrev] ?? atleta.position?.displayName ?? abrev,
+                atleta.jersey ? '#' + atleta.jersey : '',
+            ].filter(Boolean).join(' · ');
+            const chips = [
+                atleta.age ? atleta.age + ' años' : '',
+                atleta.displayHeight || '',
+                atleta.displayWeight || '',
+            ].filter(Boolean);
+
+            const cabecera = `
+                <div class="jug-hero">
+                    <span class="jug-face">
+                        ${atleta.headshot?.href
+                            ? `<img class="cara" src="${atleta.headshot.href}" onerror="this.style.display='none'">`
+                            : `<span class="sin-foto">${(atleta.displayName ?? '?').charAt(0)}</span>`}
+                        ${atleta.flag?.href ? `<img class="bandera" src="${atleta.flag.href}" onerror="this.style.display='none'">` : ''}
+                    </span>
+                    <div style="min-width:0;flex:1;">
+                        <div class="jug-nombre">${atleta.displayName ?? '?'}</div>
+                        <div class="jug-meta">${meta}</div>
+                        <div class="jug-chips">${chips.map(c => `<span class="jug-chip">${c}</span>`).join('')}</div>
+                    </div>
+                </div>`;
+
+            // Goles, asistencias e historial son features de Platea. Al usuario free le
+            // mostramos la cabecera y el candado, y ni siquiera gastamos los fetches.
+            if (!_esPro()) {
+                cont.innerHTML = cabecera +
+                    _paywallInline('pro', 'Los goles, asistencias y el historial del jugador están disponibles en el plan Platea.');
+                return;
+            }
+
+            // Totales de temporada + historial, en paralelo
+            const [stats, log] = await Promise.all([
+                _get(`${BASE}/types/1/athletes/${athleteId}/statistics`).catch(() => null),
+                _get(`${BASE}/athletes/${athleteId}/eventlog`).catch(() => null),
+            ]);
+
+            // ---- Totales de la temporada ----
+            // Las stats vienen repartidas en categorías (general/offensive/defensive); las aplanamos.
+            const totales = {};
+            (stats?.splits?.categories ?? []).forEach(c => {
+                (c.stats ?? []).forEach(s => { totales[s.name] = s.displayValue; });
+            });
+            const val = (k) => totales[k] ?? '—';
+
+            // ---- Historial partido a partido (últimos 8, más reciente primero) ----
+            const jugados  = (log?.events?.items ?? []).filter(i => i.played);
+            const partidos = (await Promise.all(jugados.slice(-8).reverse().map(async (it) => {
+                try {
+                    const [ev, ps] = await Promise.all([
+                        _get(it.event['$ref']),
+                        it.statistics?.['$ref'] ? _get(it.statistics['$ref']).catch(() => null) : Promise.resolve(null),
+                    ]);
+                    const m = {};
+                    (ps?.splits?.categories ?? []).forEach(c => {
+                        (c.stats ?? []).forEach(s => { m[s.name] = s.displayValue; });
+                    });
+                    const f = new Date(ev.date ?? '');
+                    return {
+                        id:    ev.id,
+                        rival: ev.name ?? ev.shortName ?? '?',
+                        fecha: isNaN(f) ? '' : f.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }),
+                        min:   m['minutes'] ?? '0',
+                        goles: parseInt(m['totalGoals'] ?? '0', 10) || 0,
+                        asist: parseInt(m['goalAssists'] ?? '0', 10) || 0,
+                    };
+                } catch { return null; }
+            }))).filter(Boolean);
+
+            const historial = partidos.length ? `
+                <div class="jug-hist-row head">
+                    <span class="jug-hist-h izq">Fecha</span>
+                    <span class="jug-hist-h izq">Partido</span>
+                    <span class="jug-hist-h">Min</span>
+                    <span class="jug-hist-h">G</span>
+                    <span class="jug-hist-h">A</span>
+                </div>
+                ${partidos.map(p => `
+                    <div class="jug-hist-row" onclick="window.location.hash='#/partido?id=${p.id}&liga=fifa.world'">
+                        <span class="jug-hist-fecha">${p.fecha}</span>
+                        <span class="jug-hist-rival">${p.rival}</span>
+                        <span class="jug-hist-num ${p.min === '0' ? 'cero' : ''}">${p.min}</span>
+                        <span class="jug-hist-num ${p.goles ? 'gol' : 'cero'}">${p.goles}</span>
+                        <span class="jug-hist-num ${p.asist ? '' : 'cero'}">${p.asist}</span>
+                    </div>`).join('')}`
+                : '<p style="color:var(--muted);font-size:.84rem;padding:12px 2px;">Sin partidos registrados esta temporada.</p>';
+
+            cont.innerHTML = `
+                ${cabecera}
+
+                <div class="jug-stats">
+                    <div class="jug-stat destacada"><div class="v">${val('totalGoals')}</div><div class="l">Goles</div></div>
+                    <div class="jug-stat destacada"><div class="v">${val('goalAssists')}</div><div class="l">Asistencias</div></div>
+                    <div class="jug-stat"><div class="v">${val('appearances')}</div><div class="l">Partidos</div></div>
+                    <div class="jug-stat"><div class="v">${val('minutes')}</div><div class="l">Minutos</div></div>
+                    <div class="jug-stat"><div class="v">${val('totalShots')}</div><div class="l">Tiros</div></div>
+                    <div class="jug-stat"><div class="v">${val('shotsOnTarget')}</div><div class="l">Al arco</div></div>
+                </div>
+
+                <div class="glass-panel">
+                    <div class="panel-title">Historial de partidos</div>
+                    ${historial}
+                </div>`;
+        } catch (e) {
+            cont.innerHTML = `
+                <div class="glass-panel" style="text-align:center;padding:2.5rem;">
+                    <div style="font-size:1.8rem;margin-bottom:.6rem;">😕</div>
+                    <p style="color:var(--muted);font-size:.88rem;">No pudimos cargar la ficha de este jugador.</p>
+                </div>`;
+        }
+    };
+
     const router = async () => {
         const hash = window.location.hash || '#/';
         const url  = new URL('http://dummy.com' + hash.replace('#', ''));
@@ -6099,6 +6349,9 @@ const App = (() => {
                 break;
             case '#/awards':
                 renderAwards();
+                break;
+            case '#/jugador':
+                await renderJugador(url.searchParams.get('id'));
                 break;
             case '#/perfil':
                 await renderPerfil();

@@ -223,6 +223,156 @@
 .scorer-goals .n { font-family:var(--font-display); font-weight:700; font-size:1.05rem; color:var(--violet); }
 .scorer-goals .u { font-family:var(--font-body); font-size:.58rem; color:var(--dim); }
 
+/* ── Alineaciones ─────────────────────────────────────────────────────────── */
+.lineups-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+.lu-head { display:flex; align-items:center; gap:9px; margin-bottom:12px; }
+.lu-flag { width:24px; height:24px; object-fit:contain; flex-shrink:0; }
+.lu-name {
+    font-family:var(--font-heading); font-weight:700; font-size:.88rem; color:#fff;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.lu-form {
+    margin-left:auto; flex-shrink:0;
+    font-family:var(--font-display); font-weight:700; font-size:.68rem;
+    color:var(--blue); background:rgba(61,111,255,.14);
+    padding:3px 9px; border-radius:6px;
+}
+.lu-list { display:flex; flex-direction:column; }
+.lu-row {
+    display:flex; justify-content:space-between; align-items:center; gap:8px;
+    padding:5px 0; border-bottom:1px solid rgba(255,255,255,.04);
+    font-family:var(--font-body); font-size:.78rem; color:var(--text-sub);
+}
+.lu-row:last-child { border-bottom:none; }
+.lu-jersey {
+    font-family:var(--font-display); font-weight:700; font-size:.66rem;
+    color:var(--dim); min-width:16px; text-align:right; flex-shrink:0;
+}
+.lu-player { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.lu-pos { font-family:var(--font-display); font-size:.62rem; color:var(--dim); flex-shrink:0; }
+.lu-cap { color:var(--gold); font-weight:700; }
+
+/* ── Jugador destacado (rail) ─────────────────────────────────────────────── */
+.spot-top { display:flex; gap:13px; align-items:center; }
+.spot-face {
+    width:64px; height:64px; border-radius:var(--r-md); flex-shrink:0; position:relative;
+    background:var(--bg-card-inner);
+}
+.spot-face img.cara { width:64px; height:64px; border-radius:var(--r-md); object-fit:cover; }
+.spot-face img.bandera {
+    position:absolute; bottom:-4px; right:-4px;
+    width:22px; height:22px; border-radius:50%; object-fit:cover;
+    box-shadow:0 0 0 2px var(--bg-card);
+}
+.spot-name { font-family:var(--font-heading); font-weight:700; font-size:1rem; color:#fff; }
+.spot-meta { font-family:var(--font-body); font-size:.72rem; color:var(--muted); margin-top:2px; }
+.spot-badge {
+    display:inline-flex; align-items:center; gap:5px; margin-top:7px;
+    background:rgba(245,195,59,.14); padding:3px 8px; border-radius:7px;
+    font-family:var(--font-display); font-weight:700; font-size:.66rem; color:var(--gold);
+}
+.spot-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:14px; }
+.spot-stat { background:var(--bg-card-inner); border-radius:11px; padding:10px 0; text-align:center; }
+.spot-stat .v { font-family:var(--font-display); font-weight:700; font-size:1.15rem; color:#fff; }
+.spot-stat .l { font-family:var(--font-body); font-size:.62rem; color:var(--muted); margin-top:2px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FICHA DE JUGADOR (#/jugador)
+   ══════════════════════════════════════════════════════════════════════════ */
+.jug-hero {
+    display:flex; align-items:center; gap:20px; flex-wrap:wrap;
+    border-radius:20px; padding:22px 24px; margin-bottom:20px;
+    border:1px solid var(--border);
+    background:radial-gradient(600px 300px at 20% -10%, rgba(139,92,246,.3), transparent 60%),
+               linear-gradient(120deg,#141a33 0%,#101529 100%);
+}
+.jug-face {
+    width:96px; height:96px; border-radius:20px; flex-shrink:0; position:relative;
+    background:var(--bg-card-inner);
+}
+.jug-face img.cara { width:96px; height:96px; border-radius:20px; object-fit:cover; }
+.jug-face img.bandera {
+    position:absolute; bottom:-6px; right:-6px;
+    width:30px; height:30px; border-radius:50%; object-fit:cover;
+    box-shadow:0 0 0 3px #12172B;
+}
+.jug-nombre { font-family:var(--font-heading); font-weight:700; font-size:1.7rem; color:#fff; letter-spacing:-.02em; }
+.jug-meta   { font-family:var(--font-body); font-size:.84rem; color:var(--muted); margin-top:4px; }
+.jug-chips  { display:flex; gap:7px; margin-top:11px; flex-wrap:wrap; }
+.jug-chip {
+    font-family:var(--font-display); font-weight:600; font-size:.66rem;
+    color:var(--text-sub); background:rgba(255,255,255,.06);
+    border:1px solid var(--border); padding:4px 10px; border-radius:20px;
+}
+
+.jug-stats { display:grid; grid-template-columns:repeat(6,1fr); gap:10px; margin-bottom:20px; }
+.jug-stat {
+    background:var(--bg-card); border:1px solid var(--border);
+    border-radius:var(--r-md); padding:14px 6px; text-align:center;
+}
+.jug-stat .v { font-family:var(--font-display); font-weight:700; font-size:1.5rem; color:#fff; }
+.jug-stat .l {
+    font-family:var(--font-body); font-size:.66rem; color:var(--muted); margin-top:3px;
+    text-transform:uppercase; letter-spacing:.05em;
+}
+.jug-stat.destacada .v { color:var(--violet); }
+
+/* Historial partido a partido */
+.jug-hist-row {
+    display:grid; grid-template-columns:64px 1fr 46px 40px 40px;
+    gap:10px; align-items:center; padding:11px 10px; border-radius:11px;
+    background:var(--bg-row); border:1px solid rgba(255,255,255,.05);
+    margin-bottom:6px; cursor:pointer; transition:border-color .15s, background .15s;
+}
+.jug-hist-row:hover { background:rgba(255,255,255,.035); border-color:rgba(255,255,255,.1); }
+.jug-hist-row.head {
+    background:transparent; border:none; cursor:default; padding:0 10px 6px;
+    margin-bottom:2px;
+}
+.jug-hist-row.head:hover { background:transparent; }
+.jug-hist-fecha { font-family:var(--font-display); font-weight:600; font-size:.68rem; color:var(--dim); }
+.jug-hist-rival {
+    font-family:var(--font-body); font-weight:600; font-size:.82rem; color:var(--text-main);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.jug-hist-num  { font-family:var(--font-display); font-weight:700; font-size:.9rem; color:var(--text-main); text-align:center; }
+.jug-hist-num.cero { color:var(--dim); font-weight:500; }
+.jug-hist-num.gol  { color:var(--green-goal); }
+.jug-hist-h { font-family:var(--font-display); font-weight:600; font-size:.58rem; color:var(--dim); text-transform:uppercase; letter-spacing:.06em; text-align:center; }
+.jug-hist-h.izq { text-align:left; }
+
+/* Inicial de respaldo cuando ESPN no tiene foto del jugador */
+.sin-foto {
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-display); font-weight:800; color:var(--dim);
+    background:var(--bg-card-inner);
+}
+.scorer-face .sin-foto { border-radius:50%; font-size:.78rem; }
+.spot-face   .sin-foto { border-radius:var(--r-md); font-size:1.4rem; }
+.jug-face    .sin-foto { border-radius:20px; font-size:2.2rem; }
+
+/* Clickeables en la home */
+.clickable { cursor:pointer; }
+.scorer-row.clickable:hover .scorer-name { color:#fff; text-decoration:underline; }
+.spot-link {
+    display:block; margin-top:12px; text-align:center; cursor:pointer;
+    border:1px solid rgba(255,255,255,.1); padding:9px; border-radius:11px;
+    font-family:var(--font-display); font-weight:700; font-size:.72rem; color:var(--text-sub);
+    transition:border-color .15s, color .15s;
+}
+.spot-link:hover { border-color:var(--blue); color:#fff; }
+
+@media (max-width:900px) {
+    .jug-stats { grid-template-columns:repeat(3,1fr); }
+}
+@media (max-width:560px) {
+    .jug-stats { grid-template-columns:repeat(2,1fr); }
+    .jug-hist-row { grid-template-columns:52px 1fr 34px 32px 32px; gap:6px; }
+    .jug-face, .jug-face img.cara { width:72px; height:72px; }
+    .jug-nombre { font-size:1.3rem; }
+}
+
 /* ── Responsive ───────────────────────────────────────────────────────────── */
 @media (max-width:1080px) {
     .home-grid { grid-template-columns:minmax(0,1fr); }
@@ -231,6 +381,7 @@
 @media (max-width:760px) {
     .home-rail { grid-template-columns:1fr; }
     .home-groups { grid-template-columns:1fr; }
+    .lineups-grid { grid-template-columns:1fr; gap:18px; }
     .hero-grid { grid-template-columns:1fr; gap:14px; }
     .hero-side, .hero-side.away { flex-direction:column; text-align:center; }
     .hero-score { font-size:2.4rem; }
