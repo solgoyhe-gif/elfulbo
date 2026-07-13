@@ -580,33 +580,46 @@ const App = (() => {
         // Render inicial con skeleton
         appContainer.innerHTML = `
             ${renderNavbar('#/home')}
-            <main class="page-container fade-in" style="max-width:820px; margin:0 auto;">
+            <main class="page-container fade-in home-page">
 
                 <!-- Saludo -->
-                <div style="margin-bottom:1.6rem;display:flex;align-items:center;justify-content:space-between;">
+                <div class="home-head">
                     <div>
-                        <h2 style="font-family:var(--font-heading);font-size:1.5rem;font-weight:700;margin-bottom:2px;letter-spacing:-.02em;">
-                            ${nombre ? 'Hola, ' + nombre : 'Bienvenido'} 👋
-                        </h2>
-                        <p style="color:var(--muted);font-size:.82rem;font-family:var(--font-body);">The sound of sport.</p>
+                        <h2 class="home-hola">${nombre ? 'Hola, ' + nombre : 'Bienvenido'} 👋</h2>
+                        <p class="home-tagline">The sound of sport.</p>
                     </div>
                     <a href="#/ligas" style="font-family:var(--font-body);font-size:.78rem;font-weight:600;color:var(--blue);text-decoration:none;">Ver ligas →</a>
                 </div>
 
-                <!-- Sección fútbol -->
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                    <span style="font-family:var(--font-display);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);">⚽ Fútbol</span>
-                    <a href="#/h2h" class="subsection-link">Ver todos →</a>
-                </div>
-                <div id="home-futbol" class="glass-panel" style="padding:1rem;margin-bottom:1.5rem;gap:6px;">
-                    <div style="display:flex;gap:8px;align-items:center;">
-                        <div style="width:18px;height:18px;border:2px solid var(--blue);border-right-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></div>
-                        <span style="color:var(--muted);font-size:.82rem;">Cargando partidos...</span>
-                    </div>
-                </div>
+                <div class="home-grid">
+                  <div class="home-col">
 
-                <!-- Deportes elegidos -->
-                <div id="home-otros-deportes">
+                    <!-- Partido destacado -->
+                    <div id="home-hero" class="hero-card">
+                        <div class="skel-cell" style="width:110px;height:24px;border-radius:20px;"></div>
+                        <div class="skel-cell" style="width:55%;height:46px;margin:22px auto;"></div>
+                        <div class="skel-cell" style="width:35%;height:16px;margin:0 auto;"></div>
+                    </div>
+
+                    <!-- Partidos del día -->
+                    <div>
+                        <div class="home-section-head">
+                            <span class="home-section-label">⚽ Fútbol · Mundial 2026</span>
+                            <a href="#/h2h" class="subsection-link">Ver todos →</a>
+                        </div>
+                        <div class="glass-panel" style="gap:12px;">
+                            <div class="tabs-row" id="home-tabs"></div>
+                            <div id="home-lista">
+                                <div style="display:flex;gap:8px;align-items:center;padding:6px 0;">
+                                    <div style="width:18px;height:18px;border:2px solid var(--blue);border-right-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></div>
+                                    <span style="color:var(--muted);font-size:.82rem;">Cargando partidos...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Deportes elegidos -->
+                    <div id="home-otros-deportes">
                     ${deportes.length > 0 && esProMax ? deportes.map(d => {
                         const info = DEPORTE_INFO[d];
                         if (!info) return '';
@@ -634,6 +647,22 @@ const App = (() => {
                         Ver planes →
                     </a>
                 </div>` : ''}
+
+                  </div><!-- /home-col -->
+
+                  <!-- Rail derecho -->
+                  <aside class="home-rail">
+                      <div id="rail-live" class="rail-live">
+                          <div class="panel-title" style="margin-bottom:.9rem;">Partido destacado</div>
+                          <div class="skel-cell" style="height:56px;"></div>
+                      </div>
+                      <div id="rail-next" class="glass-panel">
+                          <div class="panel-title">Próximos partidos</div>
+                          <div class="skel-cell" style="height:38px;"></div>
+                      </div>
+                  </aside>
+
+                </div><!-- /home-grid -->
 
             </main>
         ${_closeSidebarWrapper()}
@@ -701,29 +730,204 @@ const App = (() => {
         };
 
         // Cargar partido de fútbol
-        const _cargarFutbol = async () => {
-            const futbolEl = document.getElementById('home-futbol');
-            if (!futbolEl) return;
-            try {
-                const hoy = new Date().toLocaleDateString('en-CA', {timeZone:'America/Argentina/Buenos_Aires'}).replace(/-/g,'');
-                const res = await fetch(CF_WORKER + '/?url=' + encodeURIComponent('https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=' + hoy));
-                const data = res.ok ? await res.json() : {};
-                const eventos = data.events ?? [];
+        // ── Estado del dashboard de la home ──────────────────────────────────
+        let _tab     = 'all';   // filtro activo de los tabs
+        let _delDia  = [];      // partidos que se listan (hoy, o el rango si hoy no hay)
+        let _delRango= [];      // todos los partidos de los próximos 7 días (para el rail)
 
-                // Priorizar: en vivo → finalizado → próximo
-                eventos.sort((a,b) => {
-                    const p = s => s==='in'?0:s==='post'?1:2;
-                    return p(a.competitions?.[0]?.status?.type?.state) - p(b.competitions?.[0]?.status?.type?.state);
-                });
+        const _estadoEv = (ev) => ev?.competitions?.[0]?.status?.type?.state ?? 'pre';
+        const _catEv    = (ev) => { const s = _estadoEv(ev); return s === 'in' ? 'live' : s === 'post' ? 'finished' : 'upcoming'; };
+        const _horaEv   = (ev) => {
+            const f = new Date(ev?.date ?? '');
+            return isNaN(f) ? '' : f.toLocaleTimeString('es-AR', {timeZone:'America/Argentina/Buenos_Aires', hour:'2-digit', minute:'2-digit'});
+        };
+        const _logoEq = (logo, nombre, px) => logo
+            ? `<img src="${logo}" width="${px}" height="${px}" style="object-fit:contain;" onerror="this.style.display='none'">`
+            : `<span style="font-weight:800;font-size:${Math.round(px * 0.45)}px;">${(nombre ?? '?').charAt(0)}</span>`;
 
-                const top3 = eventos.slice(0,3);
-                if (top3.length === 0) {
-                    futbolEl.innerHTML = '<p style="color:var(--text-muted); font-size:0.82rem;">Sin partidos hoy.</p>';
-                    return;
+        // ── Hero: partido destacado ──────────────────────────────────────────
+        const _pintarHero = (ev) => {
+            const el = document.getElementById('home-hero');
+            if (!el) return;
+            if (!ev) { el.className = ''; el.innerHTML = ''; return; }
+
+            const comp   = ev.competitions?.[0];
+            const home   = comp?.competitors?.find(c => c.homeAway === 'home');
+            const away   = comp?.competitors?.find(c => c.homeAway === 'away');
+            const estado = _estadoEv(ev);
+            const esLive = estado === 'in';
+            const esPost = estado === 'post';
+            const clock  = comp?.status?.displayClock ?? '';
+
+            let badge, linea, color, cta;
+            if (esLive) {
+                badge = `<div class="hero-live-badge"><span class="hero-live-dot"></span><span class="hero-live-text">EN VIVO</span></div>`;
+                linea = clock ? clock + " · en juego" : 'En juego';
+                color = 'var(--red-live)'; cta = 'Ver en vivo';
+            } else if (esPost) {
+                badge = `<div class="hero-live-badge" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);"><span class="hero-live-text" style="color:#9aa3bd;">FINALIZADO</span></div>`;
+                linea = 'Partido finalizado'; color = 'var(--muted)'; cta = 'Ver resumen';
+            } else {
+                badge = `<div class="hero-live-badge" style="background:rgba(61,111,255,.14);border-color:rgba(61,111,255,.35);"><span class="hero-live-text" style="color:#8FA9FF;">PRÓXIMO</span></div>`;
+                const h = _horaEv(ev);
+                linea = h ? 'Comienza ' + h : 'Próximamente'; color = '#8FA9FF'; cta = 'Ver detalle';
+            }
+
+            const marcador = (esLive || esPost)
+                ? `${home?.score ?? '-'}<span class="hero-score-sep">–</span>${away?.score ?? '-'}`
+                : 'VS';
+            const nota = comp?.notes?.[0]?.headline ?? 'Mundial 2026';
+            const ir   = `window.location.hash='#/partido?id=${ev.id}&liga=fifa.world'`;
+
+            el.className = 'hero-card';
+            el.innerHTML = `
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                    ${badge}
+                    <span class="hero-meta">${nota}</span>
+                </div>
+                <div class="hero-grid">
+                    <div class="hero-side">
+                        <div class="hero-logo">${_logoEq(home?.team?.logo, home?.team?.displayName, 44)}</div>
+                        <div style="min-width:0;">
+                            <div class="hero-team-name">${home?.team?.displayName ?? '?'}</div>
+                            <div class="hero-team-sub">${home?.team?.abbreviation ?? ''}</div>
+                        </div>
+                    </div>
+                    <div class="hero-center">
+                        <div class="hero-score">${marcador}</div>
+                        <div class="hero-state-line" style="color:${color};">${linea}</div>
+                        <button class="hero-watch-btn" style="margin-top:14px;" onclick="${ir}">${cta} →</button>
+                    </div>
+                    <div class="hero-side away">
+                        <div class="hero-logo">${_logoEq(away?.team?.logo, away?.team?.displayName, 44)}</div>
+                        <div style="min-width:0;">
+                            <div class="hero-team-name">${away?.team?.displayName ?? '?'}</div>
+                            <div class="hero-team-sub">${away?.team?.abbreviation ?? ''}</div>
+                        </div>
+                    </div>
+                </div>`;
+        };
+
+        // ── Tabs + lista de partidos ─────────────────────────────────────────
+        const _pintarTabs = () => {
+            const el = document.getElementById('home-tabs');
+            if (!el) return;
+            const contar = k => k === 'all' ? _delDia.length : _delDia.filter(e => _catEv(e) === k).length;
+            const defs = [['all','Todos'], ['live','En vivo'], ['upcoming','Próximos'], ['finished','Finalizados']];
+            el.innerHTML = defs.map(([k, label]) =>
+                `<button class="tab-btn${_tab === k ? ' active' : ''}" onclick="window._homeSetTab('${k}')">${label}<span class="tab-count">${contar(k)}</span></button>`
+            ).join('');
+        };
+
+        const _pintarLista = () => {
+            const el = document.getElementById('home-lista');
+            if (!el) return;
+            const lista = _tab === 'all' ? _delDia : _delDia.filter(e => _catEv(e) === _tab);
+            el.innerHTML = lista.length
+                ? lista.map(ev => _renderPartidoHome(ev, 'fifa.world')).join('')
+                : '<p style="color:var(--muted);font-size:.82rem;padding:14px 2px;text-align:center;">No hay partidos en esta categoría.</p>';
+        };
+
+        window._homeSetTab = (t) => { _tab = t; _pintarTabs(); _pintarLista(); };
+
+        // ── Rail derecho ─────────────────────────────────────────────────────
+        const _pintarRail = (destacado) => {
+            const elLive = document.getElementById('rail-live');
+            const elNext = document.getElementById('rail-next');
+
+            if (elLive) {
+                if (!destacado) {
+                    elLive.style.display = 'none';
+                } else {
+                    const comp   = destacado.competitions?.[0];
+                    const h      = comp?.competitors?.find(c => c.homeAway === 'home');
+                    const a      = comp?.competitors?.find(c => c.homeAway === 'away');
+                    const estado = _estadoEv(destacado);
+                    const esLive = estado === 'in';
+                    const esPost = estado === 'post';
+                    const marcador = (esLive || esPost) ? `${h?.score ?? '-'} – ${a?.score ?? '-'}` : 'VS';
+                    const etiqueta = esLive ? (comp?.status?.displayClock ?? 'EN VIVO') : esPost ? 'FT' : _horaEv(destacado);
+                    const color    = esLive ? 'var(--red-live)' : esPost ? 'var(--muted)' : 'var(--blue)';
+                    const fondo    = esLive ? 'rgba(255,77,109,.14)' : 'rgba(255,255,255,.06)';
+                    const ir       = `window.location.hash='#/partido?id=${destacado.id}&liga=fifa.world'`;
+
+                    elLive.innerHTML = `
+                        <div class="panel-title" style="margin-bottom:.9rem;">${esLive ? 'Partido en vivo' : 'Partido destacado'}</div>
+                        <div class="rail-live-teams">
+                            <div class="rail-team">
+                                <div class="logo">${_logoEq(h?.team?.logo, h?.team?.displayName, 30)}</div>
+                                <div class="nm">${h?.team?.displayName ?? '?'}</div>
+                            </div>
+                            <div class="rail-live-score">
+                                <div class="sc">${marcador}</div>
+                                <div class="st" style="color:${color};background:${fondo};">${etiqueta}</div>
+                            </div>
+                            <div class="rail-team">
+                                <div class="logo">${_logoEq(a?.team?.logo, a?.team?.displayName, 30)}</div>
+                                <div class="nm">${a?.team?.displayName ?? '?'}</div>
+                            </div>
+                        </div>
+                        <div class="rail-cta" onclick="${ir}">Match Center →</div>`;
                 }
-                futbolEl.innerHTML = top3.map(ev => _renderPartidoHome(ev, 'fifa.world')).join('<hr style="border:none; border-top:1px solid var(--border-glass); margin:8px 0;">');
-            } catch(e) {
-                if (futbolEl) futbolEl.innerHTML = '<p style="color:var(--text-muted); font-size:0.82rem;">Error cargando partidos.</p>';
+            }
+
+            if (elNext) {
+                const prox = _delRango.filter(e => _catEv(e) === 'upcoming').slice(0, 5);
+                elNext.innerHTML = `<div class="panel-title">Próximos partidos</div>` + (prox.length
+                    ? prox.map(ev => {
+                        const c  = ev.competitions?.[0];
+                        const h  = c?.competitors?.find(x => x.homeAway === 'home');
+                        const a  = c?.competitors?.find(x => x.homeAway === 'away');
+                        const ir = `window.location.hash='#/partido?id=${ev.id}&liga=fifa.world'`;
+                        const img = (t) => t?.logo ? `<img class="rail-next-logo" src="${t.logo}" onerror="this.style.display='none'">` : '';
+                        return `<div class="rail-next-row" onclick="${ir}">
+                            <span class="rail-next-time">${_horaEv(ev)}</span>
+                            ${img(h?.team)}
+                            <span class="rail-next-team">${h?.team?.abbreviation ?? h?.team?.displayName ?? '?'}</span>
+                            <span class="rail-next-vs">vs</span>
+                            <span class="rail-next-team">${a?.team?.abbreviation ?? a?.team?.displayName ?? '?'}</span>
+                            ${img(a?.team)}
+                        </div>`;
+                    }).join('')
+                    : '<p style="color:var(--muted);font-size:.78rem;padding:8px 0;">Sin partidos próximos.</p>');
+            }
+        };
+
+        // ── Carga de datos (un solo fetch: hoy + próximos 7 días) ────────────
+        const _cargarFutbol = async () => {
+            try {
+                const TZ  = 'America/Argentina/Buenos_Aires';
+                const fmt = (d) => d.toLocaleDateString('en-CA', {timeZone: TZ}).replace(/-/g, '');
+                const hoy = new Date();
+                const rango = fmt(hoy) + '-' + fmt(new Date(hoy.getTime() + 7 * 24 * 60 * 60 * 1000));
+
+                const res  = await fetch(CF_WORKER + '/?url=' + encodeURIComponent('https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=' + rango));
+                const data = res.ok ? await res.json() : {};
+                _delRango  = data.events ?? [];
+
+                // Listamos los de hoy; si hoy no hay partidos, mostramos todo el rango
+                const hoyStr = fmt(hoy);
+                const deHoy  = _delRango.filter(e => fmt(new Date(e.date)) === hoyStr);
+                _delDia = deHoy.length ? deHoy : _delRango.slice();
+
+                // Orden: en vivo → próximos → finalizados, y dentro de cada grupo por fecha
+                const prio = e => { const c = _catEv(e); return c === 'live' ? 0 : c === 'upcoming' ? 1 : 2; };
+                _delDia.sort((a, b) => prio(a) - prio(b) || new Date(a.date) - new Date(b.date));
+                _delRango.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                // Destacado: el primero en vivo; si no hay, el primero de la lista
+                const destacado = _delDia.find(e => _catEv(e) === 'live') ?? _delDia[0] ?? null;
+
+                _pintarHero(destacado);
+                _pintarTabs();
+                _pintarLista();
+                _pintarRail(destacado);
+            } catch (e) {
+                _pintarHero(null);
+                const el = document.getElementById('home-lista');
+                if (el) el.innerHTML = '<p style="color:var(--muted);font-size:.82rem;">Error cargando partidos.</p>';
+                const rl = document.getElementById('rail-live');
+                if (rl) rl.style.display = 'none';
             }
         };
 
