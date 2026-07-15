@@ -558,6 +558,25 @@ const App = (() => {
     };
 
     // ── VISTAS PRINCIPALES ────────────────────────────────────────────────────
+    // ── Competencias que sigue el usuario ────────────────────────────────────
+    // El perfil guarda slugs de ESPN (eng.1, arg.1, uefa.champions…), elegidos en #/setup.
+    // Dos quedaron mal grabados en cuentas viejas: 'uefa.cl' y 'uefa.el' dan HTTP 400.
+    // Los corregimos al leer, así no hay que migrar Firestore.
+    const SLUG_ARREGLOS = {
+        'uefa.cl': 'uefa.champions',
+        'uefa.el': 'uefa.europa',
+    };
+    const _normalizarSlug = (s) => SLUG_ARREGLOS[s] ?? s;
+
+    const _competenciasUsuario = () => {
+        const p = window.FirebaseAuth?.getPerfil() ?? {};
+        const elegidas = [p.ligaNacional, p.ligaInternacional]
+            .filter(Boolean)
+            .map(_normalizarSlug);
+        // Perfil incompleto o viejo: algo hay que mostrar.
+        return elegidas.length ? [...new Set(elegidas)] : ['fifa.world'];
+    };
+
     const renderHome = async () => {
         const CF_WORKER  = 'https://whistle.solgoyhe.workers.dev';
         const perfil     = window.FirebaseAuth?.getPerfil() ?? {};
@@ -607,8 +626,8 @@ const App = (() => {
                     <!-- Partidos del día -->
                     <div>
                         <div class="home-section-head">
-                            <span class="home-section-label">⚽ Fútbol · Mundial 2026</span>
-                            <a href="#/h2h" class="subsection-link">Ver todos →</a>
+                            <span class="home-section-label" id="home-liga-label">⚽ Fútbol</span>
+                            <a href="#/ligas" class="subsection-link">Ver todas →</a>
                         </div>
                         <div class="glass-panel" style="gap:12px;">
                             <div class="tabs-row" id="home-tabs"></div>
@@ -752,7 +771,8 @@ const App = (() => {
         let _tab     = 'all';   // filtro activo de los tabs
         let _delDia  = [];      // partidos que se listan (hoy, o el rango si hoy no hay)
         let _delRango= [];      // todos los partidos de los próximos 7 días (para el rail)
-        let _temporada = new Date().getFullYear();  // la pisa el scoreboard si trae season.year
+        let _comps   = [];      // { slug, nombre, year } de cada competencia del usuario
+        let _compDest= null;    // la competencia a la que pertenece el partido destacado
 
         const _estadoEv = (ev) => ev?.competitions?.[0]?.status?.type?.state ?? 'pre';
         const _catEv    = (ev) => { const s = _estadoEv(ev); return s === 'in' ? 'live' : s === 'post' ? 'finished' : 'upcoming'; };
@@ -795,8 +815,8 @@ const App = (() => {
             const marcador = (esLive || esPost)
                 ? `${home?.score ?? '-'}<span class="hero-score-sep">–</span>${away?.score ?? '-'}`
                 : 'VS';
-            const nota = comp?.notes?.[0]?.headline ?? 'Mundial 2026';
-            const ir   = `window.location.hash='#/partido?id=${ev.id}&liga=fifa.world'`;
+            const nota = comp?.notes?.[0]?.headline ?? ev._liga ?? '';
+            const ir   = `window.location.hash='#/partido?id=${ev.id}&liga=${ev._slug}'`;
 
             el.className = 'hero-card';
             el.innerHTML = `
@@ -843,7 +863,7 @@ const App = (() => {
             if (!el) return;
             const lista = _tab === 'all' ? _delDia : _delDia.filter(e => _catEv(e) === _tab);
             el.innerHTML = lista.length
-                ? lista.map(ev => _renderPartidoHome(ev, 'fifa.world')).join('')
+                ? lista.map(ev => _renderPartidoHome(ev, ev._slug)).join('')
                 : '<p style="color:var(--muted);font-size:.82rem;padding:14px 2px;text-align:center;">No hay partidos en esta categoría.</p>';
         };
 
@@ -868,7 +888,7 @@ const App = (() => {
                     const etiqueta = esLive ? (comp?.status?.displayClock ?? 'EN VIVO') : esPost ? 'FT' : _horaEv(destacado);
                     const color    = esLive ? 'var(--red-live)' : esPost ? 'var(--muted)' : 'var(--blue)';
                     const fondo    = esLive ? 'rgba(255,77,109,.14)' : 'rgba(255,255,255,.06)';
-                    const ir       = `window.location.hash='#/partido?id=${destacado.id}&liga=fifa.world'`;
+                    const ir       = `window.location.hash='#/partido?id=${destacado.id}&liga=${destacado._slug}'`;
 
                     elLive.innerHTML = `
                         <div class="panel-title" style="margin-bottom:.9rem;">${esLive ? 'Partido en vivo' : 'Partido destacado'}</div>
@@ -897,7 +917,7 @@ const App = (() => {
                         const c  = ev.competitions?.[0];
                         const h  = c?.competitors?.find(x => x.homeAway === 'home');
                         const a  = c?.competitors?.find(x => x.homeAway === 'away');
-                        const ir = `window.location.hash='#/partido?id=${ev.id}&liga=fifa.world'`;
+                        const ir = `window.location.hash='#/partido?id=${ev.id}&liga=${ev._slug}'`;
                         const img = (t) => t?.logo ? `<img class="rail-next-logo" src="${t.logo}" onerror="this.style.display='none'">` : '';
                         return `<div class="rail-next-row" onclick="${ir}">
                             <span class="rail-next-time">${_horaEv(ev)}</span>
@@ -923,7 +943,7 @@ const App = (() => {
         const _cargarDetallePartido = async (ev) => {
             if (!ev) return;
             let sum;
-            try { sum = await _espn(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary?event=${ev.id}`); }
+            try { sum = await _espn(`https://site.api.espn.com/apis/site/v2/sports/soccer/${ev._slug}/summary?event=${ev.id}`); }
             catch { return; }
 
             // ---- Cronología (keyEvents) ----
@@ -998,7 +1018,7 @@ const App = (() => {
                                 ${titulares.map(j => {
                                     const jid = j.athlete?.id;
                                     return `
-                                    <div class="lu-row ${jid ? 'clickable' : ''}" ${jid ? `onclick="window.location.hash='#/jugador?id=${jid}'"` : ''}>
+                                    <div class="lu-row ${jid ? 'clickable' : ''}" ${jid ? `onclick="window.location.hash='#/jugador?id=${jid}&liga=${ev._slug}'"` : ''}>
                                         <span class="lu-jersey">${j.jersey ?? ''}</span>
                                         <span class="lu-player">${j.athlete?.displayName ?? '?'}${j.captain ? ' <span class="lu-cap">(C)</span>' : ''}</span>
                                         <span class="lu-pos">${j.position?.abbreviation ?? ''}</span>
@@ -1079,13 +1099,18 @@ const App = (() => {
             }
         };
 
-        // ── Grupos del Mundial ───────────────────────────────────────────────
-        const _cargarGrupos = async () => {
+        // ── Tabla de posiciones ──────────────────────────────────────────────
+        // Sirve para grupos (Mundial = 12 hijos), zonas (Liga Argentina = 2) y
+        // ligas de tabla única (Premier = 1 hijo). ESPN siempre usa `children`.
+        const _cargarGrupos = async (comp) => {
             const el = document.getElementById('home-grupos');
-            if (!el) return;
+            if (!el || !comp) return;
             try {
-                const data = await _espn('https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings');
-                const grupos = (data.children ?? []).slice(0, 4).map(g => {
+                const data = await _espn(`https://site.api.espn.com/apis/v2/sports/soccer/${comp.slug}/standings`);
+                const hijos = data.children ?? [];
+                const unaSolaTabla = hijos.length === 1;
+
+                const grupos = hijos.slice(0, 4).map(g => {
                     // OJO: ESPN NO devuelve las entradas ordenadas. La posición real está
                     // en note.rank (note.color trae el color oficial de clasificación).
                     const equipos = (g.standings?.entries ?? []).map(e => {
@@ -1105,48 +1130,57 @@ const App = (() => {
                     }).sort((a, b) => (a.pos || 99) - (b.pos || 99));
 
                     equipos.forEach((t, i) => { if (!t.pos) t.pos = i + 1; });
-                    return { nombre: g.name, equipos };
+                    // En tabla única mostramos los primeros 10; en grupos, todos (son 4).
+                    return { nombre: g.name, equipos: unaSolaTabla ? equipos.slice(0, 10) : equipos };
                 }).filter(g => g.equipos.length);
 
                 if (!grupos.length) return;
 
+                const titulo = unaSolaTabla ? 'Tabla de posiciones' : 'Vista de Grupos';
+
                 el.style.display = '';
                 el.innerHTML = `
                     <div class="home-section-head">
-                        <span class="section-title" style="font-size:1rem;border:none;padding:0;margin:0;">Vista de Grupos</span>
-                        <a href="#/liga?id=world_cup" class="subsection-link">Ver todos →</a>
+                        <span class="section-title" style="font-size:1rem;border:none;padding:0;margin:0;">${titulo}</span>
+                        <a href="#/liga?id=${comp.slug}" class="subsection-link">Ver completa →</a>
                     </div>
-                    <div class="home-groups">
-                        ${grupos.map(g => {
-                            const ir = `window.location.hash='#/grupo?id=${encodeURIComponent(g.nombre)}'`;
-                            return `
+                    <div class="home-groups" ${unaSolaTabla ? 'style="grid-template-columns:1fr;"' : ''}>
+                        ${grupos.map(g => `
                             <div class="hg-card">
                                 <div class="hg-head">
-                                    <span class="hg-name">${g.nombre}</span>
+                                    <span class="hg-name">${unaSolaTabla ? comp.nombre : g.nombre}</span>
                                     <span class="hg-h">PJ</span>
                                     <span class="hg-h">PTS</span>
                                 </div>
-                                ${g.equipos.map(t => `
+                                ${g.equipos.map(t => {
+                                    const ir = unaSolaTabla
+                                        ? `window.location.hash='#/liga?id=${comp.slug}'`
+                                        : `window.location.hash='#/grupo?id=${encodeURIComponent(g.nombre)}'`;
+                                    return `
                                     <div class="hg-row" onclick="${ir}">
                                         <span class="hg-pos ${t.color ? '' : 'resto'}" ${t.color ? `style="color:${t.color};"` : ''}>${t.pos}</span>
                                         ${t.logo ? `<img class="hg-logo" src="${t.logo}" onerror="this.style.visibility='hidden'">` : '<span class="hg-logo"></span>'}
                                         <span class="hg-team">${t.nombre}</span>
                                         <span class="hg-pj">${t.pj}</span>
                                         <span class="hg-pts">${t.pts}</span>
-                                    </div>`).join('')}
-                            </div>`;
-                        }).join('')}
+                                    </div>`;
+                                }).join('')}
+                            </div>`).join('')}
                     </div>`;
             } catch (e) { /* si falla, la sección queda oculta */ }
         };
 
         // ── Máximos goleadores ───────────────────────────────────────────────
         // El core API devuelve los atletas como $ref, así que hay que resolverlos.
-        const _cargarGoleadores = async () => {
+        const _cargarGoleadores = async (comp) => {
             const el = document.getElementById('rail-goleadores');
-            if (!el) return;
+            if (!el || !comp) return;
             try {
-                const data = await _espn(`https://sports.core.api.espn.com/v2/sports/soccer/leagues/fifa.world/seasons/${_temporada}/types/1/leaders`);
+                // Algunas ligas devuelven 404 con el año en curso porque la temporada
+                // todavía no arrancó (ej. Premier en julio). Probamos el año anterior.
+                const leadersDe = (year) => _espn(`https://sports.core.api.espn.com/v2/sports/soccer/leagues/${comp.slug}/seasons/${year}/types/1/leaders`);
+                const data = await leadersDe(comp.year).catch(() => leadersDe(comp.year - 1));
+
                 const cat  = (data.categories ?? []).find(c => c.name === 'goalsLeaders');
                 const top  = (cat?.leaders ?? []).slice(0, 5);
                 if (!top.length) { el.style.display = 'none'; return; }
@@ -1184,7 +1218,7 @@ const App = (() => {
                 el.innerHTML = `
                     <div class="panel-title">Máximos goleadores</div>
                     ${jugadores.map((p, i) => `
-                        <div class="scorer-row clickable" onclick="window.location.hash='#/jugador?id=${p.id}'">
+                        <div class="scorer-row clickable" onclick="window.location.hash='#/jugador?id=${p.id}&liga=${comp.slug}'">
                             <span class="scorer-rank ${claseRank(i)}">${i + 1}</span>
                             <span class="scorer-face">
                                 ${p.cara
@@ -1225,7 +1259,7 @@ const App = (() => {
                             <div class="spot-stat"><div class="v">${p0.asist ?? '—'}</div><div class="l">Asist.</div></div>
                             <div class="spot-stat"><div class="v">${p0.partidos ?? '—'}</div><div class="l">Partidos</div></div>
                         </div>
-                        <div class="spot-link" onclick="window.location.hash='#/jugador?id=${p0.id}'">Ver perfil completo →</div>`;
+                        <div class="spot-link" onclick="window.location.hash='#/jugador?id=${p0.id}&liga=${comp.slug}'">Ver perfil completo →</div>`;
                 }
             } catch (e) { el.style.display = 'none'; }
         };
@@ -1272,7 +1306,7 @@ const App = (() => {
             } catch (e) { /* si falla, la sección queda oculta */ }
         };
 
-        // ── Carga de datos (un solo fetch: hoy + próximos 7 días) ────────────
+        // ── Carga de datos: las competencias que el usuario eligió en #/setup ──
         const _cargarFutbol = async () => {
             try {
                 const TZ  = 'America/Argentina/Buenos_Aires';
@@ -1280,14 +1314,39 @@ const App = (() => {
                 const hoy = new Date();
                 const rango = fmt(hoy) + '-' + fmt(new Date(hoy.getTime() + 7 * 24 * 60 * 60 * 1000));
 
-                const res  = await fetch(CF_WORKER + '/?url=' + encodeURIComponent('https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=' + rango));
-                const data = res.ok ? await res.json() : {};
-                _delRango  = data.events ?? [];
-                // Con rango de fechas, data.season.year viene vacío: hay que sacarlo de leagues[0].
-                _temporada = data.leagues?.[0]?.season?.year
-                          ?? data.season?.year
-                          ?? _delRango[0]?.season?.year
-                          ?? _temporada;
+                // Un scoreboard por competencia, en paralelo. Si una falla, seguimos con las otras.
+                _comps = (await Promise.all(_competenciasUsuario().map(async (slug) => {
+                    const pedir = (qs) => _espn(`https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard${qs}`);
+                    try {
+                        // Primero la semana en curso. Pero si la liga está en receso —las
+                        // europeas no juegan de junio a agosto— eso devuelve 0 partidos y la
+                        // home quedaría vacía. En ese caso pedimos el scoreboard sin fechas,
+                        // que da la jornada relevante (la próxima, o la última jugada).
+                        let data = await pedir(`?dates=${rango}`);
+                        if (!(data.events ?? []).length) data = await pedir('');
+
+                        const liga = data.leagues?.[0];
+                        // Con rango de fechas data.season viene vacío: el año está en leagues[0].
+                        const year = liga?.season?.year ?? data.season?.year ?? hoy.getFullYear();
+                        const nombre = liga?.name ?? slug;
+                        // Etiquetamos cada partido con su competencia, porque después se mezclan.
+                        const eventos = (data.events ?? []).map(e => ({ ...e, _slug: slug, _liga: nombre }));
+                        return { slug, nombre, year, eventos };
+                    } catch {
+                        return { slug, nombre: slug, year: hoy.getFullYear(), eventos: [] };
+                    }
+                }))).filter(c => c.eventos.length);
+
+                _delRango = _comps.flatMap(c => c.eventos);
+
+                if (!_delRango.length) {
+                    _pintarHero(null);
+                    _pintarTabs();
+                    _pintarLista();
+                    _pintarRail(null);
+                    await _cargarNoticias();
+                    return;
+                }
 
                 // Listamos los de hoy; si hoy no hay partidos, mostramos todo el rango
                 const hoyStr = fmt(hoy);
@@ -1301,6 +1360,15 @@ const App = (() => {
 
                 // Destacado: el primero en vivo; si no hay, el primero de la lista
                 const destacado = _delDia.find(e => _catEv(e) === 'live') ?? _delDia[0] ?? null;
+                _compDest = _comps.find(c => c.slug === destacado?._slug) ?? _comps[0] ?? null;
+
+                // El encabezado de la sección refleja lo que el usuario eligió
+                const etiqueta = document.getElementById('home-liga-label');
+                if (etiqueta) {
+                    etiqueta.textContent = _comps.length > 1
+                        ? '⚽ ' + _comps.map(c => c.nombre).join(' · ')
+                        : '⚽ ' + (_comps[0]?.nombre ?? 'Fútbol');
+                }
 
                 _pintarHero(destacado);
                 _pintarTabs();
@@ -1311,8 +1379,8 @@ const App = (() => {
                 // así que un error acá no rompe el marcador ni la lista de arriba.
                 await Promise.all([
                     _cargarDetallePartido(destacado),
-                    _cargarGrupos(),
-                    _cargarGoleadores(),
+                    _cargarGrupos(_compDest),
+                    _cargarGoleadores(_compDest),
                     _cargarNoticias(),
                 ]);
             } catch (e) {
@@ -4031,8 +4099,10 @@ const App = (() => {
         };
 
         const LIGAS_INTERNACIONALES = [
-            {id:'uefa.cl',     nombre:'Champions League',    flag:'⭐'},
-            {id:'uefa.el',     nombre:'Europa League',       flag:'🟠'},
+            // OJO: los slugs son los de ESPN. 'uefa.cl' y 'uefa.el' NO existen (dan 400),
+            // los correctos son 'uefa.champions' y 'uefa.europa'.
+            {id:'uefa.champions', nombre:'Champions League', flag:'⭐'},
+            {id:'uefa.europa',    nombre:'Europa League',    flag:'🟠'},
             {id:'conmebol.libertadores', nombre:'Copa Libertadores', flag:'🏆'},
             {id:'conmebol.sudamericana', nombre:'Copa Sudamericana',  flag:'🥈'},
             {id:'fifa.world',  nombre:'Mundial 2026',        flag:'🌍'},
@@ -6146,8 +6216,9 @@ const App = (() => {
     };
 
     // ── FICHA DE JUGADOR ─────────────────────────────────────────────────────
-    const renderJugador = async (athleteId) => {
+    const renderJugador = async (athleteId, ligaSlug) => {
         if (!athleteId) { window.location.hash = '#/home'; return; }
+        const liga = _normalizarSlug(ligaSlug) || 'fifa.world';
 
         const CF_WORKER = 'https://whistle.solgoyhe.workers.dev';
         const _get = async (url) => {
@@ -6171,7 +6242,7 @@ const App = (() => {
         `;
 
         const cont = document.getElementById('jug-cont');
-        const BASE = `https://sports.core.api.espn.com/v2/sports/soccer/leagues/fifa.world/seasons/${new Date().getFullYear()}`;
+        const BASE = `https://sports.core.api.espn.com/v2/sports/soccer/leagues/${liga}/seasons/${new Date().getFullYear()}`;
 
         try {
             const atleta = await _get(`${BASE}/athletes/${athleteId}`);
@@ -6260,7 +6331,7 @@ const App = (() => {
                     <span class="jug-hist-h">A</span>
                 </div>
                 ${partidos.map(p => `
-                    <div class="jug-hist-row" onclick="window.location.hash='#/partido?id=${p.id}&liga=fifa.world'">
+                    <div class="jug-hist-row" onclick="window.location.hash='#/partido?id=${p.id}&liga=${liga}'">
                         <span class="jug-hist-fecha">${p.fecha}</span>
                         <span class="jug-hist-rival">${p.rival}</span>
                         <span class="jug-hist-num ${p.min === '0' ? 'cero' : ''}">${p.min}</span>
@@ -6351,7 +6422,7 @@ const App = (() => {
                 renderAwards();
                 break;
             case '#/jugador':
-                await renderJugador(url.searchParams.get('id'));
+                await renderJugador(url.searchParams.get('id'), url.searchParams.get('liga'));
                 break;
             case '#/perfil':
                 await renderPerfil();
