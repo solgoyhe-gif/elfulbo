@@ -995,13 +995,8 @@ const App = (() => {
             // Sale del mismo summary, así que no cuesta un fetch extra.
             const elLineups = document.getElementById('home-alineaciones');
             const rosters   = (sum.rosters ?? []).filter(r => (r.roster ?? []).some(j => j.starter));
-            if (elLineups && rosters.length === 2 && !_esPro()) {
-                // Feature de Platea (mismo candado que en #/partido)
-                elLineups.style.display = '';
-                elLineups.innerHTML = `
-                    <div class="panel-title">Alineaciones</div>
-                    ${_paywallInline('pro', 'Las alineaciones tácticas están disponibles en el plan Platea.')}`;
-            } else if (elLineups && rosters.length === 2) {
+            if (elLineups && rosters.length === 2) {
+                // Alineaciones: disponibles para todos los planes.
                 const columna = (r) => {
                     // _filaDesigla traduce la sigla de ESPN a fila: 0=arquero 1=defensa 2=medio 3=ataque
                     const titulares = (r.roster ?? [])
@@ -1040,15 +1035,7 @@ const App = (() => {
             const equipos = sum.boxscore?.teams ?? [];
             const elStats = document.getElementById('rail-stats');
             if (!elStats || equipos.length !== 2) return;
-
-            if (!_esPro()) {
-                // Feature de Platea (mismo candado que en #/partido)
-                elStats.style.display = '';
-                elStats.innerHTML = `
-                    <div class="panel-title">Estadísticas</div>
-                    ${_paywallInline('pro', 'Las estadísticas del partido están disponibles en el plan Platea.')}`;
-                return;
-            }
+            // Estadísticas: disponibles para todos los planes.
 
             const valor = (i, clave) => {
                 const s = (equipos[i].statistics ?? []).find(x => x.name === clave);
@@ -3000,7 +2987,13 @@ const App = (() => {
         // Día actual en Argentina (UTC-3)
         const hoyAR = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }));
         const hoyStr = `${hoyAR.getFullYear()}${String(hoyAR.getMonth()+1).padStart(2,'0')}${String(hoyAR.getDate()).padStart(2,'0')}`;
-        const diaDefault = DIAS_MUNDIAL.find(d => d.fecha === hoyStr) ?? DIAS_MUNDIAL[0];
+        // Durante el Mundial mostramos el día de hoy. Antes de que arranque, el primer día.
+        // Terminado el torneo, la final (último día) — así la sección "sigue viéndose" con
+        // el desenlace en vez de quedar parada en el día inaugural. (fecha es YYYYMMDD: el
+        // orden alfabético coincide con el cronológico.)
+        const _ultimoDia = DIAS_MUNDIAL[DIAS_MUNDIAL.length - 1];
+        const diaDefault = DIAS_MUNDIAL.find(d => d.fecha === hoyStr)
+            ?? (hoyStr > _ultimoDia.fecha ? _ultimoDia : DIAS_MUNDIAL[0]);
 
         // ── Estructura base ───────────────────────────────────────────────────
         appContainer.innerHTML = `
@@ -3627,16 +3620,18 @@ const App = (() => {
                             ${[
                                 {t:'Tabla de grupos Mundial 2026', ok:true},
                                 {t:'Partidos del día', ok:true},
+                                {t:'Estadísticas del partido', ok:true},
+                                {t:'Alineaciones tácticas', ok:true},
                                 {t:'Noticias básicas', ok:true},
                                 {t:'1 liga a elección', ok:true},
                                 {t:'Todas las ligas', ok:false},
-                                {t:'Estadísticas y alineaciones', ok:false},
-                                {t:'Noticias traducidas', ok:false},
+                                {t:'Análisis IA pre-partido', ok:false, prox:true},
                                 {t:'Todos los deportes', ok:false},
                             ].map(f => `
                                 <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem;
                                     margin-bottom:7px; color:${f.ok ? 'var(--text-main)' : 'var(--text-muted)'};">
                                     <span>${f.ok ? '✅' : '🔒'}</span><span>${f.t}</span>
+                                    ${f.prox ? '<span style="font-size:0.6rem; font-weight:800; background:rgba(245,195,59,0.16); color:var(--gold); padding:2px 7px; border-radius:10px; letter-spacing:0.04em;">PRONTO</span>' : ''}
                                 </div>`).join('')}
                             <button onclick="abrirAuth('registro')"
                                 style="width:100%; margin-top:1.5rem; padding:11px; background:transparent;
@@ -3667,9 +3662,8 @@ const App = (() => {
                             </p>
                             ${[
                                 {t:'Todo lo de Popular', ok:true},
+                                {t:'Análisis IA pre-partido', ok:true, prox:true},
                                 {t:'Todas las ligas de fútbol', ok:true},
-                                {t:'Estadísticas del partido', ok:true},
-                                {t:'Alineaciones tácticas', ok:true},
                                 {t:'Noticias traducidas', ok:true},
                                 {t:'Equipo favorito', ok:true},
                                 {t:'Todos los deportes', ok:false},
@@ -3678,6 +3672,7 @@ const App = (() => {
                                 <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem;
                                     margin-bottom:7px; color:${f.ok ? 'var(--text-main)' : 'var(--text-muted)'};">
                                     <span>${f.ok ? '✅' : '🔒'}</span><span>${f.t}</span>
+                                    ${f.prox ? '<span style="font-size:0.6rem; font-weight:800; background:rgba(245,195,59,0.16); color:var(--gold); padding:2px 7px; border-radius:10px; letter-spacing:0.04em;">PRONTO</span>' : ''}
                                 </div>`).join('')}
                             <button id="btn-pro_mensual" onclick="window._suscribirse('pro_mensual')"
                                 style="width:100%; margin-top:1.5rem; padding:11px; background:var(--accent-neon);
@@ -4033,7 +4028,7 @@ const App = (() => {
                         ${p.precio ?? 'Gratis'}${planKey !== 'free' ? '<span style="font-size:0.8rem; color:var(--text-muted);">/mes</span>' : ''}
                     </div>
                     ${(p.features ?? []).map(f => `<div style="display:flex; align-items:center; gap:8px; font-size:0.8rem; margin-bottom:6px; color:${f.ok ? 'var(--text-main)' : 'var(--text-muted)'};">
-                        <span>${f.ok ? '✅' : '🔒'}</span><span>${f.texto}</span></div>`).join('')}
+                        <span>${f.ok ? '✅' : '🔒'}</span><span>${f.texto}</span>${f.proximamente ? '<span style="font-size:0.6rem; font-weight:800; background:rgba(245,195,59,0.16); color:var(--gold); padding:2px 7px; border-radius:10px; letter-spacing:0.04em;">PRONTO</span>' : ''}</div>`).join('')}
                     ${!actual ? `<button class="btn-primary" style="width:100%; margin-top:1.2rem; background:${meta.color}; color:#000;" onclick="window._suscribirse('${planKey}_mensual')">SUSCRIBIRME</button>` : ''}
                 </div>`;
         };
@@ -5673,6 +5668,13 @@ const App = (() => {
             const fechaPartido    = new Date(comp.date ?? summary.header?.competitions?.[0]?.date ?? NaN);
             const horasHastaInicio = isNaN(fechaPartido.getTime()) ? 99 : (fechaPartido - new Date()) / 3600000;
 
+            // Árbitro y estadio (ESPN los da en gameInfo; el árbitro es solo el nombre)
+            const arbitro = (summary.gameInfo?.officials ?? []).find(o => /referee/i.test(o.position?.name ?? o.position?.displayName ?? ''))
+                         ?? summary.gameInfo?.officials?.[0]
+                         ?? null;
+            const estadioNombre = summary.gameInfo?.venue?.fullName ?? '';
+            const estadioCiudad = summary.gameInfo?.venue?.address?.city ?? '';
+
             const homeName  = home.team?.displayName ?? '?';
             const awayName  = away.team?.displayName ?? '?';
             const homeLogo  = home.team?.logo ?? '';
@@ -5819,26 +5821,44 @@ const App = (() => {
                         </div>` : ''}
                     </div>
 
+                    ${(arbitro || estadioNombre) ? `
+                    <!-- INFO DEL PARTIDO -->
+                    <div class="glass-panel" style="padding:1.2rem 1.5rem; margin-bottom:1.5rem; display:flex; gap:2rem; flex-wrap:wrap;">
+                        ${arbitro ? `
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="font-size:1.1rem;">🧑‍⚖️</span>
+                            <div>
+                                <div style="font-size:0.62rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted);">Árbitro</div>
+                                <div style="font-size:0.85rem; font-weight:600; color:var(--text-main);">${arbitro.displayName ?? arbitro.fullName ?? '—'}</div>
+                            </div>
+                        </div>` : ''}
+                        ${estadioNombre ? `
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="font-size:1.1rem;">🏟️</span>
+                            <div>
+                                <div style="font-size:0.62rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted);">Estadio</div>
+                                <div style="font-size:0.85rem; font-weight:600; color:var(--text-main);">${estadioNombre}${estadioCiudad ? ` · ${estadioCiudad}` : ''}</div>
+                            </div>
+                        </div>` : ''}
+                    </div>` : ''}
+
                     ${(boxTeamHome || boxTeamAway) ? `
                     <!-- STATS -->
                     <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
                         <h3 class="panel-title" style="text-align:center; color:var(--accent-neon); font-size:0.75rem; letter-spacing:2px;">ESTADÍSTICAS</h3>
-                        ${esPro ? `
-                            ${_statBar(getStat(boxTeamHome,'possessionPct'), getStat(boxTeamAway,'possessionPct'), 'POSESIÓN %')}
-                            ${_statBar(getStat(boxTeamHome,'totalShots'), getStat(boxTeamAway,'totalShots'), 'TIROS TOTALES')}
-                            ${_statBar(getStat(boxTeamHome,'shotsOnTarget'), getStat(boxTeamAway,'shotsOnTarget'), 'TIROS A PUERTA')}
-                            ${_statBar(getStat(boxTeamHome,'wonCorners'), getStat(boxTeamAway,'wonCorners'), 'CORNERS')}
-                            ${_statBar(getStat(boxTeamHome,'foulsCommitted'), getStat(boxTeamAway,'foulsCommitted'), 'FALTAS')}
-                            ${_statBar(getStat(boxTeamHome,'yellowCards'), getStat(boxTeamAway,'yellowCards'), 'AMARILLAS')}
-                        ` : _paywallInline('pro', 'Las estadísticas completas están disponibles en el plan Platea.')}
+                        ${_statBar(getStat(boxTeamHome,'possessionPct'), getStat(boxTeamAway,'possessionPct'), 'POSESIÓN %')}
+                        ${_statBar(getStat(boxTeamHome,'totalShots'), getStat(boxTeamAway,'totalShots'), 'TIROS TOTALES')}
+                        ${_statBar(getStat(boxTeamHome,'shotsOnTarget'), getStat(boxTeamAway,'shotsOnTarget'), 'TIROS A PUERTA')}
+                        ${_statBar(getStat(boxTeamHome,'wonCorners'), getStat(boxTeamAway,'wonCorners'), 'CORNERS')}
+                        ${_statBar(getStat(boxTeamHome,'foulsCommitted'), getStat(boxTeamAway,'foulsCommitted'), 'FALTAS')}
+                        ${_statBar(getStat(boxTeamHome,'yellowCards'), getStat(boxTeamAway,'yellowCards'), 'AMARILLAS')}
                     </div>` : ''}
 
                     ${(hayTitulares || !esPost) ? `
                     <!-- ALINEACIONES -->
                     <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
                         <h3 class="panel-title" style="text-align:center; color:var(--accent-neon); font-size:0.75rem; letter-spacing:2px; margin-bottom:1rem;">ALINEACIONES</h3>
-                        ${!esPro ? _paywallInline('pro', 'Las alineaciones tácticas están disponibles en el plan Platea.') :
-                          hayTitulares ? `
+                        ${hayTitulares ? `
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
                             <div>
                                 <p style="text-align:center; font-size:0.75rem; font-weight:700; color:var(--text-muted); margin-bottom:6px;">

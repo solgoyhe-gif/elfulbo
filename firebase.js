@@ -23,11 +23,12 @@ window.PLANES = {
         features: [
             { texto: 'Tabla de grupos Mundial 2026',       ok: true  },
             { texto: 'Partidos del día',                   ok: true  },
+            { texto: 'Estadísticas del partido',           ok: true  },
+            { texto: 'Alineaciones tácticas',              ok: true  },
             { texto: 'Noticias básicas',                   ok: true  },
             { texto: '1 liga a elección',                  ok: true  },
             { texto: 'Todas las ligas de fútbol',          ok: false },
-            { texto: 'Estadísticas y alineaciones',        ok: false },
-            { texto: 'Noticias traducidas',                ok: false },
+            { texto: 'Análisis IA pre-partido',            ok: false, proximamente: true },
             { texto: 'Todos los deportes',                 ok: false },
         ]
     },
@@ -40,9 +41,8 @@ window.PLANES = {
         descripcion: 'Todas las ligas de fútbol, estadísticas completas, alineaciones tácticas y noticias traducidas. Viví el fútbol desde la Platea.',
         features: [
             { texto: 'Todo lo de Popular',                 ok: true  },
+            { texto: 'Análisis IA pre-partido',            ok: true,  proximamente: true },
             { texto: 'Todas las ligas de fútbol',          ok: true  },
-            { texto: 'Estadísticas del partido',           ok: true  },
-            { texto: 'Alineaciones tácticas',              ok: true  },
             { texto: 'Noticias traducidas',                ok: true  },
             { texto: 'Equipo favorito',                    ok: true  },
             { texto: 'Todos los deportes',                 ok: false },
