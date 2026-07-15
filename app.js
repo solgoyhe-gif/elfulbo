@@ -5628,6 +5628,41 @@ const App = (() => {
     };
 
     // ── VISTA DE PARTIDO ─────────────────────────────────────────────────────
+    // ── Análisis IA pre-partido (feature de Platea, "próximamente") ──────────
+    // Llama al Worker (/ia/analisis-previa), que hace la llamada al modelo.
+    // Mientras el endpoint no exista todavía, falla con gracia a "muy pronto".
+    const _formatearIA = (texto) => String(texto)
+        .replace(/[&<>]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;' }[c]))
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .split(/\n{2,}/).map(p => `<p style="margin-bottom:0.8rem; line-height:1.6;">${p.replace(/\n/g, '<br>')}</p>`).join('');
+
+    window._cargarAnalisisIA = async (eventId, liga) => {
+        const cont = document.getElementById('ia-previa-cont');
+        if (!cont) return;
+        cont.innerHTML = `
+            <div style="display:flex; align-items:center; justify-content:center; gap:10px; padding:1rem 0;">
+                <div style="width:22px; height:22px; border:3px solid var(--accent-neon); border-right-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></div>
+                <span style="color:var(--muted); font-size:0.85rem;">Analizando el partido con IA...</span>
+            </div>`;
+        try {
+            const res = await fetch('https://whistle.solgoyhe.workers.dev/ia/analisis-previa', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ event: eventId, liga }),
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            if (!data.analisis) throw new Error('sin análisis');
+            cont.innerHTML = `<div style="text-align:left; font-size:0.86rem; color:var(--text-sub);">${_formatearIA(data.analisis)}</div>`;
+        } catch (e) {
+            cont.innerHTML = `
+                <div style="text-align:center; padding:1rem 0;">
+                    <div style="font-size:1.6rem; margin-bottom:0.5rem;">✨</div>
+                    <p style="color:var(--muted); font-size:0.84rem;">El análisis por IA todavía no está disponible.<br>Muy pronto, con el plan Platea.</p>
+                </div>`;
+        }
+    };
+
     const renderPartido = async (eventId, ligaId) => {
         const CF_WORKER  = 'https://whistle.solgoyhe.workers.dev';
         const espnLeague = ESPN.getSlug(ligaId) ?? ligaId ?? 'fifa.world';
@@ -5820,6 +5855,25 @@ const App = (() => {
                             <div style="text-align:right;">${goleadoresAway.map(g=>`<span style="font-size:0.7rem;">${g.minuto}'</span> ${g.nombre} ${g.ownGoal?'(PP)':''}⚽`).join('<br>')}</div>
                         </div>` : ''}
                     </div>
+
+                    ${esPre ? `
+                    <!-- ANÁLISIS IA PRE-PARTIDO (Platea, próximamente) -->
+                    <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
+                        <h3 class="panel-title" style="text-align:center; color:var(--accent-neon); font-size:0.75rem; letter-spacing:2px; display:flex; align-items:center; justify-content:center; gap:8px;">
+                            ✨ ANÁLISIS IA PRE-PARTIDO
+                            <span style="font-size:0.55rem; font-weight:800; background:rgba(245,195,59,0.16); color:var(--gold); padding:2px 7px; border-radius:10px; letter-spacing:0.04em;">PRONTO</span>
+                        </h3>
+                        ${esPro ? `
+                            <div id="ia-previa-cont" style="text-align:center;">
+                                <p style="color:var(--muted); font-size:0.82rem; margin-bottom:1rem;">Generá un análisis del partido con IA: cómo llega cada equipo, la clave táctica y un pronóstico.</p>
+                                <button onclick="window._cargarAnalisisIA('${eventId}','${espnLeague}')"
+                                    style="padding:10px 22px; background:var(--grad-main); color:#fff; font-weight:800; font-family:var(--font-display); border:none; border-radius:10px; cursor:pointer; font-size:0.85rem;">
+                                    ✨ Generar análisis
+                                </button>
+                            </div>
+                        ` : _paywallInline('pro', 'El análisis IA pre-partido estará disponible en el plan Platea.')}
+                    </div>
+                    ` : ''}
 
                     ${(arbitro || estadioNombre) ? `
                     <!-- INFO DEL PARTIDO -->
