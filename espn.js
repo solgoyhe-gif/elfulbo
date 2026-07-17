@@ -49,7 +49,7 @@ const ESPN = (() => {
         sudamericana:  'conmebol.sudamericana',
         // Argentina
         liga_prof:     'arg.1',
-        copa_liga:     null,       // ESPN no tiene este torneo — se maneja en el fallback
+        copa_liga:     'arg.copa_lpf',  // Copa de la Liga Profesional (tiene grupos/tabla)
         copa_argentina:'arg.copa',
         // Sudamérica extra (ocultas)
         copa_america:  'conmebol.copa_america',
