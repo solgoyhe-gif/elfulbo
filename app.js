@@ -3655,7 +3655,7 @@ const App = (() => {
                                 color:var(--accent-neon); margin-bottom:0.3rem;">Platea</div>
                             <div id="precio-pro" style="font-family:var(--font-heading); font-size:1.8rem;
                                 font-weight:900; color:var(--accent-neon); margin-bottom:0.8rem;">
-                                $4.99<span style="font-size:0.85rem; color:var(--text-muted);">/mes</span>
+                                $6.500<span style="font-size:0.85rem; color:var(--text-muted);">/mes</span>
                             </div>
                             <p style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; margin-bottom:1.2rem;">
                                 Todas las ligas de fútbol, estadísticas completas, alineaciones tácticas y noticias traducidas. Viví el fútbol desde la Platea.
@@ -3691,7 +3691,7 @@ const App = (() => {
                                 color:#ffd700; margin-bottom:0.3rem;">Palco</div>
                             <div id="precio-promax" style="font-family:var(--font-heading); font-size:1.8rem;
                                 font-weight:900; color:#ffd700; margin-bottom:0.8rem;">
-                                $14.99<span style="font-size:0.85rem; color:var(--text-muted);">/mes</span>
+                                $15.000<span style="font-size:0.85rem; color:var(--text-muted);">/mes</span>
                             </div>
                             <p style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; margin-bottom:1.2rem;">
                                 Acceso completo a todas las ligas, deportes y estadísticas. Notificaciones en tiempo real e historial extendido. La experiencia definitiva.

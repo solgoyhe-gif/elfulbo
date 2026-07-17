@@ -34,8 +34,8 @@ window.PLANES = {
     },
     pro: {
         nombre: 'Platea',
-        precio: '$4.99',
-        precioAnual: '$39.99',
+        precio: '$6.500',
+        precioAnual: '$74.000',
         color: '#6C5CE7',
         emoji: '🎟️',
         descripcion: 'Todas las ligas de fútbol, estadísticas completas, alineaciones tácticas y noticias traducidas. Viví el fútbol desde la Platea.',
@@ -51,8 +51,8 @@ window.PLANES = {
     },
     promax: {
         nombre: 'Palco',
-        precio: '$14.99',
-        precioAnual: '$119.99',
+        precio: '$15.000',
+        precioAnual: '$146.000',
         color: '#F59E0B',
         emoji: '👑',
         descripcion: 'Acceso completo a todas las ligas, deportes y estadísticas. Notificaciones en tiempo real e historial extendido. La experiencia definitiva.',
