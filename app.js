@@ -3536,6 +3536,42 @@ const App = (() => {
 
     // ── LOGIN ─────────────────────────────────────────────────────────────────
     // ── LANDING ───────────────────────────────────────────────────────────────
+    // ── Referencia en USD para visitantes de fuera de Argentina ──────────────
+    // Los productos se cobran en ARS (una sola moneda en Lemon). A los de afuera
+    // les mostramos una referencia aproximada en dólares. Si geo/cotización fallan,
+    // se queda solo el precio en ARS (no rompe nada). Llena el div #ref-usd.
+    const _refUSD = async () => {
+        const cont = document.getElementById('ref-usd');
+        if (!cont) return;
+        try {
+            // País (caché 24 h)
+            let pais = null;
+            const gc = JSON.parse(localStorage.getItem('whistle_geo') || 'null');
+            if (gc && Date.now() - gc.ts < 864e5) pais = gc.pais;
+            else {
+                const g = await fetch('https://ipwho.is/').then(r => r.json());
+                pais = g?.country_code ?? null;
+                if (pais) localStorage.setItem('whistle_geo', JSON.stringify({ pais, ts: Date.now() }));
+            }
+            if (!pais || pais === 'AR') return; // argentinos (o geo desconocida): solo ARS
+
+            // Cotización ARS por USD (caché 6 h)
+            let arsUsd = null;
+            const fc = JSON.parse(localStorage.getItem('whistle_fx_ars') || 'null');
+            if (fc && Date.now() - fc.ts < 6 * 36e5) arsUsd = fc.rate;
+            else {
+                const d = await fetch('https://open.er-api.com/v6/latest/USD').then(r => r.json());
+                arsUsd = d?.rates?.ARS ?? null;
+                if (arsUsd) localStorage.setItem('whistle_fx_ars', JSON.stringify({ rate: arsUsd, ts: Date.now() }));
+            }
+            if (!arsUsd) return;
+
+            const usd = ars => Math.round(ars / arsUsd);
+            cont.style.display = '';
+            cont.innerHTML = `💵 Los precios están en <strong>pesos argentinos (ARS)</strong>. Referencia aprox.: <strong>Platea ≈ US$${usd(6500)}/mes</strong> · <strong>Palco ≈ US$${usd(15000)}/mes</strong>. El cobro se realiza en ARS.`;
+        } catch (e) { /* si falla, se muestra solo el precio en ARS */ }
+    };
+
     const renderLanding = () => {
         appContainer.innerHTML = `
             <main style="min-height:100vh; background:var(--bg-color); overflow-y:auto;">
@@ -3604,6 +3640,9 @@ const App = (() => {
                             </span>
                         </span>
                     </div>
+
+                    <!-- Referencia USD (exterior) -->
+                    <div id="ref-usd" style="display:none; max-width:860px; width:100%; box-sizing:border-box; background:rgba(61,111,255,0.08); border:1px solid rgba(61,111,255,0.2); border-radius:12px; padding:0.9rem 1.1rem; margin-bottom:1.5rem; font-size:0.8rem; color:var(--text-sub); line-height:1.5;"></div>
 
                     <!-- Planes -->
                     <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
@@ -3721,6 +3760,7 @@ const App = (() => {
                 </div>
             </main>
         `;
+        _refUSD();
     };
 
     // ── PERFIL ────────────────────────────────────────────────────────────────
@@ -4036,6 +4076,7 @@ const App = (() => {
             ${renderNavbar('#/planes')}
             <main class="page-container fade-in" style="max-width:900px; margin:0 auto;">
                 <h2 class="section-title">💳 Planes</h2>
+                <div id="ref-usd" style="display:none; background:rgba(61,111,255,0.08); border:1px solid rgba(61,111,255,0.2); border-radius:12px; padding:0.9rem 1.1rem; margin-bottom:1.5rem; font-size:0.8rem; color:var(--text-sub); line-height:1.5;"></div>
                 <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1.5rem; margin-bottom:4rem;">
                     ${_card('free',   { color: '#888'    })}
                     ${_card('pro',    { color: '#3D6FFF' })}
@@ -4044,6 +4085,7 @@ const App = (() => {
             </main>
         ${_closeSidebarWrapper()}
         `;
+        _refUSD();
     };
 
     // _renderNavbarConPerfil — alias de renderNavbar (sidebar ya incluye perfil)
