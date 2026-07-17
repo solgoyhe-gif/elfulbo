@@ -219,7 +219,7 @@ body {
 /* Accordion */
 .sidebar-accordion-btn { cursor:pointer; border:none; background:none; text-align:left; }
 .sidebar-accordion-body { max-height:0; overflow:hidden; transition:max-height 0.25s ease; }
-.sidebar-accordion-body.open { max-height:800px; }
+.sidebar-accordion-body.open { max-height:2400px; }
 .sidebar-subgroup { margin-bottom:4px; }
 .sidebar-sublabel {
     font-size:0.6rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase;

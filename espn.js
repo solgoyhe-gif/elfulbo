@@ -129,13 +129,16 @@ const ESPN = (() => {
         const url  = `${ESPN_V2}/${slug}/standings`;
         const data = await _fetch(url);
 
+        // ESPN devuelve las entries en formas distintas según el torneo:
+        //   liga simple  → data.standings.entries  (o data.standings[0].entries)
+        //   con zonas    → data.children[].standings.entries  (objeto, NO array)
+        const _entries = (s) => s?.entries ?? s?.[0]?.entries ?? [];
         let entries = [];
-        if (data?.standings?.[0]?.entries?.length) {
-            entries = data.standings[0].entries;
+        if (_entries(data?.standings).length) {
+            entries = _entries(data.standings);
         } else if (data?.children?.length) {
             for (const child of data.children) {
-                const childEntries = child?.standings?.[0]?.entries ?? [];
-                entries = entries.concat(childEntries);
+                entries = entries.concat(_entries(child?.standings));
             }
         }
 
