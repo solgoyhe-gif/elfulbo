@@ -851,7 +851,7 @@ const App = (() => {
         const _pintarTabs = () => {
             const el = document.getElementById('home-tabs');
             if (!el) return;
-            const contar = k => k === 'all' ? _delDia.length : _delDia.filter(e => _catEv(e) === k).length;
+            const contar = k => k === 'all' ? _delRango.length : _delRango.filter(e => _catEv(e) === k).length;
             const defs = [['all','Todos'], ['live','En vivo'], ['upcoming','Próximos'], ['finished','Finalizados']];
             el.innerHTML = defs.map(([k, label]) =>
                 `<button class="tab-btn${_tab === k ? ' active' : ''}" onclick="window._homeSetTab('${k}')">${label}<span class="tab-count">${contar(k)}</span></button>`
@@ -861,7 +861,7 @@ const App = (() => {
         const _pintarLista = () => {
             const el = document.getElementById('home-lista');
             if (!el) return;
-            const lista = _tab === 'all' ? _delDia : _delDia.filter(e => _catEv(e) === _tab);
+            const lista = _tab === 'all' ? _delRango : _delRango.filter(e => _catEv(e) === _tab);
             el.innerHTML = lista.length
                 ? lista.map(ev => _renderPartidoHome(ev, ev._slug)).join('')
                 : '<p style="color:var(--muted);font-size:.82rem;padding:14px 2px;text-align:center;">No hay partidos en esta categoría.</p>';
@@ -1335,7 +1335,10 @@ const App = (() => {
                     return;
                 }
 
-                // Listamos los de hoy; si hoy no hay partidos, mostramos todo el rango
+                // _delDia (los de hoy, o todo si hoy no hay) solo se usa para elegir el
+                // partido destacado. La lista de abajo muestra _delRango completo, así se
+                // ven TODAS las competencias que sigue el usuario (nacional + internacional)
+                // aunque solo una tenga partido hoy.
                 const hoyStr = fmt(hoy);
                 const deHoy  = _delRango.filter(e => fmt(new Date(e.date)) === hoyStr);
                 _delDia = deHoy.length ? deHoy : _delRango.slice();
@@ -1343,7 +1346,7 @@ const App = (() => {
                 // Orden: en vivo → próximos → finalizados, y dentro de cada grupo por fecha
                 const prio = e => { const c = _catEv(e); return c === 'live' ? 0 : c === 'upcoming' ? 1 : 2; };
                 _delDia.sort((a, b) => prio(a) - prio(b) || new Date(a.date) - new Date(b.date));
-                _delRango.sort((a, b) => new Date(a.date) - new Date(b.date));
+                _delRango.sort((a, b) => prio(a) - prio(b) || new Date(a.date) - new Date(b.date));
 
                 // Destacado: el primero en vivo; si no hay, el primero de la lista
                 const destacado = _delDia.find(e => _catEv(e) === 'live') ?? _delDia[0] ?? null;
