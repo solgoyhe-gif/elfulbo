@@ -181,6 +181,42 @@ const ESPN = (() => {
         return result;
     };
 
+    // Convierte un evento crudo de ESPN al shape que consume la app.
+    const _mapEvento = (ev, slug) => {
+        const comp = ev.competitions?.[0];
+        const home = comp?.competitors?.find(c => c.homeAway === 'home');
+        const away = comp?.competitors?.find(c => c.homeAway === 'away');
+        return {
+            id:       ev.id,
+            slug:     slug,
+            date:     ev.date,
+            // Ronda/fase del torneo (útil en copas): ESPN la manda en notes/headline.
+            ronda:    comp?.notes?.[0]?.headline ?? ev.season?.slug ?? '',
+            status: {
+                state:       comp?.status?.type?.state        ?? 'pre',
+                description: comp?.status?.type?.shortDetail  ?? comp?.status?.type?.description ?? '',
+                clock:       comp?.status?.displayClock       ?? '',
+                period:      comp?.status?.period             ?? 0,
+            },
+            homeTeam: {
+                id:    home?.team?.id,
+                name:  home?.team?.displayName ?? home?.team?.name,
+                abbr:  home?.team?.abbreviation,
+                logo:  home?.team?.logo ?? '',
+                color: home?.team?.color ? `#${home.team.color}` : null,
+                score: home?.score ?? '-',
+            },
+            awayTeam: {
+                id:    away?.team?.id,
+                name:  away?.team?.displayName ?? away?.team?.name,
+                abbr:  away?.team?.abbreviation,
+                logo:  away?.team?.logo ?? '',
+                color: away?.team?.color ? `#${away.team.color}` : null,
+                score: away?.score ?? '-',
+            },
+        };
+    };
+
     /**
      * Partidos / scoreboard.
      * Endpoint: /apis/site/v2/sports/soccer/{slug}/scoreboard
@@ -201,40 +237,39 @@ const ESPN = (() => {
         const data = await _fetch(url);
         const events = data?.events ?? [];
 
-        const result = events.map(ev => {
-            const comp = ev.competitions?.[0];
-            const home = comp?.competitors?.find(c => c.homeAway === 'home');
-            const away = comp?.competitors?.find(c => c.homeAway === 'away');
-            return {
-                id:       ev.id,
-                slug:     slug,
-                date:     ev.date,
-                status: {
-                    state:       comp?.status?.type?.state        ?? 'pre',
-                    description: comp?.status?.type?.shortDetail  ?? comp?.status?.type?.description ?? '',
-                    clock:       comp?.status?.displayClock       ?? '',
-                    period:      comp?.status?.period             ?? 0,
-                },
-                homeTeam: {
-                    id:    home?.team?.id,
-                    name:  home?.team?.displayName ?? home?.team?.name,
-                    abbr:  home?.team?.abbreviation,
-                    logo:  home?.team?.logo ?? '',
-                    color: home?.team?.color ? `#${home.team.color}` : null,
-                    score: home?.score ?? '-',
-                },
-                awayTeam: {
-                    id:    away?.team?.id,
-                    name:  away?.team?.displayName ?? away?.team?.name,
-                    abbr:  away?.team?.abbreviation,
-                    logo:  away?.team?.logo ?? '',
-                    color: away?.team?.color ? `#${away.team.color}` : null,
-                    score: away?.score ?? '-',
-                },
-            };
-        });
+        const result = events.map(ev => _mapEvento(ev, slug));
 
         _lsSet(cacheKey, result, TTL_SCOREBOARD);
+        return result;
+    };
+
+    /**
+     * Fixture COMPLETO del torneo (todo el año calendario).
+     * Pensado para copas de eliminación directa, que no tienen tabla:
+     * en vez de una tabla mostramos el calendario entero de partidos.
+     * Endpoint: scoreboard con rango de fechas de todo el año.
+     */
+    const getCalendario = async (ligaId) => {
+        const slug = getSlug(ligaId);
+        if (!slug) return [];
+
+        const year = new Date().getFullYear();
+        const cacheKey = `calendario_${slug}_${year}`;
+        if (_mem[cacheKey]) return _mem[cacheKey];
+        const cached = _lsGet(cacheKey);
+        if (cached) { _mem[cacheKey] = cached; return cached; }
+
+        const url  = `${ESPN_SITE}/${slug}/scoreboard?dates=${year}0101-${year}1231`;
+        const data = await _fetch(url);
+        const events = data?.events ?? [];
+
+        const result = events
+            .map(ev => _mapEvento(ev, slug))
+            .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        // TTL medio: el fixture cambia poco, pero los marcadores del día sí.
+        _mem[cacheKey] = result;
+        _lsSet(cacheKey, result, 30 * 60 * 1000);
         return result;
     };
 
@@ -284,5 +319,5 @@ const ESPN = (() => {
         console.log('[ESPN] Caché limpiado ✅');
     };
 
-    return { getSlug, getStandings, getScoreboard, getTeams, clearCache };
+    return { getSlug, getStandings, getScoreboard, getCalendario, getTeams, clearCache };
 })();

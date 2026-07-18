@@ -1554,7 +1554,55 @@ const App = (() => {
                     </table>
                 `;
             } else {
-                standingsBox.querySelector('.table-responsive').innerHTML = `<p style="color: var(--text-muted); padding: 10px;">Clasificación no disponible temporalmente.</p>`;
+                // Sin tabla → es una copa de eliminación directa. En vez del cartel vacío,
+                // mostramos el CALENDARIO completo del torneo (todos los partidos del año).
+                const titulo = standingsBox.querySelector('.panel-title');
+                if (titulo) titulo.textContent = '📅 Calendario';
+                const cont = standingsBox.querySelector('.table-responsive');
+
+                let fixture = [];
+                try { fixture = await ESPN.getCalendario(ligaId); } catch {}
+
+                if (!fixture.length) {
+                    cont.innerHTML = `<p style="color: var(--text-muted); padding: 10px;">Calendario no disponible temporalmente.</p>`;
+                } else {
+                    const fmtF = (d) => new Date(d).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' });
+                    const fmtH = (d) => new Date(d).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+                    const eqHtml = (t, align) => {
+                        const logo = t?.logo ? `<img src="${t.logo}" width="18" height="18" style="object-fit:contain;">` : '';
+                        const nom  = t?.abbr ?? t?.name ?? '—';
+                        const base = `display:flex;align-items:center;gap:6px;min-width:0;`;
+                        const txt  = `<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${nom}</span>`;
+                        return align === 'l'
+                            ? `<span style="${base}">${logo}${txt}</span>`
+                            : `<span style="${base}justify-content:flex-end;">${txt}${logo}</span>`;
+                    };
+                    const fila = (m) => {
+                        const st     = m.status?.state;
+                        const jugado = st === 'post' || st === 'in';
+                        const vivo   = st === 'in';
+                        const centro = jugado ? `${m.homeTeam?.score ?? '-'} - ${m.awayTeam?.score ?? '-'}` : fmtH(m.date);
+                        return `
+                            <div onclick="window.location.hash='#/partido?id=${m.id}&liga=${m.slug}'"
+                                style="display:grid;grid-template-columns:38px 1fr 62px 1fr;gap:6px;align-items:center;padding:9px 6px;border-bottom:1px solid var(--border-glass);cursor:pointer;font-size:0.85rem;transition:background 0.2s;"
+                                onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                                <span style="font-size:0.7rem;color:var(--text-muted);line-height:1.15;">${fmtF(m.date)}</span>
+                                ${eqHtml(m.homeTeam, 'l')}
+                                <span style="text-align:center;font-weight:700;font-family:var(--font-heading);white-space:nowrap;color:${vivo ? '#ff4757' : 'inherit'};">${centro}${vivo && m.status?.clock ? ` <span style="font-size:0.6rem;">${m.status.clock}</span>` : ''}</span>
+                                ${eqHtml(m.awayTeam, 'r')}
+                            </div>`;
+                    };
+                    // Próximos (en vivo + por jugar) arriba; resultados abajo, más reciente primero.
+                    const prox    = fixture.filter(m => m.status?.state !== 'post');
+                    const jugados = fixture.filter(m => m.status?.state === 'post').reverse();
+                    const seccion = (label, arr) => arr.length
+                        ? `<div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--accent-neon);margin:14px 4px 4px;">${label}</div>${arr.map(fila).join('')}`
+                        : '';
+                    cont.innerHTML = `<div style="max-height:520px;overflow-y:auto;">
+                        ${seccion('Próximos', prox)}
+                        ${seccion('Resultados', jugados)}
+                    </div>`;
+                }
             }
 
             if (partidosRaw && partidosRaw.length > 0) {
