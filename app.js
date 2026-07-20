@@ -568,13 +568,41 @@ const App = (() => {
     };
     const _normalizarSlug = (s) => SLUG_ARREGLOS[s] ?? s;
 
+    // Torneos de selecciones que ya jugaron su edición. Pasada la fecha de cierre
+    // no deben "copar" el home: grupos, partido destacado y goleadores quedarían
+    // clavados en un torneo finalizado (el scoreboard sigue devolviendo la final).
+    // Al terminar, se los saca de las competencias del usuario y el home cae en su
+    // liga nacional, que es la que sigue activa. Solo hay que actualizar la fecha
+    // cuando arranque la próxima edición.
+    const TORNEOS_FIN = {
+        'fifa.world': '2026-07-20',   // Mundial 2026: final 19-jul. Próxima edición: 2030.
+        'uefa.euro':  '2024-07-15',   // Euro 2024 terminó. Próxima: 2028.
+    };
+    const _hoyISO = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' });
+    const _torneoTerminado = (slug) => {
+        const fin = TORNEOS_FIN[slug];
+        return fin ? _hoyISO() >= fin : false;
+    };
+
+    // Liga nacional por país (mismo mapeo que el wizard de #/setup, acá aplanado)
+    // para poder elegir un fallback sensato cuando la única competencia del usuario
+    // era un torneo que ya terminó.
+    const LIGA_NACIONAL_POR_PAIS = {
+        AR:'arg.1', ES:'esp.1', MX:'mex.1', CO:'col.1', CL:'chi.1', UY:'uru.1',
+        PE:'per.1', BR:'bra.1', PY:'par.1', EC:'ecu.1', GB:'eng.1', DE:'ger.1',
+        IT:'ita.1', FR:'fra.1', PT:'por.1', NL:'ned.1',
+    };
+
     const _competenciasUsuario = () => {
         const p = window.FirebaseAuth?.getPerfil() ?? {};
         const elegidas = [p.ligaNacional, p.ligaInternacional]
             .filter(Boolean)
-            .map(_normalizarSlug);
-        // Perfil incompleto o viejo: algo hay que mostrar.
-        return elegidas.length ? [...new Set(elegidas)] : ['fifa.world'];
+            .map(_normalizarSlug)
+            .filter(slug => !_torneoTerminado(slug));   // sacar torneos ya finalizados
+        if (elegidas.length) return [...new Set(elegidas)];
+        // Sin competencias activas (perfil incompleto, o solo tenía el Mundial):
+        // caemos en la liga nacional del país del usuario, o Liga Argentina por defecto.
+        return [LIGA_NACIONAL_POR_PAIS[p.pais] ?? 'arg.1'];
     };
 
     const renderHome = async () => {
