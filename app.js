@@ -4766,6 +4766,181 @@ const App = (() => {
                     STR:{eq:'Aston Martin',num:18},
                 };
 
+                // Trazados esquemáticos de cada circuito. La clave es circuit.address.city
+                // que manda ESPN, en minúsculas y sin acentos.
+                const F1_CIRCUITOS = {
+                    'melbourne': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M30,80 Q30,30 80,30 L140,30 Q170,30 170,60 Q170,80 150,90 Q130,100 130,120 Q130,140 100,140 Q70,140 50,130 Q30,120 30,100 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round"/>
+                        <circle cx="30" cy="80" r="5" fill="#ff4757"/>
+                        <text x="20" y="75" font-size="7" fill="#fff" font-family="system-ui">START</text>
+                        <text x="90" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MELBOURNE</text>
+                    </svg>`,
+                    'shanghai': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M40,100 L40,60 Q40,30 80,30 L160,30 Q170,40 160,70 Q150,90 120,90 L100,90 Q80,90 80,110 Q80,130 60,130 Q40,130 40,115 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
+                        <circle cx="40" cy="100" r="5" fill="#ff4757"/>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">SHANGHÁI</text>
+                    </svg>`,
+                    'suzuka': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M100,130 Q60,130 40,100 Q20,70 40,50 Q60,30 100,30 Q130,30 150,50 L170,50 Q180,60 170,80 Q160,100 140,110 Q150,130 130,135 Q115,140 100,130 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
+                        <circle cx="100" cy="130" r="5" fill="#ff4757"/>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">SUZUKA</text>
+                    </svg>`,
+                    'sakhir': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M40,90 L40,50 Q40,30 70,30 Q100,30 100,50 Q100,70 80,80 Q100,90 120,80 Q150,70 160,50 Q170,30 185,50 Q185,80 160,100 Q140,120 100,120 Q60,120 40,110 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
+                        <circle cx="40" cy="90" r="5" fill="#ff4757"/>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">SAKHIR</text>
+                    </svg>`,
+                    'jeddah': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M160,120 L160,40 Q160,30 150,30 L60,30 Q50,30 50,40 L50,60 Q50,70 60,70 L130,70 Q140,70 140,80 L140,100 Q140,110 130,110 L60,110 Q50,110 50,120 L50,135"
+                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
+                        <circle cx="160" cy="120" r="5" fill="#ff4757"/>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">JEDDAH</text>
+                    </svg>`,
+                    'florida': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M50,130 L50,80 Q50,50 80,40 L150,40 Q170,40 170,60 Q170,80 150,85 Q130,90 120,100 Q110,115 120,130 Q130,145 100,145 Q70,145 50,130 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
+                        <circle cx="50" cy="130" r="5" fill="#ff4757"/>
+                        <text x="100" y="28" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MIAMI</text>
+                    </svg>`,
+                    'montreal': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M50,100 L50,50 L170,50 L170,70 L110,70 L110,90 L170,90 L170,120 L80,120 Q50,120 50,100 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
+                        <circle cx="50" cy="100" r="5" fill="#ff4757"/>
+                        <text x="100" y="38" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MONTREAL</text>
+                    </svg>`,
+                    'monte carlo': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M170,100 L170,60 Q165,30 140,25 Q110,20 80,40 Q50,60 40,90 Q30,115 50,130 Q70,145 110,140 Q140,135 160,120 Q170,115 170,100 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
+                        <circle cx="170" cy="100" r="5" fill="#ff4757"/>
+                        <text x="100" y="15" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MONACO</text>
+                    </svg>`,
+                    'barcelona': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M60,120 L60,70 Q60,40 100,35 Q140,30 160,55 Q175,75 160,95 Q145,115 120,115 Q120,130 90,135 Q65,138 60,120 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
+                        <circle cx="60" cy="120" r="5" fill="#ff4757"/>
+                        <text x="100" y="22" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">BARCELONA</text>
+                    </svg>`,
+                    'spielberg': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M80,130 Q40,130 30,100 Q20,70 50,50 Q80,30 120,40 Q160,50 170,80 Q175,100 160,120 Q145,140 110,135 Q95,133 80,130 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
+                        <circle cx="80" cy="130" r="5" fill="#ff4757"/>
+                        <text x="100" y="22" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">RED BULL RING</text>
+                    </svg>`,
+                    'silverstone': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M90,130 Q50,125 35,100 Q20,70 40,50 Q60,30 100,30 Q140,30 160,55 Q175,75 165,100 Q155,125 125,135 Q110,140 90,130 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
+                        <circle cx="90" cy="130" r="5" fill="#ff4757"/>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">SILVERSTONE</text>
+                    </svg>`,
+                    'stavelot': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M40,100 Q30,70 50,45 Q70,20 110,25 Q150,30 170,55 Q185,80 170,105 Q155,130 120,138 Q85,145 60,130 Q40,118 40,100 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
+                        <circle cx="40" cy="100" r="5" fill="#ff4757"/>
+                        <text x="100" y="15" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">SPA-FRANCORCHAMPS</text>
+                    </svg>`,
+                    'budapest': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M80,130 Q40,120 30,90 Q20,60 50,40 Q80,20 120,30 Q160,40 170,70 Q180,100 160,120 Q140,140 100,135 Q90,133 80,130 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
+                        <circle cx="80" cy="130" r="5" fill="#ff4757"/>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">HUNGARORING</text>
+                    </svg>`,
+                    'zandvoort': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M100,135 Q60,130 40,105 Q20,80 35,55 Q50,30 90,25 Q130,20 155,45 Q175,65 170,95 Q165,125 135,138 Q118,145 100,135 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
+                        <circle cx="100" cy="135" r="5" fill="#ff4757"/>
+                        <text x="100" y="15" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">ZANDVOORT</text>
+                    </svg>`,
+                    'monza': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M30,80 Q30,40 70,30 L140,30 Q165,30 170,55 Q175,80 160,95 Q145,110 130,100 Q115,90 100,100 Q85,110 85,130 Q85,145 60,145 Q35,145 30,120 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
+                        <circle cx="30" cy="80" r="5" fill="#ff4757"/>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MONZA</text>
+                    </svg>`,
+                    'madrid': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M45,120 L45,70 Q45,45 70,42 L130,36 Q160,32 168,55 Q174,75 155,85 Q135,95 138,112 Q140,130 115,134 Q85,138 62,132 Q45,128 45,120 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round"/>
+                        <circle cx="45" cy="120" r="5" fill="#ff4757"/>
+                        <text x="28" y="115" font-size="7" fill="#fff" font-family="system-ui">START</text>
+                        <text x="100" y="22" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MADRID</text>
+                    </svg>`,
+                    'baku': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M160,120 L160,40 Q155,25 140,25 L60,25 Q45,25 45,40 L45,60 Q45,75 60,75 L140,75 Q155,75 155,90 L155,110 Q155,125 140,130 L60,130 Q45,130 45,120"
+                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
+                        <circle cx="160" cy="120" r="5" fill="#ff4757"/>
+                        <text x="100" y="15" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">BAKÚ</text>
+                    </svg>`,
+                    'singapore': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M40,110 L40,50 Q40,30 60,30 L100,30 Q120,30 120,50 Q120,70 100,75 Q80,80 80,100 Q80,120 100,125 L150,125 Q170,125 170,110 Q170,95 155,90 Q140,85 140,70 Q140,55 155,50 Q170,45 175,60 Q175,80 165,100"
+                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
+                        <circle cx="40" cy="110" r="5" fill="#ff4757"/>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MARINA BAY</text>
+                    </svg>`,
+                    'austin': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M50,120 L50,60 Q50,30 90,25 Q130,20 155,45 Q175,65 165,90 Q155,115 130,120 Q115,125 100,115 Q85,105 75,115 Q65,125 50,120 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
+                        <circle cx="50" cy="120" r="5" fill="#ff4757"/>
+                        <text x="100" y="14" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">COTA - AUSTIN</text>
+                    </svg>`,
+                    'mexico city': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M60,120 Q30,120 25,90 Q20,60 50,40 Q80,20 120,25 Q160,30 170,60 Q175,85 160,105 Q145,125 115,130 Q90,135 60,120 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
+                        <circle cx="60" cy="120" r="5" fill="#ff4757"/>
+                        <text x="100" y="14" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">CDMX - HERMANOS RODRÍGUEZ</text>
+                    </svg>`,
+                    'sao paulo': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M80,130 Q40,125 30,95 Q20,65 50,45 Q80,25 120,30 Q155,35 168,65 Q178,90 165,115 Q150,140 110,140 Q95,140 80,130 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
+                        <circle cx="80" cy="130" r="5" fill="#ff4757"/>
+                        <text x="100" y="18" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">INTERLAGOS</text>
+                    </svg>`,
+                    'nevada': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M160,130 L160,40 Q160,25 145,25 L55,25 Q40,25 40,40 L40,70 L140,70 L140,100 L40,100 L40,130 Q40,145 55,145 L145,145 Q160,145 160,130 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
+                        <circle cx="160" cy="130" r="5" fill="#ff4757"/>
+                        <text x="100" y="15" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">LAS VEGAS STRIP</text>
+                    </svg>`,
+                    'lusail': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M80,130 Q40,125 28,95 Q16,65 40,45 Q64,25 105,28 Q145,31 163,60 Q178,85 165,112 Q150,138 112,142 Q96,145 80,130 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
+                        <circle cx="80" cy="130" r="5" fill="#ff4757"/>
+                        <text x="100" y="17" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">LUSAIL</text>
+                    </svg>`,
+                    'abu dhabi': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+                        <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
+                        <path d="M60,120 Q30,115 25,85 Q20,55 50,35 Q80,15 125,20 Q165,25 175,55 Q182,80 168,105 Q152,130 118,138 Q85,145 60,120 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
+                        <circle cx="60" cy="120" r="5" fill="#ff4757"/>
+                        <text x="100" y="9" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">YAS MARINA</text>
+                    </svg>`,
+                };
+
                 const _f1 = async (url) => {
                     const r = await fetch(CF_WORKER + '/?url=' + encodeURIComponent(url));
                     if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -4878,6 +5053,11 @@ const App = (() => {
                             const st   = comp.status?.type?.state ?? 'pre';
                             const cs   = comp.competitors ?? [];
                             const win  = cs.find(c => c.winner === true) ?? cs.find(c => String(c.order) === '1');
+                            // La ciudad es la clave del trazado: ESPN la manda en
+                            // circuit.address.city ("Monte carlo", "Sao paulo"…).
+                            const ciudad = (e.circuit?.address?.city ?? '')
+                                .toLowerCase()
+                                .normalize('NFD').replace(/[̀-ͯ]/g, '');
                             return {
                                 ronda:      i + 1,
                                 nombre:     e.shortName ?? e.name ?? 'GP',
@@ -4885,9 +5065,13 @@ const App = (() => {
                                 completada: st === 'post',
                                 enVivo:     st === 'in',
                                 ganador:    win?.athlete?.displayName ?? null,
+                                ciudad,
+                                circuito:   e.circuit?.fullName ?? '',
+                                pais:       e.circuit?.address?.country ?? '',
                             };
                         });
                         const proxima = carreras.find(c => !c.completada && !c.enVivo);
+                        window._f1Carreras = carreras;   // lo lee _verCircuito
 
                         container.innerHTML = `
                             ${proxima ? `
@@ -4903,16 +5087,20 @@ const App = (() => {
 
                             ${carreras.map(c => {
                                 const activa = c.enVivo || c === proxima;
+                                const tieneMapa = !!F1_CIRCUITOS[c.ciudad];
                                 return `
-                                <div style="display:grid; grid-template-columns:36px 1fr auto; align-items:center; gap:12px;
+                                <div ${tieneMapa ? `onclick="window._verCircuito(${c.ronda})"` : ''}
+                                    style="display:grid; grid-template-columns:36px 1fr auto; align-items:center; gap:12px;
                                     padding:10px 12px; border-radius:10px; margin-bottom:6px;
                                     background:${activa ? 'rgba(61,111,255,0.06)' : 'rgba(255,255,255,0.03)'};
-                                    border:1px solid ${activa ? 'rgba(61,111,255,0.3)' : 'var(--border-glass)'};">
+                                    border:1px solid ${activa ? 'rgba(61,111,255,0.3)' : 'var(--border-glass)'};
+                                    cursor:${tieneMapa ? 'pointer' : 'default'};">
                                     <div style="font-family:var(--font-heading); font-size:0.85rem; font-weight:800; color:var(--text-muted); text-align:center;">R${c.ronda}</div>
                                     <div>
                                         <div style="font-weight:700; font-size:0.9rem; color:${c.completada ? 'var(--text-main)' : activa ? 'var(--accent-neon)' : 'var(--text-muted)'};">
                                             🏁 ${c.nombre}
                                         </div>
+                                        ${c.circuito ? `<div style="font-size:0.72rem; color:var(--text-muted);">${c.circuito}</div>` : ''}
                                         ${c.completada && c.ganador ? `<div style="font-size:0.72rem; color:var(--accent-neon); margin-top:2px;">🏆 ${c.ganador}</div>` : ''}
                                     </div>
                                     <div style="text-align:right;">
@@ -4920,10 +5108,42 @@ const App = (() => {
                                         ${c.enVivo ? '<div style="font-size:0.65rem; color:#ff4757;">EN VIVO</div>'
                                           : c.completada ? '<div style="font-size:0.65rem; color:var(--text-muted);">✓ FIN</div>'
                                           : c === proxima ? '<div style="font-size:0.65rem; color:var(--accent-neon);">PRÓXIMA</div>' : ''}
+                                        ${tieneMapa ? '<div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">Ver circuito →</div>' : ''}
                                     </div>
                                 </div>`;
                             }).join('')}
                         `;
+
+                        // Detalle de un circuito: trazado + datos de la carrera.
+                        window._verCircuito = (ronda) => {
+                            const c = (window._f1Carreras ?? []).find(x => x.ronda === ronda);
+                            const svg = c && F1_CIRCUITOS[c.ciudad];
+                            if (!c || !svg) return;
+                            container.innerHTML = `
+                                <button onclick="window.location.hash='#/other-sports?deporte=racing&liga=carreras'"
+                                    style="background:transparent; border:1px solid var(--border-glass); color:var(--text-muted);
+                                    padding:6px 14px; border-radius:12px; cursor:pointer; font-size:0.8rem; margin-bottom:1.2rem;">← Volver</button>
+
+                                <div class="glass-panel" style="padding:1.5rem;">
+                                    <h3 style="font-family:var(--font-heading); font-size:1.1rem; font-weight:900; color:var(--accent-neon); margin-bottom:0.3rem;">
+                                        🏁 ${c.nombre}
+                                    </h3>
+                                    <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1.2rem;">
+                                        ${c.circuito}${c.pais ? ' — ' + c.pais : ''} · ${fmtFecha(c.fecha)}
+                                    </p>
+
+                                    ${svg}
+
+                                    <div style="margin-top:1rem; padding:12px; border-radius:8px;
+                                        background:${c.completada ? 'rgba(61,111,255,0.06)' : 'rgba(255,255,255,0.04)'};
+                                        border:1px solid ${c.completada ? 'rgba(61,111,255,0.2)' : 'var(--border-glass)'};">
+                                        ${c.completada && c.ganador
+                                            ? `<div style="font-size:0.7rem; color:var(--accent-neon); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Ganador</div>
+                                               <div style="font-weight:800; font-size:1rem;">🏆 ${c.ganador}</div>`
+                                            : `<div style="font-size:0.8rem; color:var(--text-muted);">${c.completada ? 'Carrera finalizada' : 'Carrera pendiente'} — ${fmtFecha(c.fecha)}</div>`}
+                                    </div>
+                                </div>`;
+                        };
                     }
                 } catch (err) {
                     _err('No se pudieron cargar los datos de F1. Probá de nuevo en un rato.');
