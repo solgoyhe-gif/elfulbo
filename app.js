@@ -5656,6 +5656,128 @@ const App = (() => {
             }
             // ── FIN deportes con stats ────────────────────────────────────────
 
+            // ── MMA: cartelera completa ───────────────────────────────────────
+            // Ojo: en MMA un "evento" es la velada entera y cada `competition` es
+            // UNA pelea (una UFC Fight Night trae ~13). Además los competidores no
+            // tienen homeAway, así que el render genérico los daba por indefinidos.
+            if ((ligaActual.slug ?? '').startsWith('mma/')) {
+                const rMma = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/${ligaActual.slug}/scoreboard`)}`);
+                const dMma = rMma.ok ? await rMma.json() : {};
+                const veladas = dMma.events ?? [];
+                if (!container) return;
+                if (!veladas.length) {
+                    container.innerHTML = `<div class="glass-panel" style="padding:2rem;text-align:center;"><p style="font-size:2rem;margin-bottom:.5rem;">${deporteActual.emoji}</p><p style="color:var(--text-muted);">Sin veladas programadas.</p></div>`;
+                    return;
+                }
+
+                container.innerHTML = veladas.map(velada => {
+                    const peleas = velada.competitions ?? [];
+                    const fechaV = new Date(velada.date);
+                    const cabecera = `
+                        <div style="margin-bottom:1rem;">
+                            <h3 style="font-family:var(--font-heading); font-size:1.05rem; font-weight:900; color:var(--accent-neon);">${velada.name ?? 'Velada'}</h3>
+                            <p style="font-size:.78rem; color:var(--text-muted);">
+                                ${_etiquetaDia(fechaV)} · ${peleas.length} pelea${peleas.length === 1 ? '' : 's'}
+                            </p>
+                        </div>`;
+
+                    const filas = peleas.map(p => {
+                        const cs     = p.competitors ?? [];
+                        const a      = cs[0] ?? {};
+                        const b      = cs[1] ?? {};
+                        const estado = p.status?.type?.state ?? 'pre';
+                        const esPost = estado === 'post';
+                        const esLive = estado === 'in';
+                        const nombreDe = (c) => c?.athlete?.displayName ?? c?.athlete?.shortName ?? '?';
+                        const recordDe = (c) => (c?.records ?? [])[0]?.summary ?? '';
+                        const ganoA  = a?.winner === true;
+                        const ganoB  = b?.winner === true;
+                        const detalle = p.status?.type?.shortDetail ?? '';
+                        const colorDe = (gano) => esPost ? (gano ? 'var(--accent-neon)' : 'var(--text-muted)') : 'var(--text-main)';
+
+                        const lado = (c, gano, alineado) => `
+                            <div style="text-align:${alineado}; min-width:0;">
+                                <div style="font-weight:700; font-size:.88rem; color:${colorDe(gano)}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                    ${gano ? '🏆 ' : ''}${nombreDe(c)}
+                                </div>
+                                ${recordDe(c) ? `<div style="font-size:.7rem; color:var(--text-muted);">${recordDe(c)}</div>` : ''}
+                            </div>`;
+
+                        return `
+                            <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:10px;
+                                padding:11px 12px; border-radius:10px; margin-bottom:6px;
+                                background:${esLive ? 'rgba(255,71,87,.07)' : 'rgba(255,255,255,.03)'};
+                                border:1px solid ${esLive ? 'rgba(255,71,87,.3)' : 'var(--border-glass)'};">
+                                ${lado(a, ganoA, 'right')}
+                                <div style="text-align:center; flex-shrink:0;">
+                                    <div style="font-size:.7rem; font-weight:800; color:var(--text-muted);">VS</div>
+                                    ${p.type?.text ? `<div style="font-size:.62rem; color:var(--text-muted);">${p.type.text}</div>` : ''}
+                                    ${esLive ? '<div style="font-size:.6rem; color:#ff4757; font-weight:800;">● EN VIVO</div>'
+                                      : esPost ? `<div style="font-size:.6rem; color:var(--text-muted);">${detalle || 'FIN'}</div>` : ''}
+                                </div>
+                                ${lado(b, ganoB, 'left')}
+                            </div>`;
+                    }).join('');
+
+                    return `<div class="glass-panel" style="padding:1.2rem; margin-bottom:1.2rem;">${cabecera}${filas}</div>`;
+                }).join('');
+                return;
+            }
+
+            // ── GOLF: leaderboard del torneo ──────────────────────────────────
+            // El field son ~144 jugadores sin homeAway; lo que corresponde es una
+            // tabla de posiciones, no una tarjeta de local vs visitante.
+            if ((ligaActual.slug ?? '').startsWith('golf/')) {
+                const rG = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/${ligaActual.slug}/scoreboard`)}`);
+                const dG = rG.ok ? await rG.json() : {};
+                const torneos = dG.events ?? [];
+                if (!container) return;
+                if (!torneos.length) {
+                    container.innerHTML = `<div class="glass-panel" style="padding:2rem;text-align:center;"><p style="font-size:2rem;margin-bottom:.5rem;">${deporteActual.emoji}</p><p style="color:var(--text-muted);">Sin torneos en curso.</p></div>`;
+                    return;
+                }
+
+                container.innerHTML = torneos.map(t => {
+                    const comp   = (t.competitions ?? [])[0] ?? {};
+                    const jug    = (comp.competitors ?? []).slice(0, 15);
+                    const estado = t.status?.type?.state ?? comp.status?.type?.state ?? 'pre';
+                    const detalle = t.status?.type?.detail ?? comp.status?.type?.detail ?? '';
+                    const arrancó = estado !== 'pre';
+
+                    const filas = jug.map((c, i) => {
+                        const pos    = c.status?.position?.displayName ?? String(c.order ?? i + 1);
+                        const nombre = c.athlete?.displayName ?? '?';
+                        const bandera = c.athlete?.flag?.href
+                            ? `<img src="${c.athlete.flag.href}" width="16" height="11" style="object-fit:cover;border-radius:2px;vertical-align:middle;margin-right:5px;" onerror="this.style.display='none'">`
+                            : '';
+                        const score  = c.score ?? (c.statistics ?? []).find(s => /scoreToPar|toPar/i.test(s.name ?? ''))?.displayValue ?? '—';
+                        const thru   = c.status?.thru ?? '';
+                        const medalla = i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : 'var(--text-muted)';
+                        return `
+                            <div style="display:grid; grid-template-columns:34px 1fr auto auto; align-items:center; gap:10px;
+                                padding:9px 6px; border-bottom:1px solid var(--border-glass);">
+                                <span style="font-weight:800; font-size:.82rem; color:${medalla}; text-align:center;">${pos}</span>
+                                <span style="font-size:.86rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${bandera}${nombre}</span>
+                                <span style="font-family:var(--font-heading); font-weight:900; font-size:.9rem; color:${String(score).startsWith('-') ? 'var(--accent-neon)' : 'var(--text-main)'};">${score}</span>
+                                <span style="font-size:.68rem; color:var(--text-muted); min-width:34px; text-align:right;">${arrancó && thru ? thru : ''}</span>
+                            </div>`;
+                    }).join('');
+
+                    return `
+                        <div class="glass-panel" style="padding:1.2rem; margin-bottom:1.2rem;">
+                            <div style="margin-bottom:.9rem;">
+                                <h3 style="font-family:var(--font-heading); font-size:1.05rem; font-weight:900; color:var(--accent-neon);">${t.name ?? 'Torneo'}</h3>
+                                <p style="font-size:.78rem; color:var(--text-muted);">
+                                    ${detalle || _etiquetaDia(new Date(t.date))}${comp.competitors?.length ? ` · ${comp.competitors.length} jugadores` : ''}
+                                </p>
+                            </div>
+                            ${arrancó ? '' : '<p style="font-size:.75rem; color:var(--text-muted); margin-bottom:.6rem;">El torneo todavía no arrancó — este es el field inicial.</p>'}
+                            ${filas}
+                        </div>`;
+                }).join('');
+                return;
+            }
+
             const url = `https://site.api.espn.com/apis/site/v2/sports/${ligaActual.slug}/scoreboard?dates=${fecha}`;
             const res = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(url)}`);
             const data = res.ok ? await res.json() : {};
