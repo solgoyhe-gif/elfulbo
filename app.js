@@ -584,6 +584,23 @@ const App = (() => {
         return fin ? _hoyISO() >= fin : false;
     };
 
+    // Etiqueta de día para un partido. La home lista los próximos 7 días, así que
+    // mostrar solo la hora no alcanza: no se distingue el de hoy del del jueves.
+    // Devuelve 'Hoy', 'Mañana' o 'jue 23/7'.
+    const _etiquetaDia = (fecha) => {
+        const TZ = 'America/Argentina/Buenos_Aires';
+        const f  = (fecha instanceof Date) ? fecha : new Date(fecha ?? '');
+        if (isNaN(f)) return '';
+        const soloDia = (d) => d.toLocaleDateString('en-CA', { timeZone: TZ });
+        const hoy     = new Date();
+        const manana  = new Date(hoy.getTime() + 24 * 60 * 60 * 1000);
+        const diaEv   = soloDia(f);
+        if (diaEv === soloDia(hoy))    return 'Hoy';
+        if (diaEv === soloDia(manana)) return 'Mañana';
+        return f.toLocaleDateString('es-AR', { timeZone: TZ, weekday: 'short' })
+             + ' ' + f.toLocaleDateString('es-AR', { timeZone: TZ, day: 'numeric', month: 'numeric' });
+    };
+
     // Liga nacional por país (mismo mapeo que el wizard de #/setup, acá aplanado)
     // para poder elegir un fallback sensato cuando la única competencia del usuario
     // era un torneo que ya terminó.
@@ -775,7 +792,8 @@ const App = (() => {
             return `<div onclick="${ir}" class="match-row${esLive ? ' live' : ''}" style="margin-bottom:6px;">
                 <div>
                     ${liveBadge}
-                    ${!esLive ? `<div class="match-state-main" style="color:${esPost ? 'var(--muted)' : 'var(--blue)'}">${esPost ? 'FT' : horaAR}</div>` : ''}
+                    ${!esLive ? `<div class="match-state-main" style="color:${esPost ? 'var(--muted)' : 'var(--blue)'}">${esPost ? 'FT' : _etiquetaDia(fechaEv)}</div>
+                    ${esPost ? `<div class="match-state-group">${_etiquetaDia(fechaEv)}</div>` : ''}` : ''}
                 </div>
                 <div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;min-width:0;">
                     <span class="match-team-name">${homeName}</span>
@@ -837,7 +855,11 @@ const App = (() => {
             } else {
                 badge = `<div class="hero-live-badge" style="background:rgba(61,111,255,.14);border-color:rgba(61,111,255,.35);"><span class="hero-live-text" style="color:#8FA9FF;">PRÓXIMO</span></div>`;
                 const h = _horaEv(ev);
-                linea = h ? 'Comienza ' + h : 'Próximamente'; color = '#8FA9FF'; cta = 'Ver detalle';
+                const d = _etiquetaDia(ev.date);
+                // "Comienza hoy 21:30" / "Comienza el jue 23/7 a las 16:00"
+                linea = h ? (d === 'Hoy' || d === 'Mañana' ? `Comienza ${d.toLowerCase()} ${h}` : `Comienza el ${d} a las ${h}`)
+                          : 'Próximamente';
+                color = '#8FA9FF'; cta = 'Ver detalle';
             }
 
             const marcador = (esLive || esPost)
@@ -948,7 +970,7 @@ const App = (() => {
                         const ir = `window.location.hash='#/partido?id=${ev.id}&liga=${ev._slug}'`;
                         const img = (t) => t?.logo ? `<img class="rail-next-logo" src="${t.logo}" onerror="this.style.display='none'">` : '';
                         return `<div class="rail-next-row" onclick="${ir}">
-                            <span class="rail-next-time">${_horaEv(ev)}</span>
+                            <span class="rail-next-time"><span style="display:block;font-size:.58rem;color:var(--dim);font-weight:600;">${_etiquetaDia(ev.date)}</span>${_horaEv(ev)}</span>
                             ${img(h?.team)}
                             <span class="rail-next-team">${h?.team?.abbreviation ?? h?.team?.displayName ?? '?'}</span>
                             <span class="rail-next-vs">vs</span>
