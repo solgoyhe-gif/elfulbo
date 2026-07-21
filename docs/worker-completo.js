@@ -344,19 +344,26 @@ const IA_MODELO = 'gemini-flash-latest';
 const IA_SISTEMA = [
     'Sos el analista de Whistle, una app deportiva argentina. Escribís análisis previos',
     'de partidos de fútbol en español rioplatense (voseo natural, sin exagerar el lunfardo),',
-    'para hinchas que saben de fútbol.',
+    'para hinchas que saben de fútbol y quieren llegar al partido sabiendo qué mirar.',
+    '',
+    'Estructura (4 párrafos, entre 280 y 350 palabras en total):',
+    '1. Cómo llegan los dos equipos: forma reciente y momento anímico. Citá',
+    '   resultados concretos, no generalidades.',
+    '2. La foto de la tabla: posición, puntos, diferencia de gol y qué se juega',
+    '   cada uno en ese contexto.',
+    '3. El historial entre ambos y las figuras: quién viene decidiendo los cruces,',
+    '   y qué jugador de cada lado puede desnivelar (goleadores y asistidores).',
+    '4. Qué esperar: el favorito según las probabilidades y por qué, más el duelo',
+    '   o la zona de la cancha que puede definir el partido.',
     '',
     'Reglas:',
-    '- 3 párrafos cortos, máximo 160 palabras en total.',
-    '- Párrafo 1: cómo llegan los dos equipos, usando la forma reciente.',
-    '- Párrafo 2: qué dice el historial entre ambos y las figuras de cada lado.',
-    '- Párrafo 3: qué esperar del partido. Podés mencionar el favorito según las',
-    '  probabilidades, pero NO des consejos de apuestas.',
     '- Usá SOLO los datos del contexto. No inventes lesiones, declaraciones,',
-    '  posiciones de tabla ni estadísticas que no estén.',
-    '- Si un dato falta, simplemente no lo menciones.',
-    '- Nada de títulos, listas ni markdown. Solo texto corrido.',
-    '- No empieces con "Análisis" ni "En este partido". Entrá directo.',
+    '  formaciones, decisiones del técnico ni estadísticas que no estén.',
+    '- Cuando saques una conclusión, apoyala en un dato concreto del contexto.',
+    '- Si un dato falta, simplemente no lo menciones. Nunca lo rellenes.',
+    '- NO des consejos de apuestas ni sugieras apostar.',
+    '- Nada de títulos, listas ni markdown. Solo párrafos de texto corrido.',
+    '- No empieces con "Análisis" ni "En este partido". Entrá directo al fútbol.',
 ].join('\n');
 
 async function manejarAnalisisPrevia(request, env) {
@@ -396,15 +403,23 @@ async function manejarAnalisisPrevia(request, env) {
                 body: JSON.stringify({
                     systemInstruction: { parts: [{ text: IA_SISTEMA }] },
                     contents: [{ role: 'user', parts: [{ text: contexto }] }],
-                    // Generoso a propósito: Gemini gasta tokens internos antes de
-                    // escribir, y con un tope bajo corta el texto por la mitad.
-                    generationConfig: { maxOutputTokens: 2000, temperature: 0.7 },
+                    // OJO: maxOutputTokens incluye los tokens de razonamiento interno
+                    // de Gemini, no solo el texto final. Este modelo gasta ~2500
+                    // pensando, así que con 2000 se quedaba sin presupuesto y devolvía
+                    // el análisis cortado a la mitad (finishReason MAX_TOKENS).
+                    generationConfig: { maxOutputTokens: 6000, temperature: 0.7 },
                 }),
             }
         );
         if (!aiRes.ok) return jsonError('Error del modelo: ' + (await aiRes.text()).slice(0, 200), 502);
         const aiData = await aiRes.json();
-        analisis = (aiData?.candidates?.[0]?.content?.parts ?? []).map(p => p.text ?? '').join('').trim();
+        // Descartamos las partes marcadas como `thought`: son el razonamiento
+        // interno del modelo, no el texto para el usuario.
+        analisis = (aiData?.candidates?.[0]?.content?.parts ?? [])
+            .filter(p => !p?.thought)
+            .map(p => p.text ?? '')
+            .join('')
+            .trim();
     } catch (e) {
         return jsonError('Fallo al llamar al modelo', 502);
     }
@@ -455,12 +470,49 @@ function iaContexto(sum) {
         L.push('');
     }
 
-    for (const grupo of sum?.leaders ?? []) {
-        const cat = (grupo?.leaders ?? []).find(c => /goal/i.test(c?.name ?? c?.displayName ?? ''));
-        const top = cat?.leaders?.[0];
-        if (top?.athlete?.displayName) {
-            L.push(`FIGURA ${grupo?.team?.displayName ?? '?'}: ${top.athlete.displayName} (${top.displayValue ?? ''})`);
+    // Posición en la tabla de cada uno de los dos equipos
+    const filas = sum?.standings?.groups?.[0]?.standings?.entries
+               ?? sum?.standings?.entries ?? [];
+    if (filas.length) {
+        const buscarFila = (nom) => filas.find(e => {
+            const t = String(e?.team ?? '');
+            return t && (t === nom || nom.includes(t) || t.includes(nom.split('-')[0]));
+        });
+        const linea = (c) => {
+            const nom = nombre(c);
+            const f   = buscarFila(nom);
+            if (!f) return null;
+            const st = {};
+            for (const s of f.stats ?? []) st[s.abbreviation] = s.displayValue ?? s.value;
+            const partes = [];
+            if (st.R)  partes.push(`${st.R}° en la tabla`);
+            if (st.P)  partes.push(`${st.P} puntos`);
+            if (st.GP) partes.push(`${st.GP} jugados`);
+            if (st.W != null && st.D != null && st.L != null) partes.push(`${st.W}G ${st.D}E ${st.L}P`);
+            if (st.GD) partes.push(`dif. de gol ${st.GD}`);
+            return partes.length ? `TABLA ${nom}: ${partes.join(', ')}` : null;
+        };
+        const tl = linea(local), tv = linea(visitante);
+        if (tl || tv) {
+            L.push('');
+            if (tl) L.push(tl);
+            if (tv) L.push(tv);
         }
+    }
+
+    // Goleadores y asistidores de cada equipo
+    for (const grupo of sum?.leaders ?? []) {
+        const eq  = grupo?.team?.displayName ?? '?';
+        const cat = (nombreCat) => (grupo?.leaders ?? [])
+            .find(c => new RegExp(nombreCat, 'i').test(c?.name ?? c?.displayName ?? ''));
+        const listar = (c, n) => (c?.leaders ?? []).slice(0, n)
+            .filter(a => a?.athlete?.displayName)
+            .map(a => `${a.athlete.displayName} (${a.displayValue ?? ''})`);
+
+        const goles     = listar(cat('goal'), 2);
+        const asistidor = listar(cat('assist'), 1);
+        if (goles.length)     L.push(`GOLEADORES ${eq}: ${goles.join(' · ')}`);
+        if (asistidor.length) L.push(`ASISTIDOR ${eq}: ${asistidor[0]}`);
     }
 
     const odds = (sum?.pickcenter ?? [])[0];
