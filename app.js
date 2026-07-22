@@ -4741,7 +4741,34 @@ const App = (() => {
         ${_closeSidebarWrapper()}
         `;
 
-        if (!deporteActual || !ligaActual) return;
+        // Si no se resolvió el deporte o la liga, hay que avisar SÍ o SÍ: arriba ya
+        // se pintó el spinner, así que un `return` pelado lo deja girando para
+        // siempre. Pasa con un ?liga= que no existe para ese deporte, o con los
+        // deportes marcados "próximamente", que no tienen array `ligas`.
+        if (!deporteActual || !ligaActual) {
+            const cont = document.getElementById('other-sports-content');
+            if (cont) {
+                const esProximamente = deporteActual && !deporteActual.ligas?.length;
+                cont.innerHTML = `
+                    <div class="glass-panel" style="padding:2.5rem; text-align:center;">
+                        <div style="font-size:2.2rem; margin-bottom:.7rem;">${deporteActual?.emoji ?? '🏅'}</div>
+                        <p style="font-family:var(--font-heading); font-size:1rem; font-weight:800; margin-bottom:.4rem;">
+                            ${esProximamente ? (deporteActual.nombre + ' — próximamente') : 'No pudimos abrir este deporte'}
+                        </p>
+                        <p style="color:var(--text-muted); font-size:.84rem; margin-bottom:1.2rem;">
+                            ${esProximamente
+                                ? 'Todavía no hay datos disponibles para esta competencia.'
+                                : 'La competencia que pediste no existe o cambió de nombre.'}
+                        </p>
+                        <a href="#/other-sports" style="display:inline-block; padding:9px 20px; border-radius:8px;
+                            background:rgba(61,111,255,.12); border:1px solid rgba(61,111,255,.35);
+                            color:var(--accent-neon); text-decoration:none; font-size:.84rem; font-weight:700;">
+                            Ver todos los deportes
+                        </a>
+                    </div>`;
+            }
+            return;
+        }
 
         // ── Deporte estático (Patín sobre Hielo) ─────────────────────────────
         if (deporteActual.estatico) {
