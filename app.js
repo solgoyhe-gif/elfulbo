@@ -4793,178 +4793,203 @@ const App = (() => {
                     STR:{eq:'Aston Martin',num:18},
                 };
 
-                // Trazados esquemáticos de cada circuito. La clave es circuit.address.city
-                // que manda ESPN, en minúsculas y sin acentos.
+                // Trazados de cada circuito. La clave es circuit.address.city que
+                // manda ESPN, en minúsculas y sin acentos. Son esquemas estilizados:
+                // buscan reproducir los rasgos reconocibles de cada pista (el 8 de
+                // Suzuka, las rectas de Monza, la recta larga de Bakú), no una
+                // reproducción a escala del trazado real.
                 const F1_CIRCUITOS = {
                     'melbourne': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M30,80 Q30,30 80,30 L140,30 Q170,30 170,60 Q170,80 150,90 Q130,100 130,120 Q130,140 100,140 Q70,140 50,130 Q30,120 30,100 Z"
-                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round"/>
-                        <circle cx="30" cy="80" r="5" fill="#ff4757"/>
-                        <text x="20" y="75" font-size="7" fill="#fff" font-family="system-ui">START</text>
-                        <text x="90" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MELBOURNE</text>
+                        <path d="M52,118 Q40,100 44,80 Q48,58 68,48 Q92,36 118,38 Q146,40 160,58 Q172,74 164,92 Q156,110 132,116 Q108,122 88,126 Q66,130 52,118 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="52" cy="118" r="5" fill="#ff4757"/>
+                        <text x="30" y="124" font-size="7" fill="#fff" font-family="system-ui">START</text>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MELBOURNE</text>
                     </svg>`,
                     'shanghai': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M40,100 L40,60 Q40,30 80,30 L160,30 Q170,40 160,70 Q150,90 120,90 L100,90 Q80,90 80,110 Q80,130 60,130 Q40,130 40,115 Z"
-                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
-                        <circle cx="40" cy="100" r="5" fill="#ff4757"/>
+                        <path d="M40,128 L40,96 Q40,74 60,66 Q80,58 84,74 Q88,90 72,94 Q58,98 62,84 Q66,72 84,64 L164,34 Q180,30 180,44 Q180,56 166,60 L108,80 Q92,86 96,102 Q100,120 78,128 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="40" cy="128" r="5" fill="#ff4757"/>
+                        <text x="18" y="134" font-size="7" fill="#fff" font-family="system-ui">START</text>
                         <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">SHANGHÁI</text>
                     </svg>`,
                     'suzuka': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M100,130 Q60,130 40,100 Q20,70 40,50 Q60,30 100,30 Q130,30 150,50 L170,50 Q180,60 170,80 Q160,100 140,110 Q150,130 130,135 Q115,140 100,130 Z"
-                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
-                        <circle cx="100" cy="130" r="5" fill="#ff4757"/>
+                        <path d="M46,124 Q34,106 44,88 Q54,70 76,66 L110,58 Q128,54 134,40 Q140,26 156,32 Q170,38 164,54 Q158,72 138,80 L92,98 Q74,106 78,120 Q82,134 100,132 L150,124 Q170,120 172,104"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="46" cy="124" r="5" fill="#ff4757"/>
+                        <text x="24" y="130" font-size="7" fill="#fff" font-family="system-ui">START</text>
                         <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">SUZUKA</text>
                     </svg>`,
                     'sakhir': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M40,90 L40,50 Q40,30 70,30 Q100,30 100,50 Q100,70 80,80 Q100,90 120,80 Q150,70 160,50 Q170,30 185,50 Q185,80 160,100 Q140,120 100,120 Q60,120 40,110 Z"
-                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
-                        <circle cx="40" cy="90" r="5" fill="#ff4757"/>
+                        <path d="M44,116 L44,68 Q44,50 62,48 L96,44 Q112,42 112,58 L112,74 Q112,88 128,86 L162,82 Q178,80 176,96 Q174,112 156,116 L104,124 Q72,128 44,116 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="44" cy="116" r="5" fill="#ff4757"/>
+                        <text x="22" y="122" font-size="7" fill="#fff" font-family="system-ui">START</text>
                         <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">SAKHIR</text>
                     </svg>`,
                     'jeddah': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M160,120 L160,40 Q160,30 150,30 L60,30 Q50,30 50,40 L50,60 Q50,70 60,70 L130,70 Q140,70 140,80 L140,100 Q140,110 130,110 L60,110 Q50,110 50,120 L50,135"
-                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
-                        <circle cx="160" cy="120" r="5" fill="#ff4757"/>
+                        <path d="M164,132 L164,44 Q164,30 150,30 L118,30 Q108,30 108,40 L108,52 Q108,62 98,62 L74,62 Q64,62 64,72 L64,84 Q64,94 74,94 L92,94 Q102,94 102,104 L102,116 Q102,126 92,126 L52,126 Q40,126 40,138"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="164" cy="132" r="5" fill="#ff4757"/>
+                        <text x="168" y="144" font-size="7" fill="#fff" font-family="system-ui">START</text>
                         <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">JEDDAH</text>
                     </svg>`,
                     'florida': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M50,130 L50,80 Q50,50 80,40 L150,40 Q170,40 170,60 Q170,80 150,85 Q130,90 120,100 Q110,115 120,130 Q130,145 100,145 Q70,145 50,130 Z"
-                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
-                        <circle cx="50" cy="130" r="5" fill="#ff4757"/>
-                        <text x="100" y="28" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MIAMI</text>
+                        <path d="M56,126 Q42,112 46,94 Q50,74 70,66 L118,48 Q140,40 156,52 Q170,64 162,82 Q154,98 134,100 Q114,102 112,116 Q110,130 92,132 Q72,134 56,126 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="56" cy="126" r="5" fill="#ff4757"/>
+                        <text x="34" y="132" font-size="7" fill="#fff" font-family="system-ui">START</text>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MIAMI</text>
                     </svg>`,
                     'montreal': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M50,100 L50,50 L170,50 L170,70 L110,70 L110,90 L170,90 L170,120 L80,120 Q50,120 50,100 Z"
-                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
-                        <circle cx="50" cy="100" r="5" fill="#ff4757"/>
-                        <text x="100" y="38" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MONTREAL</text>
+                        <path d="M40,116 L40,52 Q40,40 54,40 L150,40 Q166,40 166,54 Q166,66 152,68 L64,68 Q50,68 50,82 Q50,94 64,94 L154,94 Q170,94 170,108 Q170,122 154,122 L54,122 Q40,122 40,116 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="40" cy="116" r="5" fill="#ff4757"/>
+                        <text x="18" y="122" font-size="7" fill="#fff" font-family="system-ui">START</text>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MONTREAL</text>
                     </svg>`,
                     'monte carlo': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M170,100 L170,60 Q165,30 140,25 Q110,20 80,40 Q50,60 40,90 Q30,115 50,130 Q70,145 110,140 Q140,135 160,120 Q170,115 170,100 Z"
-                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
-                        <circle cx="170" cy="100" r="5" fill="#ff4757"/>
-                        <text x="100" y="15" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MONACO</text>
+                        <path d="M48,124 L48,74 Q48,60 62,56 L88,50 Q100,47 100,58 Q100,68 88,70 Q78,72 82,82 Q86,92 100,88 L142,76 Q160,71 166,84 Q172,98 158,106 L104,124 Q74,134 48,124 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="48" cy="124" r="5" fill="#ff4757"/>
+                        <text x="26" y="130" font-size="7" fill="#fff" font-family="system-ui">START</text>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MÓNACO</text>
                     </svg>`,
                     'barcelona': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M60,120 L60,70 Q60,40 100,35 Q140,30 160,55 Q175,75 160,95 Q145,115 120,115 Q120,130 90,135 Q65,138 60,120 Z"
-                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
-                        <circle cx="60" cy="120" r="5" fill="#ff4757"/>
-                        <text x="100" y="22" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">BARCELONA</text>
+                        <path d="M44,122 L44,66 Q44,48 64,44 L118,34 Q142,30 156,44 Q170,58 160,76 Q150,92 130,94 Q112,96 114,108 Q116,120 100,124 Q70,130 44,122 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="44" cy="122" r="5" fill="#ff4757"/>
+                        <text x="22" y="128" font-size="7" fill="#fff" font-family="system-ui">START</text>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">BARCELONA</text>
                     </svg>`,
                     'spielberg': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M80,130 Q40,130 30,100 Q20,70 50,50 Q80,30 120,40 Q160,50 170,80 Q175,100 160,120 Q145,140 110,135 Q95,133 80,130 Z"
-                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
-                        <circle cx="80" cy="130" r="5" fill="#ff4757"/>
-                        <text x="100" y="22" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">RED BULL RING</text>
+                        <path d="M48,126 L86,44 Q92,30 106,36 L158,58 Q172,64 166,78 L140,124 Q134,134 120,132 L60,132 Q46,132 48,126 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="48" cy="126" r="5" fill="#ff4757"/>
+                        <text x="26" y="132" font-size="7" fill="#fff" font-family="system-ui">START</text>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">RED BULL RING</text>
                     </svg>`,
                     'silverstone': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M90,130 Q50,125 35,100 Q20,70 40,50 Q60,30 100,30 Q140,30 160,55 Q175,75 165,100 Q155,125 125,135 Q110,140 90,130 Z"
-                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
-                        <circle cx="90" cy="130" r="5" fill="#ff4757"/>
+                        <path d="M52,120 Q40,104 50,90 L74,58 Q84,44 100,50 L126,60 Q138,64 134,76 Q130,86 142,90 L166,98 Q178,102 172,114 Q166,126 152,126 L74,130 Q58,132 52,120 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="52" cy="120" r="5" fill="#ff4757"/>
+                        <text x="30" y="126" font-size="7" fill="#fff" font-family="system-ui">START</text>
                         <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">SILVERSTONE</text>
                     </svg>`,
                     'stavelot': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M40,100 Q30,70 50,45 Q70,20 110,25 Q150,30 170,55 Q185,80 170,105 Q155,130 120,138 Q85,145 60,130 Q40,118 40,100 Z"
-                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
-                        <circle cx="40" cy="100" r="5" fill="#ff4757"/>
-                        <text x="100" y="15" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">SPA-FRANCORCHAMPS</text>
+                        <path d="M46,130 L58,60 Q60,44 76,46 L108,50 Q122,52 120,64 Q118,74 130,76 L166,82 Q180,84 174,98 L156,126 Q150,136 136,134 L60,136 Q44,136 46,130 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="46" cy="130" r="5" fill="#ff4757"/>
+                        <text x="24" y="136" font-size="7" fill="#fff" font-family="system-ui">START</text>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">SPA-FRANCORCHAMPS</text>
                     </svg>`,
                     'budapest': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M80,130 Q40,120 30,90 Q20,60 50,40 Q80,20 120,30 Q160,40 170,70 Q180,100 160,120 Q140,140 100,135 Q90,133 80,130 Z"
-                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
-                        <circle cx="80" cy="130" r="5" fill="#ff4757"/>
+                        <path d="M46,120 L46,72 Q46,54 66,52 L96,48 Q110,46 110,58 Q110,68 98,72 Q86,76 90,88 Q94,100 110,96 L142,88 Q160,84 166,96 Q172,110 156,118 L104,128 Q70,132 46,120 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="46" cy="120" r="5" fill="#ff4757"/>
+                        <text x="24" y="126" font-size="7" fill="#fff" font-family="system-ui">START</text>
                         <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">HUNGARORING</text>
                     </svg>`,
                     'zandvoort': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M100,135 Q60,130 40,105 Q20,80 35,55 Q50,30 90,25 Q130,20 155,45 Q175,65 170,95 Q165,125 135,138 Q118,145 100,135 Z"
-                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
-                        <circle cx="100" cy="135" r="5" fill="#ff4757"/>
-                        <text x="100" y="15" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">ZANDVOORT</text>
+                        <path d="M50,124 L50,70 Q50,52 70,50 Q90,48 92,64 Q94,78 80,82 Q68,86 74,98 Q80,110 96,104 L146,84 Q166,76 172,90 Q178,106 160,116 L102,130 Q70,134 50,124 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="50" cy="124" r="5" fill="#ff4757"/>
+                        <text x="28" y="130" font-size="7" fill="#fff" font-family="system-ui">START</text>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">ZANDVOORT</text>
                     </svg>`,
                     'monza': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M30,80 Q30,40 70,30 L140,30 Q165,30 170,55 Q175,80 160,95 Q145,110 130,100 Q115,90 100,100 Q85,110 85,130 Q85,145 60,145 Q35,145 30,120 Z"
-                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
-                        <circle cx="30" cy="80" r="5" fill="#ff4757"/>
+                        <path d="M46,132 L46,58 Q46,44 60,42 L74,40 Q84,39 84,48 L84,56 Q84,64 94,62 L104,60 Q114,58 114,48 L114,42 Q114,32 126,34 L156,40 Q172,43 172,58 L172,88 Q172,104 156,110 Q136,118 122,106 Q108,94 90,102 L60,122 Q46,130 46,132 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="46" cy="132" r="5" fill="#ff4757"/>
+                        <text x="24" y="138" font-size="7" fill="#fff" font-family="system-ui">START</text>
                         <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MONZA</text>
                     </svg>`,
                     'madrid': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M45,120 L45,70 Q45,45 70,42 L130,36 Q160,32 168,55 Q174,75 155,85 Q135,95 138,112 Q140,130 115,134 Q85,138 62,132 Q45,128 45,120 Z"
-                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round"/>
-                        <circle cx="45" cy="120" r="5" fill="#ff4757"/>
-                        <text x="28" y="115" font-size="7" fill="#fff" font-family="system-ui">START</text>
-                        <text x="100" y="22" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MADRID</text>
+                        <path d="M48,124 L48,72 Q48,52 70,48 L124,38 Q152,33 164,50 Q176,68 158,82 Q140,94 138,110 Q136,128 112,132 Q76,136 48,124 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="48" cy="124" r="5" fill="#ff4757"/>
+                        <text x="26" y="130" font-size="7" fill="#fff" font-family="system-ui">START</text>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MADRID</text>
                     </svg>`,
                     'baku': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M160,120 L160,40 Q155,25 140,25 L60,25 Q45,25 45,40 L45,60 Q45,75 60,75 L140,75 Q155,75 155,90 L155,110 Q155,125 140,130 L60,130 Q45,130 45,120"
-                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
-                        <circle cx="160" cy="120" r="5" fill="#ff4757"/>
-                        <text x="100" y="15" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">BAKÚ</text>
+                        <path d="M162,134 L162,52 Q162,38 148,38 L96,38 Q84,38 84,50 L84,60 Q84,70 72,70 L56,70 Q44,70 44,82 L44,92 Q44,102 56,102 L70,102 Q82,102 82,114 L82,124 Q82,136 70,136 L44,136"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="162" cy="134" r="5" fill="#ff4757"/>
+                        <text x="166" y="146" font-size="7" fill="#fff" font-family="system-ui">START</text>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">BAKÚ</text>
                     </svg>`,
                     'singapore': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M40,110 L40,50 Q40,30 60,30 L100,30 Q120,30 120,50 Q120,70 100,75 Q80,80 80,100 Q80,120 100,125 L150,125 Q170,125 170,110 Q170,95 155,90 Q140,85 140,70 Q140,55 155,50 Q170,45 175,60 Q175,80 165,100"
-                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
-                        <circle cx="40" cy="110" r="5" fill="#ff4757"/>
+                        <path d="M44,126 L44,58 Q44,44 58,44 L102,44 Q114,44 114,56 L114,68 Q114,80 128,80 L160,80 Q174,80 174,94 L174,116 Q174,130 160,130 L58,130 Q44,130 44,126 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="44" cy="126" r="5" fill="#ff4757"/>
+                        <text x="22" y="132" font-size="7" fill="#fff" font-family="system-ui">START</text>
                         <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">MARINA BAY</text>
                     </svg>`,
                     'austin': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M50,120 L50,60 Q50,30 90,25 Q130,20 155,45 Q175,65 165,90 Q155,115 130,120 Q115,125 100,115 Q85,105 75,115 Q65,125 50,120 Z"
-                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
-                        <circle cx="50" cy="120" r="5" fill="#ff4757"/>
-                        <text x="100" y="14" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">COTA - AUSTIN</text>
+                        <path d="M52,128 L52,66 Q52,48 70,46 Q86,44 88,58 Q90,70 100,66 Q110,62 114,72 Q118,82 128,78 Q138,74 142,84 L164,110 Q172,120 162,128 L70,132 Q52,134 52,128 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="52" cy="128" r="5" fill="#ff4757"/>
+                        <text x="30" y="134" font-size="7" fill="#fff" font-family="system-ui">START</text>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">COTA - AUSTIN</text>
                     </svg>`,
                     'mexico city': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M60,120 Q30,120 25,90 Q20,60 50,40 Q80,20 120,25 Q160,30 170,60 Q175,85 160,105 Q145,125 115,130 Q90,135 60,120 Z"
-                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
-                        <circle cx="60" cy="120" r="5" fill="#ff4757"/>
-                        <text x="100" y="14" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">CDMX - HERMANOS RODRÍGUEZ</text>
+                        <path d="M44,120 L44,58 Q44,44 58,44 L146,44 Q162,44 162,58 L162,84 Q162,96 148,98 L120,102 Q108,104 110,114 Q112,124 100,126 Q94,127 90,120 Q86,112 96,110 Q106,108 104,98 Q102,90 88,92 L58,98 Q44,100 44,120 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="44" cy="120" r="5" fill="#ff4757"/>
+                        <text x="22" y="126" font-size="7" fill="#fff" font-family="system-ui">START</text>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">CDMX</text>
                     </svg>`,
                     'sao paulo': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M80,130 Q40,125 30,95 Q20,65 50,45 Q80,25 120,30 Q155,35 168,65 Q178,90 165,115 Q150,140 110,140 Q95,140 80,130 Z"
-                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
-                        <circle cx="80" cy="130" r="5" fill="#ff4757"/>
-                        <text x="100" y="18" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">INTERLAGOS</text>
+                        <path d="M60,128 Q44,116 48,96 L58,62 Q62,46 80,46 L134,46 Q152,46 156,62 Q160,78 146,86 L118,100 Q104,107 108,118 Q112,130 96,132 Q74,134 60,128 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="60" cy="128" r="5" fill="#ff4757"/>
+                        <text x="38" y="134" font-size="7" fill="#fff" font-family="system-ui">START</text>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">INTERLAGOS</text>
                     </svg>`,
                     'nevada': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M160,130 L160,40 Q160,25 145,25 L55,25 Q40,25 40,40 L40,70 L140,70 L140,100 L40,100 L40,130 Q40,145 55,145 L145,145 Q160,145 160,130 Z"
-                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
-                        <circle cx="160" cy="130" r="5" fill="#ff4757"/>
-                        <text x="100" y="15" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">LAS VEGAS STRIP</text>
+                        <path d="M160,128 L160,56 Q160,42 146,42 L62,42 Q48,42 48,56 L48,74 Q48,86 62,86 L124,86 Q138,86 138,98 L138,112 Q138,126 124,126 L62,126 Q48,126 48,138"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="160" cy="128" r="5" fill="#ff4757"/>
+                        <text x="164" y="140" font-size="7" fill="#fff" font-family="system-ui">START</text>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">LAS VEGAS STRIP</text>
                     </svg>`,
                     'lusail': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M80,130 Q40,125 28,95 Q16,65 40,45 Q64,25 105,28 Q145,31 163,60 Q178,85 165,112 Q150,138 112,142 Q96,145 80,130 Z"
-                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
-                        <circle cx="80" cy="130" r="5" fill="#ff4757"/>
-                        <text x="100" y="17" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">LUSAIL</text>
+                        <path d="M50,118 Q40,96 52,78 Q64,58 90,50 L128,40 Q152,34 166,50 Q178,66 166,84 Q154,100 130,106 L96,116 Q68,124 50,118 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="50" cy="118" r="5" fill="#ff4757"/>
+                        <text x="28" y="124" font-size="7" fill="#fff" font-family="system-ui">START</text>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">LUSAIL</text>
                     </svg>`,
                     'abu dhabi': `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
                         <rect width="200" height="160" fill="#1a1a2e" rx="8"/>
-                        <path d="M60,120 Q30,115 25,85 Q20,55 50,35 Q80,15 125,20 Q165,25 175,55 Q182,80 168,105 Q152,130 118,138 Q85,145 60,120 Z"
-                            fill="none" stroke="#3D6FFF" stroke-width="3"/>
-                        <circle cx="60" cy="120" r="5" fill="#ff4757"/>
-                        <text x="100" y="9" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">YAS MARINA</text>
+                        <path d="M46,126 L46,64 Q46,48 62,46 L112,40 Q128,38 130,52 Q132,64 120,68 L104,74 Q92,78 96,90 Q100,102 114,98 L154,86 Q170,81 174,94 Q178,108 162,116 L104,132 Q68,138 46,126 Z"
+                            fill="none" stroke="#3D6FFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <circle cx="46" cy="126" r="5" fill="#ff4757"/>
+                        <text x="24" y="132" font-size="7" fill="#fff" font-family="system-ui">START</text>
+                        <text x="100" y="20" font-size="8" fill="#ffd700" font-family="system-ui" font-weight="bold" text-anchor="middle">YAS MARINA</text>
                     </svg>`,
                 };
 
