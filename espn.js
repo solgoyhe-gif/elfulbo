@@ -85,7 +85,13 @@ const ESPN = (() => {
     // ── Fetch con cascada de proxies ──────────────────────────────────────────
     const _fetch = async (espnUrl) => {
         const encoded = encodeURIComponent(espnUrl);
+        // ESPN empezó a bloquear las IPs de Cloudflare (403 de Akamai), así que el
+        // proxy del Worker dejó de servir para site.api. Pero site.api manda CORS *,
+        // así que el navegador va DIRECTO primero (sale de la IP del usuario y no lo
+        // bloquean). El Worker y allorigins quedan de respaldo por si algún host no
+        // tiene CORS.
         const proxies = [
+            { url: espnUrl,                                          parse: r => r.json() },
             { url: `${CF_WORKER}?url=${encoded}`,                    parse: r => r.json() },
             { url: `https://api.allorigins.win/get?url=${encoded}`,  parse: async r => JSON.parse((await r.json()).contents) },
         ];

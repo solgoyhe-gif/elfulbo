@@ -419,7 +419,7 @@ const App = (() => {
                     const url = src.slug
                         ? `https://site.api.espn.com/apis/site/v2/sports/soccer/${src.slug}/scoreboard?dates=${hoy}`
                         : `https://site.api.espn.com/apis/site/v2/sports/${src.sport}/scoreboard?dates=${hoy}`;
-                    return fetch(`${CF_WORKER}/?url=${encodeURIComponent(url)}`)
+                    return fetch(`${_proxyEspn(url)}`)
                         .then(r => r.ok ? r.json() : {})
                         .then(d => (d.events ?? []).map(ev => {
                             const comp = ev.competitions?.[0];
@@ -600,6 +600,19 @@ const App = (() => {
         return f.toLocaleDateString('es-AR', { timeZone: TZ, weekday: 'short' })
              + ' ' + f.toLocaleDateString('es-AR', { timeZone: TZ, day: 'numeric', month: 'numeric' });
     };
+
+    // ── Acceso a ESPN ────────────────────────────────────────────────────────
+    // ESPN (vía Akamai) empezó a bloquear las IPs de Cloudflare con un 403, así
+    // que el proxy del Worker dejó de servir. Pero site.api y sports.core mandan
+    // CORS *, así que el navegador les puede pegar DIRECTO: el pedido sale de la
+    // IP del usuario (residencial) y no lo bloquean. now.core (noticias) no manda
+    // CORS, ese sí necesita un proxy — pero a ESE host Akamai NO lo bloquea, así
+    // que las noticias siguen pasando por el Worker sin problema.
+    // Este helper reemplaza al viejo proxy del Worker (?url=...): manda solo las
+    // noticias por el Worker y todo el resto directo desde el navegador.
+    const _proxyEspn = (u) => /now\.core\.api\.espn\.com/.test(u)
+        ? 'https://whistle.solgoyhe.workers.dev/?url=' + encodeURIComponent(u)
+        : u;
 
     // Liga nacional por país (mismo mapeo que el wizard de #/setup, acá aplanado)
     // para poder elegir un fallback sensato cuando la única competencia del usuario
@@ -984,7 +997,7 @@ const App = (() => {
 
         // ── Fetch a ESPN vía el proxy de Cloudflare ──────────────────────────
         const _espn = async (url) => {
-            const r = await fetch(CF_WORKER + '/?url=' + encodeURIComponent(url));
+            const r = await fetch(_proxyEspn(url));
             if (!r.ok) throw new Error('HTTP ' + r.status);
             return r.json();
         };
@@ -1440,7 +1453,7 @@ const App = (() => {
             if (!info) return;
             try {
                 const hoy = new Date().toLocaleDateString('en-CA', {timeZone:'America/Argentina/Buenos_Aires'}).replace(/-/g,'');
-                const res = await fetch(CF_WORKER + '/?url=' + encodeURIComponent('https://site.api.espn.com/apis/site/v2/sports/' + info.slug + '/scoreboard?dates=' + hoy));
+                const res = await fetch(_proxyEspn('https://site.api.espn.com/apis/site/v2/sports/' + info.slug + '/scoreboard?dates=' + hoy));
                 const data = res.ok ? await res.json() : {};
                 const eventos = data.events ?? [];
                 eventos.sort((a,b) => {
@@ -1704,7 +1717,7 @@ const App = (() => {
 
         try {
             const espnUrl      = 'https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings';
-            const espnProxyUrl = `${CF_WORKER}/?url=${encodeURIComponent(espnUrl)}`;
+            const espnProxyUrl = `${_proxyEspn(espnUrl)}`;
             const respuestaEspn = await fetch(espnProxyUrl);
             if (!respuestaEspn.ok) throw new Error('ESPN Standings falló');
 
@@ -1970,7 +1983,7 @@ const App = (() => {
             const todasFechas = [...new Set(Object.values(FASES_FECHAS).flat())];
             const scoreboards = await Promise.all(
                 todasFechas.map(f =>
-                    fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${f}`)}`)
+                    fetch(`${_proxyEspn(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${f}`)}`)
                         .then(r => r.ok ? r.json().catch(()=>({})) : {})
                 )
             );
@@ -2385,7 +2398,7 @@ const App = (() => {
             }
             try {
                 const hoy = new Date().toLocaleDateString('en-CA', {timeZone:'America/Argentina/Buenos_Aires'}).replace(/-/g,'');
-                const res  = await fetch(CF_WORKER + '/?url=' + encodeURIComponent('https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=' + hoy));
+                const res  = await fetch(_proxyEspn('https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=' + hoy));
                 const data = res.ok ? await res.json() : {};
                 const hayEnVivo = (data.events ?? []).some(ev => ev.competitions?.[0]?.status?.type?.state === 'in');
                 if (hayEnVivo) await renderBracketMundial(container);
@@ -2413,7 +2426,7 @@ const App = (() => {
         const CF_WORKER = 'https://whistle.solgoyhe.workers.dev';
 
         try {
-            const espnProxyUrl  = `${CF_WORKER}/?url=${encodeURIComponent('https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings')}`;
+            const espnProxyUrl  = `${_proxyEspn('https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings')}`;
             const respuestaEspn = await fetch(espnProxyUrl);
             const parsedEspn    = await respuestaEspn.json();
             const grupoEncontrado = parsedEspn.children?.find(g => g.name.replace(/Group /i, 'GRUPO ').toUpperCase() === grupoNombre);
@@ -2608,9 +2621,9 @@ const App = (() => {
             const todasFechas = [...fechasBase, ...fechasExtendidas];
 
             const [rosterRes, ...scoreboardsRes] = await Promise.all([
-                fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/teams/${equipoId}/roster`)}`),
+                fetch(`${_proxyEspn(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/teams/${equipoId}/roster`)}`),
                 ...todasFechas.map(fecha =>
-                    fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/scoreboard?dates=${fecha}`)}`)
+                    fetch(`${_proxyEspn(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/scoreboard?dates=${fecha}`)}`)
                 )
             ]);
 
@@ -2984,7 +2997,7 @@ const App = (() => {
                 </div>`;
 
             try {
-                const summaryRes  = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/summary?event=${partido.id}`)}`);
+                const summaryRes  = await fetch(`${_proxyEspn(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/summary?event=${partido.id}`)}`);
                 const summaryJSON = summaryRes.ok ? await summaryRes.json() : {};
                 const stats       = extraerStatsDeSummary(summaryJSON, equipoId);
 
@@ -3212,7 +3225,7 @@ const App = (() => {
                 </div>`;
 
             try {
-                const res = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${fecha}`)}`);
+                const res = await fetch(`${_proxyEspn(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${fecha}`)}`);
                 const data = res.ok ? await res.json() : {};
                 const eventos = data.events ?? [];
 
@@ -3340,7 +3353,7 @@ const App = (() => {
 
             try {
                 const [sumRes] = await Promise.all([
-                    fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary?event=${eventId}`)}`)
+                    fetch(`${_proxyEspn(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary?event=${eventId}`)}`)
                 ]);
                 const summaryData = sumRes.ok ? await sumRes.json() : {};
 
@@ -3427,7 +3440,7 @@ const App = (() => {
             if (!document.getElementById('h2h-partidos-dia')) return;
 
             try {
-                const res = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${_diaActivo}`)}`);
+                const res = await fetch(`${_proxyEspn(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${_diaActivo}`)}`);
                 const data = res.ok ? await res.json() : {};
                 const hayEnVivo = (data.events ?? []).some(ev =>
                     ev.competitions?.[0]?.status?.type?.state === 'in'
@@ -3462,7 +3475,7 @@ const App = (() => {
         `;
 
         try {
-            const res  = await fetch(`${CF_WORKER}/?url=${encodeURIComponent('https://now.core.api.espn.com/v1/sports/news?sport=soccer&limit=30')}`);
+            const res  = await fetch(`${_proxyEspn('https://now.core.api.espn.com/v1/sports/news?sport=soccer&limit=30')}`);
             const data = res.ok ? await res.json() : {};
             const articulos = (data.headlines ?? []).filter(a => a.headline && a.description);
 
@@ -4994,7 +5007,7 @@ const App = (() => {
                 };
 
                 const _f1 = async (url) => {
-                    const r = await fetch(CF_WORKER + '/?url=' + encodeURIComponent(url));
+                    const r = await fetch(_proxyEspn(url));
                     if (!r.ok) throw new Error('HTTP ' + r.status);
                     return r.json();
                 };
@@ -5538,7 +5551,7 @@ const App = (() => {
 
                     if (tab === 'partidos') {
                         const url = `https://site.api.espn.com/apis/site/v2/sports/${ligaActual.slug}/scoreboard?dates=${fecha}`;
-                        const res = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(url)}`);
+                        const res = await fetch(`${_proxyEspn(url)}`);
                         const data = res.ok ? await res.json() : {};
                         const eventos = data.events ?? [];
 
@@ -5601,7 +5614,7 @@ const App = (() => {
 
                     } else if (tab === 'posiciones') {
                         const url = `https://site.api.espn.com/apis/v2/sports/${deporteStats.standingsPath}/standings`;
-                        const res = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(url)}`);
+                        const res = await fetch(`${_proxyEspn(url)}`);
                         const data = res.ok ? await res.json() : {};
                         const children = data.children ?? [];
 
@@ -5655,7 +5668,7 @@ const App = (() => {
                     } else if (tab === 'líderes') {
                         // Leaders: usamos el scoreboard que trae leaders globales
                         const url = `https://site.api.espn.com/apis/site/v2/sports/${ligaActual.slug}/scoreboard`;
-                        const res = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(url)}`);
+                        const res = await fetch(`${_proxyEspn(url)}`);
                         const data = res.ok ? await res.json() : {};
                         const leaders = data.leagues?.[0]?.leaders ?? data.leaders ?? [];
 
@@ -5713,7 +5726,7 @@ const App = (() => {
             // UNA pelea (una UFC Fight Night trae ~13). Además los competidores no
             // tienen homeAway, así que el render genérico los daba por indefinidos.
             if ((ligaActual.slug ?? '').startsWith('mma/')) {
-                const rMma = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/${ligaActual.slug}/scoreboard`)}`);
+                const rMma = await fetch(`${_proxyEspn(`https://site.api.espn.com/apis/site/v2/sports/${ligaActual.slug}/scoreboard`)}`);
                 const dMma = rMma.ok ? await rMma.json() : {};
                 const veladas = dMma.events ?? [];
                 if (!container) return;
@@ -5780,7 +5793,7 @@ const App = (() => {
             // El field son ~144 jugadores sin homeAway; lo que corresponde es una
             // tabla de posiciones, no una tarjeta de local vs visitante.
             if ((ligaActual.slug ?? '').startsWith('golf/')) {
-                const rG = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/${ligaActual.slug}/scoreboard`)}`);
+                const rG = await fetch(`${_proxyEspn(`https://site.api.espn.com/apis/site/v2/sports/${ligaActual.slug}/scoreboard`)}`);
                 const dG = rG.ok ? await rG.json() : {};
                 const torneos = dG.events ?? [];
                 if (!container) return;
@@ -5831,7 +5844,7 @@ const App = (() => {
             }
 
             const url = `https://site.api.espn.com/apis/site/v2/sports/${ligaActual.slug}/scoreboard?dates=${fecha}`;
-            const res = await fetch(`${CF_WORKER}/?url=${encodeURIComponent(url)}`);
+            const res = await fetch(`${_proxyEspn(url)}`);
             const data = res.ok ? await res.json() : {};
             const eventos = data.events ?? [];
 
@@ -5970,8 +5983,8 @@ const App = (() => {
 
         try {
             const [sumRes, scRes] = await Promise.all([
-                fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/summary?event=${eventId}`)}`),
-                fetch(`${CF_WORKER}/?url=${encodeURIComponent(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/scoreboard`)}`)
+                fetch(`${_proxyEspn(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/summary?event=${eventId}`)}`),
+                fetch(`${_proxyEspn(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeague}/scoreboard`)}`)
             ]);
 
             const summary = sumRes.ok ? await sumRes.json() : {};
@@ -6586,7 +6599,7 @@ const App = (() => {
 
         const CF_WORKER = 'https://whistle.solgoyhe.workers.dev';
         const _get = async (url) => {
-            const r = await fetch(CF_WORKER + '/?url=' + encodeURIComponent(String(url).replace('http://', 'https://')));
+            const r = await fetch(_proxyEspn(String(url).replace('http://', 'https://')));
             if (!r.ok) throw new Error('HTTP ' + r.status);
             return r.json();
         };
