@@ -1,7 +1,11 @@
 {
+  "id": "/",
   "name": "Whistle",
   "short_name": "Whistle",
-  "description": "The sound of sport.",
+  "description": "The sound of sport. Resultados en vivo, tablas, plantillas y análisis de fútbol y otros deportes.",
+  "lang": "es-AR",
+  "dir": "ltr",
+  "categories": ["sports"],
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -13,13 +17,19 @@
       "src": "favicon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "favicon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "favicon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
