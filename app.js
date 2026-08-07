@@ -250,11 +250,12 @@ const App = (() => {
         const pm = planMeta[plan] ?? planMeta.free;
 
         const links = [
-            { href: '#/home',   icon: '🏠', label: 'Inicio',  active: activeHash === '#/home' },
-            { href: '#/h2h',    icon: '⚔️', label: 'H2H',     active: activeHash === '#/h2h' },
-            { href: '#/info',   icon: '📰', label: 'Info',    active: activeHash === '#/info' },
-            { href: '#/awards', icon: '🏅', label: 'Awards',  active: activeHash === '#/awards' },
-            { href: '#/perfil', icon: '👤', label: 'Perfil',  active: activeHash === '#/perfil' },
+            { href: '#/home',    icon: '🏠', label: 'Inicio',  active: activeHash === '#/home' },
+            { href: '#/mercado', icon: '🔁', label: 'Mercado', active: activeHash === '#/mercado' },
+            { href: '#/h2h',     icon: '⚔️', label: 'H2H',     active: activeHash === '#/h2h' },
+            { href: '#/info',    icon: '📰', label: 'Info',    active: activeHash === '#/info' },
+            { href: '#/awards',  icon: '🏅', label: 'Awards',  active: activeHash === '#/awards' },
+            { href: '#/perfil',  icon: '👤', label: 'Perfil',  active: activeHash === '#/perfil' },
         ];
 
         // Deportes con sub-ligas desplegables
@@ -6593,6 +6594,209 @@ const App = (() => {
     };
 
     // ── FICHA DE JUGADOR ─────────────────────────────────────────────────────
+    // ── MERCADO DE PASES ──────────────────────────────────────────────────────
+    // Feed de transferencias por liga desde ESPN (/leagues/{slug}/seasons/{año}/
+    // transactions). Cada transacción trae athlete/from/to como refs, así que hay
+    // que resolver nombres — es pesado, por eso se limita a las más recientes y se
+    // cachea en localStorage 6 h (primera carga lenta, después instantánea).
+    // No hay valor de mercado en ninguna API gratis: se muestra el tipo del pase.
+    const renderMercado = async (ligaParam) => {
+        const CORE = 'https://sports.core.api.espn.com/v2/sports/soccer/leagues';
+        const _get = async (url) => {
+            const r = await fetch(_proxyEspn(String(url).replace('http://', 'https://')));
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        };
+
+        // Ligas elegibles: las que sigue el usuario + un set grande por defecto.
+        const LIGAS_MERCADO = [
+            { slug: 'eng.1', nombre: 'Premier League', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
+            { slug: 'esp.1', nombre: 'La Liga',        flag: '🇪🇸' },
+            { slug: 'ita.1', nombre: 'Serie A',        flag: '🇮🇹' },
+            { slug: 'ger.1', nombre: 'Bundesliga',     flag: '🇩🇪' },
+            { slug: 'fra.1', nombre: 'Ligue 1',        flag: '🇫🇷' },
+            { slug: 'arg.1', nombre: 'Liga Argentina', flag: '🇦🇷' },
+            { slug: 'bra.1', nombre: 'Brasileirão',    flag: '🇧🇷' },
+            { slug: 'usa.1', nombre: 'MLS',            flag: '🇺🇸' },
+        ];
+        const ligaActual = ligaParam
+            || _competenciasUsuario().find(s => LIGAS_MERCADO.some(l => l.slug === s))
+            || 'eng.1';
+        const ligaInfo = LIGAS_MERCADO.find(l => l.slug === ligaActual) ?? { slug: ligaActual, nombre: ligaActual, flag: '⚽' };
+
+        // Traduce mes+año a la ventana de mercado (verano jun-sep, invierno dic-feb).
+        const _ventana = (fechaISO) => {
+            const f = new Date(fechaISO ?? '');
+            if (isNaN(f)) return { clave: 'zzz', titulo: 'Otras fechas', orden: 0 };
+            const m = f.getUTCMonth() + 1, y = f.getUTCFullYear();
+            if (m >= 6 && m <= 9)  return { clave: `v${y}`, titulo: `☀️ Mercado de verano ${y}`,   orden: y * 10 + 2 };
+            if (m === 12)          return { clave: `i${y + 1}`, titulo: `❄️ Mercado de invierno ${y + 1}`, orden: (y + 1) * 10 + 1 };
+            if (m <= 2)            return { clave: `i${y}`, titulo: `❄️ Mercado de invierno ${y}`, orden: y * 10 + 1 };
+            return { clave: `o${y}`, titulo: `Otros movimientos ${y}`, orden: y * 10 };
+        };
+        const _tipoPase = (t) => {
+            const s = String(t.displayAmount ?? t.type ?? '').trim();
+            const map = {
+                'Free': 'Libre', 'Free agent': 'Libre', 'Free Transfer': 'Libre',
+                'Loan': 'Préstamo', 'Return from loan': 'Fin de préstamo', 'Back from Loan': 'Fin de préstamo',
+                'Transfer': 'Transferencia', 'Undisclosed': 'S/D', 'N/A': '', '-': '',
+            };
+            return map[s] ?? s;
+        };
+        const _escudo = (ref) => {
+            const id = (String(ref).match(/teams\/(\d+)/) || [])[1];
+            return id ? `https://a.espncdn.com/i/teamlogos/soccer/500/${id}.png` : '';
+        };
+
+        // Tabs de liga
+        const tabs = LIGAS_MERCADO.map(l => `
+            <button onclick="window.location.hash='#/mercado?liga=${l.slug}'"
+                style="flex-shrink:0; padding:7px 15px; border-radius:18px; cursor:pointer;
+                border:1.5px solid ${l.slug === ligaActual ? 'var(--accent-neon)' : 'var(--border-glass)'};
+                background:${l.slug === ligaActual ? 'rgba(61,111,255,.12)' : 'rgba(255,255,255,.04)'};
+                color:${l.slug === ligaActual ? 'var(--accent-neon)' : 'var(--text-main)'};
+                font-family:var(--font-heading); font-weight:700; font-size:.8rem; white-space:nowrap;">
+                ${l.flag} ${l.nombre}
+            </button>`).join('');
+
+        appContainer.innerHTML = `
+            ${renderNavbar('#/mercado')}
+            <main class="page-container fade-in">
+                <h2 class="section-title">🔁 Mercado de pases</h2>
+                <div style="overflow-x:auto; padding-bottom:8px; margin-bottom:1.5rem;">
+                    <div style="display:flex; gap:8px; width:max-content;">${tabs}</div>
+                </div>
+                <div id="mercado-cont">
+                    <div style="text-align:center; padding:3rem;">
+                        <div style="width:36px;height:36px;border:3px solid var(--accent-neon);border-right-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto;"></div>
+                        <p style="color:var(--muted);margin-top:1rem;font-size:.85rem;">Cargando el mercado de ${ligaInfo.nombre}...</p>
+                    </div>
+                </div>
+            </main>
+        ${_closeSidebarWrapper()}
+        `;
+
+        const cont = document.getElementById('mercado-cont');
+        const MOSTRAR = 40;   // tope de pases a resolver, para no disparar cientos de fetches
+
+        try {
+            // Caché en localStorage: primera carga lenta (resuelve nombres), después instantánea.
+            const cacheKey = `mercado_${ligaActual}`;
+            let pases = null;
+            try {
+                const hit = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+                if (hit && Date.now() - hit.ts < 6 * 60 * 60 * 1000) pases = hit.pases;
+            } catch {}
+
+            if (!pases) {
+                // Buscar la temporada con datos: el año actual, si no el anterior.
+                const anio = new Date().getFullYear();
+                let items = [];
+                for (const y of [anio, anio - 1, anio - 2]) {
+                    const d = await _get(`${CORE}/${ligaActual}/seasons/${y}/transactions?limit=1000`).catch(() => null);
+                    if ((d?.items ?? []).length) { items = d.items; break; }
+                }
+
+                // Agrupamos TODO por ventana y tomamos las más recientes de CADA una,
+                // así se ven tanto verano como invierno (si tomáramos el top-40 global
+                // caerían todas en la última ventana). Tope por ventana para acotar
+                // los fetches de resolución.
+                const POR_VENTANA = 25;
+                const porVent = {};
+                for (const t of items) {
+                    if (!(t.athlete?.['$ref'] && (t.from?.['$ref'] || t.to?.['$ref']))) continue;
+                    (porVent[_ventana(t.date).clave] ??= []).push(t);
+                }
+                const recientes = Object.values(porVent)
+                    .flatMap(arr => arr
+                        .sort((a, b) => new Date(b.date ?? 0) - new Date(a.date ?? 0))
+                        .slice(0, POR_VENTANA))
+                    .sort((a, b) => new Date(b.date ?? 0) - new Date(a.date ?? 0))
+                    .slice(0, MOSTRAR * 3);
+
+                // Resolver clubes (deduplicado) y jugadores (uno por pase), en paralelo.
+                const refsClub = [...new Set(recientes.flatMap(t => [t.from?.['$ref'], t.to?.['$ref']]).filter(Boolean))];
+                const nombreClub = {};
+                await Promise.all(refsClub.map(async (ref) => {
+                    try { const e = await _get(ref); nombreClub[ref] = e.displayName ?? e.shortDisplayName ?? e.name ?? '?'; }
+                    catch { nombreClub[ref] = '?'; }
+                }));
+
+                pases = await Promise.all(recientes.map(async (t) => {
+                    let jugador = '?';
+                    try { const a = await _get(t.athlete['$ref']); jugador = a.displayName ?? a.fullName ?? '?'; } catch {}
+                    return {
+                        jugador,
+                        fecha:  t.date,
+                        tipo:   _tipoPase(t),
+                        deRef:  t.from?.['$ref'] ?? '',
+                        aRef:   t.to?.['$ref'] ?? '',
+                        deNom:  t.from?.['$ref'] ? (nombreClub[t.from['$ref']] ?? '?') : '',
+                        aNom:   t.to?.['$ref'] ? (nombreClub[t.to['$ref']] ?? '?') : '',
+                    };
+                }));
+
+                try { localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), pases })); } catch {}
+            }
+
+            if (!pases.length) {
+                cont.innerHTML = `<div class="glass-panel" style="padding:2.5rem;text-align:center;color:var(--muted);">
+                    <div style="font-size:1.8rem;margin-bottom:.6rem;">🔁</div>
+                    <p>Todavía no hay movimientos cargados para ${ligaInfo.nombre}.</p></div>`;
+                return;
+            }
+
+            // Agrupar por ventana de mercado
+            const grupos = {};
+            for (const p of pases) {
+                const v = _ventana(p.fecha);
+                (grupos[v.clave] ??= { titulo: v.titulo, orden: v.orden, pases: [] }).pases.push(p);
+            }
+            const ordenados = Object.values(grupos).sort((a, b) => b.orden - a.orden);
+
+            const club = (nombre, ref) => nombre
+                ? `<span style="display:inline-flex;align-items:center;gap:6px;min-width:0;">
+                       ${_escudo(ref) ? `<img src="${_escudo(ref)}" width="22" height="22" style="object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'">` : ''}
+                       <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${nombre}</span>
+                   </span>`
+                : '<span style="color:var(--muted);">Libre</span>';
+
+            cont.innerHTML = ordenados.map(g => `
+                <div style="margin-bottom:1.6rem;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem;">
+                        <h3 style="font-family:var(--font-heading);font-size:.95rem;font-weight:800;color:var(--text-main);">${g.titulo}</h3>
+                        <span style="font-size:.72rem;color:var(--muted);">${g.pases.length} pase${g.pases.length === 1 ? '' : 's'}</span>
+                    </div>
+                    <div class="glass-panel" style="padding:.4rem 1rem;">
+                        ${g.pases.map(p => {
+                            const f = new Date(p.fecha);
+                            const fecha = isNaN(f) ? '' : f.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' });
+                            return `
+                            <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:11px 2px;border-bottom:1px solid var(--border-glass);">
+                                <div style="min-width:0;">
+                                    <div style="font-weight:700;font-size:.9rem;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.jugador}</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--text-sub);min-width:0;">
+                                        ${club(p.deNom, p.deRef)}
+                                        <span style="color:var(--accent-neon);flex-shrink:0;">→</span>
+                                        ${club(p.aNom, p.aRef)}
+                                    </div>
+                                </div>
+                                <div style="text-align:right;flex-shrink:0;">
+                                    <div style="font-size:.72rem;color:var(--muted);">${fecha}</div>
+                                    ${p.tipo ? `<div style="font-size:.66rem;color:var(--muted);background:rgba(255,255,255,.06);padding:2px 8px;border-radius:8px;margin-top:3px;white-space:nowrap;">${p.tipo}</div>` : ''}
+                                </div>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>`).join('') +
+                `<p style="text-align:center;font-size:.72rem;color:var(--muted);margin-top:.5rem;">Datos de ESPN · sin valor de mercado (ninguna fuente gratuita lo provee)</p>`;
+        } catch (e) {
+            cont.innerHTML = `<div class="glass-panel" style="padding:2.5rem;text-align:center;color:var(--muted);">
+                <div style="font-size:1.8rem;margin-bottom:.6rem;">😕</div>
+                <p>No pudimos cargar el mercado de pases. Probá de nuevo en un rato.</p></div>`;
+        }
+    };
+
     const renderJugador = async (athleteId, ligaSlug) => {
         if (!athleteId) { window.location.hash = '#/home'; return; }
         const liga = _normalizarSlug(ligaSlug) || 'fifa.world';
@@ -6851,6 +7055,9 @@ const App = (() => {
                     url.searchParams.get('liga'),
                     url.searchParams.get('name')
                 );
+                break;
+            case '#/mercado':
+                await renderMercado(url.searchParams.get('liga'));
                 break;
             case '#/h2h':
                 await renderH2H();
