@@ -6661,10 +6661,14 @@ const App = (() => {
                 return;
             }
 
-            // Totales de temporada + historial, en paralelo
-            const [stats, log] = await Promise.all([
+            // Totales de temporada + historial + trayectoria de pases, en paralelo.
+            // Los pases salen de /athletes/{id}/transactions (host sin liga/season):
+            // trae fecha, club de origen y destino con IDs nativos de ESPN. OJO: no
+            // hay valor de mercado en ninguna API gratis, solo el tipo (préstamo/libre).
+            const [stats, log, tx] = await Promise.all([
                 _get(`${BASE}/types/1/athletes/${athleteId}/statistics`).catch(() => null),
                 _get(`${BASE}/athletes/${athleteId}/eventlog`).catch(() => null),
+                _get(`https://sports.core.api.espn.com/v2/sports/soccer/athletes/${athleteId}/transactions?limit=50`).catch(() => null),
             ]);
 
             // ---- Totales de la temporada ----
@@ -6717,6 +6721,60 @@ const App = (() => {
                     </div>`).join('')}`
                 : '<p style="color:var(--muted);font-size:.84rem;padding:12px 2px;">Sin partidos registrados esta temporada.</p>';
 
+            // ---- Trayectoria de pases (más reciente primero) ----
+            const _escudoRef = (ref) => {
+                const id = (String(ref).match(/teams\/(\d+)/) || [])[1];
+                return id ? `https://a.espncdn.com/i/teamlogos/soccer/500/${id}.png` : '';
+            };
+            const _tipoPase = (t) => {
+                const s = String(t.displayAmount ?? t.type ?? '').trim();
+                const map = {
+                    'Free': 'Libre', 'Free agent': 'Libre', 'Free Transfer': 'Libre',
+                    'Loan': 'Préstamo', 'Return from loan': 'Fin de préstamo', 'Back from Loan': 'Fin de préstamo',
+                    'Transfer': 'Transferencia', 'Undisclosed': 'S/D', 'N/A': '', '-': '',
+                };
+                return map[s] ?? s;   // si es un monto real (€X) lo deja tal cual
+            };
+
+            const pases = (tx?.items ?? [])
+                .filter(t => t.from?.['$ref'] || t.to?.['$ref'])
+                .sort((a, b) => new Date(b.date ?? 0) - new Date(a.date ?? 0))
+                .slice(0, 15);
+
+            // Resolvemos el nombre de cada club una sola vez (deduplicado). El escudo
+            // se arma con el ID, sin fetch.
+            const refsUnicos = [...new Set(pases.flatMap(t => [t.from?.['$ref'], t.to?.['$ref']]).filter(Boolean))];
+            const nombreRef = {};
+            await Promise.all(refsUnicos.map(async (ref) => {
+                try { const eq = await _get(ref); nombreRef[ref] = eq.displayName ?? eq.shortDisplayName ?? eq.name ?? '?'; }
+                catch { nombreRef[ref] = '?'; }
+            }));
+
+            const _clubPase = (ref) => ref
+                ? `<span style="display:inline-flex;align-items:center;gap:6px;min-width:0;">
+                       ${_escudoRef(ref) ? `<img src="${_escudoRef(ref)}" width="20" height="20" style="object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'">` : ''}
+                       <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${nombreRef[ref] ?? '?'}</span>
+                   </span>`
+                : '<span style="color:var(--muted);">—</span>';
+
+            const trayectoria = pases.length
+                ? pases.map(t => {
+                    const f     = new Date(t.date ?? '');
+                    const fecha = isNaN(f) ? '' : f.toLocaleDateString('es-AR', { month: 'short', year: 'numeric' });
+                    const tipo  = _tipoPase(t);
+                    return `
+                        <div style="display:grid;grid-template-columns:70px 1fr auto;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--border-glass);">
+                            <span style="font-size:.72rem;color:var(--muted);text-transform:capitalize;">${fecha}</span>
+                            <div style="display:flex;align-items:center;gap:8px;font-size:.82rem;min-width:0;">
+                                ${_clubPase(t.from?.['$ref'])}
+                                <span style="color:var(--accent-neon);flex-shrink:0;">→</span>
+                                ${_clubPase(t.to?.['$ref'])}
+                            </div>
+                            ${tipo ? `<span style="font-size:.66rem;color:var(--muted);background:rgba(255,255,255,.06);padding:2px 8px;border-radius:8px;white-space:nowrap;">${tipo}</span>` : '<span></span>'}
+                        </div>`;
+                }).join('')
+                : '<p style="color:var(--muted);font-size:.84rem;padding:12px 2px;">Sin pases registrados para este jugador.</p>';
+
             cont.innerHTML = `
                 ${cabecera}
 
@@ -6732,6 +6790,11 @@ const App = (() => {
                 <div class="glass-panel">
                     <div class="panel-title">Historial de partidos</div>
                     ${historial}
+                </div>
+
+                <div class="glass-panel">
+                    <div class="panel-title">Trayectoria de pases</div>
+                    ${trayectoria}
                 </div>`;
         } catch (e) {
             cont.innerHTML = `
