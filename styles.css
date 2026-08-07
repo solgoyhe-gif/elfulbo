@@ -42,6 +42,8 @@
     /* alias retrocompat */
     --accent-neon:  #3D6FFF;
     --accent-neon-light: #8B5CF6;
+    --accent-neon-rgb: 61, 111, 255;   /* JS lo pisa con el color del equipo favorito */
+    --accent-light-rgb: 139, 92, 246;
     --accent-red:   #FF4D6D;
     --accent-gold:  #F5C33B;
     --accent-green: #2FD98B;

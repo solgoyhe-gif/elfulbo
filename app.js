@@ -244,7 +244,7 @@ const App = (() => {
 
         const planMeta = {
             free:   { color: '#888',    bg: 'rgba(136,136,136,0.2)', emoji: '⚽', label: 'POPULAR' },
-            pro:    { color: '#3D6FFF', bg: 'rgba(61,111,255,0.2)',   emoji: '🎟️', label: 'PLATEA'  },
+            pro:    { color: 'var(--accent-neon)', bg: 'rgba(var(--accent-neon-rgb),0.2)',   emoji: '🎟️', label: 'PLATEA'  },
             promax: { color: '#ffd700', bg: 'rgba(255,215,0,0.2)',   emoji: '👑', label: 'PALCO'   },
         };
         const pm = planMeta[plan] ?? planMeta.free;
@@ -399,7 +399,7 @@ const App = (() => {
         { sport: 'basketball/nba',  slug: null, emoji: '🏀', color: '#FF6B35', label: 'NBA' },
         { sport: 'hockey/nhl',      slug: null, emoji: '🏒', color: '#6CABDD', label: 'NHL' },
         { sport: 'baseball/mlb',    slug: null, emoji: '⚾', color: '#E63946', label: 'MLB' },
-        { sport: 'football/nfl',    slug: null, emoji: '🏈', color: '#8B5CF6', label: 'NFL' },
+        { sport: 'football/nfl',    slug: null, emoji: '🏈', color: 'var(--accent-neon-light)', label: 'NFL' },
         { sport: 'mma/ufc',         slug: null, emoji: '🥊', color: '#FF4D6D', label: 'UFC' },
     ];
 
@@ -615,6 +615,62 @@ const App = (() => {
         ? 'https://whistle.solgoyhe.workers.dev/?url=' + encodeURIComponent(u)
         : u;
 
+    // ── Tema por equipo favorito ─────────────────────────────────────────────
+    // La app se tiñe con los colores del equipo que el usuario eligió en #/setup
+    // (perfil.equipoFavorito, id de ESPN). Cada equipo: [primario, secundario].
+    // El primario reemplaza el acento azul (--accent-neon, --blue…, 137 usos) y
+    // tiene que leerse bien sobre el fondo oscuro y con texto blanco encima; el
+    // secundario es el segundo stop del degradé. Si el equipo no está en el mapa,
+    // se deja el azul/violeta original.
+    const COLORES_EQUIPO = {
+        '6':    ['#1F5AA8', '#FCD116'],  // Boca — azul y amarillo
+        '5':    ['#E4002B', '#FF4E6A'],  // River — rojo (banda)
+        '7':    ['#2C7BC0', '#7FC3F0'],  // Racing — celeste
+        '8':    ['#D0021B', '#FF4D5E'],  // Independiente — rojo
+        '9':    ['#C8102E', '#123C86'],  // San Lorenzo — azul y rojo
+        '10':   ['#E1122B', '#FF5C6E'],  // Huracán — rojo (el Globo)
+        '86':   ['#2A4A86', '#E4C15A'],  // Real Madrid — azul y dorado
+        '83':   ['#A50044', '#004D98'],  // Barcelona — blaugrana
+        '1068': ['#CB3524', '#1F3A93'],  // Atlético de Madrid — rojo y azul
+        '360':  ['#2C93C9', '#8FD0EE'],  // Man City — celeste
+        '364':  ['#DA291C', '#FF5340'],  // Man United — rojo
+        '359':  ['#C8102E', '#F6444F'],  // Liverpool — rojo
+        '338':  ['#EF0107', '#FF5A5F'],  // Arsenal — rojo
+        '363':  ['#1A55B3', '#6C9BE8'],  // Chelsea — azul
+        '111':  ['#8E9AA8', '#D3D8DF'],  // Juventus — blanco y negro (plata)
+        '108':  ['#1D4E9B', '#3A6FC4'],  // Inter — azul
+        '109':  ['#C8102E', '#FF3B3B'],  // Milan — rojo y negro
+        '132':  ['#DC052D', '#FF445F'],  // Bayern — rojo
+        '124':  ['#D4B400', '#FFE500'],  // Dortmund — amarillo
+        '131':  ['#D50000', '#FF4444'],  // Flamengo — rojo y negro
+        '119':  ['#6B7280', '#D1D5DB'],  // Corinthians — blanco y negro
+        '202':  ['#4E9FD8', '#A9D6F5'],  // Argentina — celeste
+        '205':  ['#009C3B', '#FFDF00'],  // Brasil — verde y amarillo
+        '164':  ['#C60B1E', '#FFC400'],  // España — rojo y amarillo
+        '478':  ['#2545A8', '#E1122B'],  // Francia — azul y rojo
+        '482':  ['#DA020E', '#046A38'],  // Portugal — rojo y verde
+    };
+    // Azul/violeta original de Whistle: el fallback si no hay equipo o no está mapeado.
+    const TEMA_DEFAULT = ['var(--accent-neon)', 'var(--accent-neon-light)'];
+
+    const _hexARgb = (hex) => {
+        const h = String(hex).replace('#', '');
+        return `${parseInt(h.slice(0, 2), 16)}, ${parseInt(h.slice(2, 4), 16)}, ${parseInt(h.slice(4, 6), 16)}`;
+    };
+    const _aplicarTemaEquipo = () => {
+        const eq = window.FirebaseAuth?.getPerfil()?.equipoFavorito;
+        const [p, s] = COLORES_EQUIPO[eq] ?? TEMA_DEFAULT;
+        const r = document.documentElement.style;
+        r.setProperty('--accent-neon', p);
+        r.setProperty('--accent-neon-light', s);
+        r.setProperty('--accent-blue', p);
+        r.setProperty('--blue', p);
+        r.setProperty('--grad-main', `linear-gradient(135deg, ${p}, ${s})`);
+        // Tokens RGB para los rgba(...) con transparencia (fondos, hovers, halos).
+        r.setProperty('--accent-neon-rgb', _hexARgb(p));
+        r.setProperty('--accent-light-rgb', _hexARgb(s));
+    };
+
     // Liga nacional por país (mismo mapeo que el wizard de #/setup, acá aplanado)
     // para poder elegir un fallback sensato cuando la única competencia del usuario
     // era un torneo que ya terminó.
@@ -729,11 +785,11 @@ const App = (() => {
 
                 <!-- Upgrade CTA si no tiene deportes elegidos -->
                 ${deportes.length === 0 && !esProMax ? `
-                <div style="background:linear-gradient(135deg,rgba(61,111,255,.1),rgba(139,92,246,.08));border:1px solid rgba(61,111,255,.2);border-radius:var(--r-lg);padding:1.5rem;text-align:center;">
+                <div style="background:linear-gradient(135deg,rgba(var(--accent-neon-rgb),.1),rgba(var(--accent-light-rgb),.08));border:1px solid rgba(var(--accent-neon-rgb),.2);border-radius:var(--r-lg);padding:1.5rem;text-align:center;">
                     <div style="font-size:1.8rem;margin-bottom:.7rem;">🏆</div>
                     <p style="font-family:var(--font-heading);font-size:.95rem;font-weight:700;color:var(--text-main);margin-bottom:.4rem;">Seguí más deportes</p>
                     <p style="font-size:.82rem;color:var(--muted);margin-bottom:1.1rem;">Con Platea o Palco podés personalizar tu home.</p>
-                    <a href="#/planes" style="display:inline-flex;align-items:center;gap:8px;padding:10px 22px;background:linear-gradient(135deg,#3D6FFF,#8B5CF6);color:#fff;font-weight:700;font-family:var(--font-body);border-radius:var(--r-md);text-decoration:none;font-size:.84rem;box-shadow:0 8px 20px rgba(61,111,255,.3);">
+                    <a href="#/planes" style="display:inline-flex;align-items:center;gap:8px;padding:10px 22px;background:linear-gradient(135deg,var(--accent-neon),var(--accent-neon-light));color:#fff;font-weight:700;font-family:var(--font-body);border-radius:var(--r-md);text-decoration:none;font-size:.84rem;box-shadow:0 8px 20px rgba(var(--accent-neon-rgb),.3);">
                         Ver planes →
                     </a>
                 </div>` : ''}
@@ -867,7 +923,7 @@ const App = (() => {
                 badge = `<div class="hero-live-badge" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);"><span class="hero-live-text" style="color:#9aa3bd;">FINALIZADO</span></div>`;
                 linea = 'Partido finalizado'; color = 'var(--muted)'; cta = 'Ver resumen';
             } else {
-                badge = `<div class="hero-live-badge" style="background:rgba(61,111,255,.14);border-color:rgba(61,111,255,.35);"><span class="hero-live-text" style="color:#8FA9FF;">PRÓXIMO</span></div>`;
+                badge = `<div class="hero-live-badge" style="background:rgba(var(--accent-neon-rgb),.14);border-color:rgba(var(--accent-neon-rgb),.35);"><span class="hero-live-text" style="color:#8FA9FF;">PRÓXIMO</span></div>`;
                 const h = _horaEv(ev);
                 const d = _etiquetaDia(ev.date);
                 // "Comienza hoy 21:30" / "Comienza el jue 23/7 a las 16:00"
@@ -1488,12 +1544,12 @@ const App = (() => {
             <main class="page-container fade-in">
                 <h2 class="section-title">🏆 Competiciones Disponibles</h2>
                 ${!esPro ? `
-                <div style="background:rgba(61,111,255,.06);border:1px solid rgba(61,111,255,.2);border-radius:var(--r-md);padding:12px 16px;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;">
+                <div style="background:rgba(var(--accent-neon-rgb),.06);border:1px solid rgba(var(--accent-neon-rgb),.2);border-radius:var(--r-md);padding:12px 16px;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;">
                     <div>
                         <span style="font-family:var(--font-body);font-size:.82rem;color:var(--text-main);font-weight:600;">Plan Popular — 1 liga nacional + todas las copas</span>
                         <span style="display:block;font-size:.73rem;color:var(--muted);margin-top:2px;">Pasate a Platea para ver todas las ligas.</span>
                     </div>
-                    <a href="#/planes" style="padding:7px 16px;background:linear-gradient(135deg,#3D6FFF,#8B5CF6);color:#fff;font-weight:700;font-family:var(--font-body);border-radius:var(--r-sm);text-decoration:none;font-size:.78rem;white-space:nowrap;">
+                    <a href="#/planes" style="padding:7px 16px;background:linear-gradient(135deg,var(--accent-neon),var(--accent-neon-light));color:#fff;font-weight:700;font-family:var(--font-body);border-radius:var(--r-sm);text-decoration:none;font-size:.78rem;white-space:nowrap;">
                         Ver planes
                     </a>
                 </div>` : ''}
@@ -1904,7 +1960,7 @@ const App = (() => {
                 <div style="display:flex; gap:8px; margin:1.5rem 0 1rem;">
                     <button id="tab-grupos" onclick="window._mundialTab('grupos')"
                         style="padding:10px 24px; border-radius:20px; border:2px solid var(--accent-neon);
-                        background:rgba(61,111,255,0.12); color:var(--accent-neon);
+                        background:rgba(var(--accent-neon-rgb),0.12); color:var(--accent-neon);
                         cursor:pointer; font-family:var(--font-heading); font-weight:700; font-size:0.9rem;">
                         🏟️ GRUPOS
                     </button>
@@ -1943,7 +1999,7 @@ const App = (() => {
             const btnActivo = tab === 'grupos' ? btnGrupos : btnBracket;
             if (btnActivo) {
                 btnActivo.style.border     = '2px solid var(--accent-neon)';
-                btnActivo.style.background = 'rgba(61,111,255,0.12)';
+                btnActivo.style.background = 'rgba(var(--accent-neon-rgb),0.12)';
                 btnActivo.style.color      = 'var(--accent-neon)';
             }
 
@@ -2179,19 +2235,19 @@ const App = (() => {
                 const _row = (name, score, logo, win, isHome) => {
                     const ry = isHome ? y : y + BH + GAP;
                     const isPending = (name === '?' || name === '·' || name === '');
-                    const fill    = win ? '#3D6FFF' : isPending ? 'rgba(255,255,255,0.25)' : '#ffffff';
-                    const bgFill  = win ? 'rgba(61,111,255,0.15)' : isPending ? 'rgba(255,255,255,0.03)' : 'rgba(30,30,50,0.95)';
+                    const fill    = win ? 'var(--accent-neon)' : isPending ? 'rgba(255,255,255,0.25)' : '#ffffff';
+                    const bgFill  = win ? 'rgba(var(--accent-neon-rgb),0.15)' : isPending ? 'rgba(255,255,255,0.03)' : 'rgba(30,30,50,0.95)';
                     const weight  = win ? '700' : isPending ? '400' : '500';
                     return `
                         <rect x="${x}" y="${ry}" width="${BW}" height="${BH}" rx="4"
-                            fill="${bgFill}" stroke="${win ? '#3D6FFF' : 'rgba(255,255,255,0.15)'}" stroke-width="${win?1.5:1}"/>
+                            fill="${bgFill}" stroke="${win ? 'var(--accent-neon)' : 'rgba(255,255,255,0.15)'}" stroke-width="${win?1.5:1}"/>
                         ${logo ? `<image href="${logo}" x="${x+5}" y="${ry+9}" width="18" height="18" style="object-fit:contain;"/>` : ''}
                         <text x="${x + (logo?26:8)}" y="${ry + BH/2 + 1}" dominant-baseline="middle"
                             font-family="system-ui" font-size="10" font-weight="${weight}" fill="${fill}">
                             ${name.substring(0,10)}
                         </text>
                         ${score !== '' ? `<text x="${x+BW-6}" y="${ry + BH/2 + 1}" dominant-baseline="middle" text-anchor="end"
-                            font-family="system-ui" font-size="11" font-weight="800" fill="${win?'#3D6FFF':'#ffffff'}">${score}</text>` : ''}
+                            font-family="system-ui" font-size="11" font-weight="800" fill="${win?'var(--accent-neon)':'#ffffff'}">${score}</text>` : ''}
                     `;
                 };
 
@@ -2207,10 +2263,10 @@ const App = (() => {
                 // Badge PEN / AET
                 const notaBadge = d.nota ? `
                     <rect x="${x + BW - 26}" y="${y + MATCHH - 2}" width="24" height="10" rx="3"
-                        fill="${d.nota==='PEN' ? 'rgba(245,195,59,0.25)' : 'rgba(61,111,255,0.2)'}"/>
+                        fill="${d.nota==='PEN' ? 'rgba(245,195,59,0.25)' : 'rgba(var(--accent-neon-rgb),0.2)'}"/>
                     <text x="${x + BW - 14}" y="${y + MATCHH + 4}" text-anchor="middle" dominant-baseline="middle"
                         font-family="system-ui" font-size="6.5" font-weight="800"
-                        fill="${d.nota==='PEN' ? '#F5C33B' : '#3D6FFF'}">${d.nota}</text>` : '';
+                        fill="${d.nota==='PEN' ? '#F5C33B' : 'var(--accent-neon)'}">${d.nota}</text>` : '';
 
                 return `
                     <g ${onclick} style="${cursor}" class="bracket-match">
@@ -2706,7 +2762,7 @@ const App = (() => {
         const chipsHtml = partidos.length > 0
             ? partidos.map((p, i) => `
                 <button onclick="window._seleccionarPartido(${i})" id="chip-partido-${i}"
-                    style="flex-shrink:0; padding: 10px 18px; border-radius: 20px; border: 2px solid ${i === 0 ? 'var(--accent-neon)' : 'var(--border-glass)'}; background: ${i === 0 ? 'rgba(61,111,255,0.12)' : 'rgba(255,255,255,0.04)'}; color: ${i === 0 ? 'var(--accent-neon)' : 'var(--text-muted)'}; cursor: pointer; font-family: var(--font-heading); font-weight: 700; font-size: 0.9rem; white-space: nowrap; transition: all 0.2s;">
+                    style="flex-shrink:0; padding: 10px 18px; border-radius: 20px; border: 2px solid ${i === 0 ? 'var(--accent-neon)' : 'var(--border-glass)'}; background: ${i === 0 ? 'rgba(var(--accent-neon-rgb),0.12)' : 'rgba(255,255,255,0.04)'}; color: ${i === 0 ? 'var(--accent-neon)' : 'var(--text-muted)'}; cursor: pointer; font-family: var(--font-heading); font-weight: 700; font-size: 0.9rem; white-space: nowrap; transition: all 0.2s;">
                     vs ${p.rival}
                     ${p.isLive ? '<span style="color:#ff4757; margin-left:6px; font-size:0.75rem;">● VIVO</span>' : ''}
                     <span style="display:block; font-size:0.75rem; font-weight:400; margin-top:2px; color:var(--text-muted);">${p.resultado}</span>
@@ -2972,7 +3028,7 @@ const App = (() => {
                 const chip = document.getElementById(`chip-partido-${i}`);
                 if (!chip) return;
                 chip.style.border     = i === idx ? '2px solid var(--accent-neon)' : '2px solid var(--border-glass)';
-                chip.style.background = i === idx ? 'rgba(61,111,255,0.12)' : 'rgba(255,255,255,0.04)';
+                chip.style.background = i === idx ? 'rgba(var(--accent-neon-rgb),0.12)' : 'rgba(255,255,255,0.04)';
                 chip.style.color      = i === idx ? 'var(--accent-neon)' : 'var(--text-muted)';
             });
 
@@ -3046,7 +3102,7 @@ const App = (() => {
 
             document.querySelectorAll('.roster-item-js').forEach(item => {
                 if (item.dataset.id === String(jugadorId)) {
-                    item.style.background = 'rgba(61,111,255,0.12)';
+                    item.style.background = 'rgba(var(--accent-neon-rgb),0.12)';
                     item.style.borderLeft = '3px solid var(--accent-neon)';
                     item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
@@ -3123,7 +3179,7 @@ const App = (() => {
                             <button id="btn-dia-${d.fecha}" onclick="window._seleccionarDia('${d.fecha}')"
                                 style="flex-shrink:0; padding: 8px 16px; border-radius: 20px;
                                     border: 2px solid ${d.fecha === diaDefault.fecha ? 'var(--accent-neon)' : 'var(--border-glass)'};
-                                    background: ${d.fecha === diaDefault.fecha ? 'rgba(61,111,255,0.12)' : 'rgba(255,255,255,0.04)'};
+                                    background: ${d.fecha === diaDefault.fecha ? 'rgba(var(--accent-neon-rgb),0.12)' : 'rgba(255,255,255,0.04)'};
                                     color: ${d.fecha === diaDefault.fecha ? 'var(--accent-neon)' : 'var(--text-muted)'};
                                     cursor: pointer; font-family: var(--font-heading); font-weight: 700;
                                     font-size: 0.8rem; white-space: nowrap; transition: all 0.2s; text-transform: uppercase;">
@@ -3214,7 +3270,7 @@ const App = (() => {
                 if (!btn) return;
                 const activo = d.fecha === fecha;
                 btn.style.border     = activo ? '2px solid var(--accent-neon)' : '2px solid var(--border-glass)';
-                btn.style.background = activo ? 'rgba(61,111,255,0.12)' : 'rgba(255,255,255,0.04)';
+                btn.style.background = activo ? 'rgba(var(--accent-neon-rgb),0.12)' : 'rgba(255,255,255,0.04)';
                 btn.style.color      = activo ? 'var(--accent-neon)' : 'var(--text-muted)';
             });
 
@@ -3695,7 +3751,7 @@ const App = (() => {
                 <div style="display:flex; flex-direction:column; align-items:center; justify-content:center;
                     padding: 5rem 1.5rem 3rem; text-align:center;">
                     <div style="font-family:var(--font-heading); font-size:clamp(3rem,10vw,5.5rem);
-                        font-weight:900; letter-spacing:4px; text-shadow:0 0 40px rgba(61,111,255,0.3); margin-bottom:0.5rem;">
+                        font-weight:900; letter-spacing:4px; text-shadow:0 0 40px rgba(var(--accent-neon-rgb),0.3); margin-bottom:0.5rem;">
                         <span style="color:var(--accent-neon);">WHISTLE</span>
                     </div>
                     <p style="font-size:clamp(0.95rem,2.5vw,1.1rem); color:var(--text-muted); margin-bottom:2.5rem; max-width:480px; line-height:1.6; text-align:center;">
@@ -3703,7 +3759,7 @@ const App = (() => {
                     </p>
                     <div style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; margin-bottom:4rem;">
                         <button onclick="abrirAuth('registro')"
-                            style="padding:14px 32px; background:linear-gradient(135deg,#3D6FFF,#8B5CF6); color:#fff; font-weight:900;
+                            style="padding:14px 32px; background:linear-gradient(135deg,var(--accent-neon),var(--accent-neon-light)); color:#fff; font-weight:900;
                             font-family:var(--font-heading); border:none; border-radius:8px; cursor:pointer;
                             font-size:1rem; letter-spacing:1px; transition:opacity 0.2s;"
                             onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
@@ -3749,7 +3805,7 @@ const App = (() => {
                         </div>
                         <span id="toggle-label-anual" style="font-size:0.85rem; color:var(--text-muted);">
                             Anual
-                            <span style="background:rgba(61,111,255,0.15); color:var(--accent-neon);
+                            <span style="background:rgba(var(--accent-neon-rgb),0.15); color:var(--accent-neon);
                                 padding:1px 7px; border-radius:10px; font-size:0.68rem; font-weight:800; margin-left:4px;">
                                 -33%
                             </span>
@@ -3757,7 +3813,7 @@ const App = (() => {
                     </div>
 
                     <!-- Referencia USD (exterior) -->
-                    <div id="ref-usd" style="display:none; max-width:860px; width:100%; box-sizing:border-box; background:rgba(61,111,255,0.08); border:1px solid rgba(61,111,255,0.2); border-radius:12px; padding:0.9rem 1.1rem; margin-bottom:1.5rem; font-size:0.8rem; color:var(--text-sub); line-height:1.5;"></div>
+                    <div id="ref-usd" style="display:none; max-width:860px; width:100%; box-sizing:border-box; background:rgba(var(--accent-neon-rgb),0.08); border:1px solid rgba(var(--accent-neon-rgb),0.2); border-radius:12px; padding:0.9rem 1.1rem; margin-bottom:1.5rem; font-size:0.8rem; color:var(--text-sub); line-height:1.5;"></div>
 
                     <!-- Planes -->
                     <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
@@ -3798,9 +3854,9 @@ const App = (() => {
 
                         <!-- PRO -->
                         <div class="glass-panel" style="padding:1.8rem; text-align:left;
-                            border-color:var(--accent-neon); background:rgba(61,111,255,0.04); position:relative;">
+                            border-color:var(--accent-neon); background:rgba(var(--accent-neon-rgb),0.04); position:relative;">
                             <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%);
-                                background:linear-gradient(135deg,#3D6FFF,#8B5CF6); color:#fff; font-size:0.65rem; font-weight:800;
+                                background:linear-gradient(135deg,var(--accent-neon),var(--accent-neon-light)); color:#fff; font-size:0.65rem; font-weight:800;
                                 padding:3px 14px; border-radius:20px; font-family:var(--font-heading); letter-spacing:1px; white-space:nowrap;">
                                 MÁS POPULAR
                             </div>
@@ -3960,7 +4016,7 @@ const App = (() => {
 
         const planMeta = {
             free:   { color: '#888',    bg: 'rgba(136,136,136,0.2)', emoji: '⚽', label: 'POPULAR' },
-            pro:    { color: '#3D6FFF', bg: 'rgba(61,111,255,0.2)',   emoji: '🎟️', label: 'PLATEA'  },
+            pro:    { color: 'var(--accent-neon)', bg: 'rgba(var(--accent-neon-rgb),0.2)',   emoji: '🎟️', label: 'PLATEA'  },
             promax: { color: '#ffd700', bg: 'rgba(255,215,0,0.2)',   emoji: '👑', label: 'PALCO'   },
         };
         const meta = planMeta[plan] ?? planMeta.free;
@@ -3987,7 +4043,7 @@ const App = (() => {
                     <div style="text-align:center; padding:1.5rem; border:1px dashed var(--border-glass); border-radius:12px;">
                         <div style="font-size:2rem; margin-bottom:0.5rem;">🔒</div>
                         <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Disponibles desde el plan Platea.</p>
-                        <button class="btn-primary" style="background:#3D6FFF; color:#000;" onclick="window.location.hash='#/planes'">VER PLANES →</button>
+                        <button class="btn-primary" style="background:var(--accent-neon); color:#000;" onclick="window.location.hash='#/planes'">VER PLANES →</button>
                     </div>
                 </div>`;
 
@@ -4001,7 +4057,7 @@ const App = (() => {
                 return `<div ${bloq ? '' : `onclick="window._perfilToggleDeporte('${d.id}')"`}
                     style="padding:12px; border-radius:8px; text-align:center; transition:all 0.2s;
                     border:2px solid ${sel ? 'var(--accent-neon)' : 'var(--border-glass)'};
-                    background:${sel ? 'rgba(61,111,255,0.1)' : 'rgba(255,255,255,0.03)'};
+                    background:${sel ? 'rgba(var(--accent-neon-rgb),0.1)' : 'rgba(255,255,255,0.03)'};
                     cursor:${bloq ? 'default' : 'pointer'}; opacity:${bloq ? '0.4' : '1'};">
                     <div style="font-size:1.5rem; margin-bottom:4px;">${d.emoji}</div>
                     <div style="font-size:0.78rem; font-weight:600;">${d.nombre}</div>
@@ -4116,7 +4172,7 @@ const App = (() => {
                     ` : plan === 'pro' ? `
                         <div style="text-align:center; padding:1rem;">
                             <div style="font-size:2rem; margin-bottom:0.5rem;">🎟️</div>
-                            <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:800; color:#3D6FFF;">Platea activo</div>
+                            <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:800; color:var(--accent-neon);">Platea activo</div>
                             <button class="btn-primary" style="margin-top:1rem; background:#ffd700; color:#000;"
                                 onclick="window.location.hash='#/planes'">PASARTE A PALCO 👑</button>
                         </div>
@@ -4124,7 +4180,7 @@ const App = (() => {
                         <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1rem;">
                             Estás en el plan <strong>Popular</strong>. Pasate a Platea para acceder a estadísticas, alineaciones, todas las ligas y más.
                         </p>
-                        <button class="btn-primary" style="background:#3D6FFF; color:#000;" onclick="window.location.hash='#/planes'">
+                        <button class="btn-primary" style="background:var(--accent-neon); color:#000;" onclick="window.location.hash='#/planes'">
                             VER PLANES 🔥
                         </button>
                     `}
@@ -4176,7 +4232,7 @@ const App = (() => {
             if (!p) return '';
             return `
                 <div class="glass-panel" style="padding:1.5rem; position:relative; ${actual ? 'border-color:' + meta.color + ';' : ''}">
-                    ${actual ? '<div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg,#3D6FFF,#8B5CF6); color:#fff; font-size:0.65rem; font-weight:800; padding:3px 14px; border-radius:20px; font-family:var(--font-heading); letter-spacing:1px; white-space:nowrap;">PLAN ACTUAL</div>' : ''}
+                    ${actual ? '<div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg,var(--accent-neon),var(--accent-neon-light)); color:#fff; font-size:0.65rem; font-weight:800; padding:3px 14px; border-radius:20px; font-family:var(--font-heading); letter-spacing:1px; white-space:nowrap;">PLAN ACTUAL</div>' : ''}
                     <div style="font-size:1.5rem; margin-bottom:0.4rem;">${p.emoji ?? ''}</div>
                     <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:900; color:${meta.color}; margin-bottom:0.2rem;">${p.nombre ?? planKey}</div>
                     <div style="font-family:var(--font-heading); font-size:1.6rem; font-weight:900; color:${meta.color}; margin-bottom:0.8rem;">
@@ -4191,10 +4247,10 @@ const App = (() => {
             ${renderNavbar('#/planes')}
             <main class="page-container fade-in" style="max-width:900px; margin:0 auto;">
                 <h2 class="section-title">💳 Planes</h2>
-                <div id="ref-usd" style="display:none; background:rgba(61,111,255,0.08); border:1px solid rgba(61,111,255,0.2); border-radius:12px; padding:0.9rem 1.1rem; margin-bottom:1.5rem; font-size:0.8rem; color:var(--text-sub); line-height:1.5;"></div>
+                <div id="ref-usd" style="display:none; background:rgba(var(--accent-neon-rgb),0.08); border:1px solid rgba(var(--accent-neon-rgb),0.2); border-radius:12px; padding:0.9rem 1.1rem; margin-bottom:1.5rem; font-size:0.8rem; color:var(--text-sub); line-height:1.5;"></div>
                 <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1.5rem; margin-bottom:4rem;">
                     ${_card('free',   { color: '#888'    })}
-                    ${_card('pro',    { color: '#3D6FFF' })}
+                    ${_card('pro',    { color: 'var(--accent-neon)' })}
                     ${_card('promax', { color: '#ffd700' })}
                 </div>
             </main>
@@ -4337,7 +4393,7 @@ const App = (() => {
                                 ← ATRÁS
                             </button>` : ''}
                         <button onclick="window._setupSiguiente()"
-                            style="flex:2; padding:12px; background:linear-gradient(135deg,#3D6FFF,#8B5CF6); color:#fff;
+                            style="flex:2; padding:12px; background:linear-gradient(135deg,var(--accent-neon),var(--accent-neon-light)); color:#fff;
                             border:none; border-radius:8px; cursor:pointer;
                             font-family:var(--font-heading); font-weight:900; font-size:0.95rem; letter-spacing:1px;">
                             ${_paso === 4 ? '¡LISTO! →' : 'SIGUIENTE →'}
@@ -4361,7 +4417,7 @@ const App = (() => {
                     <div onclick="window._setupElegirEquipo('${e.id}', '${e.nombre}')"
                         id="eq-${e.id}"
                         style="padding:10px; border-radius:8px; border:2px solid ${_datos.equipoFavorito?.id === e.id ? 'var(--accent-neon)' : 'var(--border-glass)'};
-                        background:${_datos.equipoFavorito?.id === e.id ? 'rgba(61,111,255,0.1)' : 'rgba(255,255,255,0.03)'};
+                        background:${_datos.equipoFavorito?.id === e.id ? 'rgba(var(--accent-neon-rgb),0.1)' : 'rgba(255,255,255,0.03)'};
                         cursor:pointer; text-align:center; transition:all 0.2s;">
                         <div style="font-size:1.2rem; margin-bottom:4px;">${e.flag}</div>
                         <div style="font-size:0.78rem; font-weight:600; line-height:1.3;">${e.nombre}</div>
@@ -4377,7 +4433,7 @@ const App = (() => {
                 ${PAISES.map(p => `
                     <div onclick="window._setupElegirPais('${p.id}', '${p.nombre}')"
                         style="padding:10px; border-radius:8px; border:2px solid ${_datos.pais?.id === p.id ? 'var(--accent-neon)' : 'var(--border-glass)'};
-                        background:${_datos.pais?.id === p.id ? 'rgba(61,111,255,0.1)' : 'rgba(255,255,255,0.03)'};
+                        background:${_datos.pais?.id === p.id ? 'rgba(var(--accent-neon-rgb),0.1)' : 'rgba(255,255,255,0.03)'};
                         cursor:pointer; text-align:center; transition:all 0.2s;">
                         <div style="font-size:1.3rem; margin-bottom:4px;">${p.flag}</div>
                         <div style="font-size:0.78rem; font-weight:600;">${p.nombre}</div>
@@ -4392,7 +4448,7 @@ const App = (() => {
                     ${(LIGAS_NACIONALES[_datos.pais.id] ?? [{id:'eng.1', nombre:'Premier League', flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'}]).map(l => `
                         <div onclick="window._setupElegirLigaNacional('${l.id}', '${l.nombre}')"
                             style="padding:12px 16px; border-radius:8px; border:2px solid ${_datos.ligaNacional?.id === l.id ? 'var(--accent-neon)' : 'var(--border-glass)'};
-                            background:${_datos.ligaNacional?.id === l.id ? 'rgba(61,111,255,0.1)' : 'rgba(255,255,255,0.03)'};
+                            background:${_datos.ligaNacional?.id === l.id ? 'rgba(var(--accent-neon-rgb),0.1)' : 'rgba(255,255,255,0.03)'};
                             cursor:pointer; display:flex; align-items:center; gap:10px; transition:all 0.2s;">
                             <span style="font-size:1.3rem;">${l.flag}</span>
                             <span style="font-weight:600;">${l.nombre}</span>
@@ -4412,7 +4468,7 @@ const App = (() => {
                 ${LIGAS_INTERNACIONALES.map(l => `
                     <div onclick="window._setupElegirLigaInt('${l.id}', '${l.nombre}')"
                         style="padding:14px 16px; border-radius:8px; border:2px solid ${_datos.ligaInternacional?.id === l.id ? 'var(--accent-neon)' : 'var(--border-glass)'};
-                        background:${_datos.ligaInternacional?.id === l.id ? 'rgba(61,111,255,0.1)' : 'rgba(255,255,255,0.03)'};
+                        background:${_datos.ligaInternacional?.id === l.id ? 'rgba(var(--accent-neon-rgb),0.1)' : 'rgba(255,255,255,0.03)'};
                         cursor:pointer; display:flex; align-items:center; gap:12px; transition:all 0.2s;">
                         <span style="font-size:1.5rem;">${l.flag}</span>
                         <span style="font-weight:600; font-size:0.95rem;">${l.nombre}</span>
@@ -4454,7 +4510,7 @@ const App = (() => {
                 const sel      = _datos.deportes.includes(d.id);
                 const bloq     = !sel && _datos.deportes.length >= maxDep;
                 const border   = sel ? 'var(--accent-neon)' : 'var(--border-glass)';
-                const bg       = sel ? 'rgba(61,111,255,0.1)' : 'rgba(255,255,255,0.03)';
+                const bg       = sel ? 'rgba(var(--accent-neon-rgb),0.1)' : 'rgba(255,255,255,0.03)';
                 const cursor   = bloq ? 'default' : 'pointer';
                 const opacity  = bloq ? '0.4' : '1';
                 const onclick  = bloq ? '' : ('onclick="window._setupToggleDeporte(\'' + d.id + '\')"');
@@ -4719,7 +4775,7 @@ const App = (() => {
                                 onclick="${d.proximamente ? '' : `window.location.hash='#/other-sports?deporte=${d.id}'`}"
                                 style="flex-shrink:0; padding:8px 16px; border-radius:20px;
                                 border:2px solid ${d.id === deporteActual?.id ? 'var(--accent-neon)' : 'var(--border-glass)'};
-                                background:${d.id === deporteActual?.id ? 'rgba(61,111,255,0.12)' : 'rgba(255,255,255,0.04)'};
+                                background:${d.id === deporteActual?.id ? 'rgba(var(--accent-neon-rgb),0.12)' : 'rgba(255,255,255,0.04)'};
                                 color:${d.proximamente ? 'var(--text-muted)' : d.id === deporteActual?.id ? 'var(--accent-neon)' : 'var(--text-main)'};
                                 cursor:${d.proximamente ? 'default' : 'pointer'};
                                 font-family:var(--font-heading); font-weight:700; font-size:0.8rem;
@@ -4737,7 +4793,7 @@ const App = (() => {
                         <button onclick="window.location.hash='#/other-sports?deporte=${deporteActual.id}&liga=${l.id}'"
                             style="padding:6px 14px; border-radius:16px;
                             border:1px solid ${l.id === ligaActual?.id ? 'var(--accent-neon)' : 'var(--border-glass)'};
-                            background:${l.id === ligaActual?.id ? 'rgba(61,111,255,0.1)' : 'transparent'};
+                            background:${l.id === ligaActual?.id ? 'rgba(var(--accent-neon-rgb),0.1)' : 'transparent'};
                             color:${l.id === ligaActual?.id ? 'var(--accent-neon)' : 'var(--text-muted)'};
                             cursor:pointer; font-size:0.8rem; font-weight:600;">
                             ${l.nombre}
@@ -4775,7 +4831,7 @@ const App = (() => {
                                 : 'La competencia que pediste no existe o cambió de nombre.'}
                         </p>
                         <a href="#/other-sports" style="display:inline-block; padding:9px 20px; border-radius:8px;
-                            background:rgba(61,111,255,.12); border:1px solid rgba(61,111,255,.35);
+                            background:rgba(var(--accent-neon-rgb),.12); border:1px solid rgba(var(--accent-neon-rgb),.35);
                             color:var(--accent-neon); text-decoration:none; font-size:.84rem; font-weight:700;">
                             Ver todos los deportes
                         </a>
@@ -5141,7 +5197,7 @@ const App = (() => {
 
                         container.innerHTML = `
                             ${proxima ? `
-                            <div style="background:rgba(61,111,255,0.08); border:1px solid rgba(61,111,255,0.3);
+                            <div style="background:rgba(var(--accent-neon-rgb),0.08); border:1px solid rgba(var(--accent-neon-rgb),0.3);
                                 border-radius:10px; padding:12px 16px; margin-bottom:1rem; display:flex; align-items:center; gap:12px;">
                                 <span style="font-size:1.5rem;">🏁</span>
                                 <div>
@@ -5158,8 +5214,8 @@ const App = (() => {
                                 <div ${tieneMapa ? `onclick="window._verCircuito(${c.ronda})"` : ''}
                                     style="display:grid; grid-template-columns:36px 1fr auto; align-items:center; gap:12px;
                                     padding:10px 12px; border-radius:10px; margin-bottom:6px;
-                                    background:${activa ? 'rgba(61,111,255,0.06)' : 'rgba(255,255,255,0.03)'};
-                                    border:1px solid ${activa ? 'rgba(61,111,255,0.3)' : 'var(--border-glass)'};
+                                    background:${activa ? 'rgba(var(--accent-neon-rgb),0.06)' : 'rgba(255,255,255,0.03)'};
+                                    border:1px solid ${activa ? 'rgba(var(--accent-neon-rgb),0.3)' : 'var(--border-glass)'};
                                     cursor:${tieneMapa ? 'pointer' : 'default'};">
                                     <div style="font-family:var(--font-heading); font-size:0.85rem; font-weight:800; color:var(--text-muted); text-align:center;">R${c.ronda}</div>
                                     <div>
@@ -5201,8 +5257,8 @@ const App = (() => {
                                     ${svg}
 
                                     <div style="margin-top:1rem; padding:12px; border-radius:8px;
-                                        background:${c.completada ? 'rgba(61,111,255,0.06)' : 'rgba(255,255,255,0.04)'};
-                                        border:1px solid ${c.completada ? 'rgba(61,111,255,0.2)' : 'var(--border-glass)'};">
+                                        background:${c.completada ? 'rgba(var(--accent-neon-rgb),0.06)' : 'rgba(255,255,255,0.04)'};
+                                        border:1px solid ${c.completada ? 'rgba(var(--accent-neon-rgb),0.2)' : 'var(--border-glass)'};">
                                         ${c.completada && c.ganador
                                             ? `<div style="font-size:0.7rem; color:var(--accent-neon); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Ganador</div>
                                                <div style="font-weight:800; font-size:1rem;">🏆 ${c.ganador}</div>`
@@ -5408,7 +5464,7 @@ const App = (() => {
 
                     <div class="glass-panel" style="padding:1.5rem; margin-bottom:1rem;">
                         <div style="display:flex; align-items:flex-start; gap:16px; margin-bottom:1.2rem;">
-                            <div style="width:48px; height:48px; background:rgba(61,111,255,0.1); border:2px solid var(--accent-neon);
+                            <div style="width:48px; height:48px; background:rgba(var(--accent-neon-rgb),0.1); border:2px solid var(--accent-neon);
                                 border-radius:50%; display:flex; align-items:center; justify-content:center;
                                 font-size:1.4rem; flex-shrink:0;">⛸️</div>
                             <div>
@@ -5486,7 +5542,7 @@ const App = (() => {
                             border-bottom:1px solid var(--border-glass);
                             cursor:${PATIN_PERFILES[p.nombre] ? 'pointer' : 'default'};
                             transition:background 0.15s;"
-                            onmouseover="${PATIN_PERFILES[p.nombre] ? "this.style.background='rgba(61,111,255,0.04)'" : ''}"
+                            onmouseover="${PATIN_PERFILES[p.nombre] ? "this.style.background='rgba(var(--accent-neon-rgb),0.04)'" : ''}"
                             onmouseout="this.style.background='transparent'">
                             <span style="font-size:${p.pos <= 3 ? '1.4rem' : '0.9rem'}; min-width:28px; text-align:center;">
                                 ${p.pos <= 3 ? medallas[p.pos - 1] : p.pos + '.'}
@@ -5536,7 +5592,7 @@ const App = (() => {
                         ${['partidos','posiciones','líderes'].map(t => `
                             <button onclick="window._osTab='${t}'; document.getElementById('other-sports-content').innerHTML='<div style=\\'text-align:center;padding:2rem;\\'>Cargando...</div>'; window._loadOSTab();"
                                 style="padding:8px 18px; border:none; border-bottom:2px solid ${tabActiva === t ? 'var(--accent-neon)' : 'transparent'};
-                                background:${tabActiva === t ? 'rgba(61,111,255,0.1)' : 'transparent'};
+                                background:${tabActiva === t ? 'rgba(var(--accent-neon-rgb),0.1)' : 'transparent'};
                                 color:${tabActiva === t ? 'var(--accent-neon)' : 'var(--text-muted)'};
                                 cursor:pointer; font-family:var(--font-heading); font-weight:700; font-size:0.82rem;
                                 border-radius:6px 6px 0 0; transition:all 0.2s;">
@@ -6134,7 +6190,7 @@ const App = (() => {
                     <div class="glass-panel" style="padding:1.5rem; text-align:center; margin-bottom:1.5rem;">
                         ${esLive ? `<div style="background:#ff4757; display:inline-block; padding:3px 14px; border-radius:20px; font-size:0.7rem; font-weight:800; color:#fff; margin-bottom:0.8rem; animation:pulse 1s infinite;">● EN VIVO · ${clock}'</div>` :
                           esPost ? `<div style="background:rgba(255,255,255,0.08); display:inline-block; padding:3px 14px; border-radius:20px; font-size:0.7rem; color:var(--text-muted); margin-bottom:0.8rem;">FINALIZADO</div>` :
-                          `<div style="background:rgba(61,111,255,0.12); display:inline-block; padding:3px 14px; border-radius:20px; font-size:0.7rem; font-weight:700; color:var(--accent-neon); margin-bottom:0.8rem;">${shortDet || 'PRÓXIMO'}</div>`}
+                          `<div style="background:rgba(var(--accent-neon-rgb),0.12); display:inline-block; padding:3px 14px; border-radius:20px; font-size:0.7rem; font-weight:700; color:var(--accent-neon); margin-bottom:0.8rem;">${shortDet || 'PRÓXIMO'}</div>`}
 
                         <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:1rem;">
                             <div>
@@ -6145,7 +6201,7 @@ const App = (() => {
                                 <div style="font-family:var(--font-display); font-size:${(esPost||esLive)?'3rem':'1.5rem'}; font-weight:700; color:var(--text-main);">
                                     ${(esPost||esLive) ? `${homeScore} - ${awayScore}` : 'vs'}
                                 </div>
-                                ${notaPartido ? `<div style="margin-top:6px; display:inline-block; padding:3px 10px; border-radius:6px; font-family:var(--font-display); font-size:0.68rem; font-weight:700; background:${esPenales ? 'rgba(245,195,59,0.15)' : 'rgba(61,111,255,0.15)'}; color:${esPenales ? '#F5C33B' : '#3D6FFF'}; letter-spacing:.5px;">${notaPartido}</div>` : ''}
+                                ${notaPartido ? `<div style="margin-top:6px; display:inline-block; padding:3px 10px; border-radius:6px; font-family:var(--font-display); font-size:0.68rem; font-weight:700; background:${esPenales ? 'rgba(245,195,59,0.15)' : 'rgba(var(--accent-neon-rgb),0.15)'}; color:${esPenales ? '#F5C33B' : 'var(--accent-neon)'}; letter-spacing:.5px;">${notaPartido}</div>` : ''}
                             </div>
                             <div>
                                 ${awayLogo ? `<img src="${awayLogo}" width="56" height="56" style="object-fit:contain; margin-bottom:8px; display:block; margin-left:auto; margin-right:auto;" onerror="this.style.display='none'">` : ''}
@@ -6570,7 +6626,7 @@ const App = (() => {
             <div style="margin-bottom:1.2rem;">
                 <div style="font-weight:700; color:var(--accent-neon); font-size:0.82rem; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">${liga} ${data.temporada}</div>
                 <div style="display:flex; flex-wrap:wrap; gap:6px;">
-                    ${data.jugadores.map(j => `<span style="background:rgba(61,111,255,0.08); padding:3px 8px; border-radius:12px; font-size:0.72rem; color:var(--text-muted);">${j}</span>`).join('')}
+                    ${data.jugadores.map(j => `<span style="background:rgba(var(--accent-neon-rgb),0.08); padding:3px 8px; border-radius:12px; font-size:0.72rem; color:var(--text-muted);">${j}</span>`).join('')}
                 </div>
             </div>
         `).join('');
@@ -6653,7 +6709,7 @@ const App = (() => {
             <button onclick="window.location.hash='#/mercado?liga=${l.slug}'"
                 style="flex-shrink:0; padding:7px 15px; border-radius:18px; cursor:pointer;
                 border:1.5px solid ${l.slug === ligaActual ? 'var(--accent-neon)' : 'var(--border-glass)'};
-                background:${l.slug === ligaActual ? 'rgba(61,111,255,.12)' : 'rgba(255,255,255,.04)'};
+                background:${l.slug === ligaActual ? 'rgba(var(--accent-neon-rgb),.12)' : 'rgba(255,255,255,.04)'};
                 color:${l.slug === ligaActual ? 'var(--accent-neon)' : 'var(--text-main)'};
                 font-family:var(--font-heading); font-weight:700; font-size:.8rem; white-space:nowrap;">
                 ${l.flag} ${l.nombre}
@@ -7015,6 +7071,9 @@ const App = (() => {
         const path = '#' + url.pathname;
 
         const autenticado = window.FirebaseAuth?.isAuthenticated();
+
+        // Teñir la app con los colores del equipo favorito (o el azul por defecto).
+        _aplicarTemaEquipo();
 
         // Rutas públicas
         if (path === '#/' || path === '#/landing') {
