@@ -6005,10 +6005,19 @@ const App = (() => {
                 <span style="color:var(--muted); font-size:0.85rem;">Analizando el partido con IA...</span>
             </div>`;
         try {
+            // ESPN bloquea las IPs de Cloudflare, así que el Worker no puede traer
+            // el resumen del partido. Lo traemos acá (el navegador le pega directo,
+            // CORS *) y se lo pasamos ya listo; el Worker solo llama al modelo.
+            let summary = null;
+            try {
+                const sr = await fetch(_proxyEspn(`https://site.api.espn.com/apis/site/v2/sports/soccer/${liga}/summary?event=${eventId}`));
+                if (sr.ok) summary = await sr.json();
+            } catch {}
+
             const res = await fetch('https://whistle.solgoyhe.workers.dev/ia/analisis-previa', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ event: eventId, liga }),
+                body: JSON.stringify({ event: eventId, liga, summary }),
             });
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const data = await res.json();

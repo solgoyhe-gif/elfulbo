@@ -386,31 +386,47 @@ async function manejarAnalisisPrevia(request, env) {
 
     if (!env.GEMINI_API_KEY) return jsonError('Falta configurar GEMINI_API_KEY en el Worker', 503);
 
+    // ESPN bloquea las IPs de Cloudflare (403 de Akamai), así que el Worker ya no
+    // puede traer el summary. El frontend le pega directo (CORS) y lo manda en el
+    // body; usamos ese. El fetch queda solo de fallback por si viene sin summary.
     let contexto = null;
     try {
-        const r = await fetch(`${ESPN_SITE}/${liga}/summary?event=${event}`);
-        contexto = r.ok ? iaContexto(await r.json()) : null;
+        let sum = body.summary;
+        if (!sum) {
+            const r = await fetch(`${ESPN_SITE}/${liga}/summary?event=${event}`);
+            sum = r.ok ? await r.json() : null;
+        }
+        contexto = sum ? iaContexto(sum) : null;
     } catch {}
     if (!contexto) return jsonError('No se pudo obtener el contexto del partido', 502);
 
     let analisis;
     try {
-        const aiRes = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${IA_MODELO}:generateContent`,
-            {
-                method: 'POST',
-                headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
-                body: JSON.stringify({
-                    systemInstruction: { parts: [{ text: IA_SISTEMA }] },
-                    contents: [{ role: 'user', parts: [{ text: contexto }] }],
-                    // OJO: maxOutputTokens incluye los tokens de razonamiento interno
-                    // de Gemini, no solo el texto final. Este modelo gasta ~2500
-                    // pensando, así que con 2000 se quedaba sin presupuesto y devolvía
-                    // el análisis cortado a la mitad (finishReason MAX_TOKENS).
-                    generationConfig: { maxOutputTokens: 6000, temperature: 0.7 },
-                }),
-            }
-        );
+        const cuerpo = JSON.stringify({
+            systemInstruction: { parts: [{ text: IA_SISTEMA }] },
+            contents: [{ role: 'user', parts: [{ text: contexto }] }],
+            // OJO: maxOutputTokens incluye los tokens de razonamiento interno de
+            // Gemini, no solo el texto final. Este modelo gasta ~2500 pensando, así
+            // que con 2000 se quedaba sin presupuesto y cortaba el análisis a la
+            // mitad (finishReason MAX_TOKENS).
+            generationConfig: { maxOutputTokens: 6000, temperature: 0.7 },
+        });
+        // El tier gratuito de Gemini a veces devuelve 503 "high demand" por picos.
+        // Reintentamos un par de veces con espera corta antes de rendirnos.
+        let aiRes;
+        for (let intento = 0; intento < 3; intento++) {
+            aiRes = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/${IA_MODELO}:generateContent`,
+                {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
+                    body: cuerpo,
+                }
+            );
+            if (aiRes.ok) break;
+            if (![429, 500, 503].includes(aiRes.status)) break;   // error no transitorio: no reintentar
+            await new Promise(r => setTimeout(r, 1200 * (intento + 1)));
+        }
         if (!aiRes.ok) return jsonError('Error del modelo: ' + (await aiRes.text()).slice(0, 200), 502);
         const aiData = await aiRes.json();
         // Descartamos las partes marcadas como `thought`: son el razonamiento
