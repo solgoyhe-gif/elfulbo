@@ -337,9 +337,11 @@ function jsonError(msg, status = 400) {
 //  ANÁLISIS IA PRE-PARTIDO (Gemini)
 // ═══════════════════════════════════════════════════════════════════════════
 
-// Alias que siempre apunta al Flash vigente. NO usar 'gemini-2.5-flash'
-// (deprecado para cuentas nuevas) ni 'gemini-2.0-flash' (sin cuota gratuita).
-const IA_MODELO = 'gemini-flash-latest';
+// gemini-flash-lite-latest: rápido (~4s) y confiable. NO usar 'gemini-flash-latest'
+// (apunta a Gemini 3.7 Flash, un modelo "pensante" que devuelve 503 "high demand"
+// seguido en el tier gratuito y tarda 25s+). Tampoco 'gemini-2.5-flash-lite' (404),
+// 'gemini-2.5-flash' (deprecado) ni 'gemini-2.0-flash' (sin cuota).
+const IA_MODELO = 'gemini-flash-lite-latest';
 
 const IA_SISTEMA = [
     'Sos el analista de Whistle, una app deportiva argentina. Escribís análisis previos',
@@ -405,11 +407,10 @@ async function manejarAnalisisPrevia(request, env) {
         const cuerpo = JSON.stringify({
             systemInstruction: { parts: [{ text: IA_SISTEMA }] },
             contents: [{ role: 'user', parts: [{ text: contexto }] }],
-            // OJO: maxOutputTokens incluye los tokens de razonamiento interno de
-            // Gemini, no solo el texto final. Este modelo gasta ~2500 pensando, así
-            // que con 2000 se quedaba sin presupuesto y cortaba el análisis a la
-            // mitad (finishReason MAX_TOKENS).
-            generationConfig: { maxOutputTokens: 6000, temperature: 0.7 },
+            // El modelo lite no gasta tokens de razonamiento, así que con 2000 alcanza
+            // holgado para los 4 párrafos (~350 palabras). El código que descarta las
+            // partes `thought` queda igual por si algún día se cambia a un modelo pensante.
+            generationConfig: { maxOutputTokens: 2000, temperature: 0.7 },
         });
         // El tier gratuito de Gemini a veces devuelve 503 "high demand" por picos.
         // Reintentamos un par de veces con espera corta antes de rendirnos.
