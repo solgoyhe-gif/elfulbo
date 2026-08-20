@@ -651,7 +651,22 @@ const App = (() => {
         '482':  ['#DA020E', '#046A38'],  // Portugal — rojo y verde
     };
     // Azul/violeta original de Whistle: el fallback si no hay equipo o no está mapeado.
-    const TEMA_DEFAULT = ['var(--accent-neon)', 'var(--accent-neon-light)'];
+    const TEMA_DEFAULT = ['#3D6FFF', '#8B5CF6'];
+
+    // Nombre del equipo favorito (para matchear con ESPN por NOMBRE, porque los IDs
+    // de equipo de la app no coinciden con los de ESPN). Se usa para sumar al home
+    // los partidos del equipo en las copas, que no son ligas seleccionables.
+    const EQUIPOS_FAV_NOMBRE = {
+        '6': 'Boca Juniors',   '5': 'River Plate',    '7': 'Racing Club',
+        '8': 'Independiente',   '9': 'San Lorenzo',    '10': 'Huracán',
+        '86': 'Real Madrid',    '83': 'Barcelona',     '1068': 'Atlético de Madrid',
+        '360': 'Manchester City', '364': 'Manchester United', '359': 'Liverpool',
+        '338': 'Arsenal',       '363': 'Chelsea',      '111': 'Juventus',
+        '108': 'Internazionale', '109': 'AC Milan',    '132': 'Bayern Munich',
+        '124': 'Borussia Dortmund', '131': 'Flamengo', '119': 'Corinthians',
+        // Las selecciones no juegan copas de clubes, se omiten.
+    };
+    const PAISES_SUDAMERICA = ['AR', 'BR', 'UY', 'CL', 'CO', 'PE', 'PY', 'BO', 'EC', 'VE'];
 
     const _hexARgb = (hex) => {
         const h = String(hex).replace('#', '');
@@ -1419,7 +1434,10 @@ const App = (() => {
                 const TZ  = 'America/Argentina/Buenos_Aires';
                 const fmt = (d) => d.toLocaleDateString('en-CA', {timeZone: TZ}).replace(/-/g, '');
                 const hoy = new Date();
-                const rango = fmt(hoy) + '-' + fmt(new Date(hoy.getTime() + 7 * 24 * 60 * 60 * 1000));
+                const DIA = 24 * 60 * 60 * 1000;
+                // La ventana arranca 3 días ATRÁS (antes solo miraba hacia adelante y los
+                // partidos de ayer no aparecían) y llega a 7 días adelante.
+                const rango = fmt(new Date(hoy.getTime() - 3 * DIA)) + '-' + fmt(new Date(hoy.getTime() + 7 * DIA));
 
                 // Un scoreboard por competencia, en paralelo. Si una falla, seguimos con las otras.
                 _comps = (await Promise.all(_competenciasUsuario().map(async (slug) => {
@@ -1445,6 +1463,36 @@ const App = (() => {
                 }))).filter(c => c.eventos.length);
 
                 _delRango = _comps.flatMap(c => c.eventos);
+
+                // Sumamos los partidos del EQUIPO FAVORITO en las copas (Copa Argentina,
+                // Libertadores, Sudamericana / Champions, Europa), que no son ligas
+                // seleccionables. Sin esto, un partido de copa del equipo no aparecía
+                // (le pasó al usuario con Racing). Se filtra por NOMBRE porque los IDs de
+                // equipo de la app no coinciden con los de ESPN. Va en try aparte: si
+                // falla, el home sigue con los partidos de las ligas.
+                try {
+                    const favNombre = EQUIPOS_FAV_NOMBRE[window.FirebaseAuth?.getPerfil()?.equipoFavorito];
+                    if (favNombre) {
+                        const norm = (x) => String(x ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+                        const favN = norm(favNombre);
+                        const esSA = PAISES_SUDAMERICA.includes(window.FirebaseAuth?.getPerfil()?.pais);
+                        const copas = esSA
+                            ? ['arg.copa', 'conmebol.libertadores', 'conmebol.sudamericana']
+                            : ['uefa.champions', 'uefa.europa'];
+                        const yaEstan = new Set(_delRango.map(e => e.id));
+                        const extras = (await Promise.all(copas.map(async (slug) => {
+                            try {
+                                const d = await _espn(`https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${rango}`);
+                                const nombre = d.leagues?.[0]?.name ?? slug;
+                                return (d.events ?? [])
+                                    .filter(e => (e.competitions?.[0]?.competitors ?? []).some(c => norm(c.team?.displayName) === favN))
+                                    .filter(e => !yaEstan.has(e.id))
+                                    .map(e => ({ ...e, _slug: slug, _liga: nombre }));
+                            } catch { return []; }
+                        }))).flat();
+                        _delRango = _delRango.concat(extras);
+                    }
+                } catch {}
 
                 if (!_delRango.length) {
                     _pintarHero(null);
