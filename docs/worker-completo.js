@@ -15,6 +15,27 @@
 //      Nombre: GEMINI_API_KEY     Valor: tu key de aistudio.google.com/apikey
 // ═══════════════════════════════════════════════════════════════════════════
 
+// ── Mapa de ID de equipo favorito → ID real de ESPN ───────────────────────────
+// Los IDs que guarda el frontend (EQUIPOS_FAVORITOS) NO coinciden con los de ESPN,
+// asi que el push del equipo favorito nunca matcheaba. Traducimos al comparar. Solo
+// van los que cambian; el resto cae por el `?? id`. NO se toca el frontend ni el
+// perfil guardado: la traduccion pasa solo aca, al comparar contra el id de ESPN.
+const MAPA_ID_ESPN = {
+    '6': '5',    // Boca
+    '5': '16',   // River
+    '7': '15',   // Racing
+    '8': '11',   // Independiente
+    '9': '18',   // San Lorenzo
+    '360': '382', // Manchester City
+    '364': '360', // Manchester United
+    '359': '364', // Liverpool
+    '338': '359', // Arsenal
+    '108': '110', // Inter
+    '109': '103', // Milan
+    '131': '819', // Flamengo
+    '119': '874', // Corinthians
+};
+
 // ── Lemon Squeezy Variant IDs ─────────────────────────────────────────────────
 
 const LS_VARIANTS = {
@@ -289,8 +310,9 @@ async function pollGolesYEnviarPush(env) {
                 };
                 if (!sub.endpoint) continue;
 
+                const favEspn = MAPA_ID_ESPN[sub.equipoFavorito] ?? sub.equipoFavorito;
                 const esEquipoFav = sub.equipoFavorito &&
-                    (sub.equipoFavorito === partido.homeId || sub.equipoFavorito === partido.awayId);
+                    (favEspn === partido.homeId || favEspn === partido.awayId);
                 const sigueLiga = sub.ligas.includes(partido.slug);
                 if (!esEquipoFav && !sigueLiga) continue;
 
