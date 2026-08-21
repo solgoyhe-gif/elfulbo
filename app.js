@@ -292,7 +292,7 @@ const App = (() => {
 
         const _accordionBtn = (key, icon, label, isOpen) => `
             <button class="sidebar-link sidebar-accordion-btn ${isOpen ? 'open' : ''}"
-                onclick="window._sidebarAccordion['${key}'] = !window._sidebarAccordion['${key}']; window._refreshSidebar();"
+                onclick="window._navAcc('${key}')"
                 style="width:100%; display:flex; align-items:center; justify-content:space-between;">
                 <span style="display:flex; align-items:center; gap:0;">
                     <span class="sidebar-icon">${icon}</span>
@@ -377,6 +377,17 @@ const App = (() => {
 
     const _closeSidebarWrapper = () => window.FirebaseAuth?.isAuthenticated() ? '</div>' : '';
     window._sidebarToggle = _sidebarToggle;
+    // En el celular la barra es horizontal: los "desplegables" no pueden abrirse,
+    // asi que tocarlos navega directo a su seccion. En escritorio si despliegan.
+    window._navAcc = (key) => {
+        if (window.innerWidth <= 768) {
+            window.location.hash = key === 'futbol' ? '#/ligas' : '#/other-sports';
+        } else {
+            window._sidebarAccordion[key] = !window._sidebarAccordion[key];
+            window._refreshSidebar();
+        }
+    };
+
     window._refreshSidebar = () => {
         const sb = document.getElementById('app-sidebar');
         if (!sb) return;

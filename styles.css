@@ -977,9 +977,17 @@ body {
         padding-bottom:env(safe-area-inset-bottom);
     }
     .sidebar-header,.sidebar-divider,.sidebar-footer { display:none; }
-    /* En el celular los acordeones (Fútbol / Other Sports) no funcionan bien en una
-       barra horizontal: los ocultamos y la barra queda con los accesos directos. */
-    .sidebar-accordion-btn,.sidebar-accordion-body { display:none; }
+    /* En el celular los acordeones (Fútbol / Other Sports) no despliegan: el boton
+       navega directo a su seccion (window._navAcc) y se ve igual que los demas iconos.
+       Se ocultan el cuerpo desplegable y el chevron; se apilan icono sobre label.
+       Va con !important porque el boton trae estilos inline (display/justify). */
+    .sidebar-accordion-body { display:none !important; }
+    .sidebar-chevron { display:none !important; }
+    .sidebar-accordion-btn {
+        flex-direction:column !important; justify-content:center !important;
+        align-items:center !important; width:auto !important; padding:7px 5px !important;
+    }
+    .sidebar-accordion-btn > span { flex-direction:column !important; gap:3px !important; }
     .sidebar-nav {
         /* En escritorio es position:absolute con top/bottom fijos; dentro de la barra
            de 64px del celular eso daba altura NEGATIVA y la dejaba invisible. */
