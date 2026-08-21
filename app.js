@@ -343,7 +343,7 @@ const App = (() => {
                         ${futbolSublinks}
                     </div>
 
-                    ${_accordionBtn('other', '🎽', 'Other Sports', acc.other)}
+                    ${_accordionBtn('other', '🎽', 'Otros', acc.other)}
                     <div class="sidebar-accordion-body ${acc.other ? 'open' : ''}">
                         ${otherSublinks}
                     </div>
