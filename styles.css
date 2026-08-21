@@ -999,19 +999,19 @@ body {
     }
     .sidebar-link {
         flex:1 1 0 !important; min-width:0 !important;
-        flex-direction:column; gap:2px;
-        height:auto; padding:6px 1px; margin:0; border-radius:0;
+        flex-direction:column; gap:1px;
+        height:auto; padding:4px 1px; margin:0; border-radius:0;
         width:auto;
         align-items:center; justify-content:center;
-        font-size:.5rem;
+        font-size:.46rem;
         background:transparent !important;
     }
     .sidebar-link.active { color:var(--blue); box-shadow:inset 0 2px 0 var(--blue); }
-    .sidebar-icon { width:22px; height:22px; border-radius:5px; font-size:1rem; flex:none; }
+    .sidebar-icon { width:17px; height:17px; border-radius:5px; font-size:.78rem; flex:none; }
     .sidebar-label {
-        opacity:1 !important; font-size:.5rem;
-        white-space:normal; text-align:center; line-height:1.05;
-        word-break:break-word; width:100%;
+        opacity:1 !important; font-size:.46rem;
+        white-space:nowrap; text-align:center; line-height:1;
+        overflow:hidden; text-overflow:ellipsis; max-width:100%;
     }
     .sidebar-page-wrapper,
     .sidebar-page-wrapper.sidebar-closed { margin-left:0 !important; padding-bottom:var(--sidebar-w-closed); }
