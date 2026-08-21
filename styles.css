@@ -977,8 +977,14 @@ body {
         padding-bottom:env(safe-area-inset-bottom);
     }
     .sidebar-header,.sidebar-divider,.sidebar-footer { display:none; }
+    /* En el celular los acordeones (Fútbol / Other Sports) no funcionan bien en una
+       barra horizontal: los ocultamos y la barra queda con los accesos directos. */
+    .sidebar-accordion-btn,.sidebar-accordion-body { display:none; }
     .sidebar-nav {
-        flex-direction:row; padding:0; gap:0;
+        /* En escritorio es position:absolute con top/bottom fijos; dentro de la barra
+           de 64px del celular eso daba altura NEGATIVA y la dejaba invisible. */
+        position:static; top:auto; bottom:auto; height:100%;
+        display:flex; flex-direction:row; padding:0; gap:0;
         overflow-x:auto; overflow-y:hidden;
         align-items:stretch; width:100%;
     }
