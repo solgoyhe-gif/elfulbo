@@ -225,11 +225,15 @@ async function sendPush(subscription, payload, env) {
 // ── Polling de goles ──────────────────────────────────────────────────────────
 async function pollGolesYEnviarPush(env) {
     try {
+        // OJO: NO usar site.api.espn.com aca. Akamai bloquea las IPs de Cloudflare
+        // con 403 "Access Denied", asi que desde el Worker ese host no responde y el
+        // poller nunca veia los partidos. cdn.espn.com/core SI responde al Worker y
+        // trae los mismos datos (mismos IDs, marcador, estado) en content.sbData.events.
         const scoreboards = await Promise.allSettled(
             SLUGS_MONITOREAR.map(slug =>
-                fetch(`${ESPN_SITE}/${slug}/scoreboard`)
+                fetch(`https://cdn.espn.com/core/soccer/scoreboard?xhr=1&league=${slug}`)
                     .then(r => r.json())
-                    .then(d => ({ slug, events: d?.events ?? [] }))
+                    .then(d => ({ slug, events: d?.content?.sbData?.events ?? [] }))
             )
         );
 
