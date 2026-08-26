@@ -39,10 +39,10 @@ window.PLANES = {
         descripcion: 'Todas las ligas y copas de fútbol del mundo, más todas las competencias de cada deporte. Viví el fútbol desde la Platea.',
         features: [
             { texto: 'Todo lo de Popular',                 ok: true  },
-            { texto: 'Todas las ligas y copas de fútbol del mundo', ok: true  },
+            { texto: 'Ligas y copas del mundo (tabla y partidos)', ok: true  },
             { texto: 'Otros deportes: todas las competencias', ok: true  },
             { texto: 'Noticias traducidas',                ok: true  },
-            { texto: 'Equipo favorito y estadísticas completas', ok: true  },
+            { texto: 'Plantillas y fichas de jugador del mundo', ok: false },
             { texto: 'Otros deportes con detalle completo',ok: false },
             { texto: 'Análisis IA pre-partido',            ok: false },
         ]
@@ -57,6 +57,7 @@ window.PLANES = {
         features: [
             { texto: 'Todo lo de Platea',                  ok: true  },
             { texto: 'Análisis IA pre-partido',            ok: true  },
+            { texto: 'Plantillas y fichas de jugador de todo el mundo', ok: true  },
             { texto: 'Otros deportes con detalle completo',ok: true  },
             { texto: 'Notificaciones de gol en vivo',      ok: true  },
             { texto: 'Historial extendido',                ok: true  },

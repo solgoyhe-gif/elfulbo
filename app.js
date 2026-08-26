@@ -3011,11 +3011,11 @@ const App = (() => {
                 <div class="equipo-grid" style="margin-top: 2rem;">
                     <div class="glass-panel" style="padding: 1.5rem; max-height: 500px; overflow-y: auto;">
                         <h3 class="panel-title">Lista de Convocados</h3>
-                        ${_esPro() ? rosterHtml : `
+                        ${!_detalleSoloPalco(ligaId) ? rosterHtml : `
                             <div style="text-align:center; padding:2rem;">
-                                <p style="font-size:1.5rem; margin-bottom:0.5rem;">🔒</p>
-                                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Lista de convocados disponible en Plan Platea</p>
-                                <a href="#/planes" style="color:var(--accent-neon); font-weight:700; font-size:0.85rem;">Ver planes →</a>
+                                <p style="font-size:1.5rem; margin-bottom:0.5rem;">👑</p>
+                                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">La plantilla completa de las ligas del mundo es exclusiva de Palco</p>
+                                <a href="#/planes" style="color:#ffd700; font-weight:700; font-size:0.85rem;">Ver planes →</a>
                             </div>`}
                     </div>
                     <div class="glass-panel" style="padding: 1rem; overflow: hidden;">
@@ -4078,10 +4078,10 @@ const App = (() => {
                             </p>
                             ${[
                                 {t:'Todo lo de Popular', ok:true},
-                                {t:'Todas las ligas y copas de fútbol del mundo', ok:true},
+                                {t:'Ligas y copas del mundo (tabla y partidos)', ok:true},
                                 {t:'Otros deportes: todas las competencias', ok:true},
                                 {t:'Noticias traducidas', ok:true},
-                                {t:'Equipo favorito y estadísticas completas', ok:true},
+                                {t:'Plantillas y fichas de jugador del mundo', ok:false},
                                 {t:'Otros deportes con detalle completo', ok:false},
                                 {t:'Análisis IA pre-partido', ok:false},
                             ].map(f => `
@@ -4115,6 +4115,7 @@ const App = (() => {
                             ${[
                                 {t:'Todo lo de Platea', ok:true},
                                 {t:'Análisis IA pre-partido', ok:true},
+                                {t:'Plantillas y fichas de jugador de todo el mundo', ok:true},
                                 {t:'Otros deportes con detalle completo', ok:true},
                                 {t:'Notificaciones de gol en vivo', ok:true},
                                 {t:'Historial extendido', ok:true},
@@ -4842,6 +4843,10 @@ const App = (() => {
     const _ligaAccesibleFree = (ligaId) => LIGAS_ARGENTINAS_FREE.has(ligaId);
     // true si el usuario NO puede ver esta liga (gratuito + liga no argentina)
     const _ligaBloqueada = (ligaId) => !_esPro() && !_ligaAccesibleFree(ligaId);
+    // El DETALLE PROFUNDO (plantilla, ficha de jugador, etc.) de las ligas NO argentinas
+    // es exclusivo de Palco. En el fútbol argentino + Mundial lo ve cualquiera que acceda
+    // (el free tiene el fútbol argentino completo). Platea ve esas ligas pero no su detalle.
+    const _detalleSoloPalco = (ligaId) => !_esProMax() && !_ligaAccesibleFree(ligaId);
 
     // Paywall de página completa (con navbar), para cuando se bloquea el acceso a toda una sección
     const _paywallPagina = (activeHash, titulo, mensaje) => {
@@ -7149,11 +7154,16 @@ const App = (() => {
                     </div>
                 </div>`;
 
-            // Goles, asistencias e historial son features de Platea. Al usuario free le
-            // mostramos la cabecera y el candado, y ni siquiera gastamos los fetches.
-            if (!_esPro()) {
-                cont.innerHTML = cabecera +
-                    _paywallInline('pro', 'Los goles, asistencias y el historial del jugador están disponibles en el plan Platea.');
+            // Detalle profundo del jugador (goles, asistencias, historial). En el fútbol
+            // argentino lo ve cualquiera que acceda (free incluido); en las ligas del mundo
+            // es exclusivo de Palco. Sin contexto de liga, cae en la regla vieja (Platea).
+            const _reqPalco = ligaSlug && _detalleSoloPalco(ligaSlug);
+            if (_reqPalco || (!ligaSlug && !_esPro())) {
+                cont.innerHTML = cabecera + _paywallInline(
+                    _reqPalco ? 'promax' : 'pro',
+                    _reqPalco
+                        ? 'El detalle de jugadores de las ligas del mundo es exclusivo de Palco.'
+                        : 'Los goles, asistencias y el historial del jugador están disponibles en el plan Platea.');
                 return;
             }
 
