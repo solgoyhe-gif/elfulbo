@@ -994,7 +994,8 @@ const App = (() => {
                 const sel = iso === window._calEstado.sel;
                 const bg  = sel ? 'var(--blue)' : esHoy ? 'rgba(var(--accent-neon-rgb),.14)' : 'transparent';
                 const col = sel ? '#fff' : esHoy ? 'var(--accent-neon)' : 'var(--text-main)';
-                celdas += `<button onclick="window._calSelDia('${iso}')" style="position:relative;aspect-ratio:1;border:none;border-radius:9px;background:${bg};color:${col};font-family:var(--font-heading);font-weight:${sel||esHoy?'800':'600'};font-size:.82rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+                const borde = sel ? 'var(--blue)' : 'rgba(255,255,255,.18)';
+                celdas += `<button onclick="window._calSelDia('${iso}')" style="position:relative;aspect-ratio:1;border:1px solid ${borde};border-radius:9px;background:${bg};color:${col};font-family:var(--font-heading);font-weight:${sel||esHoy?'800':'600'};font-size:.82rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">
                     ${dia}${tiene ? `<span style="position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:${sel?'#fff':'var(--accent-neon)'};"></span>` : ''}
                 </button>`;
             }
