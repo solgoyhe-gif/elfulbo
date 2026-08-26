@@ -51,6 +51,10 @@ const ESPN = (() => {
         liga_prof:     'arg.1',
         copa_liga:     'arg.copa_lpf',  // Copa de la Liga Profesional (tiene grupos/tabla)
         copa_argentina:'arg.copa',
+        primera_nacional:'arg.2',       // Primera Nacional (36 equipos, 2 zonas)
+        primera_b_metro:'arg.3',        // Primera B Metropolitana (22 equipos)
+        primera_c:     'arg.4',         // Primera C (partidos; ESPN a veces sin tabla)
+        primera_d:     'arg.5',         // Primera D (11 equipos)
         // Sudamérica extra (ocultas)
         copa_america:  'conmebol.copa_america',
         recopa:        'conmebol.recopa',

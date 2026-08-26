@@ -59,6 +59,16 @@ const LIGAS = {
         ]
     },
 
+    ascenso_argentino: {
+        nombre: "Ascenso Argentino",
+        competiciones: [
+            { id: "primera_nacional", nombre: "Primera Nacional",      pais: "Argentina", flag: "🇦🇷", badge_color: "#4395d1" },
+            { id: "primera_b_metro",  nombre: "Primera B Metropolitana",pais: "Argentina", flag: "🇦🇷", badge_color: "#1c355e" },
+            { id: "primera_c",        nombre: "Primera C",             pais: "Argentina", flag: "🇦🇷", badge_color: "#75aadb" },
+            { id: "primera_d",        nombre: "Primera D",             pais: "Argentina", flag: "🇦🇷", badge_color: "#4395d1" },
+        ]
+    },
+
     // ── LIGAS OCULTAS — visible solo para admin hasta que estén verificadas ────
     // Para activar al público: quitar hidden: true
     sudamerica_extra: {
