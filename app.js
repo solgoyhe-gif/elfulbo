@@ -1446,9 +1446,12 @@ const App = (() => {
                 const fmt = (d) => d.toLocaleDateString('en-CA', {timeZone: TZ}).replace(/-/g, '');
                 const hoy = new Date();
                 const DIA = 24 * 60 * 60 * 1000;
-                // La ventana arranca 3 días ATRÁS (antes solo miraba hacia adelante y los
-                // partidos de ayer no aparecían) y llega a 7 días adelante.
-                const rango = fmt(new Date(hoy.getTime() - 3 * DIA)) + '-' + fmt(new Date(hoy.getTime() + 7 * DIA));
+                // La ventana arranca 7 días ATRÁS y llega a 10 adelante. En las ligas
+                // que juegan una vez por semana, una misma fecha se reparte de viernes a
+                // lunes (hasta ~5 días): con solo 3 días atrás se perdían los partidos del
+                // arranque de la fecha (le pasó con Aldosivi, que jugó el viernes mientras
+                // el resto de la fecha era sáb-dom). 7 días atrás garantiza la fecha completa.
+                const rango = fmt(new Date(hoy.getTime() - 7 * DIA)) + '-' + fmt(new Date(hoy.getTime() + 10 * DIA));
 
                 // Un scoreboard por competencia, en paralelo. Si una falla, seguimos con las otras.
                 _comps = (await Promise.all(_competenciasUsuario().map(async (slug) => {
