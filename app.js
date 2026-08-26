@@ -1670,6 +1670,13 @@ const App = (() => {
             return;
         }
 
+        // Freemium: el plan gratuito solo accede al fútbol argentino
+        if (_ligaBloqueada(ligaId)) {
+            _paywallPagina('#/liga?id=' + ligaId, ligaData.nombre,
+                `${ligaData.nombre} es parte de Platea. Con el plan gratuito tenés todo el fútbol argentino; para ver esta liga y el resto del mundo, pasate a Platea.`);
+            return;
+        }
+
         appContainer.innerHTML = `
             ${renderNavbar('#/liga?id=' + ligaId)}
             <main class="page-container fade-in">
@@ -2639,6 +2646,12 @@ const App = (() => {
     // ── VISTA: PERFIL DE EQUIPO ───────────────────────────────────────────────
     const renderEquipoDetalle = async (equipoId, ligaId, nombreEquipoDecoded) => {
         const name       = decodeURIComponent(nombreEquipoDecoded || 'Selección');
+        // Freemium: el plan gratuito solo accede a equipos del fútbol argentino
+        if (_ligaBloqueada(ligaId)) {
+            _paywallPagina('#/liga?id=' + ligaId, name,
+                `${name} pertenece a una liga de Platea. Con el plan gratuito ves todo el fútbol argentino; para el resto, pasate a Platea.`);
+            return;
+        }
         const CF_WORKER  = 'https://whistle.solgoyhe.workers.dev';
         const espnLeague = ESPN.getSlug(ligaId) ?? ligaId;
 
@@ -3887,15 +3900,13 @@ const App = (() => {
                                 La cancha siempre abierta. Seguí el Mundial, los partidos del día y tu liga favorita sin pagar nada.
                             </p>
                             ${[
-                                {t:'Tabla de grupos Mundial 2026', ok:true},
-                                {t:'Partidos del día', ok:true},
-                                {t:'Estadísticas del partido', ok:true},
-                                {t:'Alineaciones tácticas', ok:true},
-                                {t:'Noticias básicas', ok:true},
-                                {t:'1 liga a elección', ok:true},
-                                {t:'Todas las ligas', ok:false},
-                                {t:'Análisis IA pre-partido', ok:false, prox:true},
-                                {t:'Todos los deportes', ok:false},
+                                {t:'Todo el fútbol argentino (1ª, ascenso y copas)', ok:true},
+                                {t:'Mundial 2026 y partidos del día', ok:true},
+                                {t:'Estadísticas y alineaciones tácticas', ok:true},
+                                {t:'Otros deportes: tabla de la liga principal', ok:true},
+                                {t:'Ligas y copas del resto del mundo', ok:false},
+                                {t:'Todos los deportes completos', ok:false},
+                                {t:'Análisis IA pre-partido', ok:false},
                             ].map(f => `
                                 <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem;
                                     margin-bottom:7px; color:${f.ok ? 'var(--text-main)' : 'var(--text-muted)'};">
@@ -3931,12 +3942,12 @@ const App = (() => {
                             </p>
                             ${[
                                 {t:'Todo lo de Popular', ok:true},
-                                {t:'Análisis IA pre-partido', ok:true, prox:true},
-                                {t:'Todas las ligas de fútbol', ok:true},
+                                {t:'Todas las ligas y copas de fútbol del mundo', ok:true},
+                                {t:'Otros deportes: todas las competencias', ok:true},
                                 {t:'Noticias traducidas', ok:true},
-                                {t:'Equipo favorito', ok:true},
-                                {t:'Todos los deportes', ok:false},
-                                {t:'Notificaciones en vivo', ok:false},
+                                {t:'Equipo favorito y estadísticas completas', ok:true},
+                                {t:'Otros deportes con detalle completo', ok:false},
+                                {t:'Análisis IA pre-partido', ok:false},
                             ].map(f => `
                                 <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem;
                                     margin-bottom:7px; color:${f.ok ? 'var(--text-main)' : 'var(--text-muted)'};">
@@ -3967,10 +3978,10 @@ const App = (() => {
                             </p>
                             ${[
                                 {t:'Todo lo de Platea', ok:true},
-                                {t:'Todos los deportes', ok:true},
-                                {t:'Notificaciones en vivo', ok:true},
+                                {t:'Análisis IA pre-partido', ok:true},
+                                {t:'Otros deportes con detalle completo', ok:true},
+                                {t:'Notificaciones de gol en vivo', ok:true},
                                 {t:'Historial extendido', ok:true},
-                                {t:'Acceso anticipado a features', ok:true},
                                 {t:'Sin publicidad', ok:true},
                             ].map(f => `
                                 <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem;
@@ -4679,6 +4690,40 @@ const App = (() => {
             </button>
         </div>`;
 
+    // ── Gating freemium ───────────────────────────────────────────────────────
+    // Plan FREE: solo fútbol argentino (con toda la info). El resto de ligas/copas
+    // de fútbol, y los detalles de otros deportes, requieren Platea (pro).
+    const LIGAS_ARGENTINAS_FREE = new Set([
+        'liga_prof', 'copa_liga', 'copa_argentina',
+        'primera_nacional', 'primera_b_metro', 'primera_c', 'primera_d',
+    ]);
+    // ¿Esta liga la puede ver un usuario gratuito?
+    const _ligaAccesibleFree = (ligaId) => LIGAS_ARGENTINAS_FREE.has(ligaId);
+    // true si el usuario NO puede ver esta liga (gratuito + liga no argentina)
+    const _ligaBloqueada = (ligaId) => !_esPro() && !_ligaAccesibleFree(ligaId);
+
+    // Paywall de página completa (con navbar), para cuando se bloquea el acceso a toda una sección
+    const _paywallPagina = (activeHash, titulo, mensaje) => {
+        appContainer.innerHTML = `
+            ${renderNavbar(activeHash)}
+            <main class="page-container fade-in">
+                <a href="#/ligas" style="color:var(--text-muted); text-decoration:none; display:inline-block; margin-bottom:1.5rem;">← Volver</a>
+                <div class="glass-panel" style="padding:2.5rem 1.5rem; text-align:center; max-width:520px; margin:2rem auto;">
+                    <div style="font-size:3rem; margin-bottom:0.75rem;">🔒</div>
+                    <h1 style="font-family:var(--font-heading); font-size:1.4rem; margin-bottom:0.5rem;">${titulo}</h1>
+                    <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1.5rem; line-height:1.5;">${mensaje}</p>
+                    <button onclick="window.location.hash='#/planes'"
+                        style="padding:11px 28px; background:var(--accent-neon); color:#000; font-weight:800;
+                        font-family:var(--font-heading); border:none; border-radius:10px; cursor:pointer; font-size:0.95rem;">
+                        DESBLOQUEAR CON PLATEA
+                    </button>
+                    <p style="color:var(--text-muted); font-size:0.72rem; margin-top:1rem; opacity:.7;">
+                        Con el plan gratuito ves todo el fútbol argentino. Platea suma el resto de ligas, copas y deportes.
+                    </p>
+                </div>
+            </main>`;
+    };
+
     // ── OTHER SPORTS ─────────────────────────────────────────────────────────
     const OTHER_SPORTS = [
         {
@@ -4773,44 +4818,8 @@ const App = (() => {
             intentos++;
         }
 
-        const isProMax = window.FirebaseAuth?.getPlan() === 'promax';
+        const esPro     = _esPro();      // Platea o Palco
         const CF_WORKER = 'https://whistle.solgoyhe.workers.dev';
-
-        // Solo ProMax puede ver Other Sports
-        if (!isProMax) {
-            appContainer.innerHTML = `
-                ${renderNavbar('#/other-sports')}
-                <main class="page-container fade-in" style="max-width:700px; margin:0 auto;">
-                    <h2 class="section-title">🏅 Other Sports</h2>
-                    <div class="glass-panel" style="padding:3rem; text-align:center; margin-bottom:2rem;">
-                        <div style="font-size:3rem; margin-bottom:1rem;">👑</div>
-                        <h3 style="font-family:var(--font-heading); font-size:1.3rem; font-weight:900; color:#ffd700; margin-bottom:0.8rem;">
-                            Requiere Palco
-                        </h3>
-                        <p style="color:var(--text-muted); font-size:0.9rem; line-height:1.6; max-width:400px; margin:0 auto 1.5rem;">
-                            Accedé a todos los deportes — básquet, tenis, F1, NFL, MLB, NHL, golf, MMA y más — con el plan Palco.
-                        </p>
-                        <button onclick="window.location.hash='#/planes'"
-                            style="padding:12px 28px; background:#ffd700; color:#000; font-weight:900;
-                            font-family:var(--font-heading); border:none; border-radius:8px; cursor:pointer;
-                            font-size:0.95rem; letter-spacing:1px;">
-                            VER PLANES ⭐
-                        </button>
-                    </div>
-
-                    <!-- Preview bloqueado -->
-                    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:1rem; opacity:0.4; pointer-events:none;">
-                        ${OTHER_SPORTS.filter(d => !d.proximamente).map(d => `
-                            <div class="glass-panel" style="padding:1.5rem; text-align:center;">
-                                <div style="font-size:2rem; margin-bottom:0.5rem;">${d.emoji}</div>
-                                <div style="font-weight:700; font-size:0.85rem;">🔒 ${d.nombre}</div>
-                            </div>`).join('')}
-                    </div>
-                </main>
-            ${_closeSidebarWrapper()}
-            `;
-            return;
-        }
 
         // Deporte seleccionado
         const deporteActual = deporteId
@@ -4820,6 +4829,15 @@ const App = (() => {
         const ligaActual = ligaId
             ? deporteActual?.ligas?.find(l => l.id === ligaId)
             : deporteActual?.ligas?.[0];
+
+        // Freemium: el plan gratuito solo ve la liga PRINCIPAL de cada deporte
+        // (resultados + tabla). Las demás competencias requieren Platea.
+        const ligaPrincipal = deporteActual?.ligas?.[0];
+        if (!esPro && deporteActual && ligaActual && ligaPrincipal && ligaActual.id !== ligaPrincipal.id) {
+            _paywallPagina('#/other-sports', deporteActual.nombre,
+                `Con el plan gratuito ves la liga principal de cada deporte. Para ${ligaActual.nombre} y el resto de las competencias de ${deporteActual.nombre}, pasate a Platea.`);
+            return;
+        }
 
         appContainer.innerHTML = `
             ${renderNavbar('#/other-sports')}
@@ -4848,15 +4866,18 @@ const App = (() => {
                 <!-- Sub-tabs de ligas del deporte -->
                 ${deporteActual?.ligas?.length > 1 ? `
                 <div style="display:flex; gap:8px; margin-bottom:1.5rem; flex-wrap:wrap;">
-                    ${deporteActual.ligas.map(l => `
+                    ${deporteActual.ligas.map((l, i) => {
+                        const bloqueada = !esPro && i > 0; // free: solo la liga principal
+                        return `
                         <button onclick="window.location.hash='#/other-sports?deporte=${deporteActual.id}&liga=${l.id}'"
                             style="padding:6px 14px; border-radius:16px;
                             border:1px solid ${l.id === ligaActual?.id ? 'var(--accent-neon)' : 'var(--border-glass)'};
                             background:${l.id === ligaActual?.id ? 'rgba(var(--accent-neon-rgb),0.1)' : 'transparent'};
                             color:${l.id === ligaActual?.id ? 'var(--accent-neon)' : 'var(--text-muted)'};
                             cursor:pointer; font-size:0.8rem; font-weight:600;">
-                            ${l.nombre}
-                        </button>`).join('')}
+                            ${bloqueada ? '🔒 ' : ''}${l.nombre}
+                        </button>`;
+                    }).join('')}
                 </div>` : ''}
 
                 <!-- Contenido -->
@@ -6092,6 +6113,12 @@ const App = (() => {
     };
 
     const renderPartido = async (eventId, ligaId) => {
+        // Freemium: el plan gratuito solo accede a partidos del fútbol argentino
+        if (ligaId && _ligaBloqueada(ligaId)) {
+            _paywallPagina('#/partido?id=' + eventId, 'Partido',
+                'Este partido es de una liga de Platea. Con el plan gratuito ves todo el fútbol argentino; para el resto, pasate a Platea.');
+            return;
+        }
         const CF_WORKER  = 'https://whistle.solgoyhe.workers.dev';
         const espnLeague = ESPN.getSlug(ligaId) ?? ligaId ?? 'fifa.world';
         const esPro      = _esPro();
@@ -6291,7 +6318,7 @@ const App = (() => {
                             ✨ ANÁLISIS IA PRE-PARTIDO
                             <span style="font-size:0.55rem; font-weight:800; background:rgba(245,195,59,0.16); color:var(--gold); padding:2px 7px; border-radius:10px; letter-spacing:0.04em;">PRONTO</span>
                         </h3>
-                        ${esPro ? `
+                        ${_esProMax() ? `
                             <div id="ia-previa-cont" style="text-align:center;">
                                 <p style="color:var(--muted); font-size:0.82rem; margin-bottom:1rem;">Generá un análisis del partido con IA: cómo llega cada equipo, la clave táctica y un pronóstico.</p>
                                 <button onclick="window._cargarAnalisisIA('${eventId}','${espnLeague}')"
@@ -6299,7 +6326,7 @@ const App = (() => {
                                     ✨ Generar análisis
                                 </button>
                             </div>
-                        ` : _paywallInline('pro', 'El análisis IA pre-partido estará disponible en el plan Platea.')}
+                        ` : _paywallInline('promax', 'El análisis IA pre-partido es exclusivo del plan Palco.')}
                     </div>
                     ` : ''}
 
