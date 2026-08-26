@@ -754,6 +754,14 @@ const App = (() => {
                 <div class="home-grid">
                   <div class="home-col">
 
+                    <!-- Calendario mensual: todos los partidos (según el plan) -->
+                    <div id="home-calendario" class="glass-panel" style="margin-bottom:1.5rem; padding:1rem;">
+                        <div style="display:flex;gap:8px;align-items:center;padding:10px 2px;">
+                            <div style="width:18px;height:18px;border:2px solid var(--blue);border-right-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></div>
+                            <span style="color:var(--muted);font-size:.82rem;">Cargando calendario...</span>
+                        </div>
+                    </div>
+
                     <!-- Partido destacado -->
                     <div id="home-hero" class="hero-card">
                         <div class="skel-cell" style="width:110px;height:24px;border-radius:20px;"></div>
@@ -906,6 +914,130 @@ const App = (() => {
                 </div>
                 <span class="match-star">★</span>
             </div>`;
+        };
+
+        // ── CALENDARIO MENSUAL (todos los partidos según el plan) ─────────────
+        const _calPad = (n) => String(n).padStart(2, '0');
+        const _calISO = (fecha) => {
+            const f = (fecha instanceof Date) ? fecha : new Date(fecha ?? '');
+            return isNaN(f) ? '' : f.toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' });
+        };
+        const _MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+        if (!window._calEstado) {
+            const m0 = new Date(); m0.setDate(1); m0.setHours(0,0,0,0);
+            window._calEstado = { mes: m0, sel: _hoyISO() };
+        }
+        // Ligas de la app traducidas a slug ESPN, filtradas por plan.
+        const _calSlugs = () => {
+            const isAdmin = window.location.hash.includes('admin=1');
+            const slugs = new Set();
+            for (const cat in LIGAS) {
+                if (LIGAS[cat].hidden && !isAdmin) continue;
+                for (const c of LIGAS[cat].competiciones) {
+                    const s = ESPN.getSlug(c.id);
+                    if (s) slugs.add(s);
+                }
+            }
+            let lista = [...slugs];
+            // Freemium: el plan gratuito solo ve el fútbol argentino (+ Mundial).
+            if (!_esPro()) {
+                const ok = new Set(['arg.1','arg.2','arg.3','arg.4','arg.5','arg.copa','arg.copa_lpf','fifa.world']);
+                lista = lista.filter(s => ok.has(s));
+            }
+            return lista;
+        };
+        const _calCargar = async () => {
+            const d = window._calEstado.mes;
+            const y = d.getFullYear(), m = d.getMonth();
+            const ini = `${y}${_calPad(m+1)}01`;
+            const fin = `${y}${_calPad(m+1)}${_calPad(new Date(y, m+1, 0).getDate())}`;
+            const mesKey = `${y}${_calPad(m+1)}`;
+            if (!window._calDatos) window._calDatos = {};
+            const slugs = _calSlugs();
+            const arrs = await Promise.all(slugs.map(async (slug) => {
+                const k = `${slug}_${mesKey}`;
+                const c = window._calDatos[k];
+                if (c && Date.now() - c.t < 10 * 60 * 1000) return c.ev;   // caché en memoria 10 min
+                try {
+                    const dt = await _espn(`https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${ini}-${fin}`);
+                    const nombre = dt.leagues?.[0]?.name ?? slug;
+                    const ev = (dt.events ?? []).map(e => ({ ...e, _slug: slug, _liga: nombre }));
+                    window._calDatos[k] = { t: Date.now(), ev };
+                    return ev;
+                } catch { return []; }
+            }));
+            window._calEventos = arrs.flat();
+            _calPintar();
+        };
+        const _calPintar = () => {
+            const cont = document.getElementById('home-calendario');
+            if (!cont) return;
+            const d = window._calEstado.mes;
+            const y = d.getFullYear(), m = d.getMonth();
+            // Agrupar eventos del mes por día
+            const porDia = {};
+            for (const e of (window._calEventos ?? [])) {
+                const dia = _calISO(e.date);
+                if (!dia) continue;
+                (porDia[dia] = porDia[dia] ?? []).push(e);
+            }
+            // Grilla: lunes primero
+            const offset = (new Date(y, m, 1).getDay() + 6) % 7;
+            const totalDias = new Date(y, m+1, 0).getDate();
+            const hoyISO = _hoyISO();
+            let celdas = '';
+            for (let i = 0; i < offset; i++) celdas += `<div></div>`;
+            for (let dia = 1; dia <= totalDias; dia++) {
+                const iso = `${y}-${_calPad(m+1)}-${_calPad(dia)}`;
+                const tiene = (porDia[iso] ?? []).length;
+                const esHoy = iso === hoyISO;
+                const sel = iso === window._calEstado.sel;
+                const bg  = sel ? 'var(--blue)' : esHoy ? 'rgba(var(--accent-neon-rgb),.14)' : 'transparent';
+                const col = sel ? '#fff' : esHoy ? 'var(--accent-neon)' : 'var(--text-main)';
+                celdas += `<button onclick="window._calSelDia('${iso}')" style="position:relative;aspect-ratio:1;border:none;border-radius:9px;background:${bg};color:${col};font-family:var(--font-heading);font-weight:${sel||esHoy?'800':'600'};font-size:.82rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+                    ${dia}${tiene ? `<span style="position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:${sel?'#fff':'var(--accent-neon)'};"></span>` : ''}
+                </button>`;
+            }
+            // Partidos del día seleccionado, agrupados por liga
+            const delDia = (porDia[window._calEstado.sel] ?? []).slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
+            const porLiga = {};
+            for (const e of delDia) (porLiga[e._liga] = porLiga[e._liga] ?? []).push(e);
+            const selFecha = new Date(window._calEstado.sel + 'T12:00:00');
+            const selLabel = isNaN(selFecha) ? window._calEstado.sel : selFecha.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+            const listaHtml = delDia.length
+                ? Object.entries(porLiga).map(([liga, evs]) => `
+                    <div style="margin-top:14px;">
+                        <div style="font-family:var(--font-display);font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px;">${liga}</div>
+                        ${evs.map(e => _renderPartidoHome(e, e._slug)).join('')}
+                    </div>`).join('')
+                : `<p style="color:var(--muted);font-size:.82rem;text-align:center;padding:16px 2px;">No hay partidos este día.</p>`;
+            cont.innerHTML = `
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                    <button onclick="window._calMover(-1)" style="background:none;border:none;color:var(--text-main);font-size:1.3rem;cursor:pointer;padding:2px 12px;line-height:1;">‹</button>
+                    <span style="font-family:var(--font-heading);font-weight:800;font-size:.95rem;">${_MESES[m]} ${y}</span>
+                    <button onclick="window._calMover(1)" style="background:none;border:none;color:var(--text-main);font-size:1.3rem;cursor:pointer;padding:2px 12px;line-height:1;">›</button>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;font-size:.6rem;color:var(--muted);font-weight:700;margin-bottom:4px;">
+                    ${['L','M','M','J','V','S','D'].map(x=>`<div>${x}</div>`).join('')}
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;">${celdas}</div>
+                <div style="margin-top:8px;border-top:1px solid var(--border-glass);padding-top:8px;">
+                    <div style="font-family:var(--font-heading);font-weight:700;font-size:.82rem;text-transform:capitalize;margin-bottom:2px;">${selLabel}</div>
+                    ${listaHtml}
+                </div>`;
+        };
+        const _calSpinner = () => {
+            const cont = document.getElementById('home-calendario');
+            if (cont) cont.innerHTML = `<div style="display:flex;gap:8px;align-items:center;padding:10px 2px;"><div style="width:18px;height:18px;border:2px solid var(--blue);border-right-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></div><span style="color:var(--muted);font-size:.82rem;">Cargando calendario...</span></div>`;
+        };
+        window._calSelDia = (iso) => { window._calEstado.sel = iso; _calPintar(); };
+        window._calMover = (delta) => {
+            const d = window._calEstado.mes; d.setMonth(d.getMonth() + delta);
+            window._calEstado.mes = new Date(d);
+            const prefHoy = `${d.getFullYear()}-${_calPad(d.getMonth()+1)}`;
+            window._calEstado.sel = _hoyISO().startsWith(prefHoy) ? _hoyISO() : `${prefHoy}-01`;
+            _calSpinner();
+            _calCargar();
         };
 
         // Cargar partido de fútbol
@@ -1589,7 +1721,7 @@ const App = (() => {
         };
 
         // Cargar todo en paralelo
-        const promesas = [_cargarFutbol()];
+        const promesas = [_cargarFutbol(), _calCargar()];
         if (esProMax) deportes.forEach(d => promesas.push(_cargarDeporte(d)));
         await Promise.all(promesas);
     };
@@ -4697,8 +4829,13 @@ const App = (() => {
     // Plan FREE: solo fútbol argentino (con toda la info). El resto de ligas/copas
     // de fútbol, y los detalles de otros deportes, requieren Platea (pro).
     const LIGAS_ARGENTINAS_FREE = new Set([
+        // ids internos (data.js)
         'liga_prof', 'copa_liga', 'copa_argentina',
         'primera_nacional', 'primera_b_metro', 'primera_c', 'primera_d',
+        // slugs ESPN equivalentes (el calendario y algunos flujos pasan el slug directo)
+        'arg.1', 'arg.copa_lpf', 'arg.copa', 'arg.2', 'arg.3', 'arg.4', 'arg.5',
+        // Mundial: libre para todos (en renderPartido no hay early-return como en renderLigaDetalle)
+        'world_cup', 'fifa.world',
     ]);
     // ¿Esta liga la puede ver un usuario gratuito?
     const _ligaAccesibleFree = (ligaId) => LIGAS_ARGENTINAS_FREE.has(ligaId);
