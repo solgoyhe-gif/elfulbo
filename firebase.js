@@ -19,6 +19,8 @@ window.PLANES = {
         precioAnual: null,
         color: '#888',
         emoji: '⚽',
+        // Add-on de IA para este plan. Precio en ARS (≈US$5 a ~$1.400/US$).
+        ia: { precio: '$6.999', periodo: '/mes', prueba: '3 días gratis', variant: 'popular_ia_mensual' },
         descripcion: 'La cancha siempre abierta. Todo el fútbol argentino y el Mundial, sin pagar nada.',
         features: [
             { texto: 'Todo el fútbol argentino (1ª, ascenso y copas)', ok: true  },
@@ -32,10 +34,14 @@ window.PLANES = {
     },
     pro: {
         nombre: 'Platea',
-        precio: '$6.500',
-        precioAnual: '$74.000',
+        precio: '$6.499',
+        precioAnual: '$73.999',
         color: '#6C5CE7',
         emoji: '🎟️',
+        recomendado: true,
+        elegidoPct: '68%',
+        // Add-on de IA: ≈US$2 (60% OFF respecto de sumarla en Popular).
+        ia: { precio: '$2.799', periodo: '/mes', prueba: '7 días de prueba', descuento: '-60%', variant: 'platea_ia_mensual' },
         descripcion: 'Todas las ligas y copas de fútbol del mundo, más todas las competencias de cada deporte. Viví el fútbol desde la Platea.',
         features: [
             { texto: 'Todo lo de Popular',                 ok: true  },
@@ -49,10 +55,11 @@ window.PLANES = {
     },
     promax: {
         nombre: 'Palco',
-        precio: '$15.000',
-        precioAnual: '$146.000',
+        precio: '$14.999',
+        precioAnual: '$145.999',
         color: '#F59E0B',
         emoji: '👑',
+        ia: { incluida: true },
         descripcion: 'Todo lo de Platea más el Análisis IA pre-partido, el detalle completo de cada deporte y las notificaciones de gol en vivo. La experiencia definitiva.',
         features: [
             { texto: 'Todo lo de Platea',                  ok: true  },

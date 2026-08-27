@@ -3971,7 +3971,7 @@ const App = (() => {
 
             const usd = ars => Math.round(ars / arsUsd);
             cont.style.display = '';
-            cont.innerHTML = `💵 Los precios están en <strong>pesos argentinos (ARS)</strong>. Referencia aprox.: <strong>Platea ≈ US$${usd(6500)}/mes</strong> · <strong>Palco ≈ US$${usd(15000)}/mes</strong>. El cobro se realiza en ARS.`;
+            cont.innerHTML = `💵 Los precios están en <strong>pesos argentinos (ARS)</strong>. Referencia aprox.: <strong>Platea ≈ US$${usd(6499)}/mes</strong> · <strong>Palco ≈ US$${usd(14999)}/mes</strong>. El cobro se realiza en ARS.`;
         } catch (e) { /* si falla, se muestra solo el precio en ARS */ }
     };
 
@@ -4073,8 +4073,11 @@ const App = (() => {
                                     <span>${f.ok ? '✅' : '🔒'}</span><span>${f.t}</span>
                                     ${f.prox ? '<span style="font-size:0.6rem; font-weight:800; background:rgba(245,195,59,0.16); color:var(--gold); padding:2px 7px; border-radius:10px; letter-spacing:0.04em;">PRONTO</span>' : ''}
                                 </div>`).join('')}
+                            <div style="margin-top:1.2rem; padding:10px; border:1px dashed rgba(var(--accent-neon-rgb),.45); border-radius:9px; font-size:.72rem; line-height:1.5;">
+                                <span style="font-weight:800;">✨ Sumá IA</span> · <span style="color:var(--accent-neon); font-weight:800;">$6.999/mes</span> · 3 días gratis
+                            </div>
                             <button onclick="abrirAuth('registro')"
-                                style="width:100%; margin-top:1.5rem; padding:11px; background:transparent;
+                                style="width:100%; margin-top:0.8rem; padding:11px; background:transparent;
                                 color:var(--text-main); font-weight:700; font-family:var(--font-heading);
                                 border:2px solid var(--border-glass); border-radius:8px; cursor:pointer;
                                 font-size:0.9rem; letter-spacing:1px;">
@@ -4088,14 +4091,14 @@ const App = (() => {
                             <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%);
                                 background:linear-gradient(135deg,var(--accent-neon),var(--accent-neon-light)); color:#fff; font-size:0.65rem; font-weight:800;
                                 padding:3px 14px; border-radius:20px; font-family:var(--font-heading); letter-spacing:1px; white-space:nowrap;">
-                                MÁS POPULAR
+                                ★ LA ELIGE EL 68%
                             </div>
                             <div style="font-size:1.8rem; margin-bottom:0.5rem;">🎟️</div>
                             <div style="font-family:var(--font-heading); font-size:1.3rem; font-weight:900;
                                 color:var(--accent-neon); margin-bottom:0.3rem;">Platea</div>
                             <div id="precio-pro" style="font-family:var(--font-heading); font-size:1.8rem;
                                 font-weight:900; color:var(--accent-neon); margin-bottom:0.8rem;">
-                                $6.500<span style="font-size:0.85rem; color:var(--text-muted);">/mes</span>
+                                $6.499<span style="font-size:0.85rem; color:var(--text-muted);">/mes</span>
                             </div>
                             <p style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; margin-bottom:1.2rem;">
                                 Todas las ligas de fútbol, estadísticas completas, alineaciones tácticas y noticias traducidas. Viví el fútbol desde la Platea.
@@ -4114,8 +4117,11 @@ const App = (() => {
                                     <span>${f.ok ? '✅' : '🔒'}</span><span>${f.t}</span>
                                     ${f.prox ? '<span style="font-size:0.6rem; font-weight:800; background:rgba(245,195,59,0.16); color:var(--gold); padding:2px 7px; border-radius:10px; letter-spacing:0.04em;">PRONTO</span>' : ''}
                                 </div>`).join('')}
+                            <div style="margin-top:1.2rem; padding:10px; border:1px dashed rgba(var(--accent-neon-rgb),.45); border-radius:9px; font-size:.72rem; line-height:1.5;">
+                                <span style="font-weight:800;">✨ Sumá IA</span> · <span style="color:var(--accent-neon); font-weight:800;">$2.799/mes</span> <span style="background:#16a34a;color:#fff;padding:1px 6px;border-radius:6px;font-weight:800;font-size:.6rem;">-60%</span> · 7 días de prueba
+                            </div>
                             <button id="btn-pro_mensual" onclick="window._suscribirse('pro_mensual')"
-                                style="width:100%; margin-top:1.5rem; padding:11px; background:var(--accent-neon);
+                                style="width:100%; margin-top:0.8rem; padding:11px; background:var(--accent-neon);
                                 color:#000; font-weight:900; font-family:var(--font-heading);
                                 border:none; border-radius:8px; cursor:pointer;
                                 font-size:0.9rem; letter-spacing:1px;">
@@ -4131,7 +4137,7 @@ const App = (() => {
                                 color:#ffd700; margin-bottom:0.3rem;">Palco</div>
                             <div id="precio-promax" style="font-family:var(--font-heading); font-size:1.8rem;
                                 font-weight:900; color:#ffd700; margin-bottom:0.8rem;">
-                                $15.000<span style="font-size:0.85rem; color:var(--text-muted);">/mes</span>
+                                $14.999<span style="font-size:0.85rem; color:var(--text-muted);">/mes</span>
                             </div>
                             <p style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; margin-bottom:1.2rem;">
                                 Acceso completo a todas las ligas, deportes y estadísticas. Notificaciones en tiempo real e historial extendido. La experiencia definitiva.
@@ -4149,8 +4155,11 @@ const App = (() => {
                                     margin-bottom:7px; color:var(--text-main);">
                                     <span>✅</span><span>${f.t}</span>
                                 </div>`).join('')}
+                            <div style="margin-top:1.2rem; padding:10px; border:1px solid rgba(245,215,0,.35); background:rgba(245,215,0,.08); border-radius:9px; font-size:.74rem; font-weight:800; color:#ffd700;">
+                                ✨ Análisis IA incluido
+                            </div>
                             <button id="btn-promax_mensual" onclick="window._suscribirse('promax_mensual')"
-                                style="width:100%; margin-top:1.5rem; padding:11px; background:#ffd700;
+                                style="width:100%; margin-top:0.8rem; padding:11px; background:#ffd700;
                                 color:#000; font-weight:900; font-family:var(--font-heading);
                                 border:none; border-radius:8px; cursor:pointer;
                                 font-size:0.9rem; letter-spacing:1px;">
@@ -4461,17 +4470,47 @@ const App = (() => {
             const actual = plan === planKey;
             const p = PLANES[planKey];
             if (!p) return '';
+            const esFree = planKey === 'free';
+            // Badge superior: PLAN ACTUAL, o "LA ELIGE EL 68%" si es el recomendado
+            const badge = actual
+                ? '<div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg,var(--accent-neon),var(--accent-neon-light)); color:#fff; font-size:0.65rem; font-weight:800; padding:3px 14px; border-radius:20px; font-family:var(--font-heading); letter-spacing:1px; white-space:nowrap;">PLAN ACTUAL</div>'
+                : (p.recomendado ? `<div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:${meta.color}; color:#fff; font-size:0.62rem; font-weight:800; padding:3px 12px; border-radius:20px; font-family:var(--font-heading); letter-spacing:.5px; white-space:nowrap;">★ LA ELIGE EL ${p.elegidoPct ?? 'MAYORÍA'}</div>` : '');
+            // Bloque de IA (add-on con/sin, o incluida en Palco)
+            let iaHtml = '';
+            if (p.ia?.incluida) {
+                iaHtml = `<div style="margin-top:12px; border:1px solid rgba(245,195,59,.35); background:rgba(245,195,59,.08); border-radius:10px; padding:10px 12px; display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:1rem;">✨</span>
+                    <span style="font-size:.8rem; font-weight:800; color:var(--gold);">Análisis IA incluido</span>
+                </div>`;
+            } else if (p.ia) {
+                iaHtml = `<div style="margin-top:12px; border:1px dashed rgba(var(--accent-neon-rgb),.45); border-radius:10px; padding:12px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:4px;">
+                        <span style="font-size:.82rem; font-weight:800;">✨ Sumar Análisis IA</span>
+                        ${p.ia.descuento ? `<span style="font-size:.6rem; font-weight:800; background:#16a34a; color:#fff; padding:2px 7px; border-radius:8px;">${p.ia.descuento}</span>` : ''}
+                    </div>
+                    <div style="font-family:var(--font-heading); font-weight:900; color:var(--accent-neon); font-size:1.1rem;">${p.ia.precio}<span style="font-size:.7rem; color:var(--text-muted); font-weight:600;">${p.ia.periodo ?? '/mes'}</span></div>
+                    ${p.ia.prueba ? `<div style="font-size:.68rem; color:var(--text-muted); margin-top:2px;">🎁 ${p.ia.prueba}</div>` : ''}
+                    <button id="btn-${p.ia.variant}" onclick="window._suscribirse('${p.ia.variant}')" style="width:100%; margin-top:9px; padding:9px; background:var(--accent-neon); color:#000; font-weight:800; font-family:var(--font-heading); border:none; border-radius:8px; cursor:pointer; font-size:.82rem;">
+                        ${esFree ? 'EMPEZAR CON IA' : 'SUMAR IA'}
+                    </button>
+                </div>`;
+            }
+            // Botón base del plan (el free es gratis: no lleva botón de pago)
+            const btnBase = (!actual && !esFree)
+                ? `<button class="btn-primary" style="width:100%; margin-top:1.2rem; background:${meta.color}; color:#000;" onclick="window._suscribirse('${planKey}_mensual')">SUSCRIBIRME</button>`
+                : '';
             return `
-                <div class="glass-panel" style="padding:1.5rem; position:relative; ${actual ? 'border-color:' + meta.color + ';' : ''}">
-                    ${actual ? '<div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg,var(--accent-neon),var(--accent-neon-light)); color:#fff; font-size:0.65rem; font-weight:800; padding:3px 14px; border-radius:20px; font-family:var(--font-heading); letter-spacing:1px; white-space:nowrap;">PLAN ACTUAL</div>' : ''}
+                <div class="glass-panel" style="padding:1.5rem; position:relative; ${actual || p.recomendado ? 'border-color:' + meta.color + ';' : ''}">
+                    ${badge}
                     <div style="font-size:1.5rem; margin-bottom:0.4rem;">${p.emoji ?? ''}</div>
                     <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:900; color:${meta.color}; margin-bottom:0.2rem;">${p.nombre ?? planKey}</div>
                     <div style="font-family:var(--font-heading); font-size:1.6rem; font-weight:900; color:${meta.color}; margin-bottom:0.8rem;">
-                        ${p.precio ?? 'Gratis'}${planKey !== 'free' ? '<span style="font-size:0.8rem; color:var(--text-muted);">/mes</span>' : ''}
+                        ${p.precio ?? 'Gratis'}${!esFree ? '<span style="font-size:0.8rem; color:var(--text-muted);">/mes</span>' : ''}
                     </div>
                     ${(p.features ?? []).map(f => `<div style="display:flex; align-items:center; gap:8px; font-size:0.8rem; margin-bottom:6px; color:${f.ok ? 'var(--text-main)' : 'var(--text-muted)'};">
                         <span>${f.ok ? '✅' : '🔒'}</span><span>${f.texto}</span>${f.proximamente ? '<span style="font-size:0.6rem; font-weight:800; background:rgba(245,195,59,0.16); color:var(--gold); padding:2px 7px; border-radius:10px; letter-spacing:0.04em;">PRONTO</span>' : ''}</div>`).join('')}
-                    ${!actual ? `<button class="btn-primary" style="width:100%; margin-top:1.2rem; background:${meta.color}; color:#000;" onclick="window._suscribirse('${planKey}_mensual')">SUSCRIBIRME</button>` : ''}
+                    ${iaHtml}
+                    ${btnBase}
                 </div>`;
         };
         appContainer.innerHTML = `
@@ -4835,6 +4874,9 @@ const App = (() => {
     const _esPro    = () => ['pro','promax'].includes(_plan());
     const _esProMax = () => _plan() === 'promax';
     const _esProMaxOPro = () => _esPro();
+    // La IA se activa por ser Palco (la incluye) o por tener el add-on de IA comprado
+    // en Popular/Platea (flag `ia` en el perfil, que setea el Worker tras el pago).
+    const _tieneIA = () => _esProMax() || window.FirebaseAuth?.getPerfil()?.ia === true;
 
     // Paywall inline
     const _paywallInline = (requiere = 'pro', mensaje = '') => `
@@ -6488,7 +6530,7 @@ const App = (() => {
                             ✨ ANÁLISIS IA PRE-PARTIDO
                             <span style="font-size:0.55rem; font-weight:800; background:rgba(245,195,59,0.16); color:var(--gold); padding:2px 7px; border-radius:10px; letter-spacing:0.04em;">PRONTO</span>
                         </h3>
-                        ${_esProMax() ? `
+                        ${_tieneIA() ? `
                             <div id="ia-previa-cont" style="text-align:center;">
                                 <p style="color:var(--muted); font-size:0.82rem; margin-bottom:1rem;">Generá un análisis del partido con IA: cómo llega cada equipo, la clave táctica y un pronóstico.</p>
                                 <button onclick="window._cargarAnalisisIA('${eventId}','${espnLeague}')"
@@ -6496,7 +6538,7 @@ const App = (() => {
                                     ✨ Generar análisis
                                 </button>
                             </div>
-                        ` : _paywallInline('promax', 'El análisis IA pre-partido es exclusivo del plan Palco.')}
+                        ` : _paywallInline('promax', 'Sumá el Análisis IA a tu plan (o pasate a Palco, que ya lo incluye).')}
                     </div>
                     ` : ''}
 
@@ -6617,6 +6659,11 @@ const App = (() => {
         platea_anual:   'platea_anual',
         palco_mensual:  'palco_mensual',
         palco_anual:    'palco_anual',
+        // Add-ons de IA. TODO: crear estos productos/variantes en Lemon Squeezy y
+        // mapear estas keys a sus variant IDs reales en el Worker (/ls/checkout).
+        // Al aprobarse el pago, el Worker debe setear `ia: true` en el perfil (Popular/Platea).
+        popular_ia_mensual: 'popular_ia_mensual',
+        platea_ia_mensual:  'platea_ia_mensual',
     };
 
     window._suscribirse = async (priceKey) => {
