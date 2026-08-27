@@ -855,6 +855,29 @@ const App = (() => {
         `;
 
         // Helper: renderizar un partido en el home
+        // ── Cuotas 1-X-2 (ESPN trae odds de DraftKings, en formato americano) ──
+        // Las convertimos a DECIMAL (la que se usa en Argentina: 1.80, 3.50...).
+        const _amerADecimal = (a) => {
+            const n = parseInt(String(a ?? '').replace('+', ''), 10);
+            if (isNaN(n) || n === 0) return null;
+            return n > 0 ? (n / 100 + 1) : (100 / Math.abs(n) + 1);
+        };
+        const _cuotasHTML = (comp) => {
+            const o  = (comp?.odds ?? [])[0];
+            const ml = o?.moneyline;
+            if (!ml) return '';
+            const dec = (x) => { const v = _amerADecimal(x?.close?.odds ?? x?.open?.odds); return v ? v.toFixed(2) : null; };
+            const h = dec(ml.home), d = dec(ml.draw), a = dec(ml.away);
+            if (!h && !d && !a) return '';
+            const chip = (lbl, val) => `<div style="flex:1;text-align:center;background:rgba(255,255,255,.05);border:1px solid var(--border-glass);border-radius:7px;padding:4px 2px;">
+                <div style="font-size:.58rem;color:var(--muted);font-weight:700;letter-spacing:.05em;">${lbl}</div>
+                <div style="font-size:.82rem;font-weight:800;color:var(--text-main);">${val ?? '-'}</div></div>`;
+            return `<div style="display:flex;gap:5px;margin:0 0 6px;align-items:center;">
+                ${chip('1', h)}${chip('X', d)}${chip('2', a)}
+                <span style="font-size:.5rem;color:var(--muted);white-space:nowrap;padding-left:2px;">cuota</span>
+            </div>`;
+        };
+
         const _renderPartidoHome = (ev, ligaId) => {
             if (!ev) return '<p style="color:var(--text-muted); font-size:0.82rem; padding:4px 0;">Sin partidos hoy.</p>';
             const comp      = ev.competitions?.[0];
@@ -893,7 +916,8 @@ const App = (() => {
                    </div>`
                 : '';
 
-            return `<div onclick="${ir}" class="match-row${esLive ? ' live' : ''}" style="margin-bottom:6px;">
+            const cuotas = (!esLive && !esPost) ? _cuotasHTML(comp) : '';
+            return `<div style="margin-bottom:6px;"><div onclick="${ir}" class="match-row${esLive ? ' live' : ''}" style="margin-bottom:0;">
                 <div>
                     ${liveBadge}
                     ${!esLive ? `<div class="match-state-main" style="color:${esPost ? 'var(--muted)' : 'var(--blue)'}">${esPost ? 'FT' : _etiquetaDia(fechaEv)}</div>
@@ -913,7 +937,7 @@ const App = (() => {
                     <span class="match-team-name">${awayName}</span>
                 </div>
                 <span class="match-star">★</span>
-            </div>`;
+            </div>${cuotas}</div>`;
         };
 
         // ── CALENDARIO MENSUAL (todos los partidos según el plan) ─────────────
