@@ -4086,7 +4086,7 @@ const App = (() => {
                         </div>
 
                         <!-- PRO -->
-                        <div class="glass-panel" style="padding:1.8rem; text-align:left;
+                        <div class="glass-panel" style="padding:1.8rem; text-align:left; overflow:visible;
                             border-color:var(--accent-neon); background:rgba(var(--accent-neon-rgb),0.04); position:relative;">
                             <div style="position:absolute; top:-11px; left:50%; transform:translateX(-50%);
                                 background:linear-gradient(135deg,var(--accent-neon),var(--accent-neon-light)); color:#fff; font-size:0.58rem; font-weight:800;
@@ -4500,7 +4500,7 @@ const App = (() => {
                 ? `<button class="btn-primary" style="width:100%; margin-top:1.2rem; background:${meta.color}; color:#000;" onclick="window._suscribirse('${planKey}_mensual')">SUSCRIBIRME</button>`
                 : '';
             return `
-                <div class="glass-panel" style="padding:1.5rem; position:relative; ${actual || p.recomendado ? 'border-color:' + meta.color + ';' : ''}">
+                <div class="glass-panel" style="padding:1.5rem; position:relative; overflow:visible; ${actual || p.recomendado ? 'border-color:' + meta.color + ';' : ''}">
                     ${badge}
                     <div style="font-size:1.5rem; margin-bottom:0.4rem;">${p.emoji ?? ''}</div>
                     <div style="font-family:var(--font-heading); font-size:1.2rem; font-weight:900; color:${meta.color}; margin-bottom:0.2rem;">${p.nombre ?? planKey}</div>
