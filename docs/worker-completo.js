@@ -48,11 +48,11 @@ const LS_PLANES = {
     platea_anual:       { variantId: 1834604, plan: 'pro',    ia: false },
     palco_mensual:      { variantId: 1834609, plan: 'promax', ia: true  },
     palco_anual:        { variantId: 1834620, plan: 'promax', ia: true  },
-    // ── Add-ons de IA — REEMPLAZAR variantId 0 por el ID REAL de Lemon Squeezy ──
+    // ── Add-ons de IA (variant IDs reales de Lemon Squeezy) ──
     // "Popular + IA": no cambia el plan (sigue free), solo activa la IA.
-    popular_ia_mensual: { variantId: 0,       plan: null,     ia: true  },
+    popular_ia_mensual: { variantId: 2069506, plan: null,     ia: true  },
     // "Platea + IA": otorga el plan pro + la IA.
-    platea_ia_mensual:  { variantId: 0,       plan: 'pro',    ia: true  },
+    platea_ia_mensual:  { variantId: 2069507, plan: 'pro',    ia: true  },
 };
 
 // Derivados (no tocar): key→variantId para el checkout, variantId→entitlement para el webhook.
