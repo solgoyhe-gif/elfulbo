@@ -38,20 +38,26 @@ const MAPA_ID_ESPN = {
 
 // ── Lemon Squeezy Variant IDs ─────────────────────────────────────────────────
 
-const LS_VARIANTS = {
-    platea_mensual: 1834599,
-    platea_anual:   1834604,
-    palco_mensual:  1834609,
-    palco_anual:    1834620,
+// ── Config única de planes/variantes de Lemon Squeezy ────────────────────────
+// variantId: el ID REAL de la variante en Lemon Squeezy (sacar de GET /v1/variants,
+//   NO del listado de Products del dashboard — ver bug histórico product-vs-variant).
+// plan: plan que otorga (omitir/null = no toca el plan, solo la IA).
+// ia:   si otorga el Análisis IA.
+const LS_PLANES = {
+    platea_mensual:     { variantId: 1834599, plan: 'pro',    ia: false },
+    platea_anual:       { variantId: 1834604, plan: 'pro',    ia: false },
+    palco_mensual:      { variantId: 1834609, plan: 'promax', ia: true  },
+    palco_anual:        { variantId: 1834620, plan: 'promax', ia: true  },
+    // ── Add-ons de IA — REEMPLAZAR variantId 0 por el ID REAL de Lemon Squeezy ──
+    // "Popular + IA": no cambia el plan (sigue free), solo activa la IA.
+    popular_ia_mensual: { variantId: 0,       plan: null,     ia: true  },
+    // "Platea + IA": otorga el plan pro + la IA.
+    platea_ia_mensual:  { variantId: 0,       plan: 'pro',    ia: true  },
 };
 
-
-const LS_PLAN_MAP = {
-    1834599: 'pro',      // Platea mensual
-    1834604: 'pro',      // Platea anual
-    1834609: 'promax',   // Palco mensual
-    1834620: 'promax',   // Palco anual
-};
+// Derivados (no tocar): key→variantId para el checkout, variantId→entitlement para el webhook.
+const LS_VARIANTS     = Object.fromEntries(Object.entries(LS_PLANES).map(([k, v]) => [k, v.variantId]));
+const LS_ENTITLEMENTS = Object.fromEntries(Object.values(LS_PLANES).map(v => [v.variantId, { plan: v.plan, ia: v.ia }]));
 
 const LS_STORE_ID = '383758';
 
@@ -136,7 +142,10 @@ async function firestoreGet(path, env) {
 
 async function firestorePatch(path, fields, updateMask, env) {
     const token = await getFirebaseAdminToken(env);
-    const url   = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents/${path}?updateMask.fieldPaths=${updateMask}`;
+    // updateMask puede ser un string ('plan') o un array (['plan','ia']).
+    const masks = Array.isArray(updateMask) ? updateMask : [updateMask];
+    const qs    = masks.map(m => `updateMask.fieldPaths=${encodeURIComponent(m)}`).join('&');
+    const url   = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents/${path}?${qs}`;
     return fetch(url, {
         method: 'PATCH',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -644,7 +653,8 @@ async function handleRequest(request, env) {
             const body       = await request.json();
             const variantId  = LS_VARIANTS[body.variantKey];
             console.log('[LS checkout] variantKey:', body.variantKey, '→ variantId:', variantId);
-            if (!variantId) return jsonError(`Variant key inválido: ${body.variantKey}`, 400);
+            if (variantId === undefined) return jsonError(`Variant key inválido: ${body.variantKey}`, 400);
+            if (!variantId) return jsonError(`La variante "${body.variantKey}" todavía no está configurada en Lemon Squeezy (falta el variant ID real en LS_PLANES).`, 503);
 
             const lsRes = await fetch(`${LS_API_BASE}/checkouts`, {
                 method: 'POST',
@@ -659,7 +669,7 @@ async function handleRequest(request, env) {
                         attributes: {
                             checkout_data: {
                                 email:  body.email ?? '',
-                                custom: { uid: body.uid ?? '', plan: LS_PLAN_MAP[variantId] },
+                                custom: { uid: body.uid ?? '', plan: LS_ENTITLEMENTS[variantId]?.plan ?? '' },
                             },
                             product_options: {
                                 redirect_url: body.successUrl ?? 'https://whistle.com.ar/#/perfil?pago=ok',
@@ -703,14 +713,24 @@ async function handleRequest(request, env) {
             const status    = event?.data?.attributes?.status;
 
             if (uid && ['subscription_created', 'subscription_updated'].includes(metaEvt)) {
-                const plan = LS_PLAN_MAP[variantId] ?? 'pro';
+                const ent = LS_ENTITLEMENTS[variantId] ?? { plan: 'pro', ia: false };
                 if (['active', 'on_trial'].includes(status)) {
-                    await firestorePatch(`usuarios/${uid}`, { plan: { stringValue: plan } }, 'plan', env);
+                    // Siempre seteamos la IA; el plan solo si la variante otorga uno
+                    // (el add-on "Popular + IA" no cambia el plan, deja free).
+                    const fields = { ia: { booleanValue: !!ent.ia } };
+                    const mask   = ['ia'];
+                    if (ent.plan) { fields.plan = { stringValue: ent.plan }; mask.push('plan'); }
+                    await firestorePatch(`usuarios/${uid}`, fields, mask, env);
                 }
             }
 
             if (uid && metaEvt === 'subscription_cancelled') {
-                await firestorePatch(`usuarios/${uid}`, { plan: { stringValue: 'free' } }, 'plan', env);
+                // Al cancelar se saca la IA; si la variante daba un plan pago, vuelve a free.
+                const ent    = LS_ENTITLEMENTS[variantId] ?? {};
+                const fields = { ia: { booleanValue: false } };
+                const mask   = ['ia'];
+                if (ent.plan && ent.plan !== 'free') { fields.plan = { stringValue: 'free' }; mask.push('plan'); }
+                await firestorePatch(`usuarios/${uid}`, fields, mask, env);
             }
 
             return new Response(JSON.stringify({ received: true }), {
