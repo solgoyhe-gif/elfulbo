@@ -4088,9 +4088,9 @@ const App = (() => {
                         <!-- PRO -->
                         <div class="glass-panel" style="padding:1.8rem; text-align:left;
                             border-color:var(--accent-neon); background:rgba(var(--accent-neon-rgb),0.04); position:relative;">
-                            <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%);
-                                background:linear-gradient(135deg,var(--accent-neon),var(--accent-neon-light)); color:#fff; font-size:0.65rem; font-weight:800;
-                                padding:3px 14px; border-radius:20px; font-family:var(--font-heading); letter-spacing:1px; white-space:nowrap;">
+                            <div style="position:absolute; top:-11px; left:50%; transform:translateX(-50%);
+                                background:linear-gradient(135deg,var(--accent-neon),var(--accent-neon-light)); color:#fff; font-size:0.58rem; font-weight:800;
+                                padding:3px 12px; border-radius:20px; font-family:var(--font-heading); letter-spacing:0.2px; white-space:nowrap;">
                                 ★ LA ELIGE EL 68%
                             </div>
                             <div style="font-size:1.8rem; margin-bottom:0.5rem;">🎟️</div>
@@ -4474,7 +4474,7 @@ const App = (() => {
             // Badge superior: PLAN ACTUAL, o "LA ELIGE EL 68%" si es el recomendado
             const badge = actual
                 ? '<div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg,var(--accent-neon),var(--accent-neon-light)); color:#fff; font-size:0.65rem; font-weight:800; padding:3px 14px; border-radius:20px; font-family:var(--font-heading); letter-spacing:1px; white-space:nowrap;">PLAN ACTUAL</div>'
-                : (p.recomendado ? `<div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:${meta.color}; color:#fff; font-size:0.62rem; font-weight:800; padding:3px 12px; border-radius:20px; font-family:var(--font-heading); letter-spacing:.5px; white-space:nowrap;">★ LA ELIGE EL ${p.elegidoPct ?? 'MAYORÍA'}</div>` : '');
+                : (p.recomendado ? `<div style="position:absolute; top:-11px; left:50%; transform:translateX(-50%); background:${meta.color}; color:#fff; font-size:0.58rem; font-weight:800; padding:3px 12px; border-radius:20px; font-family:var(--font-heading); letter-spacing:0.2px; white-space:nowrap;">★ LA ELIGE EL ${p.elegidoPct ?? 'MAYORÍA'}</div>` : '');
             // Bloque de IA (add-on con/sin, o incluida en Palco)
             let iaHtml = '';
             if (p.ia?.incluida) {
