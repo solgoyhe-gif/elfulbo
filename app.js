@@ -754,14 +754,6 @@ const App = (() => {
                 <div class="home-grid">
                   <div class="home-col">
 
-                    <!-- Calendario mensual: todos los partidos (según el plan) -->
-                    <div id="home-calendario" class="glass-panel" style="margin-bottom:1.5rem; padding:1rem;">
-                        <div style="display:flex;gap:8px;align-items:center;padding:10px 2px;">
-                            <div style="width:18px;height:18px;border:2px solid var(--blue);border-right-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></div>
-                            <span style="color:var(--muted);font-size:.82rem;">Cargando calendario...</span>
-                        </div>
-                    </div>
-
                     <!-- Partido destacado -->
                     <div id="home-hero" class="hero-card">
                         <div class="skel-cell" style="width:110px;height:24px;border-radius:20px;"></div>
@@ -785,6 +777,19 @@ const App = (() => {
                                     <div style="width:18px;height:18px;border:2px solid var(--blue);border-right-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></div>
                                     <span style="color:var(--muted);font-size:.82rem;">Cargando partidos...</span>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calendario mensual: todos los partidos (según el plan) -->
+                    <div style="margin-top:1.5rem;">
+                        <div class="home-section-head">
+                            <span class="home-section-label">📅 Calendario</span>
+                        </div>
+                        <div id="home-calendario" class="glass-panel" style="padding:1rem;">
+                            <div style="display:flex;gap:8px;align-items:center;padding:10px 2px;">
+                                <div style="width:18px;height:18px;border:2px solid var(--blue);border-right-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></div>
+                                <span style="color:var(--muted);font-size:.82rem;">Cargando calendario...</span>
                             </div>
                         </div>
                     </div>
@@ -3926,13 +3931,15 @@ const App = (() => {
         window._abrirNoticia = (id) => {
             const modal = document.getElementById(id);
             if (!modal) return;
+            // Moverlo al <body>: si el modal queda anidado en un contenedor con transform,
+            // el position:fixed se rompe y el modal aparece mal ubicado / traba la página.
+            if (modal.parentElement !== document.body) document.body.appendChild(modal);
             modal.style.display = 'block';
             document.body.style.overflow = 'hidden';
         };
         window._cerrarNoticia = (id) => {
             const modal = document.getElementById(id);
-            if (!modal) return;
-            modal.style.display = 'none';
+            if (modal) modal.style.display = 'none';
             document.body.style.overflow = '';
         };
     };
@@ -5054,7 +5061,7 @@ const App = (() => {
         appContainer.innerHTML = `
             ${renderNavbar('#/other-sports')}
             <main class="page-container fade-in">
-                <h2 class="section-title">🏅 Other Sports</h2>
+                <h2 class="section-title">🏅 Otros deportes</h2>
 
                 <!-- Tabs de deportes -->
                 <div style="overflow-x:auto; padding-bottom:8px; margin-bottom:1.5rem; scrollbar-width:thin;">
@@ -7386,6 +7393,13 @@ const App = (() => {
         const hash = window.location.hash || '#/';
         const url  = new URL('http://dummy.com' + hash.replace('#', ''));
         const path = '#' + url.pathname;
+
+        // Al cambiar de sección, arrancar desde arriba (antes quedaba a mitad de página
+        // con el scroll de la sección anterior).
+        window.scrollTo(0, 0);
+        document.querySelector('.sidebar-page-wrapper')?.scrollTo?.(0, 0);
+        // Destrabar el scroll por si quedó un modal (noticia) abierto que lo bloqueó.
+        document.body.style.overflow = '';
 
         const autenticado = window.FirebaseAuth?.isAuthenticated();
 
