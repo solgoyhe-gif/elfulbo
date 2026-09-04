@@ -860,6 +860,13 @@ const App = (() => {
         `;
 
         // Helper: renderizar un partido en el home
+        // Casas de apuestas (legales en Argentina) para el "dónde apostar".
+        // Son links a la home de cada casa (no cuotas propias de cada una).
+        const _CASAS = [
+            { n: 'Betano',  u: 'https://www.betano.com.ar/' },
+            { n: 'Betsson', u: 'https://www.betsson.bet.ar/' },
+            { n: 'Bplay',   u: 'https://www.bplay.bet.ar/' },
+        ];
         // ── Cuotas 1-X-2 (ESPN trae odds de DraftKings, en formato americano) ──
         // Las convertimos a DECIMAL (la que se usa en Argentina: 1.80, 3.50...).
         const _amerADecimal = (a) => {
@@ -877,10 +884,12 @@ const App = (() => {
             const chip = (lbl, val) => `<div style="flex:1;text-align:center;background:rgba(255,255,255,.05);border:1px solid var(--border-glass);border-radius:7px;padding:4px 2px;">
                 <div style="font-size:.58rem;color:var(--muted);font-weight:700;letter-spacing:.05em;">${lbl}</div>
                 <div style="font-size:.82rem;font-weight:800;color:var(--text-main);">${val ?? '-'}</div></div>`;
-            return `<div style="display:flex;gap:5px;margin:0 0 6px;align-items:center;">
+            const casas = _CASAS.map(c => `<a href="${c.u}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--blue);text-decoration:none;font-weight:600;">${c.n}</a>`).join(' · ');
+            return `<div style="display:flex;gap:5px;margin:0 0 3px;align-items:center;">
                 ${chip('1', h)}${chip('X', d)}${chip('2', a)}
                 <span style="font-size:.5rem;color:var(--muted);white-space:nowrap;padding-left:2px;">cuota</span>
-            </div>`;
+            </div>
+            <div style="font-size:.58rem;color:var(--muted);margin:0 0 6px;">Apostá en: ${casas}</div>`;
         };
 
         const _renderPartidoHome = (ev, ligaId) => {
@@ -4590,8 +4599,8 @@ const App = (() => {
             {id:'uefa.europa',    nombre:'Europa League',    flag:'🟠'},
             {id:'conmebol.libertadores', nombre:'Copa Libertadores', flag:'🏆'},
             {id:'conmebol.sudamericana', nombre:'Copa Sudamericana',  flag:'🥈'},
-            {id:'fifa.world',  nombre:'Mundial 2026',        flag:'🌍'},
-            {id:'uefa.euro',   nombre:'Eurocopa',            flag:'🇪🇺'},
+            // No se ofrecen torneos de selecciones ya terminados (Mundial 2026, Eurocopa):
+            // si el usuario los elegía, el home le quedaba clavado en un torneo finalizado.
         ];
 
         const EQUIPOS_FAVORITOS = [
