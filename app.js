@@ -7138,10 +7138,10 @@ const App = (() => {
                     Los premios individuales y colectivos más importantes del fútbol mundial.
                 </p>
 
-                ${_card('Balón de Oro', _icono('premios/balon-oro.png', '🥇'), balonHtml)}
+                ${_card('Balón de Oro', _icono('premios/png-transparent-ballon-d-or-2017-ballon-d-or-2016-2018-world-cup-2014-fifa-ballon-d-or-2015-fifa-ballon-d-or-football-thumbnail.png', '🥇'), balonHtml)}
                 ${_card('FIFA The Best', '🌟', theBestHtml)}
-                ${_card('Bota de Oro', _icono('premios/bota-oro.png', '👟'), botaHtml)}
-                ${_card('Guante de Oro', _icono('premios/guante-oro.png', '🧤'), guanteHtml)}
+                ${_card('Bota de Oro', _icono('premios/images.jpg', '👟'), botaHtml)}
+                ${_card('Guante de Oro', _icono('premios/Trofeo_GuanteDeOro5%20(1).png', '🧤'), guanteHtml)}
                 ${_card('Golden Boy', '🌱', goldenBoyHtml)}
                 ${_card('Premio Puskás (mejor gol)', '⚽', puskasHtml)}
                 ${_card('Premios por liga', '🏅', premiosLigaHtml)}
