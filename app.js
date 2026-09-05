@@ -4357,6 +4357,7 @@ const App = (() => {
 
         // Push status
         const pushActivo = plan === 'promax' ? await pushEstaActivo() : false;
+        const tiene2FA   = ((window.firebase?.auth?.().currentUser?.multiFactor?.enrolledFactors?.length) ?? 0) > 0;
 
         appContainer.innerHTML = `
             ${renderNavbar('#/perfil')}
@@ -4438,6 +4439,40 @@ const App = (() => {
                     `}
                 </div>
 
+                <!-- Seguridad -->
+                <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
+                    <h3 class="panel-title" style="margin-bottom:1rem;">🔒 Seguridad</h3>
+
+                    <!-- Cambiar email -->
+                    <div style="margin-bottom:1.4rem;">
+                        <div style="font-size:0.82rem; font-weight:700; margin-bottom:0.5rem;">Cambiar email</div>
+                        <input id="sec-email-nuevo" type="email" placeholder="Nuevo email" style="width:100%; background:var(--surface-color); color:var(--text-main); border:1px solid var(--border-glass); border-radius:8px; padding:9px; font-size:0.85rem; margin-bottom:6px; color-scheme:dark;">
+                        <input id="sec-email-pass" type="password" placeholder="Tu contraseña actual" style="width:100%; background:var(--surface-color); color:var(--text-main); border:1px solid var(--border-glass); border-radius:8px; padding:9px; font-size:0.85rem; margin-bottom:6px; color-scheme:dark;">
+                        <button class="btn-primary" style="width:100%;" onclick="window._cambiarEmail()">ACTUALIZAR EMAIL</button>
+                        <div id="sec-email-msg" style="font-size:0.78rem; margin-top:6px;"></div>
+                    </div>
+
+                    <!-- Cambiar contraseña -->
+                    <div style="margin-bottom:1.4rem; border-top:1px solid var(--border-glass); padding-top:1.2rem;">
+                        <div style="font-size:0.82rem; font-weight:700; margin-bottom:0.5rem;">Cambiar contraseña</div>
+                        <input id="sec-pass-actual" type="password" placeholder="Contraseña actual" style="width:100%; background:var(--surface-color); color:var(--text-main); border:1px solid var(--border-glass); border-radius:8px; padding:9px; font-size:0.85rem; margin-bottom:6px; color-scheme:dark;">
+                        <input id="sec-pass-nueva" type="password" placeholder="Nueva contraseña (mín. 6)" style="width:100%; background:var(--surface-color); color:var(--text-main); border:1px solid var(--border-glass); border-radius:8px; padding:9px; font-size:0.85rem; margin-bottom:6px; color-scheme:dark;">
+                        <button class="btn-primary" style="width:100%;" onclick="window._cambiarPassword()">ACTUALIZAR CONTRASEÑA</button>
+                        <div id="sec-pass-msg" style="font-size:0.78rem; margin-top:6px;"></div>
+                    </div>
+
+                    <!-- 2FA -->
+                    <div style="border-top:1px solid var(--border-glass); padding-top:1.2rem;">
+                        <div style="font-size:0.82rem; font-weight:700; margin-bottom:0.3rem;">Verificación en dos pasos (2FA)</div>
+                        <p style="color:var(--text-muted); font-size:0.76rem; margin-bottom:0.7rem;">Sumá una capa extra con una app tipo Google Authenticator.</p>
+                        <div id="sec-2fa-cont">
+                            ${tiene2FA
+                                ? '<span style="color:var(--accent-neon); font-weight:700; font-size:0.85rem;">✓ Activada</span>'
+                                : '<button class="btn-primary" style="width:100%;" onclick="window._activar2FA()">ACTIVAR 2FA</button>'}
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Plan actual -->
                 <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
                     <h3 class="panel-title" style="margin-bottom:1rem;">💳 Plan Actual</h3>
@@ -4497,6 +4532,81 @@ const App = (() => {
             await window.FirebaseAuth?.actualizarPerfil({ deportes: deportesGuardar });
             const ok = document.getElementById('deportes-ok');
             if (ok) { ok.style.display = 'block'; setTimeout(() => ok.style.display = 'none', 2000); }
+        };
+
+        // ── Seguridad (#16) ──────────────────────────────────────────────────
+        const _msgSeg = (id, texto, ok) => {
+            const el = document.getElementById(id);
+            if (el) { el.textContent = texto; el.style.color = ok ? 'var(--accent-neon)' : '#ff4757'; }
+        };
+        const _reauth = async (u, pass) => {
+            const cred = firebase.auth.EmailAuthProvider.credential(u.email, pass);
+            await u.reauthenticateWithCredential(cred);
+        };
+
+        window._cambiarEmail = async () => {
+            const nuevo = document.getElementById('sec-email-nuevo')?.value.trim();
+            const pass  = document.getElementById('sec-email-pass')?.value;
+            if (!nuevo || !nuevo.includes('@')) return _msgSeg('sec-email-msg', 'Ingresá un email válido.', false);
+            if (!pass) return _msgSeg('sec-email-msg', 'Ingresá tu contraseña actual.', false);
+            try {
+                const u = firebase.auth().currentUser;
+                await _reauth(u, pass);
+                if (u.verifyBeforeUpdateEmail) {
+                    await u.verifyBeforeUpdateEmail(nuevo);
+                    _msgSeg('sec-email-msg', '✓ Te enviamos un mail a ' + nuevo + ' para confirmar el cambio.', true);
+                } else {
+                    await u.updateEmail(nuevo);
+                    _msgSeg('sec-email-msg', '✓ Email actualizado.', true);
+                }
+            } catch (e) { _msgSeg('sec-email-msg', window._traducirError?.(e.code) ?? 'No se pudo cambiar el email.', false); }
+        };
+
+        window._cambiarPassword = async () => {
+            const actual = document.getElementById('sec-pass-actual')?.value;
+            const nueva  = document.getElementById('sec-pass-nueva')?.value;
+            if (!actual) return _msgSeg('sec-pass-msg', 'Ingresá tu contraseña actual.', false);
+            if (!nueva || nueva.length < 6) return _msgSeg('sec-pass-msg', 'La nueva debe tener al menos 6 caracteres.', false);
+            try {
+                const u = firebase.auth().currentUser;
+                await _reauth(u, actual);
+                await u.updatePassword(nueva);
+                _msgSeg('sec-pass-msg', '✓ Contraseña actualizada.', true);
+                document.getElementById('sec-pass-actual').value = '';
+                document.getElementById('sec-pass-nueva').value = '';
+            } catch (e) { _msgSeg('sec-pass-msg', window._traducirError?.(e.code) ?? 'No se pudo cambiar la contraseña.', false); }
+        };
+
+        window._activar2FA = async () => {
+            const cont = document.getElementById('sec-2fa-cont');
+            if (!cont) return;
+            try {
+                const u = firebase.auth().currentUser;
+                const Totp = firebase.auth.TotpMultiFactorGenerator;
+                if (!Totp) throw new Error('no-totp');
+                const session = await u.multiFactor.getSession();
+                const secret  = await Totp.generateSecret(session);
+                window._2faSecret = secret;
+                cont.innerHTML = `
+                    <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:0.5rem;">Escaneá esta clave en Google Authenticator (o pegala a mano) y después ingresá el código de 6 dígitos:</p>
+                    <p style="font-family:monospace; font-size:0.85rem; background:var(--surface-color); padding:8px; border-radius:6px; word-break:break-all; margin-bottom:8px;">${secret.secretKey}</p>
+                    <input id="sec-2fa-code" inputmode="numeric" placeholder="Código de 6 dígitos" style="width:100%; background:var(--surface-color); color:var(--text-main); border:1px solid var(--border-glass); border-radius:8px; padding:9px; font-size:0.85rem; margin-bottom:6px; color-scheme:dark;">
+                    <button class="btn-primary" style="width:100%;" onclick="window._confirmar2FA()">CONFIRMAR</button>
+                    <div id="sec-2fa-msg" style="font-size:0.78rem; margin-top:6px;"></div>`;
+            } catch (e) {
+                cont.innerHTML = '<p style="color:var(--text-muted); font-size:0.8rem;">La verificación en dos pasos todavía no está habilitada en el servidor (falta activar MFA/Identity Platform en Firebase).</p>';
+            }
+        };
+
+        window._confirmar2FA = async () => {
+            const code = document.getElementById('sec-2fa-code')?.value.trim();
+            if (!code) return _msgSeg('sec-2fa-msg', 'Ingresá el código.', false);
+            try {
+                const Totp = firebase.auth.TotpMultiFactorGenerator;
+                const assertion = Totp.assertionForEnrollment(window._2faSecret, code);
+                await firebase.auth().currentUser.multiFactor.enroll(assertion, 'App Authenticator');
+                _msgSeg('sec-2fa-msg', '✓ Verificación en dos pasos activada.', true);
+            } catch (e) { _msgSeg('sec-2fa-msg', window._traducirError?.(e.code) ?? 'Código incorrecto o vencido.', false); }
         };
     };
 
