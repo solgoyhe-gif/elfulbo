@@ -3889,28 +3889,19 @@ const App = (() => {
                         const tiempo = tiempoRelativo(art.published ?? art.lastModified ?? '');
                         const artId  = 'art-' + grupo.label.replace(/\s/g,'-') + '-' + artIdx;
                         return `
-                            <div class="glass-panel" style="padding:1rem; display:flex; gap:1rem; align-items:flex-start;
-                                transition:background 0.2s; cursor:pointer; margin-bottom:0.8rem;"
-                                onmouseover="this.style.background='rgba(255,255,255,0.06)'"
-                                onmouseout="this.style.background=''"
+                            <div class="glass-panel" style="padding:0; overflow:hidden; cursor:pointer; margin-bottom:1rem; transition:transform 0.15s;"
+                                onmouseover="this.style.transform='translateY(-2px)'"
+                                onmouseout="this.style.transform=''"
                                 onclick="window._abrirNoticia('${artId}')">
-                                ${img ? `
-                                    <img src="${img}" alt="" width="90" height="60"
-                                        style="object-fit:cover; border-radius:6px; flex-shrink:0;"
-                                        onerror="this.style.display='none'">
-                                ` : `
-                                    <div style="width:90px; height:60px; border-radius:6px; background:rgba(255,255,255,0.06);
-                                        display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1.5rem;">
-                                        ${grupo.emoji}
-                                    </div>
-                                `}
-                                <div style="flex:1; min-width:0;">
-                                    <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:5px;">${tiempo}</div>
-                                    <p style="font-weight:700; font-size:0.9rem; line-height:1.3; margin:0 0 5px 0;
-                                        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                ${img
+                                    ? `<img src="${img}" alt="" style="width:100%; height:180px; object-fit:cover; display:block;" onerror="this.style.display='none'">`
+                                    : `<div style="width:100%; height:120px; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; font-size:2.5rem;">${grupo.emoji}</div>`}
+                                <div style="padding:1rem 1.1rem 1.2rem;">
+                                    <div style="font-size:0.68rem; color:var(--text-muted); margin-bottom:6px;">${tiempo}</div>
+                                    <p style="font-family:var(--font-heading); font-weight:800; font-size:1.02rem; line-height:1.25; margin:0 0 6px 0;">
                                         ${art.headline}
                                     </p>
-                                    <p style="font-size:0.78rem; color:var(--text-muted); margin:0; line-height:1.4;
+                                    <p style="font-size:0.82rem; color:var(--text-muted); margin:0; line-height:1.45;
                                         display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
                                         ${art.description}
                                     </p>
