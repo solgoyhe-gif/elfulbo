@@ -7024,6 +7024,35 @@ const App = (() => {
             'Ligue 1':        { temporada: '2024/25', jugadores: ['Barcola', 'Ramos', 'Désiré Doué', 'Hakimi', 'Marquinhos', 'Pacho', 'Lucas Beraldo', 'Donnarumma', 'Ben Yedder', 'Laborde', 'Ndiaye'] },
         };
 
+        // ── #9: premios nuevos (estructura para ir completando a mano) ──────────
+        // FIFA The Best (jugador masculino)
+        const THE_BEST = [
+            { año: 2024, jugador: 'Vinícius Júnior', club: 'Real Madrid',  pais: '🇧🇷' },
+            { año: 2023, jugador: 'Lionel Messi',    club: 'Inter Miami',  pais: '🇦🇷' },
+            { año: 2022, jugador: 'Lionel Messi',    club: 'Paris SG',     pais: '🇦🇷' },
+            { año: 2021, jugador: 'Robert Lewandowski', club: 'Bayern München', pais: '🇵🇱' },
+            { año: 2020, jugador: 'Robert Lewandowski', club: 'Bayern München', pais: '🇵🇱' },
+        ];
+        // Golden Boy (mejor sub-21 de Europa)
+        const GOLDEN_BOY = [
+            { año: 2024, jugador: 'Lamine Yamal',    club: 'FC Barcelona', pais: '🇪🇸' },
+            { año: 2023, jugador: 'Jude Bellingham', club: 'Real Madrid',  pais: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
+            { año: 2022, jugador: 'Gavi',            club: 'FC Barcelona', pais: '🇪🇸' },
+            { año: 2021, jugador: 'Pedri',           club: 'FC Barcelona', pais: '🇪🇸' },
+            { año: 2020, jugador: 'Erling Haaland',  club: 'Borussia Dortmund', pais: '🇳🇴' },
+        ];
+        // Premio Puskás (mejor gol). `video`: link de YouTube (opcional).
+        const PUSKAS = [
+            { año: 2024, jugador: 'Alejandro Garnacho', club: 'Manchester United', pais: '🇦🇷', video: '' },
+            { año: 2023, jugador: 'Guilherme Madruga',  club: 'Botafogo-SP',       pais: '🇧🇷', video: '' },
+            { año: 2022, jugador: 'Marcin Oleksy',      club: 'Warta Poznań',      pais: '🇵🇱', video: '' },
+        ];
+        // Premios individuales por liga (ej: MVP / revelación). Cargar a mano.
+        const PREMIOS_LIGA = [
+            { premio: 'Revelación Serie A', temporada: '2024/25', jugador: 'Nicolás Paz', club: 'Como', pais: '🇦🇷' },
+            // Sumá acá MVP Premier, Pichichi especial, etc.
+        ];
+
         const _card = (titulo, emoji, contenido) => `
             <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
                 <h3 style="font-family:var(--font-heading); font-size:1.1rem; font-weight:900;
@@ -7069,6 +7098,13 @@ const App = (() => {
             GUANTE_ORO.map(g => [g.temporada, g.jugador, g.club, g.pais])
         );
 
+        const theBestHtml   = _tabla(['Año', 'Jugador', 'Club', ''], THE_BEST.map(b => [b.año, b.jugador, b.club, b.pais]));
+        const goldenBoyHtml = _tabla(['Año', 'Jugador', 'Club', ''], GOLDEN_BOY.map(b => [b.año, b.jugador, b.club, b.pais]));
+        const puskasHtml    = _tabla(['Año', 'Jugador', 'Club', '', 'Gol'], PUSKAS.map(b => [b.año, b.jugador, b.club, b.pais, b.video ? `<a href="${b.video}" target="_blank" rel="noopener" style="color:var(--accent-neon); text-decoration:none; font-weight:700;">▶ Ver</a>` : '—']));
+        const premiosLigaHtml = PREMIOS_LIGA.length
+            ? _tabla(['Premio', 'Temp.', 'Jugador', 'Club', ''], PREMIOS_LIGA.map(p => [p.premio, p.temporada, p.jugador, p.club, p.pais]))
+            : '<p style="color:var(--text-muted); font-size:0.82rem;">Próximamente.</p>';
+
         const equipoAnioHtml = EQUIPO_ANIO.map((e, i) => `
             <div style="margin-bottom:${i < EQUIPO_ANIO.length - 1 ? '1.2rem' : '0'}; padding-bottom:${i < EQUIPO_ANIO.length - 1 ? '1.2rem' : '0'}; border-bottom:${i < EQUIPO_ANIO.length - 1 ? '1px solid var(--border-glass)' : 'none'};">
                 <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
@@ -7100,13 +7136,21 @@ const App = (() => {
                 </p>
 
                 ${_card('Balón de Oro', '🥇', balonHtml)}
+                ${_card('FIFA The Best', '🌟', theBestHtml)}
                 ${_card('Bota de Oro', '👟', botaHtml)}
                 ${_card('Guante de Oro', '🧤', guanteHtml)}
+                ${_card('Golden Boy', '🌱', goldenBoyHtml)}
+                ${_card('Premio Puskás (mejor gol)', '⚽', puskasHtml)}
+                ${_card('Premios por liga', '🏅', premiosLigaHtml)}
                 ${_card('Equipo del Año UEFA', '🏆', equipoAnioHtml)}
-                ${_card('Equipo de la Temporada', '🌟', equipoTempHtml)}
+                ${_card('Equipo de la Temporada', '⭐', equipoTempHtml)}
+                <p style="color:var(--text-muted); font-size:0.78rem; text-align:center; margin-top:1rem;">
+                    Próximamente: votaciones de la comunidad. 🗳️
+                </p>
             </main>
             ${_closeSidebarWrapper()}
         `;
+        // Nota: los premios se completan/actualizan a mano en los arrays de arriba.
     };
 
     // ── FICHA DE JUGADOR ─────────────────────────────────────────────────────
