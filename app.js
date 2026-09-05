@@ -7053,6 +7053,9 @@ const App = (() => {
             // Sumá acá MVP Premier, Pichichi especial, etc.
         ];
 
+        // Ícono real (imagen) con fallback al emoji si el archivo no está.
+        const _icono = (src, emoji) => `<img src="${src}" alt="" style="width:1.5em; height:1.5em; object-fit:contain; vertical-align:middle;" onerror="this.outerHTML='${emoji}'">`;
+
         const _card = (titulo, emoji, contenido) => `
             <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
                 <h3 style="font-family:var(--font-heading); font-size:1.1rem; font-weight:900;
@@ -7135,10 +7138,10 @@ const App = (() => {
                     Los premios individuales y colectivos más importantes del fútbol mundial.
                 </p>
 
-                ${_card('Balón de Oro', '🥇', balonHtml)}
+                ${_card('Balón de Oro', _icono('premios/balon-oro.png', '🥇'), balonHtml)}
                 ${_card('FIFA The Best', '🌟', theBestHtml)}
-                ${_card('Bota de Oro', '👟', botaHtml)}
-                ${_card('Guante de Oro', '🧤', guanteHtml)}
+                ${_card('Bota de Oro', _icono('premios/bota-oro.png', '👟'), botaHtml)}
+                ${_card('Guante de Oro', _icono('premios/guante-oro.png', '🧤'), guanteHtml)}
                 ${_card('Golden Boy', '🌱', goldenBoyHtml)}
                 ${_card('Premio Puskás (mejor gol)', '⚽', puskasHtml)}
                 ${_card('Premios por liga', '🏅', premiosLigaHtml)}
