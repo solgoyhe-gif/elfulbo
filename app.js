@@ -7182,6 +7182,7 @@ const App = (() => {
                 <div style="overflow-x:auto; padding-bottom:8px; margin-bottom:1.5rem;">
                     <div style="display:flex; gap:8px; width:max-content;">${tabs}</div>
                 </div>
+                <div id="mercado-rumores"></div>
                 <div id="mercado-cont">
                     <div style="text-align:center; padding:3rem;">
                         <div style="width:36px;height:36px;border:3px solid var(--accent-neon);border-right-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto;"></div>
@@ -7193,6 +7194,33 @@ const App = (() => {
         `;
 
         const cont = document.getElementById('mercado-cont');
+
+        // #14 — Rumores y novedades: noticias de ESPN clasificadas como fichajes.
+        (async () => {
+            const box = document.getElementById('mercado-rumores');
+            if (!box) return;
+            const esFichaje = (art) => {
+                const t = ((art.headline ?? art.title ?? '') + ' ' + (art.description ?? '')).toLowerCase();
+                return art.type === 'Transfer' || /transfer|sign(ed|ing|s)?|fichaj|vende|compra|contrat|loan|préstamo|deal|bid|target|link(ed|s)?/.test(t);
+            };
+            try {
+                const data = await _get('https://now.core.api.espn.com/v1/sports/news?sport=soccer&limit=30');
+                const arts = (data.headlines ?? data.articles ?? []).filter(esFichaje).slice(0, 6);
+                if (!arts.length) { box.innerHTML = ''; return; }
+                box.innerHTML = `
+                    <div style="font-family:var(--font-display); font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:.6rem;">🗞️ Rumores y novedades</div>
+                    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:2rem;">
+                        ${arts.map(a => {
+                            const link = a.links?.web?.href ?? a.links?.mobile?.href ?? '#';
+                            return `<a href="${link}" target="_blank" rel="noopener" class="glass-panel" style="padding:.8rem 1rem; text-decoration:none; color:inherit; display:block;">
+                                <div style="font-weight:700; font-size:.85rem; line-height:1.35;">${a.headline ?? a.title ?? ''}</div>
+                                ${a.description ? `<div style="font-size:.76rem; color:var(--text-muted); margin-top:3px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${a.description}</div>` : ''}
+                            </a>`;
+                        }).join('')}
+                    </div>`;
+            } catch { box.innerHTML = ''; }
+        })();
+
         const MOSTRAR = 40;   // tope de pases a resolver, para no disparar cientos de fetches
 
         try {
