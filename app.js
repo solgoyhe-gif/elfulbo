@@ -4468,7 +4468,7 @@ const App = (() => {
                         <div id="sec-2fa-cont">
                             ${tiene2FA
                                 ? '<span style="color:var(--accent-neon); font-weight:700; font-size:0.85rem;">✓ Activada</span>'
-                                : '<button class="btn-primary" style="width:100%;" onclick="window._activar2FA()">ACTIVAR 2FA</button>'}
+                                : '<span style="display:inline-block; background:rgba(245,195,59,0.16); color:var(--gold); padding:4px 12px; border-radius:12px; font-size:0.72rem; font-weight:800; letter-spacing:.04em;">PRÓXIMAMENTE</span>'}
                         </div>
                     </div>
                 </div>
