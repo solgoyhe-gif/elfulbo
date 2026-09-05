@@ -370,6 +370,17 @@ const App = (() => {
                     </button>
                 </div>
             </aside>
+
+            <!-- Overlay + barra inferior (solo móvil): 4 accesos + hamburguesa -->
+            <div class="mobile-overlay" id="mobile-overlay" onclick="window._toggleDrawer(false)"></div>
+            <nav class="mobile-bottom-bar">
+                <a href="#/home" class="mbb-item ${activeHash === '#/home' ? 'active' : ''}"><span class="mbb-icon">🏠</span>Inicio</a>
+                <a href="#/ligas" class="mbb-item ${(activeHash.includes('#/liga')) ? 'active' : ''}"><span class="mbb-icon">🏆</span>Ligas</a>
+                <a href="#/mercado" class="mbb-item ${activeHash.includes('#/mercado') ? 'active' : ''}"><span class="mbb-icon">🔁</span>Mercado</a>
+                <a href="#/perfil" class="mbb-item ${activeHash.includes('#/perfil') ? 'active' : ''}"><span class="mbb-icon">👤</span>Perfil</a>
+                <button class="mbb-item" onclick="window._toggleDrawer(true)"><span class="mbb-icon">☰</span>Menú</button>
+            </nav>
+
             <div id="sidebar-wrapper" class="sidebar-page-wrapper ${abierta ? '' : 'sidebar-closed'}">
                 ${_renderTicker()}
         `;
@@ -377,27 +388,38 @@ const App = (() => {
 
     const _closeSidebarWrapper = () => window.FirebaseAuth?.isAuthenticated() ? '</div>' : '';
     window._sidebarToggle = _sidebarToggle;
-    // En el celular la barra es horizontal: los "desplegables" no pueden abrirse,
-    // asi que tocarlos navega directo a su seccion. En escritorio si despliegan.
+    // Los desplegables (Fútbol / Otros) despliegan in-situ. En el celular el menú es un
+    // cajón vertical (drawer), así que también despliegan bien ahí.
     window._navAcc = (key) => {
-        if (window.innerWidth <= 768) {
-            window.location.hash = key === 'futbol' ? '#/ligas' : '#/other-sports';
-        } else {
-            window._sidebarAccordion[key] = !window._sidebarAccordion[key];
-            window._refreshSidebar();
-        }
+        window._sidebarAccordion[key] = !window._sidebarAccordion[key];
+        window._refreshSidebar();
+    };
+
+    // Abre/cierra el cajón lateral en el celular.
+    window._toggleDrawer = (open) => {
+        const sb = document.getElementById('app-sidebar');
+        const ov = document.getElementById('mobile-overlay');
+        if (!sb) return;
+        const show = open === undefined ? !sb.classList.contains('drawer-open') : open;
+        sb.classList.toggle('drawer-open', show);
+        ov?.classList.toggle('visible', show);
+        document.body.style.overflow = show ? 'hidden' : '';
     };
 
     window._refreshSidebar = () => {
         const sb = document.getElementById('app-sidebar');
         if (!sb) return;
+        const eraDrawer = sb.classList.contains('drawer-open');  // preservar si estaba abierto
         const hash = window.location.hash || '#/home';
         const nuevoHTML = renderNavbar(hash);
         // Extraer solo el <aside> del HTML generado y reemplazarlo
         const tmp = document.createElement('div');
         tmp.innerHTML = nuevoHTML;
         const nuevoAside = tmp.querySelector('aside');
-        if (nuevoAside) sb.replaceWith(nuevoAside);
+        if (nuevoAside) {
+            if (eraDrawer) nuevoAside.classList.add('drawer-open');
+            sb.replaceWith(nuevoAside);
+        }
     };
 
     // ── TICKER DE SCORES ─────────────────────────────────────────────────────

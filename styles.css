@@ -968,53 +968,55 @@ body {
     .h2h-vs { transform:rotate(90deg); padding:5px 14px; }
 }
 
+/* La barra inferior y el overlay del celular no se ven en escritorio */
+.mobile-bottom-bar, .mobile-overlay { display:none; }
+
 @media (max-width:768px) {
+    /* La sidebar pasa a ser un CAJÓN (drawer) que entra desde la izquierda.
+       Antes era una barra horizontal abajo donde no entraba todo; ahora abajo va una
+       barra con 4 accesos + hamburguesa, y el menú completo vive en el cajón. */
     .sidebar {
-        width:100% !important; height:var(--sidebar-w-closed);
-        top:auto; bottom:0; left:0;
-        flex-direction:row;
-        border-right:none; border-top:1px solid var(--border);
+        width:80% !important; max-width:300px; height:100vh;
+        top:0; bottom:auto; left:0;
+        flex-direction:column;
+        border-right:1px solid var(--border); border-top:none;
+        transform:translateX(-100%); transition:transform .25s ease;
+        z-index:2000;
+    }
+    .sidebar.drawer-open { transform:translateX(0); box-shadow:6px 0 40px rgba(0,0,0,.6); }
+    .sidebar-header, .sidebar-footer { display:flex; }
+    .sidebar-divider { display:block; }
+    .sidebar-toggle { display:none; }  /* expandir/retraer no aplica al cajón */
+    .sidebar-nav {
+        position:static; top:auto; bottom:auto; height:auto; flex:1;
+        display:flex; flex-direction:column; gap:2px; padding:.5rem;
+        overflow-y:auto; width:100%;
+    }
+
+    /* Overlay detrás del cajón */
+    .mobile-overlay {
+        display:block; position:fixed; inset:0; background:rgba(0,0,0,.55);
+        opacity:0; pointer-events:none; transition:opacity .25s; z-index:1999;
+    }
+    .mobile-overlay.visible { opacity:1; pointer-events:auto; }
+
+    /* Barra inferior de accesos rápidos (Inicio · Ligas · Mercado · Perfil · Menú) */
+    .mobile-bottom-bar {
+        display:flex; position:fixed; bottom:0; left:0; right:0;
+        height:var(--sidebar-w-closed);
+        background:var(--bg-card); border-top:1px solid var(--border); z-index:1500;
         padding-bottom:env(safe-area-inset-bottom);
     }
-    .sidebar-header,.sidebar-divider,.sidebar-footer { display:none; }
-    /* En el celular los acordeones (Fútbol / Other Sports) no despliegan: el boton
-       navega directo a su seccion (window._navAcc) y se ve igual que los demas iconos.
-       Se ocultan el cuerpo desplegable y el chevron; se apilan icono sobre label.
-       Va con !important porque el boton trae estilos inline (display/justify). */
-    .sidebar-accordion-body { display:none !important; }
-    .sidebar-chevron { display:none !important; }
-    .sidebar-accordion-btn {
-        flex-direction:column !important; justify-content:center !important;
-        align-items:center !important; width:auto !important; padding:7px 5px !important;
+    .mbb-item {
+        flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+        background:none; border:none; cursor:pointer; text-decoration:none;
+        color:var(--muted); font-family:var(--font-body); font-size:.6rem; font-weight:600;
     }
-    .sidebar-accordion-btn > span { flex-direction:column !important; gap:3px !important; }
-    .sidebar-nav {
-        /* En escritorio es position:absolute con top/bottom fijos; dentro de la barra
-           del celular eso daba altura NEGATIVA y la dejaba invisible. Ahora los items
-           se reparten iguales y SIN scroll horizontal (todo tiene que entrar). */
-        position:static; top:auto; bottom:auto; height:100%;
-        display:flex; flex-direction:row; padding:0; gap:0;
-        overflow:hidden;
-        align-items:stretch; width:100%;
-    }
-    .sidebar-link {
-        flex:1 1 0 !important; min-width:0 !important;
-        flex-direction:column; gap:1px;
-        height:auto; padding:4px 1px; margin:0; border-radius:0;
-        width:auto;
-        align-items:center; justify-content:center;
-        font-size:.46rem;
-        background:transparent !important;
-    }
-    .sidebar-link.active { color:var(--blue); box-shadow:inset 0 2px 0 var(--blue); }
-    .sidebar-icon { width:17px; height:17px; border-radius:5px; font-size:.78rem; flex:none; }
-    .sidebar-label {
-        opacity:1 !important; font-size:.46rem;
-        white-space:nowrap; text-align:center; line-height:1;
-        overflow:hidden; text-overflow:ellipsis; max-width:100%;
-    }
+    .mbb-item .mbb-icon { font-size:1.35rem; line-height:1; }
+    .mbb-item.active { color:var(--blue); }
+
     .sidebar-page-wrapper,
-    .sidebar-page-wrapper.sidebar-closed { margin-left:0 !important; padding-bottom:var(--sidebar-w-closed); }
+    .sidebar-page-wrapper.sidebar-closed { margin-left:0 !important; padding-bottom:calc(var(--sidebar-w-closed) + env(safe-area-inset-bottom) + 8px); }
     .page-container { padding:1rem 1rem; }
     .dashboard-container { padding-top:1rem; padding-bottom:calc(var(--sidebar-w-closed) + 1rem); }
     .match-row { grid-template-columns:60px 1fr 70px 1fr 0; }
