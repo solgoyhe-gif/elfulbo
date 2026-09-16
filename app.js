@@ -1041,22 +1041,24 @@ const App = (() => {
                 if (!dia) continue;
                 (porDia[dia] = porDia[dia] ?? []).push(e);
             }
-            // Grilla: lunes primero
-            const offset = (new Date(y, m, 1).getDay() + 6) % 7;
+            // Tira horizontal compacta de días (scrolleable), en vez de la grilla del mes.
             const totalDias = new Date(y, m+1, 0).getDate();
             const hoyISO = _hoyISO();
-            let celdas = '';
-            for (let i = 0; i < offset; i++) celdas += `<div></div>`;
+            const DOW = ['D','L','M','M','J','V','S'];
+            let chips = '';
             for (let dia = 1; dia <= totalDias; dia++) {
                 const iso = `${y}-${_calPad(m+1)}-${_calPad(dia)}`;
                 const tiene = (porDia[iso] ?? []).length;
                 const esHoy = iso === hoyISO;
                 const sel = iso === window._calEstado.sel;
-                const bg  = sel ? 'var(--blue)' : esHoy ? 'rgba(var(--accent-neon-rgb),.14)' : 'transparent';
+                const dow = DOW[new Date(y, m, dia).getDay()];
+                const bg = sel ? 'var(--blue)' : 'rgba(255,255,255,.04)';
                 const col = sel ? '#fff' : esHoy ? 'var(--accent-neon)' : 'var(--text-main)';
-                const borde = sel ? 'var(--blue)' : 'rgba(255,255,255,.18)';
-                celdas += `<button onclick="window._calSelDia('${iso}')" style="position:relative;aspect-ratio:1;border:1px solid ${borde};border-radius:9px;background:${bg};color:${col};font-family:var(--font-heading);font-weight:${sel||esHoy?'800':'600'};font-size:.82rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">
-                    ${dia}${tiene ? `<span style="position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:${sel?'#fff':'var(--accent-neon)'};"></span>` : ''}
+                const bd = sel ? 'var(--blue)' : esHoy ? 'var(--accent-neon)' : 'var(--border-glass)';
+                chips += `<button data-sel="${sel ? 1 : 0}" onclick="window._calSelDia('${iso}')" style="flex:0 0 auto; width:42px; padding:5px 0; border:1px solid ${bd}; border-radius:10px; background:${bg}; color:${col}; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:1px; font-family:var(--font-heading);">
+                    <span style="font-size:.52rem; opacity:.75;">${dow}</span>
+                    <span style="font-size:.95rem; font-weight:800;">${dia}</span>
+                    <span style="width:4px; height:4px; border-radius:50%; background:${tiene ? (sel ? '#fff' : 'var(--accent-neon)') : 'transparent'};"></span>
                 </button>`;
             }
             // Partidos del día seleccionado, agrupados por liga
@@ -1067,25 +1069,26 @@ const App = (() => {
             const selLabel = isNaN(selFecha) ? window._calEstado.sel : selFecha.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
             const listaHtml = delDia.length
                 ? Object.entries(porLiga).map(([liga, evs]) => `
-                    <div style="margin-top:14px;">
+                    <div style="margin-top:12px;">
                         <div style="font-family:var(--font-display);font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px;">${liga}</div>
                         ${evs.map(e => _renderPartidoHome(e, e._slug)).join('')}
                     </div>`).join('')
-                : `<p style="color:var(--muted);font-size:.82rem;text-align:center;padding:16px 2px;">No hay partidos este día.</p>`;
+                : `<p style="color:var(--muted);font-size:.82rem;text-align:center;padding:14px 2px;">No hay partidos este día.</p>`;
             cont.innerHTML = `
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                    <button onclick="window._calMover(-1)" style="background:none;border:none;color:var(--text-main);font-size:1.3rem;cursor:pointer;padding:2px 12px;line-height:1;">‹</button>
-                    <span style="font-family:var(--font-heading);font-weight:800;font-size:.95rem;">${_MESES[m]} ${y}</span>
-                    <button onclick="window._calMover(1)" style="background:none;border:none;color:var(--text-main);font-size:1.3rem;cursor:pointer;padding:2px 12px;line-height:1;">›</button>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <button onclick="window._calMover(-1)" style="background:none;border:none;color:var(--text-main);font-size:1.2rem;cursor:pointer;padding:2px 10px;line-height:1;">‹</button>
+                    <span style="font-family:var(--font-heading);font-weight:800;font-size:.85rem;">${_MESES[m]} ${y}</span>
+                    <button onclick="window._calMover(1)" style="background:none;border:none;color:var(--text-main);font-size:1.2rem;cursor:pointer;padding:2px 10px;line-height:1;">›</button>
                 </div>
-                <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;font-size:.6rem;color:var(--muted);font-weight:700;margin-bottom:4px;">
-                    ${['L','M','M','J','V','S','D'].map(x=>`<div>${x}</div>`).join('')}
-                </div>
-                <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;">${celdas}</div>
-                <div style="margin-top:8px;border-top:1px solid var(--border-glass);padding-top:8px;">
-                    <div style="font-family:var(--font-heading);font-weight:700;font-size:.82rem;text-transform:capitalize;margin-bottom:2px;">${selLabel}</div>
+                <div id="cal-strip" style="display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; scrollbar-width:thin;">${chips}</div>
+                <div style="margin-top:8px; border-top:1px solid var(--border-glass); padding-top:8px;">
+                    <div style="font-family:var(--font-heading); font-weight:700; font-size:.8rem; text-transform:capitalize; margin-bottom:2px;">${selLabel}</div>
                     ${listaHtml}
                 </div>`;
+            // Centrar la tira en el día seleccionado
+            const strip = document.getElementById('cal-strip');
+            const selBtn = strip?.querySelector('[data-sel="1"]');
+            if (strip && selBtn) strip.scrollLeft = selBtn.offsetLeft - strip.clientWidth / 2 + selBtn.offsetWidth / 2;
         };
         const _calSpinner = () => {
             const cont = document.getElementById('home-calendario');
