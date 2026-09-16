@@ -1505,13 +1505,25 @@ const App = (() => {
             const el = document.getElementById('rail-goleadores');
             if (!el || !comp) return;
             try {
-                // Algunas ligas devuelven 404 con el año en curso porque la temporada
-                // todavía no arrancó (ej. Premier en julio). Probamos el año anterior.
-                const leadersDe = (year) => _espn(`https://sports.core.api.espn.com/v2/sports/soccer/leagues/${comp.slug}/seasons/${year}/types/1/leaders`);
-                const data = await leadersDe(comp.year).catch(() => leadersDe(comp.year - 1));
-
-                const cat  = (data.categories ?? []).find(c => c.name === 'goalsLeaders');
-                const top  = (cat?.leaders ?? []).slice(0, 5);
+                // Probamos varias combinaciones de año y tipo de torneo hasta encontrar
+                // goleadores: el tipo 1 es la primera fase (Apertura en arg), el 6 la
+                // segunda (Clausura). Algunas ligas devuelven 404 con el año en curso
+                // porque la temporada no arrancó, así que también probamos el anterior.
+                const anioBase = parseInt(comp.year) || new Date().getFullYear();
+                const anios = [...new Set([anioBase, anioBase - 1])];
+                const tipos = [1, 6, 2, 3];
+                let cat = null;
+                for (const y of anios) {
+                    for (const tp of tipos) {
+                        try {
+                            const d = await _espn(`https://sports.core.api.espn.com/v2/sports/soccer/leagues/${comp.slug}/seasons/${y}/types/${tp}/leaders`);
+                            const c = (d.categories ?? []).find(x => x.name === 'goalsLeaders');
+                            if (c?.leaders?.length) { cat = c; break; }
+                        } catch {}
+                    }
+                    if (cat) break;
+                }
+                const top = (cat?.leaders ?? []).slice(0, 5);
                 if (!top.length) { el.style.display = 'none'; return; }
 
                 const POSICIONES = { F: 'Delantero', M: 'Mediocampista', D: 'Defensor', G: 'Arquero' };
@@ -1745,10 +1757,11 @@ const App = (() => {
 
                 // Datos complementarios: van en paralelo y cada uno se oculta si falla,
                 // así que un error acá no rompe el marcador ni la lista de arriba.
+                const compGoleadores = _compDest ?? { slug: (_competenciasUsuario()[0] || 'arg.1'), year: new Date().getFullYear(), nombre: '' };
                 await Promise.all([
                     _cargarDetallePartido(destacado),
                     _cargarGrupos(_compDest),
-                    _cargarGoleadores(_compDest),
+                    _cargarGoleadores(compGoleadores),
                     _cargarNoticias(),
                 ]);
             } catch (e) {
@@ -1975,7 +1988,7 @@ const App = (() => {
                     acumular(aperturaRaw); acumular(zonasRaw);
                     const tablaAnual = Object.values(anual).map(x => { x.stats.dif = x.stats.gf - x.stats.gc; return x; });
                     const totalAnual = tablaAnual.length;
-                    const colorAnual = (pos) => pos <= 4 ? '#2FD98B' : (pos <= 8 ? '#f0a500' : (pos >= totalAnual - 1 ? '#ff4757' : ''));
+                    const colorAnual = (pos) => pos <= 3 ? '#2FD98B' : (pos <= 9 ? '#f0a500' : (pos === totalAnual ? '#ff4757' : ''));
 
                     html = `
                         <div style="margin-bottom:1.4rem;">
