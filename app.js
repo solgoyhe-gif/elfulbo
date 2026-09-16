@@ -1757,11 +1757,11 @@ const App = (() => {
 
                 // Datos complementarios: van en paralelo y cada uno se oculta si falla,
                 // así que un error acá no rompe el marcador ni la lista de arriba.
-                const compGoleadores = _compDest ?? { slug: (_competenciasUsuario()[0] || 'arg.1'), year: new Date().getFullYear(), nombre: '' };
+                // (Los goleadores se cargan aparte, en `promesas`, para que se muestren
+                //  aunque algo del flujo de partidos de arriba falle.)
                 await Promise.all([
                     _cargarDetallePartido(destacado),
                     _cargarGrupos(_compDest),
-                    _cargarGoleadores(compGoleadores),
                     _cargarNoticias(),
                 ]);
             } catch (e) {
@@ -1798,7 +1798,14 @@ const App = (() => {
         };
 
         // Cargar todo en paralelo
-        const promesas = [_cargarFutbol(), _calCargar()];
+        // Goleadores: carga independiente (usa la liga nacional del usuario) para que
+        // se muestre aunque el flujo de partidos de arriba tenga un error.
+        const _cargarGoleadoresHome = () => _cargarGoleadores({
+            slug: _competenciasUsuario()[0] || 'arg.1',
+            year: new Date().getFullYear(),
+            nombre: '',
+        });
+        const promesas = [_cargarFutbol(), _calCargar(), _cargarGoleadoresHome()];
         if (esProMax) deportes.forEach(d => promesas.push(_cargarDeporte(d)));
         await Promise.all(promesas);
     };
