@@ -1909,8 +1909,9 @@ const App = (() => {
 
             const _tieneTabla = zonasRaw && zonasRaw.some(z => z.tabla?.length);
             if (_tieneTabla) {
-                const _rowHtml = (entry) => {
-                    const t = entry.team;
+                const _num = (v) => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
+                const _rowHtml = (entry, pos) => {
+                    const t = entry.team; const s = entry.stats;
                     const imgLogo = t.logo
                         ? `<img src="${t.logo}" width="20" height="24" style="object-fit: contain; margin-right: 8px;">`
                         : `<span class="team-shield" style="margin-right: 8px;">${t.name.charAt(0)}</span>`;
@@ -1919,22 +1920,26 @@ const App = (() => {
                             style="cursor: pointer; transition: background 0.2s;"
                             onmouseover="this.style.background='rgba(255,255,255,0.05)'"
                             onmouseout="this.style.background='transparent'">
-                            <td class="col-pos">${entry.pos}</td>
+                            <td class="col-pos">${pos}</td>
                             <td class="col-team">${imgLogo} <span>${t.name}</span></td>
-                            <td>${entry.stats.pj}</td>
-                            <td>${entry.stats.pg}</td>
-                            <td>${entry.stats.pe}</td>
-                            <td>${entry.stats.pp}</td>
-                            <td class="col-pts">${entry.stats.pts}</td>
+                            <td>${s.pj}</td>
+                            <td>${s.pg}</td>
+                            <td>${s.pe}</td>
+                            <td>${s.pp}</td>
+                            <td>${_num(s.dif) > 0 ? '+' : ''}${s.dif}</td>
+                            <td class="col-pts">${s.pts}</td>
                         </tr>`;
                 };
                 const _tablaHtml = (tabla) => {
-                    // ESPN no siempre manda las entries ordenadas: ordenamos por posición.
-                    const orden = [...tabla].sort((a, b) => (parseInt(a.pos) || 99) - (parseInt(b.pos) || 99));
+                    // Ordenar por PUNTOS (desempate: diferencia de gol, luego goles a favor).
+                    const orden = [...tabla].sort((a, b) =>
+                        _num(b.stats.pts) - _num(a.stats.pts) ||
+                        _num(b.stats.dif) - _num(a.stats.dif) ||
+                        _num(b.stats.gf)  - _num(a.stats.gf));
                     return `
                         <table class="standings-table">
-                            <thead><tr><th class="col-pos">#</th><th>Equipo</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th class="col-pts">PTS</th></tr></thead>
-                            <tbody>${orden.map(_rowHtml).join('')}</tbody>
+                            <thead><tr><th class="col-pos">#</th><th>Equipo</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th>DIF</th><th class="col-pts">PTS</th></tr></thead>
+                            <tbody>${orden.map((e, i) => _rowHtml(e, i + 1)).join('')}</tbody>
                         </table>`;
                 };
 
