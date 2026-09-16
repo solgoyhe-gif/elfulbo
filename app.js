@@ -5636,6 +5636,15 @@ const App = (() => {
                     return r.json();
                 };
                 const _stat    = (stats, ab) => (stats ?? []).find(s => s.abbreviation === ab)?.displayValue ?? '';
+                // Jolpica (Ergast) — datos de F1 confiables. NO manda CORS, así que va SÍ o SÍ
+                // por el Worker (ESPN daba standings que no cuadraban con los resultados).
+                const _jolpi = async (path) => {
+                    const u = `https://api.jolpi.ca/ergast/f1/${path}.json`;
+                    const r = await fetch(`https://whistle.solgoyhe.workers.dev/?url=${encodeURIComponent(u)}`);
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    return r.json();
+                };
+                const _natFlag = { British:'🇬🇧', English:'🇬🇧', Italian:'🇮🇹', Dutch:'🇳🇱', Spanish:'🇪🇸', Monegasque:'🇲🇨', German:'🇩🇪', French:'🇫🇷', Mexican:'🇲🇽', Australian:'🇦🇺', Finnish:'🇫🇮', Canadian:'🇨🇦', Thai:'🇹🇭', Japanese:'🇯🇵', 'New Zealander':'🇳🇿', American:'🇺🇸', Danish:'🇩🇰', Brazilian:'🇧🇷', Argentine:'🇦🇷', Argentinian:'🇦🇷', Belgian:'🇧🇪', Chinese:'🇨🇳', Austrian:'🇦🇹' };
                 const _medalla = (pos) => pos === 1 ? '#ffd700' : pos === 2 ? '#c0c0c0' : pos === 3 ? '#cd7f32' : 'var(--text-muted)';
                 const _flagImg = (href) => href
                     ? `<img src="${href}" width="18" height="12" style="object-fit:cover;border-radius:2px;vertical-align:middle;" onerror="this.style.display='none'">`
@@ -5644,24 +5653,29 @@ const App = (() => {
 
                 try {
                     if (ligaActual.id === 'pilotos' || ligaActual.id === 'constructores') {
-                        const data     = await _f1('https://site.api.espn.com/apis/v2/sports/racing/f1/standings');
-                        const children = data.children ?? [];
-                        const dRaw     = children.find(c => /driver/i.test(c.name ?? ''))?.standings?.entries ?? [];
-                        const cRaw     = children.find(c => /constructor/i.test(c.name ?? ''))?.standings?.entries ?? [];
-                        const anio     = children[0]?.standings?.season ?? new Date().getFullYear();
-
-                        const pilotos = dRaw.map(e => {
-                            const ab   = e.athlete?.abbreviation ?? '';
-                            const meta = F1_META[ab] ?? {};
-                            return {
-                                pos:    Number(_stat(e.stats, 'RK')) || 0,
-                                nombre: e.athlete?.displayName ?? '?',
-                                flag:   e.athlete?.flag?.href ?? '',
-                                equipo: meta.eq ?? '',
-                                num:    meta.num ?? '',
-                                puntos: _stat(e.stats, 'PTS') || '0',
-                            };
-                        }).sort((a, b) => a.pos - b.pos);
+                        // Standings de Jolpica (Ergast) — confiables. Si el año en curso
+                        // todavía no tiene datos, cae al anterior.
+                        const anioBase = new Date().getFullYear();
+                        let anio = anioBase, dLists = [], cLists = [];
+                        for (const y of [anioBase, anioBase - 1]) {
+                            const dd = await _jolpi(`${y}/driverStandings`).catch(() => null);
+                            const ll = dd?.MRData?.StandingsTable?.StandingsLists ?? [];
+                            if (ll.length && ll[0].DriverStandings?.length) {
+                                anio = y; dLists = ll;
+                                const cc = await _jolpi(`${y}/constructorStandings`).catch(() => null);
+                                cLists = cc?.MRData?.StandingsTable?.StandingsLists ?? [];
+                                break;
+                            }
+                        }
+                        const pilotos = (dLists[0]?.DriverStandings ?? []).map(x => ({
+                            pos:    Number(x.position) || 0,
+                            nombre: `${x.Driver.givenName} ${x.Driver.familyName}`,
+                            flag:   _natFlag[x.Driver.nationality] ?? '',
+                            equipo: x.Constructors?.[x.Constructors.length - 1]?.name ?? '',
+                            num:    x.Driver.permanentNumber ?? '',
+                            puntos: x.points,
+                            wins:   x.wins,
+                        }));
 
                         if (ligaActual.id === 'pilotos') {
                             if (!pilotos.length) return _err('No se pudo cargar el campeonato de pilotos.');
@@ -5671,15 +5685,19 @@ const App = (() => {
                                 </p>
                                 <div class="glass-panel" style="padding:1rem;">
                                     ${pilotos.map(p => `
-                                        <div style="display:grid; grid-template-columns:30px 32px 1fr auto; align-items:center; gap:10px;
-                                            padding:10px 8px; border-bottom:1px solid var(--border-glass);">
+                                        <div style="display:grid; grid-template-columns:26px 30px 1fr auto auto; align-items:center; gap:10px;
+                                            padding:10px 6px; border-bottom:1px solid var(--border-glass);">
                                             <span style="font-weight:800; font-size:0.85rem; color:${_medalla(p.pos)};">${p.pos}</span>
                                             <div style="background:rgba(255,255,255,0.08); border-radius:6px; width:28px; height:28px;
                                                 display:flex; align-items:center; justify-content:center; font-family:var(--font-heading);
                                                 font-size:0.75rem; font-weight:900;">${p.num}</div>
-                                            <div>
-                                                <div style="font-weight:700; font-size:0.88rem;">${_flagImg(p.flag)} ${p.nombre}</div>
+                                            <div style="min-width:0;">
+                                                <div style="font-weight:700; font-size:0.88rem;">${p.flag} ${p.nombre}</div>
                                                 <div style="font-size:0.72rem; color:var(--text-muted);">${p.equipo}</div>
+                                            </div>
+                                            <div style="text-align:center;">
+                                                <div style="font-family:var(--font-heading); font-weight:800; font-size:0.9rem;">${p.wins}</div>
+                                                <div style="font-size:0.58rem; color:var(--text-muted);">vict.</div>
                                             </div>
                                             <div style="text-align:right;">
                                                 <div style="font-family:var(--font-heading); font-weight:900; font-size:1rem;
@@ -5691,12 +5709,13 @@ const App = (() => {
                                 </div>
                             `;
                         } else {
-                            const constructores = cRaw.map(e => ({
-                                pos:    Number(_stat(e.stats, 'RK')) || 0,
-                                equipo: e.team?.displayName ?? '?',
-                                color:  e.team?.color ? '#' + e.team.color : 'var(--text-muted)',
-                                puntos: _stat(e.stats, 'PTS') || '0',
-                            })).sort((a, b) => a.pos - b.pos);
+                            const constructores = (cLists[0]?.ConstructorStandings ?? []).map(x => ({
+                                pos:    Number(x.position) || 0,
+                                equipo: x.Constructor.name,
+                                color:  'var(--accent-neon)',
+                                puntos: x.points,
+                                wins:   x.wins,
+                            }));
                             if (!constructores.length) return _err('No se pudo cargar el campeonato de constructores.');
 
                             // Plantel por escudería, derivado del mapa estático de pilotos.
