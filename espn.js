@@ -191,6 +191,59 @@ const ESPN = (() => {
         return result;
     };
 
+    // Igual que getStandings pero PRESERVANDO las zonas/grupos. Devuelve
+    // [{ nombre, tabla:[...] }]. Necesario para ligas que se dividen en dos
+    // (ej: Liga Profesional argentina = Zona A + Zona B), donde cada zona tiene
+    // sus propias posiciones y puntos y no se pueden mezclar en una sola tabla.
+    const getStandingsZonas = async (ligaId) => {
+        const slug = getSlug(ligaId);
+        if (!slug) return [];
+        const cacheKey = `standings_zonas_${slug}`;
+        if (_mem[cacheKey]) return _mem[cacheKey];
+        const cached = _lsGet(cacheKey);
+        if (cached) { _mem[cacheKey] = cached; return cached; }
+
+        const data = await _fetch(`${ESPN_V2}/${slug}/standings`);
+        const _entries = (s) => s?.entries ?? s?.[0]?.entries ?? [];
+        const _map = (entry, idx) => {
+            const team = entry.team; const stats = {};
+            (entry.stats ?? []).forEach(s => { stats[s.abbreviation] = s.value; if (s.name) stats[s.name] = s.value; });
+            return {
+                pos: entry.note?.rank ?? (idx + 1),
+                team: {
+                    id: team.id, name: team.displayName ?? team.name,
+                    logo: team.logos?.[0]?.href ?? '', abbr: team.abbreviation ?? '',
+                    color: team.color ? `#${team.color}` : null,
+                },
+                stats: {
+                    pj: stats['GP'] ?? stats['GS'] ?? stats['gamesPlayed'] ?? 0,
+                    pg: stats['W']  ?? stats['wins']   ?? 0,
+                    pe: stats['T']  ?? stats['D']      ?? stats['ties']   ?? 0,
+                    pp: stats['L']  ?? stats['losses'] ?? 0,
+                    gf: stats['GF'] ?? stats['pointsFor']     ?? 0,
+                    gc: stats['GA'] ?? stats['pointsAgainst'] ?? 0,
+                    dif:stats['GD'] ?? stats['pointsDiff']    ?? 0,
+                    pts:stats['PTS']?? stats['Pts']    ?? stats['points'] ?? 0,
+                },
+            };
+        };
+
+        let zonas = [];
+        if (data?.children?.length) {
+            zonas = data.children
+                .map(ch => ({ nombre: ch.name ?? ch.abbreviation ?? '', tabla: _entries(ch?.standings).map(_map) }))
+                .filter(z => z.tabla.length);
+        }
+        if (!zonas.length) {
+            const flat = _entries(data?.standings);
+            if (flat.length) zonas = [{ nombre: '', tabla: flat.map(_map) }];
+        }
+
+        _mem[cacheKey] = zonas;
+        _lsSet(cacheKey, zonas, TTL_STANDINGS);
+        return zonas;
+    };
+
     // Convierte un evento crudo de ESPN al shape que consume la app.
     const _mapEvento = (ev, slug) => {
         const comp = ev.competitions?.[0];
@@ -329,5 +382,5 @@ const ESPN = (() => {
         console.log('[ESPN] Caché limpiado ✅');
     };
 
-    return { getSlug, getStandings, getScoreboard, getCalendario, getTeams, clearCache };
+    return { getSlug, getStandings, getStandingsZonas, getScoreboard, getCalendario, getTeams, clearCache };
 })();

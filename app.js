@@ -1899,16 +1899,17 @@ const App = (() => {
         `;
 
         try {
-            const [tablaRaw, partidosRaw] = await Promise.all([
-                ESPN.getStandings(ligaId),
+            const [zonasRaw, partidosRaw] = await Promise.all([
+                ESPN.getStandingsZonas(ligaId),
                 ESPN.getScoreboard(ligaId)
             ]);
 
             const standingsBox = document.getElementById('standings-box');
             const matchesBox   = document.getElementById('matches-box');
 
-            if (tablaRaw && tablaRaw.length > 0) {
-                let rowsHtml = tablaRaw.map(entry => {
+            const _tieneTabla = zonasRaw && zonasRaw.some(z => z.tabla?.length);
+            if (_tieneTabla) {
+                const _rowHtml = (entry) => {
                     const t = entry.team;
                     const imgLogo = t.logo
                         ? `<img src="${t.logo}" width="20" height="24" style="object-fit: contain; margin-right: 8px;">`
@@ -1925,16 +1926,32 @@ const App = (() => {
                             <td>${entry.stats.pe}</td>
                             <td>${entry.stats.pp}</td>
                             <td class="col-pts">${entry.stats.pts}</td>
-                        </tr>
-                    `;
-                }).join('');
+                        </tr>`;
+                };
+                const _tablaHtml = (tabla) => {
+                    // ESPN no siempre manda las entries ordenadas: ordenamos por posición.
+                    const orden = [...tabla].sort((a, b) => (parseInt(a.pos) || 99) - (parseInt(b.pos) || 99));
+                    return `
+                        <table class="standings-table">
+                            <thead><tr><th class="col-pos">#</th><th>Equipo</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th class="col-pts">PTS</th></tr></thead>
+                            <tbody>${orden.map(_rowHtml).join('')}</tbody>
+                        </table>`;
+                };
 
-                standingsBox.querySelector('.table-responsive').innerHTML = `
-                    <table class="standings-table">
-                        <thead><tr><th class="col-pos">#</th><th>Equipo</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th class="col-pts">PTS</th></tr></thead>
-                        <tbody>${rowsHtml}</tbody>
-                    </table>
-                `;
+                // Con más de una zona (ej: Liga Profesional argentina = Zona A / Zona B)
+                // se muestra una tabla por zona, cada una con sus posiciones y puntos.
+                const html = zonasRaw.length > 1
+                    ? zonasRaw.map(z => `
+                        <div style="margin-bottom:1.6rem;">
+                            <div style="font-family:var(--font-heading); font-weight:800; font-size:0.8rem;
+                                color:var(--accent-neon); text-transform:uppercase; letter-spacing:1px; margin-bottom:0.6rem;">
+                                ${(z.nombre || 'Zona').replace(/group/i, 'Zona')}
+                            </div>
+                            ${_tablaHtml(z.tabla)}
+                        </div>`).join('')
+                    : _tablaHtml(zonasRaw[0].tabla);
+
+                standingsBox.querySelector('.table-responsive').innerHTML = html;
             } else {
                 // Sin tabla → es una copa de eliminación directa. En vez del cartel vacío,
                 // mostramos el CALENDARIO completo del torneo (todos los partidos del año).
