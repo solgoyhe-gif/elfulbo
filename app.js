@@ -5750,32 +5750,39 @@ const App = (() => {
                         }
 
                     } else if (ligaActual.id === 'carreras') {
-                        const anioActual = new Date().getFullYear();
-                        const sb = await _f1(`https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard?dates=${anioActual}0101-${anioActual}1231`);
-                        const evs = (sb.events ?? []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
-                        if (!evs.length) return _err('No se pudo cargar el calendario.');
+                        // Calendario + ganadores desde Jolpica (Ergast) — confiable.
+                        const anioBase = new Date().getFullYear();
+                        let anio = anioBase, races = [];
+                        for (const y of [anioBase, anioBase - 1]) {
+                            const sc = await _jolpi(`${y}`).catch(() => null);
+                            const rr = sc?.MRData?.RaceTable?.Races ?? [];
+                            if (rr.length) { anio = y; races = rr; break; }
+                        }
+                        if (!races.length) return _err('No se pudo cargar el calendario.');
+                        // Ganador de cada carrera en una sola llamada (results/1 = P1).
+                        const winData = await _jolpi(`${anio}/results/1?limit=30`).catch(() => null);
+                        const winByRound = {};
+                        (winData?.MRData?.RaceTable?.Races ?? []).forEach(r => {
+                            const w = r.Results?.[0]?.Driver;
+                            winByRound[r.round] = w ? `${w.givenName} ${w.familyName}` : null;
+                        });
 
                         const fmtFecha = (d) => d.toLocaleDateString('es-AR', { day:'numeric', month:'short', timeZone:'America/Argentina/Buenos_Aires' });
-                        const carreras = evs.map((e, i) => {
-                            const comp = e.competitions?.[0] ?? {};
-                            const st   = comp.status?.type?.state ?? 'pre';
-                            const cs   = comp.competitors ?? [];
-                            const win  = cs.find(c => c.winner === true) ?? cs.find(c => String(c.order) === '1');
-                            // La ciudad es la clave del trazado: ESPN la manda en
-                            // circuit.address.city ("Monte carlo", "Sao paulo"…).
-                            const ciudad = (e.circuit?.address?.city ?? '')
-                                .toLowerCase()
-                                .normalize('NFD').replace(/[̀-ͯ]/g, '');
+                        const ahora = new Date();
+                        const carreras = races.map(r => {
+                            const ganador = winByRound[r.round] ?? null;
+                            const fecha = new Date(`${r.date}T${r.time ?? '12:00:00Z'}`);
+                            const ciudad = (r.Circuit?.Location?.locality ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
                             return {
-                                ronda:      i + 1,
-                                nombre:     e.shortName ?? e.name ?? 'GP',
-                                fecha:      new Date(e.date),
-                                completada: st === 'post',
-                                enVivo:     st === 'in',
-                                ganador:    win?.athlete?.displayName ?? null,
+                                ronda:      Number(r.round) || 0,
+                                nombre:     r.raceName ?? 'GP',
+                                fecha,
+                                completada: !!ganador || fecha < ahora,
+                                enVivo:     false,
+                                ganador,
                                 ciudad,
-                                circuito:   e.circuit?.fullName ?? '',
-                                pais:       e.circuit?.address?.country ?? '',
+                                circuito:   r.Circuit?.circuitName ?? '',
+                                pais:       r.Circuit?.Location?.country ?? '',
                             };
                         });
                         const proxima = carreras.find(c => !c.completada && !c.enVivo);
