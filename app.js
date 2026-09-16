@@ -1920,10 +1920,13 @@ const App = (() => {
             // y descenso. Para el resto de ligas es una sola tabla (o zonas simples).
             const esArg = ligaId === 'liga_prof';
 
-            const [zonasRaw, aperturaRaw, partidosRaw] = await Promise.all([
-                ESPN.getStandingsZonas(ligaId, esArg ? 6 : undefined),                  // Clausura (o tabla normal)
-                esArg ? ESPN.getStandingsZonas(ligaId, 1) : Promise.resolve(null),       // Apertura
+            const [zonasRaw, aperturaRaw, partidosRaw, prom25A, prom25C, prom24] = await Promise.all([
+                ESPN.getStandingsZonas(ligaId, esArg ? 6 : undefined),                  // Clausura 2026 (o tabla normal)
+                esArg ? ESPN.getStandingsZonas(ligaId, 1) : Promise.resolve(null),       // Apertura 2026
                 ESPN.getScoreboard(ligaId),
+                esArg ? ESPN.getStandingsZonas(ligaId, 1, 2025) : Promise.resolve(null), // Apertura 2025 (promedios)
+                esArg ? ESPN.getStandingsZonas(ligaId, 6, 2025) : Promise.resolve(null), // Clausura 2025 (promedios)
+                esArg ? ESPN.getStandingsZonas(ligaId, undefined, 2024) : Promise.resolve(null), // 2024 (promedios)
             ]);
 
             const standingsBox = document.getElementById('standings-box');
@@ -1937,7 +1940,7 @@ const App = (() => {
                     const imgLogo = t.logo
                         ? `<img src="${t.logo}" width="20" height="24" style="object-fit: contain; margin-right: 8px;">`
                         : `<span class="team-shield" style="margin-right: 8px;">${t.name.charAt(0)}</span>`;
-                    const cPos = colorFn ? colorFn(pos) : '';
+                    const cPos = colorFn ? colorFn(pos, entry) : '';
                     return `
                         <tr onclick="window.location.hash='#/equipo?id=${t.id}&liga=${ligaId}&name=${encodeURIComponent(t.name)}'"
                             style="cursor: pointer; transition: background 0.2s;"
@@ -1986,9 +1989,55 @@ const App = (() => {
                         A.gf += _num(S.gf); A.gc += _num(S.gc); A.pts += _num(S.pts);
                     }));
                     acumular(aperturaRaw); acumular(zonasRaw);
-                    const tablaAnual = Object.values(anual).map(x => { x.stats.dif = x.stats.gf - x.stats.gc; return x; });
-                    const totalAnual = tablaAnual.length;
-                    const colorAnual = (pos) => pos <= 3 ? '#2FD98B' : (pos <= 9 ? '#f0a500' : (pos === totalAnual ? '#ff4757' : ''));
+                    const tablaAnual = Object.values(anual)
+                        .map(x => { x.stats.dif = x.stats.gf - x.stats.gc; return x; })
+                        .sort((a, b) => _num(b.stats.pts) - _num(a.stats.pts) || _num(b.stats.dif) - _num(a.stats.dif) || _num(b.stats.gf) - _num(a.stats.gf));
+
+                    // ── Tabla de Promedios ─────────────────────────────────────
+                    // Coeficiente = puntos / partidos de los últimos años (2024-2026),
+                    // sumando por equipo. Solo cuentan los que juegan 2026 (la anual).
+                    const prom = {};
+                    const sumarProm = (zonas) => (zonas || []).forEach(z => z.tabla.forEach(e => {
+                        const id = e.team.id;
+                        if (!prom[id]) prom[id] = { team: e.team, pts: 0, pj: 0 };
+                        prom[id].pts += _num(e.stats.pts); prom[id].pj += _num(e.stats.pj);
+                    }));
+                    sumarProm(aperturaRaw); sumarProm(zonasRaw);   // 2026
+                    sumarProm(prom25A); sumarProm(prom25C);        // 2025
+                    sumarProm(prom24);                             // 2024
+                    const equipos2026 = new Set(tablaAnual.map(x => x.team.id));
+                    const tablaProm = Object.values(prom)
+                        .filter(x => equipos2026.has(x.team.id) && x.pj > 0)
+                        .map(x => ({ team: x.team, prom: x.pts / x.pj, pts: x.pts, pj: x.pj }))
+                        .sort((a, b) => b.prom - a.prom);   // mejor promedio arriba
+
+                    // ── Quién desciende ────────────────────────────────────────
+                    // Baja el último de PROMEDIOS y el último de la ANUAL. Si son el
+                    // mismo equipo, baja además el anteúltimo de la anual.
+                    const desciende = new Set();
+                    const ultProm  = tablaProm.length  ? tablaProm[tablaProm.length - 1].team.id  : null;
+                    const ultAnual = tablaAnual.length ? tablaAnual[tablaAnual.length - 1].team.id : null;
+                    if (ultProm)  desciende.add(ultProm);
+                    if (ultAnual) desciende.add(ultAnual);
+                    if (ultProm && ultProm === ultAnual && tablaAnual.length > 1) desciende.add(tablaAnual[tablaAnual.length - 2].team.id);
+
+                    const colorAnual = (pos, e) => desciende.has(e.team.id) ? '#ff4757' : (pos <= 3 ? '#2FD98B' : (pos <= 9 ? '#f0a500' : ''));
+
+                    const _tablaProm = (tabla) => `
+                        <table class="standings-table">
+                            <thead><tr><th class="col-pos">#</th><th>Equipo</th><th>PJ</th><th>Pts</th><th class="col-pts">Prom.</th></tr></thead>
+                            <tbody>${tabla.map((e, i) => {
+                                const t = e.team;
+                                const cPos = e.team.id === ultProm ? '#ff4757' : '';
+                                const logo = t.logo ? `<img src="${t.logo}" width="20" height="24" style="object-fit:contain;margin-right:8px;">` : `<span class="team-shield" style="margin-right:8px;">${t.name.charAt(0)}</span>`;
+                                return `<tr onclick="window.location.hash='#/equipo?id=${t.id}&liga=${ligaId}&name=${encodeURIComponent(t.name)}'" style="cursor:pointer; transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+                                    <td class="col-pos"${cPos ? ` style="box-shadow:inset 3px 0 0 ${cPos};"` : ''}>${i + 1}</td>
+                                    <td class="col-team">${logo} <span>${t.name}</span></td>
+                                    <td>${e.pj}</td><td>${e.pts}</td>
+                                    <td class="col-pts">${e.prom.toFixed(3)}</td>
+                                </tr>`;
+                            }).join('')}</tbody>
+                        </table>`;
 
                     html = `
                         <div style="margin-bottom:1.4rem;">
@@ -2000,6 +2049,12 @@ const App = (() => {
                             </div>
                             ${_tablaHtml(tablaAnual, colorAnual)}
                         </div>
+                        ${tablaProm.length ? `
+                        <div style="margin-bottom:1.4rem;">
+                            ${_tituloTabla('📉 Tabla de Promedios', '#ff8c69')}
+                            <div style="font-size:.66rem; color:var(--text-muted); margin-bottom:.6rem;"><span style="color:#ff4757;">■</span> Último = desciende</div>
+                            ${_tablaProm(tablaProm)}
+                        </div>` : ''}
                         ${_zonas('Torneo Clausura', zonasRaw)}
                         ${_zonas('Torneo Apertura', aperturaRaw)}`;
                 } else if (zonasRaw.length > 1) {
