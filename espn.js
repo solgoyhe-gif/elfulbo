@@ -195,15 +195,16 @@ const ESPN = (() => {
     // [{ nombre, tabla:[...] }]. Necesario para ligas que se dividen en dos
     // (ej: Liga Profesional argentina = Zona A + Zona B), donde cada zona tiene
     // sus propias posiciones y puntos y no se pueden mezclar en una sola tabla.
-    const getStandingsZonas = async (ligaId) => {
+    const getStandingsZonas = async (ligaId, seasontype) => {
         const slug = getSlug(ligaId);
         if (!slug) return [];
-        const cacheKey = `standings_zonas_${slug}`;
+        const cacheKey = `standings_zonas_${slug}${seasontype ? '_st' + seasontype : ''}`;
         if (_mem[cacheKey]) return _mem[cacheKey];
         const cached = _lsGet(cacheKey);
         if (cached) { _mem[cacheKey] = cached; return cached; }
 
-        const data = await _fetch(`${ESPN_V2}/${slug}/standings`);
+        // seasontype permite pedir un torneo puntual (arg: 1=Apertura, 6=Clausura).
+        const data = await _fetch(`${ESPN_V2}/${slug}/standings${seasontype ? `?seasontype=${seasontype}` : ''}`);
         const _entries = (s) => s?.entries ?? s?.[0]?.entries ?? [];
         const _map = (entry, idx) => {
             const team = entry.team; const stats = {};

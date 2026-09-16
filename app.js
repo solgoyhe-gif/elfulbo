@@ -1902,9 +1902,15 @@ const App = (() => {
         `;
 
         try {
-            const [zonasRaw, partidosRaw] = await Promise.all([
-                ESPN.getStandingsZonas(ligaId),
-                ESPN.getScoreboard(ligaId)
+            // Liga Profesional argentina: se juega en dos torneos (Apertura + Clausura),
+            // cada uno con 2 zonas, más una Tabla Anual (suma de ambos) que define copas
+            // y descenso. Para el resto de ligas es una sola tabla (o zonas simples).
+            const esArg = ligaId === 'liga_prof';
+
+            const [zonasRaw, aperturaRaw, partidosRaw] = await Promise.all([
+                ESPN.getStandingsZonas(ligaId, esArg ? 6 : undefined),                  // Clausura (o tabla normal)
+                esArg ? ESPN.getStandingsZonas(ligaId, 1) : Promise.resolve(null),       // Apertura
+                ESPN.getScoreboard(ligaId),
             ]);
 
             const standingsBox = document.getElementById('standings-box');
@@ -1913,27 +1919,30 @@ const App = (() => {
             const _tieneTabla = zonasRaw && zonasRaw.some(z => z.tabla?.length);
             if (_tieneTabla) {
                 const _num = (v) => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
-                const _rowHtml = (entry, pos) => {
+                const _rowHtml = (entry, pos, colorFn) => {
                     const t = entry.team; const s = entry.stats;
                     const imgLogo = t.logo
                         ? `<img src="${t.logo}" width="20" height="24" style="object-fit: contain; margin-right: 8px;">`
                         : `<span class="team-shield" style="margin-right: 8px;">${t.name.charAt(0)}</span>`;
+                    const cPos = colorFn ? colorFn(pos) : '';
                     return `
                         <tr onclick="window.location.hash='#/equipo?id=${t.id}&liga=${ligaId}&name=${encodeURIComponent(t.name)}'"
                             style="cursor: pointer; transition: background 0.2s;"
                             onmouseover="this.style.background='rgba(255,255,255,0.05)'"
                             onmouseout="this.style.background='transparent'">
-                            <td class="col-pos">${pos}</td>
+                            <td class="col-pos"${cPos ? ` style="box-shadow:inset 3px 0 0 ${cPos};"` : ''}>${pos}</td>
                             <td class="col-team">${imgLogo} <span>${t.name}</span></td>
                             <td>${s.pj}</td>
                             <td>${s.pg}</td>
                             <td>${s.pe}</td>
                             <td>${s.pp}</td>
+                            <td>${s.gf}</td>
+                            <td>${s.gc}</td>
                             <td>${_num(s.dif) > 0 ? '+' : ''}${s.dif}</td>
                             <td class="col-pts">${s.pts}</td>
                         </tr>`;
                 };
-                const _tablaHtml = (tabla) => {
+                const _tablaHtml = (tabla, colorFn) => {
                     // Ordenar por PUNTOS (desempate: diferencia de gol, luego goles a favor).
                     const orden = [...tabla].sort((a, b) =>
                         _num(b.stats.pts) - _num(a.stats.pts) ||
@@ -1941,23 +1950,50 @@ const App = (() => {
                         _num(b.stats.gf)  - _num(a.stats.gf));
                     return `
                         <table class="standings-table">
-                            <thead><tr><th class="col-pos">#</th><th>Equipo</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th>DIF</th><th class="col-pts">PTS</th></tr></thead>
-                            <tbody>${orden.map((e, i) => _rowHtml(e, i + 1)).join('')}</tbody>
+                            <thead><tr><th class="col-pos">#</th><th>Equipo</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th>GF</th><th>GC</th><th>DIF</th><th class="col-pts">PTS</th></tr></thead>
+                            <tbody>${orden.map((e, i) => _rowHtml(e, i + 1, colorFn)).join('')}</tbody>
                         </table>`;
                 };
+                const _tituloTabla = (txt, color) => `<div style="font-family:var(--font-heading); font-weight:800; font-size:0.82rem; color:${color || 'var(--accent-neon)'}; text-transform:uppercase; letter-spacing:1px; margin-bottom:0.6rem;">${txt}</div>`;
+                const _zonas = (titulo, zonas) => (zonas || []).map(z => `
+                    <div style="margin-bottom:1.4rem;">
+                        ${_tituloTabla((titulo ? titulo + ' · ' : '') + (z.nombre || 'Zona').replace(/group/i, 'Zona'))}
+                        ${_tablaHtml(z.tabla)}
+                    </div>`).join('');
 
-                // Con más de una zona (ej: Liga Profesional argentina = Zona A / Zona B)
-                // se muestra una tabla por zona, cada una con sus posiciones y puntos.
-                const html = zonasRaw.length > 1
-                    ? zonasRaw.map(z => `
-                        <div style="margin-bottom:1.6rem;">
-                            <div style="font-family:var(--font-heading); font-weight:800; font-size:0.8rem;
-                                color:var(--accent-neon); text-transform:uppercase; letter-spacing:1px; margin-bottom:0.6rem;">
-                                ${(z.nombre || 'Zona').replace(/group/i, 'Zona')}
+                let html;
+                if (esArg && aperturaRaw) {
+                    // Tabla Anual = suma de Apertura + Clausura por equipo.
+                    const anual = {};
+                    const acumular = (zonas) => (zonas || []).forEach(z => z.tabla.forEach(e => {
+                        const id = e.team.id;
+                        if (!anual[id]) anual[id] = { team: e.team, stats: { pj:0, pg:0, pe:0, pp:0, gf:0, gc:0, dif:0, pts:0 } };
+                        const A = anual[id].stats, S = e.stats;
+                        A.pj += _num(S.pj); A.pg += _num(S.pg); A.pe += _num(S.pe); A.pp += _num(S.pp);
+                        A.gf += _num(S.gf); A.gc += _num(S.gc); A.pts += _num(S.pts);
+                    }));
+                    acumular(aperturaRaw); acumular(zonasRaw);
+                    const tablaAnual = Object.values(anual).map(x => { x.stats.dif = x.stats.gf - x.stats.gc; return x; });
+                    const totalAnual = tablaAnual.length;
+                    const colorAnual = (pos) => pos <= 4 ? '#2FD98B' : (pos <= 8 ? '#f0a500' : (pos >= totalAnual - 1 ? '#ff4757' : ''));
+
+                    html = `
+                        <div style="margin-bottom:1.4rem;">
+                            ${_tituloTabla('🏆 Tabla Anual', '#ffd700')}
+                            <div style="font-size:.66rem; color:var(--text-muted); margin-bottom:.6rem; display:flex; gap:12px; flex-wrap:wrap;">
+                                <span><span style="color:#2FD98B;">■</span> Libertadores</span>
+                                <span><span style="color:#f0a500;">■</span> Sudamericana</span>
+                                <span><span style="color:#ff4757;">■</span> Descenso</span>
                             </div>
-                            ${_tablaHtml(z.tabla)}
-                        </div>`).join('')
-                    : _tablaHtml(zonasRaw[0].tabla);
+                            ${_tablaHtml(tablaAnual, colorAnual)}
+                        </div>
+                        ${_zonas('Torneo Clausura', zonasRaw)}
+                        ${_zonas('Torneo Apertura', aperturaRaw)}`;
+                } else if (zonasRaw.length > 1) {
+                    html = _zonas('', zonasRaw);
+                } else {
+                    html = _tablaHtml(zonasRaw[0].tabla);
+                }
 
                 standingsBox.querySelector('.table-responsive').innerHTML = html;
             } else {
