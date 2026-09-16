@@ -5757,12 +5757,6 @@ const App = (() => {
                                 ciudad,
                                 circuito:   e.circuit?.fullName ?? '',
                                 pais:       e.circuit?.address?.country ?? '',
-                                // Clasificación final de la carrera (orden de llegada).
-                                resultados: cs.map(x => ({
-                                    pos:    Number(x.order) || 0,
-                                    nombre: x.athlete?.displayName ?? '',
-                                    flag:   x.athlete?.flag?.href ?? '',
-                                })).filter(r => r.nombre).sort((a, b) => a.pos - b.pos),
                             };
                         });
                         const proxima = carreras.find(c => !c.completada && !c.enVivo);
@@ -5783,15 +5777,13 @@ const App = (() => {
                             ${carreras.map(c => {
                                 const activa = c.enVivo || c === proxima;
                                 const tieneMapa = !!F1_CIRCUITOS[c.ciudad];
-                                // Clickeable si tiene mapa de circuito o si ya se corrió (para ver el resultado).
-                                const clickable = tieneMapa || (c.completada && c.resultados.length);
                                 return `
-                                <div ${clickable ? `onclick="window._verCircuito(${c.ronda})"` : ''}
+                                <div ${tieneMapa ? `onclick="window._verCircuito(${c.ronda})"` : ''}
                                     style="display:grid; grid-template-columns:36px 1fr auto; align-items:center; gap:12px;
                                     padding:10px 12px; border-radius:10px; margin-bottom:6px;
                                     background:${activa ? 'rgba(var(--accent-neon-rgb),0.06)' : 'rgba(255,255,255,0.03)'};
                                     border:1px solid ${activa ? 'rgba(var(--accent-neon-rgb),0.3)' : 'var(--border-glass)'};
-                                    cursor:${clickable ? 'pointer' : 'default'};">
+                                    cursor:${tieneMapa ? 'pointer' : 'default'};">
                                     <div style="font-family:var(--font-heading); font-size:0.85rem; font-weight:800; color:var(--text-muted); text-align:center;">R${c.ronda}</div>
                                     <div>
                                         <div style="font-weight:700; font-size:0.9rem; color:${c.completada ? 'var(--text-main)' : activa ? 'var(--accent-neon)' : 'var(--text-muted)'};">
@@ -5805,7 +5797,7 @@ const App = (() => {
                                         ${c.enVivo ? '<div style="font-size:0.65rem; color:#ff4757;">EN VIVO</div>'
                                           : c.completada ? '<div style="font-size:0.65rem; color:var(--text-muted);">✓ FIN</div>'
                                           : c === proxima ? '<div style="font-size:0.65rem; color:var(--accent-neon);">PRÓXIMA</div>' : ''}
-                                        ${clickable ? `<div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">${c.completada ? 'Ver resultado' : 'Ver circuito'} →</div>` : ''}
+                                        ${tieneMapa ? '<div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">Ver circuito →</div>' : ''}
                                     </div>
                                 </div>`;
                             }).join('')}
@@ -5814,8 +5806,8 @@ const App = (() => {
                         // Detalle de un circuito: trazado + datos de la carrera.
                         window._verCircuito = (ronda) => {
                             const c = (window._f1Carreras ?? []).find(x => x.ronda === ronda);
-                            const svg = (c && F1_CIRCUITOS[c.ciudad]) || '';
-                            if (!c) return;
+                            const svg = c && F1_CIRCUITOS[c.ciudad];
+                            if (!c || !svg) return;
                             container.innerHTML = `
                                 <button onclick="window.location.hash='#/other-sports?deporte=racing&liga=carreras'"
                                     style="background:transparent; border:1px solid var(--border-glass); color:var(--text-muted);
@@ -5831,18 +5823,14 @@ const App = (() => {
 
                                     ${svg}
 
-                                    ${(c.completada && c.resultados.length) ? `
-                                    <div style="margin-top:1.2rem;">
-                                        <div style="font-size:0.7rem; color:var(--accent-neon); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Resultado</div>
-                                        ${c.resultados.map(r => `
-                                            <div style="display:grid; grid-template-columns:30px 1fr; align-items:center; gap:10px; padding:7px 6px; border-bottom:1px solid var(--border-glass);">
-                                                <span style="font-family:var(--font-heading); font-weight:800; font-size:0.85rem; color:${_medalla(r.pos)};">${r.pos}</span>
-                                                <span style="font-weight:600; font-size:0.86rem;">${_flagImg(r.flag)} ${r.nombre}</span>
-                                            </div>`).join('')}
-                                    </div>` : `
-                                    <div style="margin-top:1rem; padding:12px; border-radius:8px; background:rgba(255,255,255,0.04); border:1px solid var(--border-glass);">
-                                        <div style="font-size:0.8rem; color:var(--text-muted);">Carrera pendiente — ${fmtFecha(c.fecha)}</div>
-                                    </div>`}
+                                    <div style="margin-top:1rem; padding:12px; border-radius:8px;
+                                        background:${c.completada ? 'rgba(var(--accent-neon-rgb),0.06)' : 'rgba(255,255,255,0.04)'};
+                                        border:1px solid ${c.completada ? 'rgba(var(--accent-neon-rgb),0.2)' : 'var(--border-glass)'};">
+                                        ${c.completada && c.ganador
+                                            ? `<div style="font-size:0.7rem; color:var(--accent-neon); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Ganador</div>
+                                               <div style="font-weight:800; font-size:1rem;">🏆 ${c.ganador}</div>`
+                                            : `<div style="font-size:0.8rem; color:var(--text-muted);">${c.completada ? 'Carrera finalizada' : 'Carrera pendiente'} — ${fmtFecha(c.fecha)}</div>`}
+                                    </div>
                                 </div>`;
                         };
                     }
