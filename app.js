@@ -1006,27 +1006,32 @@ const App = (() => {
             }
             return lista;
         };
+        // ESPN rompió los rangos de fecha, así que el calendario ya no puede traer todo el
+        // mes de una. Trae el DÍA SELECCIONADO (todas las ligas, día suelto) y va acumulando
+        // los partidos de los días que se visitan (para los puntitos de la tira).
         const _calCargar = async () => {
-            const d = window._calEstado.mes;
-            const y = d.getFullYear(), m = d.getMonth();
-            const ini = `${y}${_calPad(m+1)}01`;
-            const fin = `${y}${_calPad(m+1)}${_calPad(new Date(y, m+1, 0).getDate())}`;
-            const mesKey = `${y}${_calPad(m+1)}`;
-            if (!window._calDatos) window._calDatos = {};
+            if (!window._calDatos)   window._calDatos = {};
+            if (!window._calEventos) window._calEventos = [];
+            const sel = window._calEstado.sel || _hoyISO();
+            const diaKey = sel.replace(/-/g, '');
+            const esPasado = sel < _hoyISO();
             const slugs = _calSlugs();
             const arrs = await Promise.all(slugs.map(async (slug) => {
-                const k = `${slug}_${mesKey}`;
+                const k = `${slug}_${diaKey}`;
                 const c = window._calDatos[k];
-                if (c && Date.now() - c.t < 10 * 60 * 1000) return c.ev;   // caché en memoria 10 min
+                // Días pasados no cambian → caché larga; hoy/futuro → 5 min.
+                if (c && (esPasado || Date.now() - c.t < 5 * 60 * 1000)) return c.ev;
                 try {
-                    const dt = await _espn(`https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${ini}-${fin}`);
+                    const dt = await _espn(`https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${diaKey}`);
                     const nombre = dt.leagues?.[0]?.name ?? slug;
                     const ev = (dt.events ?? []).map(e => ({ ...e, _slug: slug, _liga: nombre }));
                     window._calDatos[k] = { t: Date.now(), ev };
                     return ev;
                 } catch { return []; }
             }));
-            window._calEventos = arrs.flat();
+            // Acumular (dedupe por id) para que los puntitos persistan entre días visitados.
+            const ids = new Set(window._calEventos.map(e => e.id));
+            for (const e of arrs.flat()) if (!ids.has(e.id)) { window._calEventos.push(e); ids.add(e.id); }
             _calPintar();
         };
         const _calPintar = () => {
@@ -1094,7 +1099,7 @@ const App = (() => {
             const cont = document.getElementById('home-calendario');
             if (cont) cont.innerHTML = `<div style="display:flex;gap:8px;align-items:center;padding:10px 2px;"><div style="width:18px;height:18px;border:2px solid var(--blue);border-right-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></div><span style="color:var(--muted);font-size:.82rem;">Cargando calendario...</span></div>`;
         };
-        window._calSelDia = (iso) => { window._calEstado.sel = iso; _calPintar(); };
+        window._calSelDia = (iso) => { window._calEstado.sel = iso; _calPintar(); _calCargar(); };
         window._calMover = (delta) => {
             const d = window._calEstado.mes; d.setMonth(d.getMonth() + delta);
             window._calEstado.mes = new Date(d);
