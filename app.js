@@ -1281,6 +1281,29 @@ const App = (() => {
             return r.json();
         };
 
+        // ESPN rompió los rangos de fecha del scoreboard (?dates=A-B devuelve 0). Los días
+        // sueltos (?dates=YYYYMMDD) SÍ funcionan, así que pedimos día por día y los juntamos.
+        const _fmtDia = (d) => d.toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).replace(/-/g, '');
+        const _diasVentana = (atras, adelante) => {
+            const out = [], hoy = Date.now();
+            for (let i = -atras; i <= adelante; i++) out.push(_fmtDia(new Date(hoy + i * 864e5)));
+            return out;
+        };
+        const _scoreboardDias = async (slug, dias) => {
+            const map = new Map();
+            let nombre = slug, year = new Date().getFullYear();
+            await Promise.all(dias.map(async (d) => {
+                try {
+                    const data = await _espn(`https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${d}`);
+                    const lg = data.leagues?.[0];
+                    if (lg?.name) nombre = lg.name;
+                    if (lg?.season?.year) year = lg.season.year;
+                    for (const ev of (data.events ?? [])) map.set(ev.id, ev);
+                } catch {}
+            }));
+            return { eventos: [...map.values()], nombre, year };
+        };
+
         // ── Cronología + estadísticas del partido destacado ──────────────────
         const _cargarDetallePartido = async (ev) => {
             if (!ev) return;
@@ -1663,21 +1686,19 @@ const App = (() => {
 
                 // Un scoreboard por competencia, en paralelo. Si una falla, seguimos con las otras.
                 _comps = (await Promise.all(_competenciasUsuario().map(async (slug) => {
-                    const pedir = (qs) => _espn(`https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard${qs}`);
                     try {
-                        // Primero la semana en curso. Pero si la liga está en receso —las
-                        // europeas no juegan de junio a agosto— eso devuelve 0 partidos y la
-                        // home quedaría vacía. En ese caso pedimos el scoreboard sin fechas,
-                        // que da la jornada relevante (la próxima, o la última jugada).
-                        let data = await pedir(`?dates=${rango}`);
-                        if (!(data.events ?? []).length) data = await pedir('');
-
-                        const liga = data.leagues?.[0];
-                        // Con rango de fechas data.season viene vacío: el año está en leagues[0].
-                        const year = liga?.season?.year ?? data.season?.year ?? hoy.getFullYear();
-                        const nombre = liga?.name ?? slug;
+                        // Ventana de días sueltos (-7 a +10). Si queda vacía (liga en receso),
+                        // pedimos el scoreboard sin fechas: da la jornada relevante.
+                        let { eventos, nombre, year } = await _scoreboardDias(slug, _diasVentana(7, 10));
+                        if (!eventos.length) {
+                            const nd = await _espn(`https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard`);
+                            const lg = nd.leagues?.[0];
+                            eventos = nd.events ?? [];
+                            nombre  = lg?.name ?? nombre;
+                            year    = lg?.season?.year ?? year;
+                        }
                         // Etiquetamos cada partido con su competencia, porque después se mezclan.
-                        const eventos = (data.events ?? []).map(e => ({ ...e, _slug: slug, _liga: nombre }));
+                        eventos = eventos.map(e => ({ ...e, _slug: slug, _liga: nombre }));
                         return { slug, nombre, year, eventos };
                     } catch {
                         return { slug, nombre: slug, year: hoy.getFullYear(), eventos: [] };
@@ -1702,11 +1723,11 @@ const App = (() => {
                             ? ['arg.copa', 'conmebol.libertadores', 'conmebol.sudamericana']
                             : ['uefa.champions', 'uefa.europa'];
                         const yaEstan = new Set(_delRango.map(e => e.id));
+                        const dias = _diasVentana(7, 10);
                         const extras = (await Promise.all(copas.map(async (slug) => {
                             try {
-                                const d = await _espn(`https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${rango}`);
-                                const nombre = d.leagues?.[0]?.name ?? slug;
-                                return (d.events ?? [])
+                                const { eventos, nombre } = await _scoreboardDias(slug, dias);
+                                return eventos
                                     .filter(e => (e.competitions?.[0]?.competitors ?? []).some(c => norm(c.team?.displayName) === favN))
                                     .filter(e => !yaEstan.has(e.id))
                                     .map(e => ({ ...e, _slug: slug, _liga: nombre }));
