@@ -326,11 +326,21 @@ const ESPN = (() => {
         const cached = _lsGet(cacheKey);
         if (cached) { _mem[cacheKey] = cached; return cached; }
 
-        const url  = `${ESPN_SITE}/${slug}/scoreboard?dates=${year}0101-${year}1231`;
-        const data = await _fetch(url);
-        const events = data?.events ?? [];
+        // ESPN rompió los rangos de fecha (?dates=A-B da 0). Pedimos días sueltos en una
+        // ventana (-21 a +45) y los juntamos: cubre lo reciente + lo próximo del torneo.
+        const _fmtD = (d) => { const z = n => String(n).padStart(2, '0'); return `${d.getFullYear()}${z(d.getMonth() + 1)}${z(d.getDate())}`; };
+        const ahora = Date.now();
+        const dias = [];
+        for (let i = -21; i <= 45; i++) dias.push(_fmtD(new Date(ahora + i * 864e5)));
+        const byId = new Map();
+        await Promise.all(dias.map(async (d) => {
+            try {
+                const dt = await _fetch(`${ESPN_SITE}/${slug}/scoreboard?dates=${d}`);
+                for (const ev of (dt?.events ?? [])) byId.set(ev.id, ev);
+            } catch {}
+        }));
 
-        const result = events
+        const result = [...byId.values()]
             .map(ev => _mapEvento(ev, slug))
             .sort((a, b) => new Date(a.date) - new Date(b.date));
 
