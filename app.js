@@ -5694,25 +5694,30 @@ const App = (() => {
                             }
                         }
                         const pilotos = (dLists[0]?.DriverStandings ?? []).map(x => ({
-                            pos:    Number(x.position) || 0,
-                            nombre: `${x.Driver.givenName} ${x.Driver.familyName}`,
-                            flag:   _natFlag[x.Driver.nationality] ?? '',
-                            equipo: x.Constructors?.[x.Constructors.length - 1]?.name ?? '',
-                            num:    x.Driver.permanentNumber ?? '',
-                            puntos: x.points,
-                            wins:   x.wins,
+                            pos:      Number(x.position) || 0,
+                            nombre:   `${x.Driver.givenName} ${x.Driver.familyName}`,
+                            flag:     _natFlag[x.Driver.nationality] ?? '',
+                            nac:      x.Driver.nationality ?? '',
+                            equipo:   x.Constructors?.[x.Constructors.length - 1]?.name ?? '',
+                            num:      x.Driver.permanentNumber ?? '',
+                            puntos:   x.points,
+                            wins:     x.wins,
+                            driverId: x.Driver.driverId,
                         }));
 
                         if (ligaActual.id === 'pilotos') {
                             if (!pilotos.length) return _err('No se pudo cargar el campeonato de pilotos.');
+                            window._f1Pilotos = pilotos;   // lo lee _verPiloto
+                            window._f1Anio = anio;
                             container.innerHTML = `
                                 <p style="font-size:0.7rem; color:var(--accent-neon); text-transform:uppercase; letter-spacing:1px; margin-bottom:1rem;">
                                     Campeonato de Pilotos ${anio} · en vivo
                                 </p>
                                 <div class="glass-panel" style="padding:1rem;">
                                     ${pilotos.map(p => `
-                                        <div style="display:grid; grid-template-columns:26px 30px 1fr auto auto; align-items:center; gap:10px;
-                                            padding:10px 6px; border-bottom:1px solid var(--border-glass);">
+                                        <div onclick="window._verPiloto('${p.driverId}')" style="display:grid; grid-template-columns:26px 30px 1fr auto auto; align-items:center; gap:10px;
+                                            padding:10px 6px; border-bottom:1px solid var(--border-glass); cursor:pointer;"
+                                            onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                                             <span style="font-weight:800; font-size:0.85rem; color:${_medalla(p.pos)};">${p.pos}</span>
                                             <div style="background:rgba(255,255,255,0.08); border-radius:6px; width:28px; height:28px;
                                                 display:flex; align-items:center; justify-content:center; font-family:var(--font-heading);
@@ -5734,6 +5739,52 @@ const App = (() => {
                                     `).join('')}
                                 </div>
                             `;
+
+                            // Perfil de piloto: victorias de los standings + podios/mejor/
+                            // promedio calculados de sus resultados (Jolpica, confiable).
+                            window._verPiloto = async (driverId) => {
+                                const p = (window._f1Pilotos ?? []).find(x => x.driverId === driverId);
+                                if (!p) return;
+                                container.innerHTML = `<div style="text-align:center;padding:2.5rem;"><div style="width:34px;height:34px;border:3px solid var(--accent-neon);border-right-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto;"></div></div>`;
+                                let podios = 0, carreras = 0, mejor = 99, sumaPos = 0;
+                                const ultimas = [];
+                                try {
+                                    const y = window._f1Anio ?? new Date().getFullYear();
+                                    const dd = await _jolpi(`${y}/drivers/${driverId}/results?limit=50`);
+                                    for (const r of (dd?.MRData?.RaceTable?.Races ?? [])) {
+                                        const pos = parseInt(r.Results?.[0]?.position) || 0;
+                                        if (!pos) continue;
+                                        carreras++; sumaPos += pos; mejor = Math.min(mejor, pos);
+                                        if (pos <= 3) podios++;
+                                        ultimas.push({ gp: r.raceName ?? 'GP', pos });
+                                    }
+                                } catch {}
+                                const prom = carreras ? (sumaPos / carreras).toFixed(1) : '—';
+                                const ult5 = ultimas.slice(-5).reverse();
+                                container.innerHTML = `
+                                    <button onclick="window.location.hash='#/other-sports?deporte=racing&liga=pilotos'" style="background:transparent;border:1px solid var(--border-glass);color:var(--text-muted);padding:6px 14px;border-radius:12px;cursor:pointer;font-size:0.8rem;margin-bottom:1.2rem;">← Volver</button>
+                                    <div class="glass-panel" style="padding:1.5rem;">
+                                        <div style="display:flex;align-items:center;gap:14px;margin-bottom:1.2rem;">
+                                            <div style="background:rgba(255,255,255,0.08);border-radius:10px;width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:1.3rem;font-weight:900;color:var(--accent-neon);">${p.num || '—'}</div>
+                                            <div>
+                                                <div style="font-family:var(--font-heading);font-weight:900;font-size:1.15rem;">${p.flag} ${p.nombre}</div>
+                                                <div style="font-size:0.8rem;color:var(--text-muted);">${p.equipo} · P${p.pos} · ${p.puntos} pts</div>
+                                            </div>
+                                        </div>
+                                        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.2rem;">
+                                            ${[['Victorias', p.wins], ['Podios', podios], ['Mejor', mejor < 99 ? 'P' + mejor : '—'], ['Prom.', prom]].map(([l, v]) => `
+                                                <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:10px 4px;text-align:center;">
+                                                    <div style="font-family:var(--font-heading);font-weight:900;font-size:1.05rem;color:var(--accent-neon);">${v}</div>
+                                                    <div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;">${l}</div>
+                                                </div>`).join('')}
+                                        </div>
+                                        ${ult5.length ? `
+                                        <div style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Últimas carreras</div>
+                                        ${ult5.map(u => `<div style="display:flex;justify-content:space-between;padding:6px 4px;border-bottom:1px solid var(--border-glass);font-size:0.82rem;">
+                                            <span>${u.gp}</span><span style="font-weight:800;color:${_medalla(u.pos)};">P${u.pos}</span></div>`).join('')}` : ''}
+                                        <p style="font-size:0.62rem;color:var(--text-muted);margin-top:10px;">Temporada ${window._f1Anio ?? ''} · datos de Jolpica/Ergast.</p>
+                                    </div>`;
+                            };
                         } else {
                             const constructores = (cLists[0]?.ConstructorStandings ?? []).map(x => ({
                                 pos:    Number(x.position) || 0,
