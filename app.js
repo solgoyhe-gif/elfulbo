@@ -6398,9 +6398,37 @@ const App = (() => {
                         const url = `https://site.api.espn.com/apis/site/v2/sports/${ligaActual.slug}/scoreboard`;
                         const res = await fetch(`${_proxyEspn(url)}`);
                         const data = res.ok ? await res.json() : {};
-                        const leaders = data.leagues?.[0]?.leaders ?? data.leaders ?? [];
+                        let leaders = data.leagues?.[0]?.leaders ?? data.leaders ?? [];
 
                         let html = tabsHtml;
+                        // Pretemporada: el scoreboard todavía no trae líderes. Caemos a la
+                        // temporada pasada (core API) para no dejar la pestaña vacía.
+                        if (!leaders.length) {
+                            try {
+                                const [sport, league] = deporteStats.standingsPath.split('/');
+                                const ahora = new Date().getFullYear();
+                                let catsRaw = [], añoUsado = null;
+                                for (const y of [ahora, ahora - 1, ahora - 2]) {
+                                    const r = await fetch(_proxyEspn(`https://sports.core.api.espn.com/v2/sports/${sport}/leagues/${league}/seasons/${y}/types/2/leaders`));
+                                    const d = r.ok ? await r.json() : {};
+                                    if ((d.categories ?? []).some(c => c.leaders?.length)) { catsRaw = d.categories; añoUsado = y; break; }
+                                }
+                                const quiero = ['pointsPerGame', 'reboundsPerGame', 'assistsPerGame'];
+                                const sel = quiero.map(n => catsRaw.find(c => c.name === n)).filter(Boolean);
+                                leaders = await Promise.all(sel.map(async (c) => {
+                                    const entries = await Promise.all((c.leaders ?? []).slice(0, 5).map(async (l) => {
+                                        let athlete = { displayName: '?' };
+                                        try {
+                                            const a = await (await fetch(_proxyEspn(String(l.athlete?.$ref ?? '').replace('http://', 'https://')))).json();
+                                            athlete = { displayName: a.displayName, headshot: a.headshot?.href };
+                                        } catch {}
+                                        return { athlete, team: {}, displayValue: l.displayValue ?? l.value };
+                                    }));
+                                    return { displayName: c.displayName ?? c.name, leaders: entries };
+                                }));
+                                if (añoUsado) html += `<p style="font-size:0.72rem; color:var(--text-muted); margin-bottom:0.9rem;">📅 Temporada ${añoUsado - 1}-${String(añoUsado).slice(2)} (la actual arranca pronto)</p>`;
+                            } catch {}
+                        }
                         if (!leaders.length) {
                             html += `<div class="glass-panel" style="padding:2rem; text-align:center;">
                                 <p style="color:var(--text-muted);">Líderes no disponibles en este momento.</p>
