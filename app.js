@@ -3995,22 +3995,23 @@ const App = (() => {
                 return `Hace ${Math.floor(diff/86400)} días`;
             };
 
-            // ── Traducir solo para Pro+ ───────────────────────────────────────────
-            if (_esPro()) try {
+            // ── Traducir al español (vía Worker + Gemini), para todos, con caché 6h ─
+            try {
                 const payload = articulos.map((a, i) => i + '|' + a.headline + '|' + (a.description || '')).join('\n');
                 const prompt  = 'Traduc\u00ed al espa\u00f1ol rioplatense cada l\u00ednea. Formato exacto: INDEX|TITULAR|DESCRIPCION. Una l\u00ednea por noticia. Solo devolv\u00e9 las l\u00edneas, sin explicaciones ni markdown.\n\n' + payload;
-                const tradRes = await fetch('https://api.anthropic.com/v1/messages', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        model: 'claude-sonnet-4-6',
-                        max_tokens: 4000,
-                        messages: [{ role: 'user', content: prompt }]
-                    })
-                });
-                const tradData = await tradRes.json();
-                const tradText = tradData.content?.[0]?.text ?? '';
-                tradText.split('\n').forEach(linea => {
+                const ck = 'info_trad_' + payload.length + '_' + (articulos[0]?.id ?? '');
+                let tradText = null;
+                try { const h = JSON.parse(localStorage.getItem(ck) || 'null'); if (h && Date.now() - h.t < 6 * 3600 * 1000) tradText = h.x; } catch {}
+                if (!tradText) {
+                    const tradRes = await fetch('https://whistle.solgoyhe.workers.dev/ia/traducir', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ texto: payload }),
+                    });
+                    tradText = (await tradRes.json())?.texto ?? '';
+                    if (tradText) { try { localStorage.setItem(ck, JSON.stringify({ t: Date.now(), x: tradText })); } catch {} }
+                }
+                (tradText || '').split('\n').forEach(linea => {
                     const partes = linea.split('|');
                     if (partes.length < 2) return;
                     const idx = parseInt(partes[0]);

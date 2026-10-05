@@ -403,6 +403,41 @@ const IA_SISTEMA = [
     '- No empieces con "Análisis" ni "En este partido". Entrá directo al fútbol.',
 ].join('\n');
 
+// Traduce al español las noticias (títulos + descripciones) con Gemini. El frontend manda
+// un payload "INDEX|TITULAR|DESCRIPCION" por línea y recibe lo mismo traducido.
+async function manejarTraducir(request, env) {
+    const body  = await request.json().catch(() => ({}));
+    const texto = String(body.texto ?? '').trim();
+    if (!texto) return jsonError('Falta texto', 400);
+    if (!env.GEMINI_API_KEY) return jsonError('Falta configurar GEMINI_API_KEY en el Worker', 503);
+
+    const prompt = 'Traducí al español rioplatense cada línea. Devolvé EXACTAMENTE el mismo formato: INDEX|TITULAR|DESCRIPCION, una línea por ítem, con el mismo INDEX de la entrada. No agregues explicaciones ni markdown.\n\n' + texto;
+    try {
+        const cuerpo = JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            generationConfig: { maxOutputTokens: 3000, temperature: 0.3 },
+        });
+        let aiRes;
+        for (let intento = 0; intento < 3; intento++) {
+            aiRes = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/${IA_MODELO}:generateContent`,
+                { method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY }, body: cuerpo }
+            );
+            if (aiRes.ok) break;
+            if (![429, 500, 503].includes(aiRes.status)) break;
+            await new Promise(r => setTimeout(r, 1200 * (intento + 1)));
+        }
+        if (!aiRes.ok) return jsonError('Error del modelo: ' + (await aiRes.text()).slice(0, 200), 502);
+        const aiData = await aiRes.json();
+        const out = (aiData?.candidates?.[0]?.content?.parts ?? [])
+            .filter(p => !p?.thought).map(p => p.text ?? '').join('').trim();
+        if (!out) return jsonError('El modelo no devolvió texto', 502);
+        return new Response(JSON.stringify({ texto: out }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
+    } catch (e) {
+        return jsonError('Fallo al traducir', 502);
+    }
+}
+
 async function manejarAnalisisPrevia(request, env) {
     const body  = await request.json().catch(() => ({}));
     const event = String(body.event ?? '').trim();
@@ -599,6 +634,10 @@ async function handleRequest(request, env) {
         }
 
         // ── IA: Análisis pre-partido ─────────────────────────────────────────
+        if (pathname === '/ia/traducir' && request.method === 'POST') {
+            return manejarTraducir(request, env);
+        }
+
         if (pathname === '/ia/analisis-previa' && request.method === 'POST') {
             return manejarAnalisisPrevia(request, env);
         }
